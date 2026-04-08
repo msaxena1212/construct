@@ -1,5 +1,5 @@
 export const environment = {
-  servralUrl:'https://fleetmanagementapi.elitetraveltech.in',
+  servralUrl:'https://zynoconstructionapi.elitetraveltech.in',
   defaultLanguage: 'Label',
   supportedLanguages: ['Label', 'TMSA'],
   production: true,

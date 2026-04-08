@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Fleetmanagement_frontend": {
+    "Zyno_construction_frontend": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -52,10 +52,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Fleetmanagement_frontend:build:production"
+              "buildTarget": "Zyno_construction_frontend:build:production"
             },
             "development": {
-              "buildTarget": "Fleetmanagement_frontend:build:development"
+              "buildTarget": "Zyno_construction_frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -25,5 +25,5 @@ import { AgGridModule } from 'ag-grid-angular';
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('Fleetmanagement_frontend');
+  protected readonly title = signal('Zyno_construction_frontend');
 }
