@@ -1,0 +1,77 @@
+<div class="loginpage">
+    <div class="loginbody">
+
+        <!-- Background Image -->
+        <div class="background-image">
+            <img src="assets/image/zyno_construction.jpg" alt="Zyno Background" />
+        </div>
+
+        <!-- Overlay -->
+        <div class="login-overlay">
+            <div class="login-center-wrapper">
+
+                <!-- Login Card -->
+                <div class="login-card">
+
+                    <div class="card-header">
+                        <h2>Sign in</h2>
+                    </div>
+
+                    <!-- Logo -->
+                    <div class="logo-section">
+                        <div class="dqs_log">
+                            <img src="assets/image/zyno_construction_logo.png" alt="Zyno Construction Logo" />
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <form [formGroup]="loginForm" (ngSubmit)="loginFormSubmit()" novalidate>
+
+                            <!-- Email -->
+                            <div class="form-group">
+                                <label>Email</label>
+                                <div class="input-with-icon">
+                                    <mat-icon>mail</mat-icon>
+                                    <input type="email" class="form-control" placeholder="superadmin@zyno.com"
+                                        formControlName="email" />
+                                </div>
+
+                                <mat-error *ngIf="(isSubmited || login['email'].touched) && login['email'].invalid">
+                                    <span *ngIf="login['email'].hasError('required')">Email is required</span>
+                                    <span *ngIf="login['email'].hasError('email')">Enter valid email</span>
+                                </mat-error>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="form-group">
+                                <label>Password</label>
+                                <div class="input-with-icon">
+                                    <mat-icon>lock</mat-icon>
+                                    <input type="password" class="form-control" placeholder="********"
+                                        formControlName="password" />
+                                </div>
+
+                                <mat-error
+                                    *ngIf="(isSubmited || login['password'].touched) && login['password'].invalid">
+                                    Password is required
+                                </mat-error>
+                            </div>
+
+                            <!-- Button -->
+                            <div class="form-actions">
+                                <button mat-raised-button type="submit" class="login-button" [disabled]="showLoader"
+                                    (click)="loginFormSubmit()">
+                                    <mat-spinner *ngIf="showLoader" diameter="20"></mat-spinner>
+                                    <span *ngIf="!showLoader">Login</span>
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

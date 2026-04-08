@@ -1,0 +1,5 @@
+<div class="edd-del">
+    <mat-icon (click)="edit()" *ngIf="assignAction?.Write" matTooltip="Edit">edit</mat-icon>
+    <mat-icon (click)="openDialog($event)" *ngIf="assignAction?.Read" matTooltip="View">visibility</mat-icon>
+    <!-- <mat-icon (click)="delete($event)" *ngIf="assignAction?.Delete" matTooltip="Delete">delete</mat-icon> -->
+</div>
