@@ -1,7 +1,240 @@
-<p>dashboard works!</p>
-<p>dashboard works!</p>
-<p>dashboard works!</p>
-<p>dashboard works!</p>
-<p>dashboard works!</p>
-<p>dashboard works!</p>
+<div class="dashboard-layout" [class.panel-open]="aiPanelOpen">
+    <div class="main-content">
+        <div class="topbar-left">
+            <span class="topbar-icon">⬛</span>
+            <span class="topbar-label">OPERATIONAL COMMAND</span>
+        </div>
+        <div class="page-header mt-2">
+            <div>
+                <h1 class="page-title">Hello, BuildFlow Architect.</h1>
+                <p class="page-subtitle">Monitor your active site portfolios and cross-project status in real-time.</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-outline"><span class="btn-icon">📋</span> EXPORT AUDIT</button>
+                <button class="btn-primary"><span class="btn-icon">🔄</span> NEW UPDATE</button>
+            </div>
+        </div>
 
+        <div class="cards-row top-cards">
+            <div class="card budget-card">
+                <div class="card-label">AGGREGATE BUDGET BURN</div>
+                <div class="chart-icon">📈</div>
+                <div class="big-number">0%</div>
+                <div class="badge-green">+4.2% YoY</div>
+                <div class="card-sub">SYSTEM ALLOCATION: $12.5M ACROSS 0 ACTIVE SITES</div>
+            </div>
+            <div class="card safety-card">
+                <div class="card-label">SAFETY INDEX (SPI)</div>
+                <div class="spi-row">
+                    <span class="spi-score">98.4</span>
+                    <span class="badge-elite">ELITE LEVEL</span>
+                </div>
+                <div class="spi-sub">142 DAYS ACCIDENT FREE PORTFOLIO</div>
+                <div class="spi-bars">
+                    <div class="spi-bar bar-1"></div>
+                    <div class="spi-bar bar-2"></div>
+                    <div class="spi-bar bar-3"></div>
+                    <div class="spi-bar bar-4"></div>
+                    <div class="spi-bar bar-5"></div>
+                </div>
+                <div class="shield-bg">🛡️</div>
+            </div>
+        </div>
+
+        <div class="cards-row mid-cards">
+            <div class="card small-card">
+                <div class="card-label-row">
+                    <span class="card-label">TOTAL DISCOVERY</span>
+                    <span class="card-icon-blue">👤</span>
+                </div>
+                <div class="big-number">0</div>
+                <div class="card-sub">ACTIVE PORTFOLIOS</div>
+            </div>
+            <div class="card small-card">
+                <div class="card-label-row">
+                    <span class="card-label">CRITICAL PATH</span>
+                    <span class="card-icon-yellow">⚠️</span>
+                </div>
+                <div class="big-number">05</div>
+                <div class="card-sub">PENDING CRITICAL DELAYS</div>
+            </div>
+            <div class="card dark-card manpower-card">
+                <div class="card-label-row">
+                    <span class="card-label light">SITE MANPOWER</span>
+                    <span class="card-icon">👥</span>
+                </div>
+                <div class="big-number light">142</div>
+                <div class="card-sub light">+12 SINCE LAST SHIFT</div>
+            </div>
+        </div>
+
+        <div class="cards-row diag-row">
+            <div class="card diag-card full-width">
+                <div class="card-label">QUICK DIAGNOSTIC</div>
+                <button class="btn-diag">GENERATE WEEKLY PERFORMANCE AUDIT</button>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title-row">
+                <h2 class="section-title">Project Portfolio Health</h2>
+                <span class="badge-discovery">ACTIVE DISCOVERY</span>
+            </div>
+            <a class="explore-link">EXPLORE PORTFOLIOS →</a>
+        </div>
+        <div class="portfolio-empty">
+            <span class="empty-text">No active portfolios. Add a new portfolio to get started.</span>
+        </div>
+
+    </div>
+
+    <div class="sidebar">
+        <div class="card global-card">
+            <div class="global-header">
+                <div>
+                    <div class="global-title">Global Intelligence</div>
+                    <div class="global-sub">REAL-TIME CROSS-SITE TELEMETRY</div>
+                </div>
+                <div class="live-dot-wrapper">
+                    <span class="live-dot"></span>
+                    <span class="wifi-icon">📡</span>
+                </div>
+            </div>
+            <div class="global-map">
+                <div class="map-grid">
+                    @for (dot of mapDots; track $index) {
+                    <div class="map-dot" [class.active]="dot.active" [style.top.%]="dot.y" [style.left.%]="dot.x"></div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card dark-card benchmarks-card">
+            <div class="bench-header">
+                <span class="bench-icon">🏆</span>
+                <span class="bench-title">Critical Benchmarks</span>
+                <div class="bench-nav">
+                    <span class="nav-square"></span>
+                    <span class="nav-arrow">→</span>
+                </div>
+            </div>
+            @for (item of benchmarks; track item.day) {
+            <div class="benchmark-item">
+                <div class="bench-date">
+                    <div class="bench-month">{{ item.month }}</div>
+                    <div class="bench-day">{{ item.day }}</div>
+                </div>
+                <div class="bench-info">
+                    <div class="bench-name">{{ item.name }}</div>
+                    <div class="bench-project">{{ item.project }}</div>
+                </div>
+            </div>
+            }
+            <button class="btn-calendar">VIEW MASTER CALENDAR</button>
+        </div>
+
+        <div class="card compliance-card">
+            <div class="card-label">ASSET COMPLIANCE PULSE</div>
+            @for (item of complianceItems; track item.name) {
+            <div class="compliance-item">
+                <div class="compliance-icon">{{ item.status === 'ok' ? '✅' : '⚠️' }}</div>
+                <div class="compliance-info">
+                    <div class="compliance-name">{{ item.name }}</div>
+                    <div class="compliance-sub">{{ item.sub }}</div>
+                </div>
+                <div class="compliance-action"
+                    [ngClass]="{ 'ok': item.status === 'ok', 'warn': item.status === 'warn' }">
+                    {{ item.status === 'ok' ? '✓' : '⏱' }}
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="ai-panel" [class.open]="aiPanelOpen">
+    <div class="ai-panel-header">
+        <div class="ai-brand">
+            <div class="ai-avatar">🤖</div>
+            <div>
+                <div class="ai-title">BuildFlow AI</div>
+                <div class="ai-subtitle">REAL-TIME ANALYSIS</div>
+            </div>
+        </div>
+        <button class="ai-close" (click)="closeAiPanel()">✕</button>
+    </div>
+
+    <div class="ai-section-label">SMART INSIGHTS</div>
+    <div class="insight-card red">
+        <div class="insight-header">
+            <span class="insight-dot red-dot"></span>
+            <span class="insight-title">PREDICTIVE DELAY ALERT</span>
+        </div>
+        <p class="insight-text">Incoming storm front on Oct 26 likely to delay <strong>Exterior Finishing</strong> by 48
+            hours.</p>
+        <button class="insight-action red-action">Reschedule Material Delivery</button>
+    </div>
+    <div class="insight-card yellow">
+        <div class="insight-header">
+            <span class="insight-dot yellow-dot"></span>
+            <span class="insight-title">COST OPTIMIZATION TIP</span>
+        </div>
+        <p class="insight-text">Switching to <strong>Vendor B</strong> for bulk cement could save $4,200 this quarter.
+        </p>
+    </div>
+
+    <div class="ai-section-label">CHAT ASSISTANT</div>
+    <div class="chat-messages">
+        @for (msg of chatMessages; track $index) {
+        <div class="chat-bubble" [class.user]="msg.from === 'user'" [class.ai]="msg.from === 'ai'">
+            @if (msg.from === 'ai') { <div class="ai-bubble-avatar">🤖</div> }
+            <div class="bubble-text">{{ msg.text }}</div>
+        </div>
+        }
+    </div>
+
+    <div class="quick-actions">
+        @for (action of quickActions; track action.label) {
+        <button class="quick-action-btn"><span>{{ action.icon }}</span> {{ action.label }}</button>
+        }
+    </div>
+
+    <div class="chat-input-row">
+        <input class="chat-input" [(ngModel)]="chatInput" (keyup)="onChatKey($event)"
+            placeholder="Ask BuildFlow anything..." />
+        <button class="chat-send" (click)="sendChat()">➤</button>
+    </div>
+    <div class="panel-footer">ENHANCED BY GPT-4</div>
+</div>
+
+@if (aiPanelOpen) {
+<div class="panel-backdrop" (click)="closeAiPanel()"></div>
+}
+
+<button class="fab-voice" [class.listening]="isListening" (click)="onVoiceCommand()">
+
+    <!-- Pulsing rings — visible only while listening -->
+    @if (isListening) {
+    <span class="pulse-ring ring-1"></span>
+    <span class="pulse-ring ring-2"></span>
+    }
+
+    <span class="mic-icon">🎤</span>
+    <span class="fab-voice-label">
+        {{ isListening ? 'Listening...' : 'Voice Command' }}
+    </span>
+</button>
+
+
+<div class="speed-dial" [class.open]="fabOpen">
+    <div class="speed-dial-items">
+        @for (item of fabItems; track item.label) {
+        <button class="speed-dial-item" [style.background]="item.color" [attr.aria-label]="item.label">
+            <span>{{ item.icon }}</span>
+        </button>
+        }
+    </div>
+    <button class="fab-main" (click)="toggleFab()">
+        <span class="fab-icon" [class.rotated]="fabOpen">+</span>
+    </button>
+</div>
