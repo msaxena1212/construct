@@ -1,5 +1,5 @@
 {
-  "name": "Zyno_construction_frontend",
+  "name": "zyno-construction-frontend",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -21,39 +21,28 @@
     ]
   },
   "private": true,
+  "packageManager": "npm@10.9.3",
   "dependencies": {
-    "@angular/animations": "^20.3.18",
-    "@angular/cdk": "^20.2.14",
-    "@angular/common": "^20.2.0",
-    "@angular/compiler": "^20.2.0",
-    "@angular/core": "^20.2.0",
-    "@angular/forms": "^20.2.0",
-    "@angular/material": "^20.2.14",
-    "@angular/platform-browser": "^20.2.0",
-    "@angular/router": "^20.2.0",
-    "@ngx-loading-bar/http-client": "^7.0.1",
-    "ag-grid-angular": "^35.0.0",
-    "ag-grid-community": "^35.0.0",
-    "ag-grid-enterprise": "^35.0.0",
-    "angular-bootstrap": "^0.12.2",
-    "bootstrap": "^5.3.8",
-    "ngx-toastr": "^19.1.0",
+    "@angular/cdk": "^21.2.6",
+    "@angular/common": "^21.1.0",
+    "@angular/compiler": "^21.1.0",
+    "@angular/core": "^21.1.0",
+    "@angular/forms": "^21.1.0",
+    "@angular/material": "^21.2.6",
+    "@angular/platform-browser": "^21.1.0",
+    "@angular/router": "^21.1.0",
+    "ngx-toastr": "^20.0.5",
     "rxjs": "~7.8.0",
-    "sweetalert2": "^11.26.17",
+    "sweetalert2": "^11.26.24",
     "tslib": "^2.3.0",
-    "zone.js": "^0.15.1"
+    "zone.js": "^0.16.1"
   },
   "devDependencies": {
-    "@angular/build": "^20.2.2",
-    "@angular/cli": "^20.2.2",
-    "@angular/compiler-cli": "^20.2.0",
-    "@types/jasmine": "~5.1.0",
-    "jasmine-core": "~5.9.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.9.2"
+    "@angular/build": "^21.1.0",
+    "@angular/cli": "^21.1.0",
+    "@angular/compiler-cli": "^21.1.0",
+    "jsdom": "^27.1.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.8"
   }
 }

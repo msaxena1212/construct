@@ -1,11 +1,26 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
+  "cli": {
+    "packageManager": "npm",
+    "analytics": false
+  },
   "newProjectRoot": "projects",
   "projects": {
-    "Zyno_construction_frontend": {
+    "zyno_construction_frontend": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss",
+          "standalone": false
+        },
+        "@schematics/angular:directive": {
+          "standalone": false
+        },
+        "@schematics/angular:pipe": {
+          "standalone": false
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -16,27 +31,27 @@
             "outputPath": "dist/Zyno_construction_frontend",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
             "assets": [
-              "src/erp-favicon.png",
-              "src/assets"
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
             ],
-            "styles": [
-              "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "src/styles.css"
-            ]
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2MB",
-                  "maximumError": "3MB"
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "10kB",
-                  "maximumError": "20kB"
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
                 }
               ],
               "outputHashing": "all"
@@ -47,8 +62,8 @@
               "sourceMap": true,
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.development.ts"
+                  "replace": "src/environments/environment.prod.ts",
+                  "with": "src/environments/environment.ts"
                 }
               ]
             }
@@ -59,36 +74,18 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "Zyno_construction_frontend:build:production"
+              "buildTarget": "zyno_construction_frontend:build:production"
             },
             "development": {
-              "buildTarget": "Zyno_construction_frontend:build:development"
+              "buildTarget": "zyno_construction_frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
-        "extract-i18n": {
-          "builder": "@angular/build:extract-i18n"
-        },
         "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "tsConfig": "tsconfig.spec.json",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.css"
-            ]
-          }
+          "builder": "@angular/build:unit-test"
         }
       }
     }
-  },
-  "cli": {
-    "analytics": false
   }
 }

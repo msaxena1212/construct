@@ -1,0 +1,23 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { RoleMaster } from './role-master';
+
+describe('RoleMaster', () => {
+  let component: RoleMaster;
+  let fixture: ComponentFixture<RoleMaster>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [RoleMaster]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(RoleMaster);
+    component = fixture.componentInstance;
+    await fixture.whenStable();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
