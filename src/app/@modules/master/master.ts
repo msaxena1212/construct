@@ -33,7 +33,7 @@ export class Master implements OnInit, AfterContentChecked, DoCheck {
   currentRoute: any;
   subscription: any;
   isSidebarCollapsed: boolean = false;
-
+  currentDateTime: string = '';
 
   constructor(public dialog: MatDialog, private changeDref: ChangeDetectorRef,
     private router: Router, private activatedRoute: ActivatedRoute,
@@ -232,7 +232,13 @@ export class Master implements OnInit, AfterContentChecked, DoCheck {
       this.showList = false;
     })
     this.event();
+    this.updateDateTime();
+
+    setInterval(() => {
+      this.updateDateTime();
+    }, 1000);
   }
+
   ngDoCheck(): void {
 
     let url = this.router.url;
@@ -249,19 +255,31 @@ export class Master implements OnInit, AfterContentChecked, DoCheck {
     )
     this.changeDref.detectChanges();
   }
+  updateDateTime() {
+    const now = new Date();
 
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    };
+
+    const date = now.toLocaleDateString('en-IN', options);
+    const time = now.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    this.currentDateTime = `${date} , ${time}`;
+  }
   navToggel(index: any, nav: any, event: Event) {
-
-    // 👉 If menu has NO submenu, do nothing
     if (!nav.subMenu || nav.subMenu.length === 0) {
       return;
     }
 
-    // 👉 Stop navigation for Masters
     event.preventDefault();
     event.stopPropagation();
 
-    // 👉 Toggle Masters submenu
     if (this.navIndexvalue === index) {
       this.navIndexvalue = null;
       localStorage.removeItem('index');

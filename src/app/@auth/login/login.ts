@@ -111,6 +111,7 @@ export class Login implements OnInit, AfterViewInit {
       localStorage.setItem('signInUser', JSON.stringify(userData));
 
       this.showLoader = false;
+      
       this.toast.success('Welcome to Zyno Construction Management', 'Login Successful');
       this.route.navigate(['/master/dashboard']).then(() => {
         console.log('Navigation successful');

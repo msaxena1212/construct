@@ -17,7 +17,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-rbac-role-action',
-  standalone: true, // ADD THIS LINE
+  standalone: true,
   imports: [
     CommonModule, 
     FormsModule, 
@@ -51,12 +51,10 @@ export class RbacRoleAction implements ICellRendererAngularComp {
   ) {}
 
   ngOnInit(): void {
-    // Get assignAction from parent component through context
     if (this.params?.context?.componentParent) {
       this.assignAction = this.params.context.componentParent.assignAction;
     }
-    
-    // Fallback to default if not provided
+
     if (!this.assignAction) {
       this.assignAction = { Write: true, Read: true, Edit: true, Delete: true };
     }
@@ -66,12 +64,10 @@ export class RbacRoleAction implements ICellRendererAngularComp {
     this.params = params;
     this.cellValue = this.getValueToDisplay(params);
     
-    // Get assignAction from parent component through context
     if (params.context?.componentParent) {
       this.assignAction = params.context.componentParent.assignAction;
     }
-    
-    // Fallback to default if not provided
+
     if (!this.assignAction) {
       this.assignAction = { Write: true, Read: true, Edit: true, Delete: true };
     }
@@ -142,7 +138,6 @@ export class RbacRoleAction implements ICellRendererAngularComp {
     });
       
     dialogRef.afterClosed().subscribe(result => {
-      // Handle dialog close
       if (result && this.params?.context?.componentParent?.loadMockData) {
         this.params.context.componentParent.loadMockData();
       }
