@@ -16,7 +16,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { RbacRoleDialog } from './rbac-role-dialog/rbac-role-dialog';
 import { RbacRoleAction } from './rbac-role-action/rbac-role-action';
 
-// Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 @Component({
@@ -47,11 +46,9 @@ export class RbacRoleList implements OnInit {
   rowData: any[] = [];
   assignAction: any = { Write: true, Read: true, Edit: true, Delete: true };
   loginUser: any;
-  
-  // Add context for passing to cell renderers
+
   public context: any;
 
-  // Column Definitions
   public columnDefs: ColDef[] = [
     {
       headerName: 'S. No',
@@ -117,7 +114,6 @@ export class RbacRoleList implements OnInit {
     }
   ];
 
-  // Default column definition
   public defaultColDef: ColDef = {
     sortable: true,
     filter: true,
@@ -128,23 +124,20 @@ export class RbacRoleList implements OnInit {
     public dialog: MatDialog,
     private location: Location
   ) {
-    // Initialize context to pass parent component to cell renderers
     this.context = { componentParent: this };
   }
 
   ngOnInit(): void {
-    // Simulate getting login user
+
     const lg: any = localStorage.getItem('signInUser');
     if (lg) {
       this.loginUser = JSON.parse(lg);
       console.log(this.loginUser, 'user login login user');
     }
 
-    // Load mock data immediately
     this.loadMockData();
   }
 
-  // Mock data function
   loadMockData() {
     this.rowData = [
       {
@@ -210,8 +203,7 @@ export class RbacRoleList implements OnInit {
     ];
 
     console.log('Row Data Loaded:', this.rowData);
-    
-    // Update grid if it's already initialized
+
     if (this.gridApi) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
@@ -221,12 +213,10 @@ export class RbacRoleList implements OnInit {
     this.gridApi = params.api;
     console.log('Grid Ready', this.gridApi);
 
-    // Ensure data is set after grid is ready
     if (this.rowData && this.rowData.length > 0) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
 
-    // Auto-size columns to fit
     this.gridApi.sizeColumnsToFit();
   }
 
@@ -250,21 +240,17 @@ export class RbacRoleList implements OnInit {
   }
 
   onCellClicked(e: any) {
-    // Ignore clicks on action column to prevent conflicts with action buttons
     if (e.column.getColId() === 'action') {
       return;
     }
-    
+
     console.log('Cell clicked:', e.data);
     this.openRoleDialog(e.data);
   }
 
-  // Method called from cell renderer for delete
   onDeleteRole(data: any) {
     console.log('Delete role called from parent:', data);
-    // Remove from rowData
     this.rowData = this.rowData.filter(role => role.role_master_id !== data.role_master_id);
-    // Update grid
     if (this.gridApi) {
       this.gridApi.setGridOption('rowData', this.rowData);
     }
@@ -283,7 +269,6 @@ export class RbacRoleList implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       console.log('Dialog closed:', result);
       if (result) {
-        // Refresh data if needed
         this.loadMockData();
       }
     });
