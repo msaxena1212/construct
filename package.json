@@ -1,0 +1,28 @@
+{
+  "name": "zyno_construction_backend",
+  "version": "1.0.0",
+  "description": "Zyno Construction Backend",
+  "main": "server.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/shibbu/zyno_construction_backend.git"
+  },
+  "keywords": [
+    "Backend",
+    "Zyno",
+    "Construction"
+  ],
+  "author": "Gyan Prakash, Vikash, Mayank",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/shibbu/zyno_construction_backend/issues"
+  },
+  "homepage": "https://gitlab.com/shibbu/zyno_construction_backend#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}
