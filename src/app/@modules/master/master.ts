@@ -12,13 +12,12 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from '../../@shared/material/material-module';
 import { LoadingBarHttpClientModule } from '@ngx-loading-bar/http-client';
 import { AgGridModule } from 'ag-grid-angular';
-import { FlexLayoutModule } from '@angular/flex-layout';
 
 
 @Component({
   selector: 'app-master',
   imports: [CommonModule, RouterModule, MatIconModule, MatProgressBarModule, FormsModule, ReactiveFormsModule,
-    MaterialModule, LoadingBarHttpClientModule, AgGridModule, FlexLayoutModule
+    MaterialModule, LoadingBarHttpClientModule, AgGridModule
   ],
   templateUrl: './master.html',
   styleUrl: './master.css',
