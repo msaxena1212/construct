@@ -51,8 +51,8 @@ export class Modules implements OnInit, AfterContentChecked, DoCheck {
     {
       menuitem: 'User Management',
       subMenu: [
-        { submenuitem: 'Role', routevalue: 'user-management/rbacmaster/rbac-role-master' },
-        { submenuitem: 'Menu', routevalue: 'user-management/rbacmaster/user-master' },
+        { submenuitem: 'Role', routevalue: 'user-management/role-master' },
+        { submenuitem: 'Menu', routevalue: 'user-management/user-list' },
       ],
     },
     {
