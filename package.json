@@ -4,7 +4,7 @@
   "description": "Zyno Construction Backend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "test": "npm run test"
   },
   "repository": {
@@ -23,9 +23,14 @@
   },
   "homepage": "https://gitlab.com/shibbu/zyno_construction_backend#readme",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.22.0",
+    "nodemon": "^3.1.14",
+    "sequelize": "^6.37.8"
   }
 }
