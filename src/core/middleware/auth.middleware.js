@@ -9,6 +9,8 @@ const excludedRoutes = [
   "/api/auth/signin",
   "/api/auth/sendOTP",
   "/api/auth/forgotpassword",
+  "/api/v1/accept-invite",
+  "/api/v1/invite-info"
 ];
 
 function isExcluded(req) {
@@ -70,7 +72,7 @@ const verifyAuthToken = async (req, res, next) => {
         {
           model: db.role,
           as: "role", // make sure association exists
-          attributes: ["id", "name", "role_code"],
+          attributes: ["id", "name"],
         },
       ],
     });

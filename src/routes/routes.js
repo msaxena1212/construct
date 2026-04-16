@@ -11,8 +11,12 @@ class Routes {
       express.static(path.join(__dirname, "../..", "uploads")),
     );
     require("../modules/users/user.routes")(router);
+    require("../modules/rbac/rbac.routes")(router);
+    app.use("/api/v1", router); // Use router with /api/v1 prefix
 
-    app.use("/api/v1", router); // Use router with /api prefix
+    const authRouter = express.Router();
+    require("../modules/auth/auth.routes")(authRouter);
+    app.use("/api/auth", authRouter);
   }
 }
 

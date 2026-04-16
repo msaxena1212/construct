@@ -1,13 +1,20 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
-const dotenv = require("dotenv");
 var bodyParser = require("body-parser");
 const Routes = require("./routes/routes");
 const verifyAuthToken = require("./core/middleware/auth.middleware");
 
-dotenv.config();
 const app = express();
+const db = require("./models");
+
+// table wise sycn
+db.company.sync({alter:true});
+db.user.sync({alter:true});
+// db.role_permission.sync({alter:true});
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
@@ -31,6 +38,8 @@ const corsOpts = {
 };
 
 app.use(cors(corsOpts));
+
+// Calling Auth Token on All routes
 app.use(verifyAuthToken);
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -45,11 +54,6 @@ app.get("/api/health", async (req, res) => {
   res.send({ message: "Server is healthy!", status: 200 });
 });
 
-const db = require("./models");
-
-// table wise sycn
-// db.company.sync({alter:true});
-// Calling Auth Token on All routes
 
 // Initialize routes
 Routes.initializeRoutes(app);

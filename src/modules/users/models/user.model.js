@@ -9,11 +9,11 @@ module.exports = (sequelize, Sequelize) => {
       },
       firstname: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       lastname: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       email: {
         type: Sequelize.STRING,
@@ -22,11 +22,23 @@ module.exports = (sequelize, Sequelize) => {
       },
       mobile: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       password: {
         type: Sequelize.STRING,
-        allowNull: false,
+        allowNull: true,
+      },
+      isActive: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: true,
+      },
+      isInviteAccepted: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
+      inviteToken: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
     },
     {
