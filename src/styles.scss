@@ -1,21 +1,29 @@
-
 // Include theming for Angular Material with `mat.theme()`.
 // This Sass mixin will define CSS variables that are used for styling Angular Material
 // components according to the Material 3 design spec.
 // Learn more about theming and how to use it for your application's
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+@use 'tailwindcss';
+@use 'ngx-toastr/toastr';
+
+@use '@angular/material/prebuilt-themes/deeppurple-amber.css';
+/* @import "../node_modules/bootstrap/scss/bootstrap";
+@import "~ag-grid-community/styles//ag-grid.css"; */
+/* @import "~ag-grid-community/styles//ag-theme-alpine.css"; */
 
 html {
   height: 100%;
-  @include mat.theme((
-    color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
 }
 
 body {
@@ -37,11 +45,72 @@ body {
 }
 /* You can add global styles to this file, and also import other style files */
 
-@import '@angular/material/prebuilt-themes/deeppurple-amber.css';
-/* @import "../node_modules/bootstrap/scss/bootstrap";
-@import "~ag-grid-community/styles//ag-grid.css"; */
-/* @import "~ag-grid-community/styles//ag-theme-alpine.css"; */
-/* @import 'ngx-toastr/toastr'; */
+/* ===============================
+   Premium Toastr Customization
+================================ */
+#toast-container > .toast {
+  background-image: none !important;
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+  color: #fff !important;
+  padding: 16px 20px 16px 50px !important;
+  opacity: 1 !important;
+}
+
+#toast-container > .toast-success {
+  border-left: 4px solid #10b981 !important; /* Emerald green */
+}
+
+#toast-container > .toast-error {
+  border-left: 4px solid #ef4444 !important; /* Red */
+}
+
+#toast-container > .toast-info {
+  border-left: 4px solid #3b82f6 !important; /* Blue */
+}
+
+#toast-container > .toast-warning {
+  border-left: 4px solid #f59e0b !important; /* Amber */
+}
+
+#toast-container > .toast .toast-title {
+  font-weight: 600 !important;
+  font-size: 15px !important;
+  margin-bottom: 4px !important;
+  color: #fff !important;
+}
+
+#toast-container > .toast .toast-message {
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: #cbd5e1 !important;
+}
+
+/* Custom pseudo icons */
+#toast-container > .toast::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+#toast-container > .toast-success::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2310b981' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/%3E%3C/svg%3E");
+}
+
+#toast-container > .toast-error::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23ef4444' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E");
+}
 
 html,
 body {
@@ -50,11 +119,10 @@ body {
 
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
   background-color: #f7f7f7;
   font-size: 14px !important;
 }
-
 
 ::-webkit-scrollbar {
   width: 5px;
@@ -89,7 +157,7 @@ body {
 }
 
 .form-control {
-  height: inherit
+  height: inherit;
 }
 
 .logo {
@@ -124,13 +192,13 @@ body {
   color: #ccc;
 }
 
-.user_picture>img {
+.user_picture > img {
   width: 28px;
   height: 28px;
   border-radius: 100%;
 }
 
-.user_profile>ul {
+.user_profile > ul {
   padding: 0;
   margin: 1px 0px 0px 0px;
   display: flex;
@@ -139,7 +207,7 @@ body {
   cursor: pointer;
 }
 
-.user_profile>ul>li {
+.user_profile > ul > li {
   list-style: none;
   float: left;
   position: relative;
@@ -151,14 +219,14 @@ body {
   position: relative;
 }
 
-.user_profile>ul>li>a {
+.user_profile > ul > li > a {
   color: #fff;
 
   text-decoration: none;
   display: block;
 }
 
-.user_profile>ul>li>a img {
+.user_profile > ul > li > a img {
   height: 28px;
   width: 28px;
   /* // border-radius: 50%; */
@@ -173,16 +241,16 @@ body {
 .arrow_down::after {
   position: absolute;
   right: 0;
-  content: "";
-  border-top: .4em solid;
-  border-right: .4em solid transparent;
+  content: '';
+  border-top: 0.4em solid;
+  border-right: 0.4em solid transparent;
   border-bottom: 0;
-  border-left: .4em solid transparent;
+  border-left: 0.4em solid transparent;
   top: 24px;
   display: none;
 }
 
-.user_profile>ul>li .dropdown-profile {
+.user_profile > ul > li .dropdown-profile {
   opacity: 1;
   visibility: visible;
   margin-top: 0px;
@@ -207,7 +275,7 @@ body {
   overflow: hidden;
 }
 
-.dropdown-profile>a {
+.dropdown-profile > a {
   display: flex;
   /* IMPORTANT */
   align-items: center;
@@ -218,10 +286,9 @@ body {
   padding: 8px 10px;
   text-decoration: none;
   border-bottom: solid 1px rgb(0 0 0 / 13%);
-
 }
 
-.dropdown-profile>a>img {
+.dropdown-profile > a > img {
   height: 18px;
   margin-right: 10px;
   width: 18px;
@@ -231,12 +298,12 @@ body {
   flex-shrink: 0;
 }
 
-.dropdown-profile>a:hover {
+.dropdown-profile > a:hover {
   background-color: rgba(234, 236, 236, 0.363);
   transition: 0.1s;
 }
 
-.dropdown-profile>a:last-child {
+.dropdown-profile > a:last-child {
   border-bottom: solid 0px #1d3e5a;
 }
 
@@ -245,7 +312,7 @@ body {
   top: -8px;
   width: 18px;
   height: 18px;
-  background-color: #D92B36;
+  background-color: #d92b36;
   color: #fff;
   border-radius: 50%;
   text-align: center;
@@ -270,7 +337,7 @@ body {
   float: left;
 }
 
-.nav_bar>ul {
+.nav_bar > ul {
   padding: 0;
   margin: 0;
 }
@@ -299,8 +366,18 @@ body {
   opacity: 0.9;
   font-size: 14px;
   letter-spacing: 0.3px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Open Sans',
+    'Helvetica Neue',
+    sans-serif;
 }
 
 .nav_bar ul li a p {
@@ -337,7 +414,6 @@ body {
   padding: 1.4rem;
 }
 
-
 .main {
   padding: 20px;
   background: #ffffff 0% 0% no-repeat padding-box;
@@ -372,7 +448,7 @@ body {
   margin-left: auto;
 }
 
-.form_design>h2 {
+.form_design > h2 {
   font-size: 16px;
   margin-bottom: 10px;
 }
@@ -381,7 +457,7 @@ body {
   margin: 0px;
 }
 
-.table>:not(:first-child) {
+.table > :not(:first-child) {
   border-top: 2px solid #ccc;
 }
 
@@ -425,11 +501,11 @@ body {
 
 .mat-input-element:disabled,
 .mat-form-field-type-mat-native-select.mat-form-field-disabled .mat-form-field-infix::after {
-  color: rgba(0, 0, 0, .60);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .mat-form-field-appearance-outline.mat-form-field-disabled .mat-form-field-outline {
-  color: rgba(0, 0, 0, .12);
+  color: rgba(0, 0, 0, 0.12);
 }
 
 .mybtn {
@@ -451,7 +527,7 @@ body {
 
 .check__box {
   height: 53px;
-  color: rgba(0, 0, 0, .87);
+  color: rgba(0, 0, 0, 0.87);
   border: solid 1px #d3d3d3;
   border-radius: 5px;
   margin-top: 3px;
@@ -465,7 +541,7 @@ body {
 }
 
 .mat-form-field-appearance-outline.mat-form-field-disabled .mat-form-field-outline {
-  color: rgba(0, 0, 0, .12);
+  color: rgba(0, 0, 0, 0.12);
 }
 
 .font_weight {
@@ -598,7 +674,6 @@ ul.tab_menu {
   background-color: #003b4d !important;
 }
 
-
 .ag-theme-alpine {
   --ag-header-height: 45px;
   --ag-header-foreground-color: white;
@@ -613,7 +688,6 @@ ul.tab_menu {
 
   --ag-range-selection-border-color: #04883e;
   --ag-range-selection-border-style: dashed;
-
 
   --ag-data-color: var(--ag-foreground-color);
   --ag-grid-size: 5.3px;
@@ -638,7 +712,7 @@ ul.tab_menu {
   font-size: 14px;
 }
 
-.rowClass:nth-child(2n+1):hover {
+.rowClass:nth-child(2n + 1):hover {
   background-color: #04ee6267;
 }
 
@@ -646,7 +720,7 @@ ul.tab_menu {
   background-color: #04ee6267;
 }
 
-.rowClass:nth-child(2n+1) {
+.rowClass:nth-child(2n + 1) {
   background-color: #04a74510;
 }
 
@@ -695,19 +769,16 @@ ul.tab_menu {
   caret-color: #6f7674;
 }
 
-
 .buttons_input .btn {
   position: absolute !important;
   bottom: 17px;
   right: 20px;
 }
 
-
 .bd-none .mat-form-field-appearance-fill .mat-form-field-underline::before {
   position: inherit !important;
   height: 0px !important;
 }
-
 
 #dt-pikr .md-drppicker {
   left: auto !important;
@@ -728,8 +799,6 @@ ul.tab_menu {
   background-color: #37467d !important;
   color: #fff !important;
 }
-
-
 
 /************** For Using grid and top part of grid, list, butoon searchbar, pagination of css ******/
 /* ===== PAGE WRAPPER ===== */

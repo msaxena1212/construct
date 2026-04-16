@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RoleMaster } from './role-master';
+import { MenuManagement } from './menu-management';
 
-describe('RoleMaster', () => {
-  let component: RoleMaster;
-  let fixture: ComponentFixture<RoleMaster>;
+describe('MenuManagement', () => {
+  let component: MenuManagement;
+  let fixture: ComponentFixture<MenuManagement>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [RoleMaster]
+      declarations: [MenuManagement]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(RoleMaster);
+    fixture = TestBed.createComponent(MenuManagement);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

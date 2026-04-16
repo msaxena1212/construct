@@ -167,10 +167,23 @@
     border-left: 3px solid #00bcd4;
 }
 
-.sidebar-nav ul li .nav-link .nav-icon {
-    width: 18px;
-    margin-right: 10px;
+.sidebar-nav ul li .nav-link .nav-icon,
+.sidebar-nav ul li .nav-link .nav-icon-material {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    margin-right: 12px;
     flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-nav ul li .nav-link:hover .nav-icon-material,
+.sidebar-nav ul li .nav-link.activeRoute .nav-icon-material {
+    color: #fff;
 }
 
 .sidebar-nav ul li .nav-link .nav-text {

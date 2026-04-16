@@ -1,0 +1,170 @@
+<div class="role-management-container">
+  <div class="header-section">
+    <h2>Company Roles & Permissions</h2>
+    <p>Manage access levels, edit custom roles, and assign complex operational permissions specifically within your company environment.</p>
+  </div>
+
+  <!-- Standard Split View -->
+  <div class="split-view" *ngIf="!managingPermissionsRoleId">
+    <!-- Form Card -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>{{ isEditMode ? 'Edit Role' : 'Create New Role' }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="roleForm" (ngSubmit)="onSubmit()" class="role-form">
+          <mat-form-field appearance="outline" class="full-width mt-16">
+            <mat-label>Role Name</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Finance Director">
+            <mat-error *ngIf="roleForm.get('name')?.hasError('required')">Role Name is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Role Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="CUSTOM">Custom Entity Role</mat-option>
+              <mat-option value="STATIC" [disabled]="true">Static Core System Role</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button *ngIf="isEditMode" mat-button type="button" (click)="cancelEdit()">Cancel</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="roleForm.invalid">
+              <mat-icon>{{ isEditMode ? 'save' : 'add_circle' }}</mat-icon> 
+              {{ isEditMode ? 'Save Changes' : 'Create Role' }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Table Card -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>Your Active Roles</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container mat-elevation-z1">
+          <table mat-table [dataSource]="roles">
+
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef> ID </th>
+              <td mat-cell *matCellDef="let element"> <span class="light-code">{{element.id}}</span> </td>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef> Role Name </th>
+              <td mat-cell *matCellDef="let element"> <strong>{{element.name}}</strong> </td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef> Access Type </th>
+              <td mat-cell *matCellDef="let element">
+                <span class="badge" [ngClass]="element.type === 'STATIC' ? 'badge-static' : 'badge-custom'">
+                  {{element.type}}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="actions-header" style="text-align:center;"> Manage </th>
+              <td mat-cell *matCellDef="let element" class="actions-cell">
+                <button mat-icon-button color="accent" (click)="openPermissions(element)" matTooltip="Manage User Permissions">
+                  <mat-icon>verified_user</mat-icon>
+                </button>
+                <button *ngIf="element.type !== 'STATIC'" mat-icon-button color="primary" (click)="onEdit(element)" matTooltip="Edit custom role">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button *ngIf="element.type !== 'STATIC'" mat-icon-button color="warn" (click)="onDelete(element.id, element.type)" matTooltip="Soft Delete custom role">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="interactive-row" [class.editing-row]="editingRoleId === row.id"></tr>
+          </table>
+          <div *ngIf="roles.length === 0" class="no-data">
+            No active roles instantiated for your company yet.
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Permissions View -->
+  <mat-card *ngIf="managingPermissionsRoleId" class="permissions-card fade-in">
+    <mat-card-header class="permissions-header">
+      <mat-card-title>
+        <mat-icon>security</mat-icon>
+        Configuring Permissions: <span class="highlight">{{ managingPermissionsRoleName }}</span>
+      </mat-card-title>
+      <button mat-icon-button class="close-btn" (click)="closePermissions()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="table-container mat-elevation-z1 max-h-permissions">
+        <table mat-table [dataSource]="rolePermissions">
+
+          <ng-container matColumnDef="moduleName">
+            <th mat-header-cell *matHeaderCellDef> Application Module </th>
+            <td mat-cell *matCellDef="let element">
+              <div [ngStyle]="{'padding-left': (element.depth * 30) + 'px'}" class="tree-cell">
+                <mat-icon *ngIf="element.depth > 0" class="tree-icon">subdirectory_arrow_right</mat-icon>
+                <mat-icon class="module-icon text-primary">{{element.icon || 'domain'}}</mat-icon>
+                <strong>{{element.name}}</strong> 
+                <span class="dim ml-2" *ngIf="element.title">({{element.title}})</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="create">
+            <th mat-header-cell *matHeaderCellDef class="center-col"> Create </th>
+            <td mat-cell *matCellDef="let element" class="center-col">
+              <mat-checkbox [checked]="element.permissions.can_create" color="primary" 
+                (change)="togglePermission(element, 'can_create', $event.checked)"></mat-checkbox>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="read">
+            <th mat-header-cell *matHeaderCellDef class="center-col"> Read </th>
+            <td mat-cell *matCellDef="let element" class="center-col">
+              <mat-checkbox [checked]="element.permissions.can_read" color="primary"
+                (change)="togglePermission(element, 'can_read', $event.checked)"></mat-checkbox>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="update">
+            <th mat-header-cell *matHeaderCellDef class="center-col"> Update </th>
+            <td mat-cell *matCellDef="let element" class="center-col">
+              <mat-checkbox [checked]="element.permissions.can_update" color="primary"
+                (change)="togglePermission(element, 'can_update', $event.checked)"></mat-checkbox>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="delete">
+            <th mat-header-cell *matHeaderCellDef class="center-col"> Delete </th>
+            <td mat-cell *matCellDef="let element" class="center-col">
+              <mat-checkbox [checked]="element.permissions.can_delete" color="warn"
+                (change)="togglePermission(element, 'can_delete', $event.checked)"></mat-checkbox>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="permissionsColumns; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: permissionsColumns;" class="interactive-row"></tr>
+        </table>
+      </div>
+      
+      <div class="form-actions mt-20">
+        <button mat-button (click)="closePermissions()">Cancel Configuration</button>
+        <button mat-raised-button color="accent" (click)="savePermissions()">
+          <mat-icon>verified</mat-icon> Apply Permissions Globally
+        </button>
+      </div>
+
+    </mat-card-content>
+  </mat-card>
+
+</div>

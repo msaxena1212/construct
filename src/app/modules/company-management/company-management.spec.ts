@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RbacMaster } from './rbac-master';
+import { CompanyManagement } from './company-management';
 
-describe('RbacMaster', () => {
-  let component: RbacMaster;
-  let fixture: ComponentFixture<RbacMaster>;
+describe('CompanyManagement', () => {
+  let component: CompanyManagement;
+  let fixture: ComponentFixture<CompanyManagement>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [RbacMaster]
+      declarations: [CompanyManagement]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(RbacMaster);
+    fixture = TestBed.createComponent(CompanyManagement);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

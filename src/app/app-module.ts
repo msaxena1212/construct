@@ -7,8 +7,9 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withInterceptors } from '@angular/common/http';
 import { provideToastr } from 'ngx-toastr';
+import { authInterceptor } from './core/interceptors/auth-interceptor';
 
 @NgModule({
   declarations: [App],
@@ -19,7 +20,7 @@ import { provideToastr } from 'ngx-toastr';
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }), // Use Zone.js
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withInterceptors([authInterceptor]), withInterceptorsFromDi()),
     provideToastr({
       timeOut: 3000,
       positionClass: 'toast-top-right',

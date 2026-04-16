@@ -1,143 +1,113 @@
-<section class="job-nav">
+<div class="team-management-container m-4">
+  <div class="header-section mb-4">
+    <h2>Team Management</h2>
+    <p>Invite new members to your organization and assign roles mapping system boundaries.</p>
+  </div>
 
-    <div>
-        <div class="row">
+  <mat-card class="form-card mb-4 mat-elevation-z2">
+    <mat-card-header>
+      <mat-card-title>Invite New Member</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="teamForm" (ngSubmit)="inviteUser()" class="d-flex align-items-center gap-3 pt-3">
+        <mat-form-field appearance="outline" style="flex: 2">
+          <mat-label>First Name</mat-label>
+          <input matInput formControlName="firstname" placeholder="John" required>
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="flex: 2">
+          <mat-label>Last Name</mat-label>
+          <input matInput formControlName="lastname" placeholder="Doe" required>
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="flex: 1">
+          <mat-label>Email Address</mat-label>
+          <input matInput formControlName="email" placeholder="example@zyno.com" required>
+        </mat-form-field>
 
-            <!-- <div class="btns">
-        <button type="button" routerLink="../">Back</button>
-      </div> -->
-        </div>
-        <mat-card>
-            <div class="form_head">
-                <h3>Role Functionality Assign Menu</h3>
-                <!-- <button class="backBtn" routerLink="../"><i class="fa fa-arrow-circle-left"></i> Back</button> -->
-            </div>
+        <mat-form-field appearance="outline" style="flex: 1">
+          <mat-label>Assign Role</mat-label>
+          <mat-select formControlName="role_id" required>
+            <mat-option *ngFor="let role of roles" [value]="role.id">
+              {{role.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
-            <div class="form_basic">
-                <div class="form_set">
-                    <div [formGroup]="roleAssignForm">
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-xxl-4 col-lg-4 col-md-4 col-sm-4 col-12 mb-2">
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>Functional Admin</mat-label>
-                                        <mat-select formControlName="role_master_id">
-                                            <mat-option *ngFor="let role of roleGet" [value]="role.role_master_id"
-                                                (click)="roleIdData(role.role_master_id)">{{role.role_master_name}}</mat-option>
-                                        </mat-select>
-                                    </mat-form-field>
-                                </div>
-                                <div class="col-xxl-4 col-lg-4 col-md-4 col-sm-4 col-12 mb-2">
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>Employee Name</mat-label>
-                                        <mat-select formControlName="employee_id">
-                                            <mat-option *ngFor="let role of roleGetByemployee"
-                                                (click)="roleMenuAccessIdData(role.employee_id)"
-                                                [value]="role.employee_id">{{role.first_name+"
-                                                "+role.last_name}}</mat-option>
-                                        </mat-select>
-                                    </mat-form-field>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- <div class="empty-screen" *ngIf="!selectFunctiona">
-            <div class="row">
-              <div class="col-md-4"></div>
-              <div class="col-md-4">
-                <img class="empty-img" src="../../../../../../assets/icons/icon_DQS/role-access-image.webp">
-                <p>Please Select The Functional Admin</p>
-              </div>
-              <div class="col-md-4"></div>
-            </div>
-          </div> -->
+        <button mat-flat-button color="primary" type="submit" [disabled]="teamForm.invalid"
+          style="height: 52px; margin-bottom: 20px;">
+          <mat-icon>send</mat-icon> Send Email Invite
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
 
-                    <div class="menu-list" *ngIf="selectFunctiona">
-                        <h4 class="text-primary">MENU LIST</h4>
-                        <hr>
+  <mat-card class="table-card mat-elevation-z2">
+    <mat-card-header>
+      <mat-card-title>Team Environment Settings</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="pt-3">
+      <table mat-table [dataSource]="teamMembers" class="mat-elevation-z0 w-100 table-container">
 
-                        <cdk-accordion class="example-accordion">
-                            <cdk-accordion-item *ngFor="let role of mdata; let index = index;"
-                                #accordionItem="cdkAccordionItem" class="example-accordion-item" role="button"
-                                tabindex="0" [attr.id]="'accordion-header-' + index"
-                                [attr.aria-expanded]="accordionItem.expanded"
-                                [attr.aria-controls]="'accordion-body-' + index">
-                                <section class="example-section">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef> Full Name </th>
+          <td mat-cell *matCellDef="let element">
+            <span *ngIf="element.firstname">{{element.firstname}} {{element.lastname}}</span>
+            <span *ngIf="!element.firstname" class="text-muted fst-italic" style="color: gray;">Pending Sign Up</span>
+          </td>
+        </ng-container>
 
-                                    <div class="example-accordion-item-header">
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef> Account Authentication </th>
+          <td mat-cell *matCellDef="let element"> <b>{{element.email}}</b> </td>
+        </ng-container>
 
-                                        <span class="example-accordion-item-description">
-                                            <!-- Click to {{ accordionItem.expanded ? ' open' : 'close' }} -->
-                                        </span>
-                                    </div>
-                                    <p class="example-list-section mainModule"
-                                        [ngStyle]="{'background-color':role?.role_module_master_completed?'#FF4081':'#2dcecc'}">
+        <ng-container matColumnDef="mobile">
+          <th mat-header-cell *matHeaderCellDef> Phone </th>
+          <td mat-cell *matCellDef="let element"> {{element.mobile || 'N/A'}} </td>
+        </ng-container>
 
-                                        <span class="m_count">{{index+1}}</span>
-                                        <mat-checkbox class="example-margin" color="primary" [name]="role?.menu_masters"
-                                            [checked]="role?.role_module_master_completed"
-                                            (change)="changeRoleModule($event,index,role,role?.menu_masters,role?.role_module_master_id, role?.role_module_master_name)">
-                                            <p style="font-size:14px; padding-top: 12px; font-weight: 500;"
-                                                [ngStyle]="{'color':role?.role_module_master_completed?'white':'black'}">
-                                                {{role?.role_module_master_name}}</p>
-                                        </mat-checkbox>
-                                        <span class="upIcon example-accordion-item-header"
-                                            (click)="accordionItem.toggle()">
-                                            <mat-icon>keyboard_arrow_down</mat-icon>
-                                        </span>
-                                    </p><br>
-                                    <span> </span>
-                                    <div class="example-accordion-item-body" role="region"
-                                        [style.display]="accordionItem.expanded ? '' : 'none'"
-                                        [attr.id]="'accordion-body-' + index"
-                                        [attr.aria-labelledby]="'accordion-header-' + index">
-                                        <span class="example-list-section parentMenu"
-                                            *ngFor="let menu of role?.menu_masters ,index as i">
-                                            <mat-checkbox
-                                                (change)="changeMenuAndSetAll($event,role, menu, menu?.submenu_masters, menu?.menu_master_id,i,role?.role_module_master_id,menu?.menu_master_name)"
-                                                [name]="menu?.menu_master_name" [checked]="menu?.menu_completed">
-                                                <span
-                                                    style="font-size:14px; padding-top: 12px; font-weight: 500;">{{menu?.menu_master_name}}
-                                                </span>
-                                            </mat-checkbox><br>
-                                            <div class="chiledPart"
-                                                *ngIf="role?.menu_masters[i]?.submenu_masters?.length > 0">
-                                                <span class="example-list-section childMenu"
-                                                    *ngFor="let subMenu of role?.menu_masters[i]?.submenu_masters,index as j">
-                                                    <mat-checkbox color="primary" [checked]="subMenu?.submenu_completed"
-                                                        [name]="subMenu?.submenu_master_name"
-                                                        (change)="changeSubModule($event,role,menu,menu?.submenu_masters, subMenu?.submenu_master_id,menu?.menu_master_id,j,i,role?.role_module_master_id,subMenu?.submenu_master_name)">
-                                                        <span
-                                                            style="font-size:14px; padding-top: 12px; font-weight: 500;">{{subMenu.submenu_master_name}}
-                                                        </span>
-                                                    </mat-checkbox>
-                                                </span>
-                                            </div>
-                                            <br>
-                                        </span>
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef> Role Perimeter </th>
+          <td mat-cell *matCellDef="let element">
+            <span class="badge" style="background: #00bcd4; padding: 5px 12px; border-radius: 20px; color: white;">
+              {{element.role?.name || 'Unassigned'}}
+            </span>
+          </td>
+        </ng-container>
 
-                                    </div>
-                                    <!-- <div [(ngModel)]="menu.menu_title" #menu_title="ngModel" name="menu_title">{{menu.menu_title}}</div> -->
-                                </section>
-                            </cdk-accordion-item>
-                        </cdk-accordion>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef> Connectivity </th>
+          <td mat-cell *matCellDef="let element">
+            <span *ngIf="!element.isInviteAccepted" class="badge"
+              style="background: #f59e0b; padding: 5px 12px; border-radius: 20px; color: #333;">Invite Awaiting</span>
+            <span *ngIf="element.isInviteAccepted && element.isActive" class="badge"
+              style="background: #10b981; padding: 5px 12px; border-radius: 20px; color: white;">Active
+              Connection</span>
+            <span *ngIf="element.isInviteAccepted && !element.isActive" class="badge"
+              style="background: #ef4444; padding: 5px 12px; border-radius: 20px; color: white;">Blocked</span>
+          </td>
+        </ng-container>
 
-                        <div class="save-style" *ngIf="btnActive">
-                            <div class="mt-3">
-                                <button mat-raised-button color="primary" class="mx-3" (click)="updateRoleAssign()">
-                                    Save
-                                </button>
-                                <button mat-raised-button color="warn" class="mx-3" (click)="refresh()">
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef> Platform Access Matrix </th>
+          <td mat-cell *matCellDef="let element">
+            <button *ngIf="element.isInviteAccepted" mat-stroked-button [color]="element.isActive ? 'warn' : 'primary'"
+              (click)="toggleStatus(element)">
+              <mat-icon>{{ element.isActive ? 'block' : 'check_circle' }}</mat-icon>
+              {{ element.isActive ? 'Sever Connection' : 'Allow Access' }}
+            </button>
+            <button *ngIf="!element.isInviteAccepted" mat-button disabled>
+              <mat-icon>hourglass_empty</mat-icon> Pending User Setup
+            </button>
+          </td>
+        </ng-container>
 
-                    </div>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
 
-
-                </div>
-            </div>
-        </mat-card>
-    </div>
-</section>
+      <div *ngIf="teamMembers.length === 0" class="no-data text-center p-4">
+        No teammates have been discovered inside your structural hierarchy.
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

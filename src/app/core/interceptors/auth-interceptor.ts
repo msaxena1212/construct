@@ -1,16 +1,30 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from '../../shared/services/auth/auth';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const signIn: any = localStorage.getItem('signInUser');
-  const singInUser = JSON.parse(signIn);
+  const authService = inject(AuthService);
+  const toast = inject(ToastrService);
+  const token = authService.getToken();
 
-  // if (!singInUser) {
-  //   return next.handle(request);
-  // } else {
-  //   const modifyReq = request.clone({
-  //     // setHeaders: { Authorization: `Bearer ${singInUser._token}`}
-  //   });
-  //   return next.handle(modifyReq);
-  // }
-  return next(req);
+  let modifyReq = req;
+
+  if (token) {
+    modifyReq = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` }
+    });
+  }
+
+  return next(modifyReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401 || error.status === 403) {
+        toast.error('Your session has expired or access is denied. Please log in again.', 'Unauthorized');
+        authService.logout();
+      }
+      return throwError(() => error);
+    })
+  );
 };

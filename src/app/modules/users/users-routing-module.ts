@@ -8,19 +8,10 @@ const routes: Routes = [
     component: Users,
     children: [
       {
-        path: 'rbac-master',
-        loadChildren: () =>
-          import('./rbac-master/rbac-master-module').then((m) => m.RbacMasterModule),
-      },
-      {
-        path: 'role-master',
-        loadChildren: () =>
-          import('./role-master/role-master-module').then((m) => m.RoleMasterModule),
-      },
-      {
-        path: 'user-list',
+        path: 'team-list',
         loadChildren: () => import('./user-list/user-list-module').then((m) => m.UserListModule),
       },
+      { path: 'role-master', loadChildren: () => import('./role-management/role-management-module').then(m => m.RoleManagementModule) },
     ],
   },
 ];
@@ -29,4 +20,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class UsersRoutingModule {}
+export class UsersRoutingModule { }

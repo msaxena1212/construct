@@ -13,6 +13,10 @@ const routes: Routes = [
     loadChildren: () => import('../app/auth/auth-module').then((m) => m.AuthModule),
   },
   {
+    path: 'accept-invite',
+    loadComponent: () => import('./accept-invite/accept-invite').then(m => m.AcceptInvite)
+  },
+  {
     path: 'master',
     canActivate:[authGuard],
     loadChildren: () => import('../app/modules/modules-module').then((m) => m.ModulesModule),

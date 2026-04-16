@@ -8,13 +8,15 @@ const routes: Routes = [
     component: Modules,
     children: [
       {
-        path: 'user-management',
+        path: 'team-management',
         loadChildren: () => import('./users/users-module').then((m) => m.UsersModule),
       },
       {
         path: 'dashboard',
         loadChildren: () => import('./dashboard/dashboard-module').then((m) => m.DashboardModule),
       },
+      { path: 'menu-management', loadChildren: () => import('./menu-management/menu-management-module').then(m => m.MenuManagementModule) },
+      { path: 'company-management', loadChildren: () => import('./company-management/company-management-module').then(m => m.CompanyManagementModule) },
     ],
   },
 ];
@@ -23,4 +25,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class ModulesRoutingModule {}
+export class ModulesRoutingModule { }

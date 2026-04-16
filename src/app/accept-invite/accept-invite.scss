@@ -1,0 +1,103 @@
+.accept-invite-wrapper {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f1f5f9; // sleek light slate base
+  overflow: hidden;
+}
+
+.blur-blob {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, rgba(37,99,235,0) 70%);
+  border-radius: 50%;
+  top: -100px;
+  left: -100px;
+  pointer-events: none;
+}
+
+.blob-2 {
+  background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0) 70%);
+  bottom: -150px;
+  right: -150px;
+  top: auto;
+  left: auto;
+}
+
+.accept-invite-card {
+  width: 100%;
+  max-width: 450px;
+  padding: 30px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 10px;
+
+  .brand {
+    background: #eff6ff;
+    padding: 16px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+  }
+
+  mat-card-title {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }
+
+  mat-card-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+}
+
+.submit-btn {
+  height: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 8px;
+  background-color: #2563eb;
+  color: white;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+
+  &:hover:not(:disabled) {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.15);
+  }
+
+  &:disabled {
+    background-color: #94a3b8;
+    box-shadow: none;
+  }
+}
+
+.email-badge {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+}

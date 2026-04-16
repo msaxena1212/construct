@@ -1,77 +1,146 @@
-<div class="loginpage">
-    <div class="loginbody">
-
-        <!-- Background Image -->
-        <div class="background-image">
-            <img src="assets/image/zyno_construction.jpg" alt="Zyno Background" />
-        </div>
-
-        <!-- Overlay -->
-        <div class="login-overlay">
-            <div class="login-center-wrapper">
-
-                <!-- Login Card -->
-                <div class="login-card">
-
-                    <div class="card-header">
-                        <h2>Sign in</h2>
-                    </div>
-
-                    <!-- Logo -->
-                    <div class="logo-section">
-                        <div class="dqs_log">
-                            <img src="assets/image/zyno_construction_logo.png" alt="Zyno Construction Logo" />
-                        </div>
-                    </div>
-
-                    <div class="card-body">
-                        <form [formGroup]="loginForm" (ngSubmit)="loginFormSubmit()" novalidate>
-
-                            <!-- Email -->
-                            <div class="form-group">
-                                <label>Email</label>
-                                <div class="input-with-icon">
-                                    <mat-icon>mail</mat-icon>
-                                    <input type="email" class="form-control" placeholder="superadmin@zyno.com"
-                                        formControlName="email" />
-                                </div>
-
-                                <mat-error *ngIf="(isSubmited || login['email'].touched) && login['email'].invalid">
-                                    <span *ngIf="login['email'].hasError('required')">Email is required</span>
-                                    <span *ngIf="login['email'].hasError('email')">Enter valid email</span>
-                                </mat-error>
-                            </div>
-
-                            <!-- Password -->
-                            <div class="form-group">
-                                <label>Password</label>
-                                <div class="input-with-icon">
-                                    <mat-icon>lock</mat-icon>
-                                    <input type="password" class="form-control" placeholder="********"
-                                        formControlName="password" />
-                                </div>
-
-                                <mat-error
-                                    *ngIf="(isSubmited || login['password'].touched) && login['password'].invalid">
-                                    Password is required
-                                </mat-error>
-                            </div>
-
-                            <!-- Button -->
-                            <div class="form-actions">
-                                <button mat-raised-button type="submit" class="login-button" [disabled]="showLoader"
-                                    (click)="loginFormSubmit()">
-                                    <mat-spinner *ngIf="showLoader" diameter="20"></mat-spinner>
-                                    <span *ngIf="!showLoader">Login</span>
-                                </button>
-                            </div>
-
-                        </form>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
+<div class="splitra-auth-page">
+  <div class="auth-container">
+    
+    <!-- Background elements for visual wow factor -->
+    <div class="glass-bg">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
     </div>
+
+    <div class="auth-card" [ngClass]="{'register-mode': isRegistering}">
+      
+      <!-- Logo Side or Image Header -->
+      <div class="auth-branding">
+        <div class="logo-wrapper">
+          <img src="assets/image/zyno_construction_logo.png" alt="Zyno Construction Logo" class="brand-logo" />
+        </div>
+        <h2>{{ isRegistering ? 'Start Your Journey' : 'Welcome Back' }}</h2>
+        <p>{{ isRegistering ? 'Create your company account to revolutionize your construction management.' : 'Sign in to access your Zyno operations dashboard.' }}</p>
+      </div>
+
+      <!-- Forms Side -->
+      <div class="auth-forms-wrapper">
+        
+        <!-- LOGIN FORM -->
+        <div class="auth-form-container" *ngIf="!isRegistering">
+          <form [formGroup]="loginForm" (ngSubmit)="loginFormSubmit()" class="modern-form">
+            
+            <div class="form-group">
+              <label>Email Address</label>
+              <div class="input-wrapper">
+                <mat-icon>mail_outline</mat-icon>
+                <input type="email" formControlName="email" placeholder="superadmin@zyno.com" />
+              </div>
+              <div class="error-msg" *ngIf="(isSubmited || login['email'].touched) && login['email'].invalid">
+                <span *ngIf="login['email'].hasError('required')">Email is required</span>
+                <span *ngIf="login['email'].hasError('email')">Please enter a valid email</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Password</label>
+              <div class="input-wrapper">
+                <mat-icon>lock_outline</mat-icon>
+                <input type="password" formControlName="password" placeholder="••••••••" />
+              </div>
+              <div class="error-msg" *ngIf="(isSubmited || login['password'].touched) && login['password'].invalid">
+                <span *ngIf="login['password'].hasError('required')">Password is required</span>
+                <span *ngIf="login['password'].hasError('minlength')">Minimum 6 characters required</span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <a href="javascript:void(0)" class="forgot-link">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="showLoader">
+              <mat-spinner *ngIf="showLoader" diameter="20" class="btn-spinner"></mat-spinner>
+              <span *ngIf="!showLoader">Sign In</span>
+              <mat-icon *ngIf="!showLoader">arrow_forward</mat-icon>
+            </button>
+
+            <div class="toggle-action">
+              <span>Are you a new company?</span>
+              <a href="javascript:void(0)" (click)="toggleView()">Register Now</a>
+            </div>
+            
+          </form>
+        </div>
+
+        <!-- REGSITER FORM -->
+        <div class="auth-form-container" *ngIf="isRegistering">
+          <form [formGroup]="registerForm" (ngSubmit)="registerFormSubmit()" class="modern-form register-form">
+            
+            <div class="form-row">
+              <div class="form-group half">
+                <label>First Name</label>
+                <div class="input-wrapper">
+                  <mat-icon>person_outline</mat-icon>
+                  <input type="text" formControlName="firstname" placeholder="John" />
+                </div>
+                <div class="error-msg" *ngIf="(isSubmited || register['firstname'].touched) && register['firstname'].invalid">Required</div>
+              </div>
+              <div class="form-group half">
+                <label>Last Name</label>
+                <div class="input-wrapper">
+                  <input type="text" formControlName="lastname" placeholder="Doe" />
+                </div>
+                <div class="error-msg" *ngIf="(isSubmited || register['lastname'].touched) && register['lastname'].invalid">Required</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Company Name</label>
+              <div class="input-wrapper">
+                <mat-icon>business</mat-icon>
+                <input type="text" formControlName="name" placeholder="Zyno Builders LLC" />
+              </div>
+              <div class="error-msg" *ngIf="(isSubmited || register['name'].touched) && register['name'].invalid">Company name is required</div>
+            </div>
+
+            <div class="form-group">
+              <label>Mobile Number</label>
+              <div class="input-wrapper">
+                <mat-icon>phone</mat-icon>
+                <input type="tel" formControlName="mobile" placeholder="+1 (555) 000-0000" />
+              </div>
+              <div class="error-msg" *ngIf="(isSubmited || register['mobile'].touched) && register['mobile'].invalid">Mobile is required</div>
+            </div>
+
+            <div class="form-group">
+              <label>Work Email</label>
+              <div class="input-wrapper">
+                <mat-icon>mail_outline</mat-icon>
+                <input type="email" formControlName="email" placeholder="admin@company.com" />
+              </div>
+              <div class="error-msg" *ngIf="(isSubmited || register['email'].touched) && register['email'].invalid">Enter a valid email</div>
+            </div>
+
+            <div class="form-group">
+              <label>Password</label>
+              <div class="input-wrapper">
+                <mat-icon>lock_outline</mat-icon>
+                <input type="password" formControlName="password" placeholder="••••••••" />
+              </div>
+              <div class="error-msg" *ngIf="(isSubmited || register['password'].touched) && register['password'].invalid">Min 6 characters</div>
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="showLoader">
+              <mat-spinner *ngIf="showLoader" diameter="20" class="btn-spinner"></mat-spinner>
+              <span *ngIf="!showLoader">Create Account</span>
+              <mat-icon *ngIf="!showLoader">check_circle_outline</mat-icon>
+            </button>
+
+            <div class="toggle-action">
+              <span>Already have an account?</span>
+              <a href="javascript:void(0)" (click)="toggleView()">Sign In</a>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>

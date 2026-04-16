@@ -1,0 +1,61 @@
+<div class="accept-invite-wrapper">
+  <div class="blur-blob"></div>
+  <div class="blur-blob blob-2"></div>
+
+  <mat-card class="accept-invite-card mat-elevation-z12">
+    <mat-card-header class="header-center">
+      <div class="brand">
+        <mat-icon style="font-size: 32px; width: 32px; height: 32px; color: #2563eb;">business</mat-icon>
+      </div>
+      <mat-card-title class="mt-3">Finalize Your Account</mat-card-title>
+      <mat-card-subtitle>
+        You have been invited to join the Zyno Construction platform. Provide your final credentials below to activate your account.
+      </mat-card-subtitle>
+      <div class="email-badge mt-2" *ngIf="invitedEmail">
+         <mat-icon style="font-size: 16px; width: 16px; height: 16px; vertical-align: middle; margin-right: 4px;">email</mat-icon>
+         {{ invitedEmail }}
+      </div>
+    </mat-card-header>
+
+    <mat-card-content class="pt-4">
+      <form [formGroup]="acceptForm" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-2">
+        
+        <div class="row">
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>First Name</mat-label>
+              <input matInput formControlName="firstname" placeholder="Enter first name" required>
+            </mat-form-field>
+          </div>
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Last Name</mat-label>
+              <input matInput formControlName="lastname" placeholder="Enter last name" required>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Mobile Phone</mat-label>
+          <input matInput formControlName="mobile" placeholder="e.g. +1 555-1234" required>
+          <mat-icon matSuffix>phone</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Secure Password</mat-label>
+          <input matInput formControlName="password" type="password" placeholder="Min 6 characters" required>
+          <mat-icon matSuffix>lock</mat-icon>
+          <mat-error *ngIf="acceptForm.get('password')?.hasError('minlength')">
+            Password must be at least 6 characters
+          </mat-error>
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="acceptForm.invalid || loading" class="mt-3 submit-btn">
+          <span *ngIf="!loading">Accept Invitation</span>
+          <span *ngIf="loading">Syncing Profile...</span>
+        </button>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
