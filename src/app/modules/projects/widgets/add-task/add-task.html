@@ -1,0 +1,70 @@
+<div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+    <div
+        class="w-full max-w-lg bg-surface-container-lowest rounded-3xl shadow-2xl border border-outline-variant/10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+        <!-- Header -->
+        <div class="px-8 py-6 border-b border-outline-variant/10 flex items-center justify-between">
+            <h3 class="text-xl font-bold tracking-tight text-on-surface">Create New Construction Task</h3>
+            <button (click)="close.emit()" class="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+                <span class="material-symbols-outlined text-outline">close</span>
+            </button>
+        </div>
+
+        <!-- Form -->
+        <div class="px-8 py-8 space-y-6">
+            <!-- Title -->
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Task Title</label>
+                <input [(ngModel)]="task.title" placeholder="e.g., Pour Concrete for Floor 12" type="text"
+                    class="w-full bg-surface-container-low border-none rounded-2xl p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none transition-all" />
+            </div>
+
+            <!-- Priority, Status & Assignee -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Priority</label>
+                    <select [(ngModel)]="task.priority"
+                        class="w-full bg-surface-container-low border-none rounded-lg p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none cursor-pointer">
+                        <option *ngFor="let p of priorities" [value]="p.label">{{ p.label }}</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Assignee</label>
+                    <select (change)="onAssigneeSelect($event)"
+                        class="w-full bg-surface-container-low border-none rounded-lg p-3 text-xs flex items-center gap-2 ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none cursor-pointer">
+                        <option value="" disabled selected>Select Assignee</option>
+                        <option *ngFor="let member of teamMembers" [value]="member.name">{{ member.name }}</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Initial
+                        Status</label>
+                    <input [(ngModel)]="task.status" readonly
+                        class="w-full bg-surface-container-high border-none rounded-lg p-3 text-xs text-outline font-bold outline-none cursor-not-allowed" />
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="space-y-2">
+                <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Detailed
+                    Instructions</label>
+                <textarea [(ngModel)]="task.description" rows="4"
+                    placeholder="Detailed scope of work, material requirements, or safety notes..."
+                    class="w-full bg-surface-container-low border-none rounded-2xl p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none transition-all resize-none"></textarea>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div
+            class="px-8 py-6 bg-surface-container-low/50 border-t border-outline-variant/10 flex items-center justify-end gap-4">
+            <button (click)="close.emit()"
+                class="px-6 py-2.5 text-sm font-bold text-outline hover:text-on-surface transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button (click)="onSubmit()" [disabled]="!task.title.trim()"
+                class="px-8 py-3 bg-gradient-to-br from-primary to-primary-container text-white text-sm font-bold rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100 cursor-pointer">
+                Initialize Task
+            </button>
+        </div>
+    </div>
+</div>

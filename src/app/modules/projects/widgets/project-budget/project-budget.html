@@ -1,0 +1,298 @@
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+    <!-- High-Level Summary Card (Large) -->
+    <div
+        class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-[0_12_32px_rgba(15,23,42,0.06)] border border-outline-variant/10">
+        <div class="flex items-center justify-between mb-8">
+            <h3 class="text-lg font-bold">Financial Health Snapshot</h3>
+            <div
+                class="flex items-center gap-2 bg-secondary/10 px-3 py-1.5 rounded-full text-secondary font-bold text-xs uppercase tracking-wider">
+                <span class="material-symbols-outlined text-[16px]">warning</span>
+                Variance Warning: Foundation
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="p-6 bg-surface-container-low rounded-xl border border-outline-variant/10">
+                <p class="text-outline text-xs font-bold tracking-widest uppercase mb-1">TOTAL BUDGET</p>
+                <p class="text-3xl font-extrabold text-on-surface">₹2,450,000</p>
+                <div class="mt-4 flex items-center gap-2 text-blue-600 text-xs font-bold">
+                    <span class="material-symbols-outlined text-[16px]">trending_up</span>
+                    +4.2% from Initial Estimate
+                </div>
+            </div>
+            <div class="p-6 bg-surface-container-low rounded-xl border border-outline-variant/10">
+                <p class="text-outline text-xs font-bold tracking-widest uppercase mb-1">TOTAL SPENT</p>
+                <p class="text-3xl font-extrabold text-on-surface">₹1,124,500</p>
+                <div class="mt-4 flex items-center gap-2 text-on-surface-variant text-xs font-bold">
+                    <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full w-[46%] rounded-full"></div>
+                    </div>
+                    <span>46%</span>
+                </div>
+            </div>
+            <div class="p-6 bg-surface-container-low rounded-xl border border-outline-variant/10">
+                <p class="text-outline text-xs font-bold tracking-widest uppercase mb-1">REMAINING</p>
+                <p class="text-3xl font-extrabold text-on-surface">₹1,325,500</p>
+                <div class="mt-4 flex items-center gap-2 text-secondary text-xs font-bold">
+                    <span class="material-symbols-outlined text-[16px]">schedule</span>
+                    84 Days to Completion
+                </div>
+            </div>
+        </div>
+        <div class="mt-10">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-bold text-on-surface">Cumulative Spend vs. Budget</span>
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <div class="w-2.5 h-2.5 rounded-full bg-primary"></div> Budget
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <div class="w-2.5 h-2.5 rounded-full bg-secondary"></div> Actual
+                    </div>
+                </div>
+            </div>
+            <!-- Chart Placeholder -->
+            <div class="h-48 w-full bg-surface-container-low rounded-xl relative overflow-hidden group">
+                <img alt="Analytics chart" class="w-full h-full object-cover opacity-20 grayscale"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq45JcxatoyVepvtk4YL7qArQUIejesCp_YEnGr-BiIyHBJGI7xauPT3vUncmM9e91c8i_z6VoZuXzMb1Mg-2OrguP8rqbNLTUS1TcFOtD594zqZT8RAK9EJcXT65XFkJVVbsCUqg8qrMYP-3BY8OHlbAHWQgunkrZUJ9BNCIdgQD5O0FcThV_v_2QJM6pyadx9CCcfv_pYhmFycN9U_BTodaA3z-rrCicxtp5uKzkItFA0h0u9QMu-ocPMG9W3gUp9mibB65V-Dp6" />
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <p class="text-outline font-medium text-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined">monitoring</span>
+                        Real-time chart rendering active
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material vs Labor Split (Small) -->
+    <div
+        class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl p-8 shadow-[0_12_32px_rgba(15,23,42,0.06)] border border-outline-variant/10 flex flex-col">
+        <h3 class="text-lg font-bold mb-8">Resource Distribution</h3>
+        <div class="flex-grow flex flex-col justify-center items-center py-6">
+            <!-- Donut Chart Placeholder -->
+            <div class="relative w-48 h-48 mb-8">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <circle class="stroke-surface-container-high" cx="18" cy="18" fill="none" r="16" stroke-width="4">
+                    </circle>
+                    <circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="60, 100"
+                        stroke-linecap="round" stroke-width="4"></circle>
+                    <circle class="stroke-secondary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="35, 100"
+                        stroke-dashoffset="-60" stroke-linecap="round" stroke-width="4"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-2xl font-black text-on-surface">₹1.1M</span>
+                    <span class="text-[10px] text-outline font-bold tracking-widest uppercase">EXPENDITURE</span>
+                </div>
+            </div>
+            <div class="w-full space-y-4">
+                <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full bg-primary"></div>
+                        <span class="text-sm font-bold">Labor Costs</span>
+                    </div>
+                    <span class="text-sm font-bold">60%</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full bg-secondary"></div>
+                        <span class="text-sm font-bold">Materials</span>
+                    </div>
+                    <span class="text-sm font-bold">35%</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full bg-surface-container-highest"></div>
+                        <span class="text-sm font-bold">Overhead</span>
+                    </div>
+                    <span class="text-sm font-bold">5%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Itemized Costs Section (Full Width) -->
+    <div class="col-span-12">
+        <div class="flex items-center justify-between mb-6 mt-8">
+            <h3 class="text-2xl font-extrabold tracking-tight">Itemized Cost Variance</h3>
+            <div class="flex gap-4">
+                <div class="flex rounded-lg bg-surface-container-low p-1">
+                    <button class="px-4 py-1.5 bg-white shadow-sm rounded-md text-sm font-bold text-primary">By
+                        Category</button>
+                    <button class="px-4 py-1.5 text-sm font-medium text-on-surface-variant hover:text-on-surface">By
+                        Vendor</button>
+                </div>
+                <button
+                    class="p-2 bg-surface-container-low rounded-lg hover:bg-surface-container-high transition-colors">
+                    <span class="material-symbols-outlined">filter_list</span>
+                </button>
+            </div>
+        </div>
+        <div class="space-y-4">
+            <!-- Category Header -->
+            <div class="grid grid-cols-12 px-6 py-4 text-xs font-bold tracking-widest text-outline uppercase">
+                <div class="col-span-4">Work Category</div>
+                <div class="col-span-2 text-right">Estimated</div>
+                <div class="col-span-2 text-right">Actual</div>
+                <div class="col-span-2 text-right">Variance</div>
+                <div class="col-span-2 text-right">Status</div>
+            </div>
+            <!-- Category Row 1 -->
+            <div
+                class="grid grid-cols-12 items-center bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10 border-l-4 border-l-secondary transition-all hover:translate-x-1">
+                <div class="col-span-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+                        <span class="material-symbols-outlined">foundation</span>
+                    </div>
+                    <div>
+                        <p class="font-bold text-on-surface">02-100 Foundation &amp; Concrete</p>
+                        <p class="text-xs text-on-surface-variant">Includes rebar, pumping, and finishing</p>
+                    </div>
+                </div>
+                <div class="col-span-2 text-right font-medium">₹420,000</div>
+                <div class="col-span-2 text-right font-medium">₹465,000</div>
+                <div class="col-span-2 text-right font-bold text-error">+₹45,000</div>
+                <div class="col-span-2 flex justify-end">
+                    <span
+                        class="px-3 py-1 bg-error-container text-on-error-container rounded-full text-[10px] font-bold uppercase cursor-default">Over
+                        Budget</span>
+                </div>
+            </div>
+            <!-- Category Row 2 -->
+            <div
+                class="grid grid-cols-12 items-center bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10 border-l-4 border-l-primary transition-all hover:translate-x-1">
+                <div class="col-span-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined">home_work</span>
+                    </div>
+                    <div>
+                        <p class="font-bold text-on-surface">03-400 Structural Steel</p>
+                        <p class="text-xs text-on-surface-variant">Framework and support installation</p>
+                    </div>
+                </div>
+                <div class="col-span-2 text-right font-medium">₹750,000</div>
+                <div class="col-span-2 text-right font-medium">₹710,000</div>
+                <div class="col-span-2 text-right font-bold text-green-600">-₹40,000</div>
+                <div class="col-span-2 flex justify-end">
+                    <span
+                        class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase cursor-default">Under
+                        Budget</span>
+                </div>
+            </div>
+            <!-- Category Row 3 -->
+            <div
+                class="grid grid-cols-12 items-center bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10 border-l-4 border-l-slate-300 transition-all hover:translate-x-1">
+                <div class="col-span-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                        <span class="material-symbols-outlined">electrical_services</span>
+                    </div>
+                    <div>
+                        <p class="font-bold text-on-surface">15-000 Electrical Systems</p>
+                        <p class="text-xs text-on-surface-variant">Rough-in phase for Site 104</p>
+                    </div>
+                </div>
+                <div class="col-span-2 text-right font-medium">₹185,000</div>
+                <div class="col-span-2 text-right font-medium">₹184,200</div>
+                <div class="col-span-2 text-right font-bold text-on-surface-variant">-₹800</div>
+                <div class="col-span-2 flex justify-end">
+                    <span
+                        class="px-3 py-1 bg-surface-container-high text-outline rounded-full text-[10px] font-bold uppercase cursor-default">On
+                        Track</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Invoices (Featured Card) -->
+    <div
+        class="col-span-12 lg:col-span-6 bg-surface-container-lowest rounded-xl p-8 shadow-[0_12_32px_rgba(15,23,42,0.06)] border border-outline-variant/10">
+        <div class="flex items-center justify-between mb-8">
+            <h3 class="text-lg font-bold">Recent Invoices</h3>
+            <button class="text-primary text-xs font-bold hover:underline cursor-pointer">View All Invoices</button>
+        </div>
+        <div class="space-y-6">
+            <div class="flex items-center justify-between group">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-10 h-10 rounded bg-surface-container-low flex items-center justify-center text-outline group-hover:bg-primary-fixed group-hover:text-primary transition-colors cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">description</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-on-surface cursor-pointer hover:underline">Titan Concrete -
+                            #INV-882</p>
+                        <p class="text-xs text-outline">Oct 12, 2023 • Foundation Work</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-extrabold text-on-surface">₹42,500.00</p>
+                    <p class="text-[10px] font-bold text-secondary uppercase tracking-tighter">Pending Approval</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between group">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-10 h-10 rounded bg-surface-container-low flex items-center justify-center text-outline group-hover:bg-primary-fixed group-hover:text-primary transition-colors cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">description</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-on-surface cursor-pointer hover:underline">SteelCore
+                            Fabrication - #INV-901</p>
+                        <p class="text-xs text-outline">Oct 08, 2023 • Structural Framework</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-extrabold text-on-surface">₹115,000.00</p>
+                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-tighter">Paid</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between group">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-10 h-10 rounded bg-surface-container-low flex items-center justify-center text-outline group-hover:bg-primary-fixed group-hover:text-primary transition-colors cursor-pointer">
+                        <span class="material-symbols-outlined text-[20px]">description</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-on-surface cursor-pointer hover:underline">Allied Plumping Ltd
+                            - #INV-877</p>
+                        <p class="text-xs text-outline">Oct 05, 2023 • Drainage &amp; HVAC</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-extrabold text-on-surface">₹18,200.00</p>
+                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-tighter">Paid</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Area (Featured Card) -->
+    <div
+        class="col-span-12 lg:col-span-6 bg-primary rounded-xl p-8 shadow-sm relative overflow-hidden text-white flex flex-col justify-center items-center text-center cursor-pointer hover:shadow-lg transition-shadow">
+        <!-- Abstract Blueprint Background -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none">
+            <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern height="40" id="grid" patternUnits="userSpaceOnUse" width="40">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"></path>
+                    </pattern>
+                </defs>
+                <rect fill="url(#grid)" height="100%" width="100%"></rect>
+            </svg>
+        </div>
+        <div class="relative z-10 w-full max-w-sm">
+            <div
+                class="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-4xl">cloud_upload</span>
+            </div>
+            <h3 class="text-2xl font-bold mb-3">Instant Invoice Processing</h3>
+            <p class="text-blue-100 mb-8 text-sm leading-relaxed">Drop your invoices here. ZYNO AI will automatically
+                categorize line items and flag potential variances before they occur.</p>
+            <button
+                class="w-full py-4 bg-white text-primary rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-lg cursor-pointer">
+                Select Files to Upload
+            </button>
+            <p class="mt-4 text-[11px] text-blue-200 font-medium uppercase tracking-widest">Supports PDF, JPG, and XLSX
+                (Max 50MB)</p>
+        </div>
+    </div>
+</div>

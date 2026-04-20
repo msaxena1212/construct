@@ -38,7 +38,11 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss", "public/assets/styles/custom-style.css"]
+            "styles": [
+              "src/tailwind-entry.css",
+              "src/styles.scss",
+              "public/assets/styles/custom-style.css"
+            ]
           },
           "configurations": {
             "production": {

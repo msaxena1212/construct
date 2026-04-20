@@ -1,0 +1,250 @@
+<!-- File Explorer Grid -->
+<!-- File Explorer Grid -->
+<div class="grid grid-cols-12 gap-8 relative">
+
+    <!-- Signature Alert Overlay -->
+    @if (showSignatureAlert) {
+    <div
+        class="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-xl animate-in slide-in-from-top-4 flex items-center gap-2">
+        <span class="material-symbols-outlined">check_circle</span>
+        Signature Requested via Email
+    </div>
+    }
+
+    <!-- Main View -->
+    <div class="col-span-8 flex flex-col gap-8">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold tracking-tight">Project Files</h2>
+            <div class="flex items-center gap-3">
+                <button (click)="addFolder()"
+                    class="px-4 py-2 border-2 border-outline-variant/20 text-on-surface-variant font-bold text-sm rounded-xl hover:bg-surface-container-low transition-all cursor-pointer flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">create_new_folder</span> New Folder
+                </button>
+                <button (click)="simulateFileUpload()"
+                    class="px-4 py-2 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 shadow-md transition-all cursor-pointer flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">upload</span> Upload Files
+                </button>
+            </div>
+        </div>
+
+        @if (!viewAllFiles) {
+        <!-- Dashboard View: Folders + Recent -->
+        <div class="grid grid-cols-3 gap-4">
+            @for (folder of folders; track folder.id) {
+            <div
+                class="p-6 bg-surface-container-lowest rounded-xl group hover:bg-white transition-all shadow-[0_12_32px_rgba(15,23,42,0.06)] border border-outline-variant/10 relative">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="material-symbols-outlined text-3xl" [ngClass]="folder.color"
+                        style="font-variation-settings: 'FILL' 1;">folder</span>
+                    <div class="relative">
+                        <span (click)="toggleFolderDropdown(folder.id, $event)"
+                            class="material-symbols-outlined text-outline group-hover:text-primary transition-colors cursor-pointer">more_vert</span>
+                        @if (showDropdownForFolder === folder.id) {
+                        <div
+                            class="absolute right-0 top-6 w-32 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl z-10 py-1">
+                            <button (click)="renameFolder(folder)"
+                                class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">Rename</button>
+                            <button (click)="deleteFolder(folder)"
+                                class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer">Delete</button>
+                        </div>
+                        }
+                    </div>
+                </div>
+                <h3 class="font-bold text-on-surface">{{ folder.name }}</h3>
+                <p class="text-xs text-on-surface-variant mt-1">{{ folder.fileCount }} files • {{ folder.size }}</p>
+            </div>
+            }
+        </div>
+
+        <!-- Recent Files List -->
+        <div
+            class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_12_32px_rgba(15,23,42,0.06)] border border-outline-variant/10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold tracking-tight">Recent Documents</h2>
+                <div (click)="toggleViewAll()"
+                    class="flex items-center gap-2 text-primary font-bold text-sm cursor-pointer hover:underline">
+                    View all <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-2">
+                @for (file of recentFiles; track file.id) {
+                <div (click)="openSignatureWorkflow(file)"
+                    class="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-low transition-colors group cursor-pointer"
+                    [ngClass]="{'ring-2 ring-primary bg-primary/5': selectedFileForSignature?.id === file.id}">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-lg" [ngClass]="file.color">
+                            <span class="material-symbols-outlined">{{ file.icon }}</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm truncate w-48 xl:w-64">{{ file.name }}</h4>
+                            <p class="text-xs text-on-surface-variant">Modified {{ file.date }} by {{ file.author }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <span
+                            class="text-xs font-bold text-outline-variant px-2 py-1 bg-surface-container-high rounded uppercase tracking-wider">{{
+                            file.type }}</span>
+                        @if (file.status === 'Signed') {
+                        <button
+                            class="p-1 px-2 text-emerald-600 bg-emerald-100 rounded-lg flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest pointer-events-none">
+                            <span class="material-symbols-outlined text-sm">verified</span>
+                            Signed
+                        </button>
+                        } @else if (file.status === 'Pending Signature') {
+                        <button
+                            class="p-1 px-2 text-amber-600 bg-amber-100 rounded-lg flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest pointer-events-none">
+                            <span class="material-symbols-outlined text-sm">pending</span>
+                            Pending
+                        </button>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        } @else {
+        <!-- Full View: All Files -->
+        <div
+            class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_12_32px_rgba(15,23,42,0.06)] border border-outline-variant/10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold tracking-tight">All Files Repository</h2>
+                <div (click)="toggleViewAll()"
+                    class="flex items-center gap-2 text-primary font-bold text-sm cursor-pointer hover:underline">
+                    <span class="material-symbols-outlined text-sm">arrow_back</span> Back to Dashboard
+                </div>
+            </div>
+            <div class="flex flex-col gap-2">
+                @for (file of allFiles; track file.id) {
+                <div (click)="openSignatureWorkflow(file)"
+                    class="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-low transition-colors group relative cursor-pointer"
+                    [ngClass]="{'ring-2 ring-primary bg-primary/5': selectedFileForSignature?.id === file.id}">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-lg" [ngClass]="file.color">
+                            <span class="material-symbols-outlined">{{ file.icon }}</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm">{{ file.name }}</h4>
+                            <p class="text-xs text-on-surface-variant">Folder ID: {{ file.folderId }} • {{ file.date }}
+                                • {{ file.author }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <span
+                            class="text-xs font-bold text-outline-variant px-2 py-1 bg-surface-container-high rounded uppercase tracking-wider">{{
+                            file.type }}</span>
+
+                        <div class="relative">
+                            <span (click)="toggleFileDropdown(file.id, $event)"
+                                class="material-symbols-outlined text-outline hover:text-primary transition-colors cursor-pointer">more_horiz</span>
+                            @if (showDropdownForFile === file.id) {
+                            <div
+                                class="absolute right-0 top-6 w-32 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl z-20 py-1">
+                                <button (click)="moveFile(file)"
+                                    class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">Move
+                                    To...</button>
+                                <button (click)="deleteFile(file)"
+                                    class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer">Delete</button>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Right Sidebar: Details & Signature Workflow -->
+    <div class="col-span-4 flex flex-col gap-8">
+        <!-- File Preview Card -->
+        <div
+            class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_12_32px_rgba(15,23,42,0.06)] border border-outline-variant/10 sticky top-8">
+            <div class="aspect-video relative bg-surface-container-high flex items-center justify-center">
+                @if (selectedFileForSignature?.type === 'PDF' || selectedFileForSignature?.type === 'CAD') {
+                <img alt="Blueprint Preview" class="w-full h-full object-cover opacity-80 mix-blend-multiply"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_qVrthZZVnHnQt66BZN07Aou989gzgMRB9y-NMjXYwOmv1158gp_Uc6sLSTN__ldP1Io62A0trk2iNyTZ5bjL5pxJ7gYcTz6NWPeBpFzbF5t0N-CFsSjEFHqYd4D18HJj18unp8CUHM-si6ZCGnm_4uyaWPmGlSDtARywEazzUs8_vzobyYCY7eGcj1kaBYUYK7Zw0mAgrfZMOAVUDaQBAR-nBCBDtZ5cn0hc5AgyvXRXlCmoyieVagIj0Bii2mLr_Uhwfnnj3gJS" />
+                } @else {
+                <span class="material-symbols-outlined text-[64px] text-outline-variant opacity-50">{{
+                    selectedFileForSignature?.icon || 'insert_drive_file' }}</span>
+                }
+                <div
+                    class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-sm">
+                    <button
+                        class="w-12 h-12 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer">
+                        <span class="material-symbols-outlined text-primary">fullscreen</span>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <h3 class="font-bold text-lg mb-1 truncate">{{ selectedFileForSignature?.name || 'No file selected' }}
+                </h3>
+                <p class="text-xs text-on-surface-variant mb-6 uppercase tracking-widest font-bold">Document Details</p>
+                <div class="space-y-4 mb-8">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-on-surface-variant">Status</span>
+                        <span class="font-bold"
+                            [ngClass]="selectedFileForSignature?.status === 'Signed' ? 'text-emerald-600' : 'text-amber-500'">{{
+                            selectedFileForSignature?.status || 'None' }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-on-surface-variant">Author</span>
+                        <span class="font-bold">{{ selectedFileForSignature?.author || '-' }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-on-surface-variant">Last Edited</span>
+                        <span class="font-bold">{{ selectedFileForSignature?.date || '-' }}</span>
+                    </div>
+                </div>
+
+                <!-- Signature Workflow Module -->
+                <div class="p-5 bg-surface-container-low rounded-xl">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="material-symbols-outlined text-primary text-xl">draw</span>
+                        <h4 class="font-bold text-sm">Request Signature</h4>
+                    </div>
+                    <p class="text-xs text-on-surface-variant leading-relaxed mb-4">
+                        Select the required stakeholders to sign off on this document before site execution.
+                    </p>
+                    <div class="space-y-3 mb-6">
+                        <div
+                            class="flex items-center justify-between p-2 hover:bg-white rounded-lg transition-colors cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <img alt="Approver" class="w-6 h-6 rounded-full"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDusjfZ-roS1S9W1vkYigq4F3iolIAjZzxBIqajMPRj-hTjhSDD3aCxk9vPaaMdf4BdPxRVmwGMbGFBT68zEFT8fnSFXBKh4mEWydp5Nfzl3i-LYa3rrmJGDqybxm678oy0hBf7GuiCw12GaazUA3y9ARMbkSpRKvG1mmBj6LWyN1YBRsqvVtodiU7qs1vRyZqangvFzcFOhP9-ORXOuDueKRX7XrtwaKITzv13-BhSBTJbwjnPXLZ8glDaasKLJAfijfT4Zrla1mgy" />
+                                <span class="text-xs font-medium">David Chen (Lead Eng.)</span>
+                            </div>
+                            <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-2 hover:bg-white rounded-lg transition-colors cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <img alt="Approver" class="w-6 h-6 rounded-full"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_BXivbjPQNqV8fgRVHzfOGSyk3c4F5yz_GHbrgPxnYYc_UrXoEIxLDFGSepS26GUCgb-f_OGgbujeYc5PmANJHPXPRppYCREOptNB8OVdYY0jQXguT6QiWlP1Xk_U2T4NhzkSLi3sSJozmyNmC5UvdX7GzO5i_YLyL9n0vt_lJD-GaCpSvV23KtRAncYvldz0kSJPrsYK3I5H92Xhpk6KFrhw23l-_Eq32qsIQJCo3_LxI3-FavlTHCdKl5bQ3QfcESvFVZU2WVTZ" />
+                                <span class="text-xs font-medium">Sarah Jenkins (Site Mgr.)</span>
+                            </div>
+                            <span class="material-symbols-outlined text-outline text-lg">add_circle</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        @if (selectedFileForSignature?.status === 'Signed') {
+                        <button
+                            class="w-full bg-slate-200 text-slate-500 py-3 rounded-lg font-bold text-sm pointer-events-none flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-sm">verified</span> Confirmed
+                        </button>
+                        <button
+                            class="px-4 py-3 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors font-bold flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[20px]">download</span>
+                        </button>
+                        } @else {
+                        <button (click)="sendSignatureRequest()" [disabled]="!selectedFileForSignature"
+                            class="flex-1 w-full bg-primary text-white py-3 rounded-lg font-bold text-sm hover:shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-50">
+                            Send Request via Email
+                        </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

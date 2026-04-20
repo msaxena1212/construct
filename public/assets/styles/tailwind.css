@@ -1,0 +1,21 @@
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.blueprint-grid {
+  background-image: radial-gradient(var(--color-outline-variant) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}

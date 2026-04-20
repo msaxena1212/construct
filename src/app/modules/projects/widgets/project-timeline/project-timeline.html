@@ -1,0 +1,243 @@
+<div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-10 mt-6">
+    <div class="space-y-2">
+        <span class="text-[10px] font-bold text-primary tracking-widest uppercase mb-2 block">Project Management</span>
+        <div class="flex items-center gap-4">
+            <h1 class="text-4xl font-extrabold tracking-tight text-slate-900">Construction Timeline</h1>
+            <div class="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                <span class="material-symbols-outlined text-slate-400 text-sm">folder_open</span>
+                <select [(ngModel)]="selectedProject"
+                    class="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4">
+                    @for (p of projects; track p) { <option [value]="p">{{ p }}</option> }
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="flex gap-3 bg-slate-100 p-1.5 rounded-xl border border-slate-200/50">
+        <button (click)="toggleCriticalPath()"
+            [class]="showCriticalPath ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white text-primary'"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm font-semibold text-sm transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-lg">show_chart</span>
+            Critical Path
+        </button>
+        <button (click)="toggleTeamView()"
+            [class]="showTeamView ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-600 hover:bg-white/50 bg-transparent'"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-lg">groups</span>
+            Team View
+        </button>
+        <div class="w-px bg-slate-300 self-stretch mx-1"></div>
+        <div class="flex items-center gap-2 px-3 py-1 bg-white rounded-lg shadow-sm border border-slate-200/50">
+            <span class="material-symbols-outlined text-slate-400 text-sm">filter_alt</span>
+            <select [(ngModel)]="selectedMember"
+                class="bg-transparent border-none text-[10px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4">
+                <option *ngFor="let member of team" [value]="member.name">{{ member.name }}</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Gantt Visualization Card -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200/50 overflow-hidden flex flex-col h-[700px]">
+    <!-- Gantt Controls -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-4">
+            <div class="flex bg-slate-100 rounded-lg p-1">
+                <button (click)="setViewType('day')"
+                    [class]="viewType === 'day' ? 'bg-white text-primary rounded shadow-sm' : 'text-slate-500'"
+                    class="px-4 py-1.5 text-xs font-bold transition-all cursor-pointer">Day</button>
+                <button (click)="setViewType('week')"
+                    [class]="viewType === 'week' ? 'bg-white text-primary rounded shadow-sm' : 'text-slate-500'"
+                    class="px-4 py-1.5 text-xs font-bold transition-all cursor-pointer">Week</button>
+                <button (click)="setViewType('month')"
+                    [class]="viewType === 'month' ? 'bg-white text-primary rounded shadow-sm' : 'text-slate-500'"
+                    class="px-4 py-1.5 text-xs font-bold transition-all cursor-pointer">Month</button>
+            </div>
+            <h3 class="text-sm font-bold text-slate-600 uppercase tracking-wider">{{ months[currentMonthIndex] }}</h3>
+        </div>
+        <div class="flex gap-2">
+            <button (click)="navigate('prev')"
+                class="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"><span
+                    class="material-symbols-outlined">chevron_left</span></button>
+            <button (click)="navigate('next')"
+                class="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"><span
+                    class="material-symbols-outlined">chevron_right</span></button>
+        </div>
+    </div>
+
+    <!-- Gantt Body -->
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Task Labels Sidebar -->
+        <div class="w-80 border-r border-slate-100 flex flex-col bg-slate-50/30">
+            <div class="h-12 border-b border-slate-100 flex items-center px-6">
+                <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Phase / Task Name</span>
+            </div>
+            <div class="flex-1 overflow-y-auto no-scrollbar py-4 space-y-6">
+                @for (phase of filteredPhases; track phase.title) {
+                <div class="space-y-4 px-6">
+                    <div class="flex items-center justify-between group">
+                        <span class="text-xs font-black text-slate-900">{{ phase.title }}</span>
+                        <span
+                            class="material-symbols-outlined text-sm text-slate-400 opacity-0 group-hover:opacity-100 cursor-pointer">add</span>
+                    </div>
+                    <div class="pl-4 space-y-3">
+                        @for (task of phase.tasks; track task.id) {
+                        <div class="text-[13px] text-slate-600 font-medium flex items-center gap-2">
+                            <div [class]="'w-1.5 h-1.5 rounded-full ' + task.color"></div>
+                            {{ task.name }}
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Timeline Visualization -->
+        <div class="flex-1 overflow-x-auto relative bg-white gantt-grid">
+            <!-- Dates Header -->
+            <div class="h-12 border-b border-slate-100 flex">
+                <div class="min-w-[1000px] flex">
+                    @if (viewType === 'day') {
+                    @for (day of [21, 22, 23, 24, 25, 26, 27]; track day) {
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-bold" [class.text-primary]="day === 21">{{ day === 21 ? 'TODAY' :
+                            'OCT ' + day }}</span>
+                    </div>
+                    }
+                    } @else if (viewType === 'week') {
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
+                            class="text-[10px] font-bold text-slate-400">OCT 07</span></div>
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
+                            class="text-[10px] font-bold text-slate-400">OCT 14</span></div>
+                    <div
+                        class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center bg-blue-50/30">
+                        <span class="text-[10px] font-black text-primary">OCT 21 (NOW)</span></div>
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
+                            class="text-[10px] font-bold text-slate-400">OCT 28</span></div>
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
+                            class="text-[10px] font-bold text-slate-400">NOV 04</span></div>
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
+                            class="text-[10px] font-bold text-slate-400">NOV 11</span></div>
+                    <div class="flex-1 flex flex-col items-center justify-center"><span
+                            class="text-[10px] font-bold text-slate-400">NOV 18</span></div>
+                    } @else {
+                    @for (m of ['AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB']; track m) {
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-bold" [class.text-primary]="m === 'OCT'">{{ m }}</span>
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+
+            <!-- Timeline Content Area -->
+            <div class="py-4 space-y-6 min-w-[1000px] h-full relative">
+                <!-- Current Date Line Indicator -->
+                <div class="absolute left-[34%] top-0 bottom-0 w-px bg-primary z-10 transition-all duration-500"
+                    [style.opacity]="viewType === 'week' ? 1 : 0.2">
+                    <div class="w-3 h-3 bg-primary rounded-full absolute -top-1.5 -left-1 shadow-lg shadow-primary/40">
+                    </div>
+                </div>
+
+                @for (phase of filteredPhases; track phase.title) {
+                <div class="h-4"></div> <!-- Header Row Space -->
+                @for (task of phase.tasks; track task.id) {
+                <div class="h-8 flex items-center relative">
+                    @if (task.width) {
+                    <!-- Task Bar -->
+                    <div [class]="'h-6 rounded-lg relative group shadow-sm transition-all duration-500 ' + task.color"
+                        [class.critical-highlight]="showCriticalPath && task.critical"
+                        [class.opacity-20]="showCriticalPath && !task.critical"
+                        [style.width]="viewType === 'month' ? '20%' : task.width"
+                        [style.left]="viewType === 'month' ? '30%' : task.left">
+                        <!-- Team View Avatars -->
+                        @if (showTeamView && task.assignee) {
+                        <div
+                            class="absolute -top-3 left-2 w-5 h-5 rounded-full border-2 border-white ring-1 ring-slate-200 overflow-hidden shadow-sm animate-in zoom-in-50">
+                            <img [src]="task.assignee" class="w-full h-full object-cover">
+                        </div>
+                        }
+
+                        @if (task.completion !== undefined) {
+                        <div class="absolute -right-12 top-1.5 text-[10px] font-bold text-primary">{{ task.completion
+                            }}%</div>
+                        }
+                        @if (task.status) {
+                        <div class="absolute -right-12 top-1.5 text-[10px] font-bold text-slate-400">{{ task.status }}
+                        </div>
+                        }
+                    </div>
+                    } @else if (task.isMilestone) {
+                    <!-- Milestone Marker -->
+                    <div class="absolute flex items-center transition-all duration-500"
+                        [style.left]="viewType === 'month' ? '40%' : task.left">
+                        <div
+                            class="w-6 h-6 rotate-45 bg-secondary flex items-center justify-center shadow-lg cursor-pointer">
+                            <span class="material-symbols-outlined text-white text-sm -rotate-45"
+                                style="font-variation-settings: 'FILL' 1;">star</span>
+                        </div>
+                        <span class="ml-4 text-[11px] font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded">{{
+                            task.milestoneTitle }}</span>
+                    </div>
+                    }
+                </div>
+                }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Dashboard Stats / Resource Allocation -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="col-span-1 md:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+        <div class="flex justify-between items-center mb-6">
+            <h4 class="text-sm font-black tracking-tight text-slate-900 uppercase">RESOURCE ALLOCATION</h4>
+            <a routerLink="/team" class="text-xs font-bold text-primary cursor-pointer hover:underline">Manage Team</a>
+        </div>
+        <div class="space-y-5">
+            @for (res of resources; track res.name) {
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
+                    <img class="w-full h-full object-cover" [src]="res.avatar" />
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between text-xs font-bold mb-1.5">
+                        <span>{{ res.name }} <span class="text-slate-400 font-medium ml-2">{{ res.role }}</span></span>
+                        <span [class.text-error]="res.overAllocated" [class.text-primary]="!res.overAllocated">
+                            {{ res.overAllocated ? 'Over-allocated (' + res.utilization + '%)' : res.utilization + '%
+                            Utilization' }}
+                        </span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary rounded-l-full"
+                            [style.width.%]="res.utilization > 100 ? 100 : res.utilization"></div>
+                        @if (res.overAllocated) {
+                        <div class="h-full bg-error" [style.width.%]="res.utilization - 100"></div>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div
+        class="bg-gradient-to-br from-primary to-primary-container text-white rounded-xl p-6 shadow-xl flex flex-col justify-between">
+        <div>
+            <h4 class="text-xs font-bold tracking-[0.2em] opacity-80 uppercase mb-4">Current Velocity</h4>
+            <div class="text-5xl font-black tracking-tighter mb-2">94<span class="text-2xl opacity-60">%</span></div>
+            <p class="text-xs font-medium opacity-90 leading-relaxed">The project is 4 days ahead of schedule. Site Prep
+                phase is nearing completion.</p>
+        </div>
+        <div class="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
+            <span class="text-[10px] font-bold tracking-widest uppercase">Next Milestone</span>
+            <span class="text-[10px] font-bold bg-white/20 px-2 py-1 rounded">Nov 02</span>
+        </div>
+    </div>
+</div>
+
+<button
+    class="fixed bottom-8 right-8 w-14 h-14 bg-secondary shadow-xl rounded-full flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all z-50 cursor-pointer">
+    <span class="material-symbols-outlined text-3xl">edit_calendar</span>
+</button>

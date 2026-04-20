@@ -1,0 +1,158 @@
+<div class="mb-10 mt-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary mb-2 block">Project</span>
+        <div class="flex items-center gap-3">
+            <h2 class="text-4xl font-black tracking-tight text-slate-900 leading-none">Task Management</h2>
+            <div class="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                <span class="material-symbols-outlined text-slate-400 text-sm">folder_open</span>
+                <select [(ngModel)]="selectedProject"
+                    class="bg-transparent border-none text-xs font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4">
+                    @for (p of projects; track p) { <option [value]="p">{{ p }}</option> }
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="flex items-center gap-3">
+        <div class="flex -space-x-3">
+            <img class="w-8 h-8 rounded-full border-2 border-white"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4CZeaYB7fJXEtjKFkVujKuYnqc32Vz4RirffP91HCE-igMSlf58IRegCTvDiO-n6vn8GSii3hmQCT9wn7MZCO7LYC87Mix-nc0uOD0_dHzMdyYmVbfUFLAGo6sFmnu6r5xb66CI_FUi6YCEqOcUKyBiL2helT79G1OiGR1inPdCcO87KgZ9ygFt4Q9GbiYVVfSvdkQ-o38syvfzzZJtPCCht9KpCLNPH4NAfNB_nmM9iLmnFOQ8z1D6W3w9caWMwVul6E7XtJszA-" />
+            <img class="w-8 h-8 rounded-full border-2 border-white"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1RmRziofMuKPCOGKlk1YnapBSbLaEfo01m3q_4lcO8xWYBy9DKhbId94OYnRLdh0YKtETgTw4OBQS76xCwa3GI8lqHXQEh4qQQyAWfHCmwY_elYYp6wMji5eXHwrqZcUD4iEoGkyYIRyKMxXR2lEAw34APWS_Omi6iwEz2PTn97envSoQbpymAyVXp1E00dhY0AgRi3UNTNPZdT8tKT6Oe6M4gpGCg1r2U1-D3cACjbZQSMZS2qrf08cBFkc50Xkbgk1epsoox4yv" />
+            <img class="w-8 h-8 rounded-full border-2 border-white"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8baYgQ3t4oMOHGPKXfFarqNItNIVVIfHOd53B1k7u3hLEDI1NYxbXwlB4obDhV4NFcKoh8XmJmz--LGSGjwi-6_5tek1bR_4g0zR8sP-PKdjXkmPZWQPWYZ_WxA4kNCyBSgF7hIdr8RLZJs4XGSqYbw-_kXxfo-jZFLySHpFqmRgQ_aH6iI-s-i2NZhe1wBHjRb3yN5siRJVrfnA1aetRFHVhFPPyPAuU9CJDj0_GJxvMIbyHt4DkCEkTrU9YIyXXMafDVs-F6tao" />
+            <div
+                class="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[10px] font-bold">
+                +5</div>
+        </div>
+        <div class="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
+            <span class="material-symbols-outlined text-slate-400 text-sm">filter_alt</span>
+            <select [(ngModel)]="selectedMember"
+                class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4">
+                <option *ngFor="let member of team" [value]="member.name">{{ member.name }}</option>
+            </select>
+        </div>
+        <button
+            class="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-200">
+            <span class="material-symbols-outlined text-lg">filter_list</span>
+            Filters
+        </button>
+    </div>
+</div>
+
+<!-- Kanban Board Layout -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 min-h-[716px]" cdkDropListGroup>
+    @for (column of columns; track column.id) {
+    <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between px-2 mb-2">
+            <div class="flex items-center gap-3">
+                <div [class]="'w-2.5 h-2.5 rounded-full ' + column.color"></div>
+                <h3 class="text-sm font-black uppercase tracking-widest text-slate-500">{{ column.title }}</h3>
+                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-black text-slate-500">{{
+                    getFilteredCount(column) }}</span>
+            </div>
+            <button (click)="openAddTaskModal(column.title)"
+                class="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer">
+                <span class="material-symbols-outlined">add</span>
+            </button>
+        </div>
+
+        <!-- Drop List Container -->
+        <div cdkDropList [cdkDropListData]="column.tasks" (cdkDropListDropped)="drop($event)"
+            class="flex-1 flex flex-col gap-4 min-h-[200px]">
+            @for (task of column.tasks; track task.title) {
+            @if (isTaskVisible(task)) {
+            <div cdkDrag (click)="openTaskDetail(task)"
+                [class]="'glass-card p-5 rounded-2xl shadow-sm border border-white/40 group hover:shadow-xl hover:-translate-y-1 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ' + (task.completed ? 'opacity-75 grayscale-[0.5]' : '')">
+                <!-- Drag Placeholder -->
+                <div class="cdk-drag-placeholder" *cdkDragPlaceholder></div>
+
+                @if (task.progress) {
+                <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                }
+                <div class="flex justify-between items-start mb-4">
+                    <span
+                        [class]="'px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter ' + task.priorityClass">{{
+                        task.priority }}</span>
+                    <button class="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined text-slate-400 text-lg">more_horiz</span>
+                    </button>
+                </div>
+
+                <h4
+                    [class]="'font-bold text-slate-900 mb-2 leading-snug ' + (task.completed ? 'line-through text-slate-400' : '')">
+                    {{ task.title }}</h4>
+
+                @if (task.description) {
+                <p class="text-xs text-slate-500 mb-6 line-clamp-2">{{ task.description }}</p>
+                }
+
+                @if (task.progress) {
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mb-4">
+                    <div class="bg-amber-500 h-1.5 rounded-full" [style.width.%]="task.progress"></div>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 mb-6">{{ task.progress }}% Completed</p>
+                }
+
+                @if (task.file) {
+                <div class="bg-blue-50/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-blue-600">description</span>
+                    <div class="text-[10px]">
+                        <p class="font-bold text-slate-700">{{ task.file }}</p>
+                        <p class="text-slate-400">{{ task.fileSize }}</p>
+                    </div>
+                </div>
+                }
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-[10px] font-bold"
+                        [class.text-amber-500]="task.status === 'In Progress'"
+                        [class.text-blue-600]="task.status === 'Awaiting Approval'"
+                        [class.text-green-600]="task.status === 'Verified Complete'"
+                        [class.text-slate-400]="!task.status">
+                        @if (task.date) {
+                        <span class="material-symbols-outlined text-sm">calendar_today</span>
+                        {{ task.date }}
+                        } @else if (task.status) {
+                        <span class="material-symbols-outlined text-sm">{{ task.status === 'In Progress' ? 'update' :
+                            (task.status === 'Awaiting Approval' ? 'visibility' : 'check_circle') }}</span>
+                        {{ task.status }}
+                        }
+                    </div>
+
+                    @if (task.assignee) {
+                    <img class="w-6 h-6 rounded-lg" [src]="task.assignee" />
+                    }
+                    @if (task.assignees) {
+                    <div class="flex -space-x-2">
+                        @for (img of task.assignees; track img) {
+                        <img class="w-6 h-6 rounded-lg ring-2 ring-white" [src]="img" />
+                        }
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+            }
+        </div>
+    </div>
+    }
+</div>
+
+<!-- Contextual FAB -->
+<button (click)="openAddTaskModal()"
+    class="fixed bottom-8 right-8 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-container text-white shadow-2xl shadow-primary/40 flex items-center justify-center active:scale-90 transition-all z-50 group cursor-pointer">
+    <span class="material-symbols-outlined text-3xl transition-transform group-hover:rotate-90">add</span>
+    <div
+        class="absolute right-full mr-4 bg-slate-900 text-white text-xs font-bold py-2 px-4 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">
+        Create New Task
+    </div>
+</button>
+
+@if (selectedTask) {
+<app-task-detail [task]="selectedTask" (close)="closeTaskDetail()"></app-task-detail>
+}
+
+@if (showAddTaskModal) {
+<app-add-task [initialStatus]="targetStep" (close)="showAddTaskModal = false"
+    (save)="addNewTask($event)"></app-add-task>
+}

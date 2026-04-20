@@ -17,6 +17,7 @@ const routes: Routes = [
       },
       { path: 'menu-management', loadChildren: () => import('./menu-management/menu-management-module').then(m => m.MenuManagementModule) },
       { path: 'company-management', loadChildren: () => import('./company-management/company-management-module').then(m => m.CompanyManagementModule) },
+      { path: 'projects', loadChildren: () => import('./projects/projects-module').then(m => m.ProjectsModule) },
     ],
   },
 ];

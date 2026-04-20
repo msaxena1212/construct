@@ -1,0 +1,373 @@
+<!-- Custom Header for Wizard -->
+<header
+    class="bg-white/80 backdrop-blur-xl flex justify-between items-center h-16 px-8 border-b border-surface-container-high/50 sticky top-0 z-10 w-full mb-4">
+    <div class="flex items-center gap-4">
+        <span class="text-xl font-bold tracking-tight text-on-surface">New Project Wizard</span>
+    </div>
+    <div class="flex items-center gap-6">
+        <a routerLink="/dashboard"
+            class="text-on-surface-variant hover:text-error transition-colors flex items-center gap-1 cursor-pointer">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+            <span class="text-sm font-bold">Cancel & Exit</span>
+        </a>
+    </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-8 py-8 w-full">
+    <div class="flex flex-col md:flex-row gap-12">
+        <!-- Left Column: Architectural Progress & Context -->
+        <aside class="w-full md:w-72 shrink-0">
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold tracking-tight mb-2">Create Project</h2>
+                    <p class="text-sm text-on-surface-variant leading-relaxed">Defining the structural foundation and
+                        logistical parameters for your next milestone.</p>
+                </div>
+                <nav class="flex flex-col gap-1">
+                    <!-- Step 1 -->
+                    <div (click)="setStep(1)"
+                        class="flex items-center gap-4 py-3 px-4 rounded-xl transition-all cursor-pointer"
+                        [ngClass]="currentStep === 1 ? 'bg-surface-container-lowest border-l-4 border-primary' : 'grayscale opacity-50'">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold"
+                            [ngClass]="currentStep === 1 ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface'">01</span>
+                        <div>
+                            <p class="text-sm font-bold text-on-surface">General Info</p>
+                            <p class="text-[10px] uppercase tracking-wider font-bold"
+                                [ngClass]="currentStep === 1 ? 'text-primary' : 'text-outline'">{{ currentStep === 1 ?
+                                'In Progress' : (currentStep > 1 ? 'Completed' : 'Upcoming') }}</p>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div (click)="setStep(2)"
+                        class="flex items-center gap-4 py-3 px-4 rounded-xl transition-all cursor-pointer"
+                        [ngClass]="currentStep === 2 ? 'bg-surface-container-lowest border-l-4 border-primary' : (currentStep < 2 ? 'grayscale opacity-50' : 'bg-surface-container-lowest opacity-80')">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold"
+                            [ngClass]="currentStep === 2 ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface'">02</span>
+                        <div>
+                            <p class="text-sm font-medium text-on-surface">Team & Roles</p>
+                            <p class="text-[10px] uppercase tracking-wider font-bold"
+                                [ngClass]="currentStep === 2 ? 'text-primary' : 'text-outline'">{{ currentStep === 2 ?
+                                'In Progress' : (currentStep > 2 ? 'Completed' : 'Upcoming') }}</p>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div (click)="setStep(3)"
+                        class="flex items-center gap-4 py-3 px-4 rounded-xl transition-all cursor-pointer"
+                        [ngClass]="currentStep === 3 ? 'bg-surface-container-lowest border-l-4 border-primary' : (currentStep < 3 ? 'grayscale opacity-50' : 'bg-surface-container-lowest opacity-80')">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold"
+                            [ngClass]="currentStep === 3 ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface'">03</span>
+                        <div>
+                            <p class="text-sm font-medium text-on-surface">Budget & Schedule</p>
+                            <p class="text-[10px] uppercase tracking-wider font-bold"
+                                [ngClass]="currentStep === 3 ? 'text-primary' : 'text-outline'">{{ currentStep === 3 ?
+                                'In Progress' : (currentStep > 3 ? 'Completed' : 'Upcoming') }}</p>
+                        </div>
+                    </div>
+                    <!-- Step 4 -->
+                    <div (click)="setStep(4)"
+                        class="flex items-center gap-4 py-3 px-4 rounded-xl transition-all cursor-pointer"
+                        [ngClass]="currentStep === 4 ? 'bg-surface-container-lowest border-l-4 border-primary' : (currentStep < 4 ? 'grayscale opacity-50' : 'bg-surface-container-lowest opacity-80')">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold"
+                            [ngClass]="currentStep === 4 ? 'bg-primary text-white' : 'bg-surface-container-high text-on-surface'">04</span>
+                        <div>
+                            <p class="text-sm font-medium text-on-surface">Documentation</p>
+                            <p class="text-[10px] uppercase tracking-wider font-bold"
+                                [ngClass]="currentStep === 4 ? 'text-primary' : 'text-outline'">{{ currentStep === 4 ?
+                                'In Progress' : 'Upcoming' }}</p>
+                        </div>
+                    </div>
+                </nav>
+                <div class="p-6 bg-secondary-container/10 rounded-xl">
+                    <span class="material-symbols-outlined text-secondary mb-2" data-icon="lightbulb">lightbulb</span>
+                    <p class="text-xs font-medium text-on-secondary-container leading-relaxed">
+                        Pro-tip: You can import existing project templates from your Dashboard to speed up this setup.
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Column: Form Canvas -->
+        <section class="flex-1 space-y-8" [formGroup]="projectForm">
+            <div
+                class="bg-surface-container-lowest rounded-xl p-10 shadow-[0px_12px_32px_rgba(15,23,42,0.04)] border border-outline-variant/10">
+                <!-- Step 1: General Info -->
+                <div *ngIf="currentStep === 1">
+                    <div class="mb-10">
+                        <h3 class="text-xl font-bold text-on-surface mb-1">General Project Information</h3>
+                        <p class="text-sm text-on-surface-variant">Establish the identity and physical location of the
+                            project site.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="col-span-full">
+                            <label
+                                class="block text-[11px] uppercase tracking-widest font-bold text-outline mb-2">Project
+                                Name <span class="text-error">*</span></label>
+                            <input
+                                class="w-full bg-surface-container-low border-none rounded-lg p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                                [class.ring-error]="f['name'].touched && f['name'].invalid"
+                                formControlName="name" placeholder="e.g., Sky-Rise Residences Phase II"
+                                type="text" />
+                            <p *ngIf="f['name'].touched && f['name'].invalid" class="text-[10px] text-error mt-1 font-bold">Project name is required (min 3 chars).</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="block text-[11px] uppercase tracking-widest font-bold text-outline mb-2">Project
+                                Type</label>
+                            <select
+                                class="w-full bg-surface-container-low border-none rounded-lg p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none appearance-none cursor-pointer"
+                                formControlName="type">
+                                <option>Commercial Renovation</option>
+                                <option>Residential New Build</option>
+                                <option>Industrial Facility</option>
+                                <option>Infrastructure</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="block text-[11px] uppercase tracking-widest font-bold text-outline mb-2">Estimated
+                                Completion</label>
+                            <input
+                                [class.ring-error]="f['completionDate'].touched && f['completionDate'].invalid"
+                                class="w-full bg-surface-container-low border-none rounded-lg p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                                type="date" formControlName="completionDate" />
+                        </div>
+                        <div class="col-span-full">
+                            <label
+                                class="block text-[11px] uppercase tracking-widest font-bold text-outline mb-2">Project
+                                Site Address</label>
+                            <div class="relative">
+                                <span
+                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-lg">location_on</span>
+                                <input
+                                    [class.ring-error]="f['address'].touched && f['address'].invalid"
+                                    class="w-full bg-surface-container-low border-none rounded-lg p-4 pl-12 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                                    placeholder="Search address or enter coordinates" type="text"
+                                    formControlName="address" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Team & Roles -->
+                <div *ngIf="currentStep === 2">
+                    <div class="mb-10">
+                        <h3 class="text-xl font-bold text-on-surface mb-1">Architecture & Site Team</h3>
+                        <p class="text-sm text-on-surface-variant">Assign lead architects, site managers, and safety
+                            officers.</p>
+                    </div>
+                    <div class="space-y-8">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div *ngFor="let member of team.value; let i = index"
+                                class="flex items-center gap-4 p-4 bg-surface border border-outline-variant/20 rounded-2xl group relative">
+                                <img [src]="member.avatar" class="w-12 h-12 rounded-full object-cover shadow-sm" />
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold text-on-surface">{{ member.name }}</p>
+                                    <p class="text-[11px] text-on-surface-variant font-medium">{{ member.role }}</p>
+                                </div>
+                                <button (click)="removeMember(i)" class="hidden group-hover:flex material-symbols-outlined text-error text-lg cursor-pointer">cancel</button>
+                                <span class="group-hover:hidden material-symbols-outlined text-primary">check_circle</span>
+                            </div>
+                            <div class="relative">
+                                <button (click)="showAssignDropdown = !showAssignDropdown"
+                                    class="w-full h-full flex items-center justify-center gap-3 p-4 bg-surface-container-low border border-dashed border-outline-variant rounded-2xl hover:bg-surface-container-high transition-all text-on-surface-variant cursor-pointer group">
+                                    <span
+                                        class="material-symbols-outlined text-sm group-hover:rotate-90 transition-transform">add</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider">Assign More</span>
+                                </button>
+                                <div *ngIf="showAssignDropdown"
+                                    class="absolute top-full left-0 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto">
+                                    <div *ngFor="let member of availableMembers" (click)="addMember(member)"
+                                        class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors">
+                                        <img [src]="member.avatar || 'assets/default-avatar.png'" class="w-8 h-8 rounded-full">
+                                        <div class="flex-1">
+                                            <p class="text-sm font-bold text-slate-900 dark:text-slate-50">{{ member.firstname }} {{ member.lastname }}</p>
+                                            <p class="text-[10px] text-slate-500 uppercase tracking-widest">{{ member.role?.name || 'Staff' }}</p>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="availableMembers.length === 0" class="p-4 text-center text-xs text-outline">
+                                        No team members found.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Budget & Schedule -->
+                <div *ngIf="currentStep === 3">
+                    <div class="mb-10">
+                        <h3 class="text-xl font-bold text-on-surface mb-1">Fiscal Parameters & Timeline</h3>
+                        <p class="text-sm text-on-surface-variant">Defining the commercial constraints and chronological
+                            milestones.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-2">
+                            <label class="block text-[11px] uppercase tracking-widest font-bold text-outline mb-2">Total
+                                Project Budget <span class="text-error">*</span></label>
+                            <div class="relative">
+                                <span
+                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">₹</span>
+                                <input
+                                    [class.ring-error]="f['budgetTotal'].touched && f['budgetTotal'].invalid"
+                                    class="w-full bg-surface-container-low border-none rounded-lg p-4 pl-8 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                                    placeholder="0.00" type="number" formControlName="budgetTotal" />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="block text-[11px] uppercase tracking-widest font-bold text-outline mb-2">Contingency
+                                Fund (%)</label>
+                            <input
+                                class="w-full bg-surface-container-low border-none rounded-lg p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                                placeholder="5%" type="text" />
+                        </div>
+                        <div class="col-span-full pt-4">
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-outline mb-4">Initial Milestones
+                            </h4>
+                            <div class="space-y-3 mb-4">
+                                <div *ngFor="let ms of milestones.controls; let i = index" [formGroup]="$any(ms)"
+                                    class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl group">
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-outline">panorama_fish_eye</span>
+                                        <input formControlName="name" class="bg-transparent border-none outline-none text-sm font-bold text-on-surface w-full">
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <span [class]="'text-' + ms.value.color + ' bg-' + ms.value.color + '/10'"
+                                            class="text-[10px] font-bold px-2 py-1 rounded">{{ ms.value.phase }}</span>
+                                        <button (click)="removeMilestone(i)" class="hidden group-hover:block material-symbols-outlined text-error text-lg cursor-pointer">delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input type="text" [(ngModel)]="newMilestoneName" [ngModelOptions]="{standalone: true}" (keyup.enter)="addMilestone()"
+                                    placeholder="Add specialized milestone..."
+                                    class="flex-1 bg-surface-container-low border-none rounded-lg p-3 text-sm ring-1 ring-outline-variant/20 outline-none">
+                                <button (click)="addMilestone()"
+                                    class="p-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
+                                    <span class="material-symbols-outlined text-sm">add</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Documentation -->
+                <div *ngIf="currentStep === 4">
+                    <div class="mb-10">
+                        <h3 class="text-xl font-bold text-on-surface mb-1">Logistics & Finalization</h3>
+                        <p class="text-sm text-on-surface-variant">Review all settings and initialize the project
+                            workspace.</p>
+                    </div>
+                    <div class="space-y-6">
+                        <div (click)="fileInput.click()"
+                            class="p-8 bg-surface border-2 border-dashed border-outline-variant/30 rounded-3xl flex flex-col items-center text-center group hover:border-primary/50 transition-all cursor-pointer">
+                            <input #fileInput type="file" multiple class="hidden" (change)="onFileSelected($event)">
+                            <div
+                                class="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center text-outline group-hover:bg-primary-fixed group-hover:text-primary transition-all mb-4">
+                                <span class="material-symbols-outlined text-3xl">cloud_upload</span>
+                            </div>
+                            <h4 class="font-bold text-on-surface mb-1">Upload Project Blueprints</h4>
+                            <p class="text-xs text-on-surface-variant mb-6">Drag and drop architecture plans, floor
+                                layouts, or site maps (PDF, DWG).</p>
+                            <button
+                                class="px-6 py-2 bg-surface-container-high rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-highest transition-all pointer-events-none">Browse
+                                Files</button>
+                        </div>
+
+                        <div *ngIf="documents.length > 0" class="space-y-3">
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-outline">Uploaded Documents</h4>
+                            <div *ngFor="let doc of documents.value; let i = index"
+                                class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl border border-outline-variant/20 group">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-primary">description</span>
+                                    <span class="text-sm font-bold text-on-surface">{{ doc.name }}</span>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span class="text-[10px] text-outline font-bold uppercase">{{ doc.size }}</span>
+                                    <button (click)="removeFile(i)" class="hidden group-hover:block material-symbols-outlined text-error text-lg cursor-pointer">delete</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div
+                                class="p-4 bg-secondary-container/10 border border-secondary/10 rounded-2xl flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+                                    <span class="material-symbols-outlined">analytics</span>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-outline uppercase">AI Forecast</p>
+                                    <p class="text-xs font-bold text-on-surface">Resource plan generated</p>
+                                </div>
+                            </div>
+                            <div
+                                class="p-4 bg-primary-container/10 border border-primary/10 rounded-2xl flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined">notifications_active</span>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-outline uppercase">Notifications</p>
+                                    <p class="text-xs font-bold text-on-surface">Lead staff notified</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Footer -->
+                <div class="flex justify-between items-center gap-4 mt-12 pt-8 border-t border-outline-variant/20">
+                    <button (click)="prevStep()" *ngIf="currentStep > 1"
+                        class="px-6 py-3 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">arrow_back</span>
+                        Back
+                    </button>
+                    <div class="flex-1"></div>
+                    <button *ngIf="currentStep === 1"
+                        class="px-6 py-3 rounded-xl text-sm font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer">Save
+                        as Draft</button>
+                    
+                    <button *ngIf="currentStep < 4" (click)="nextStep()"
+                        class="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-[0px_8px_16px_rgba(0,74,198,0.2)] hover:shadow-lg transition-all cursor-pointer">
+                        {{ currentStep === 1 ? 'Next: Team & Roles' : (currentStep === 2 ? 'Next: Budget & Schedule' : 'Next: Documentation') }}
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+
+                    <button *ngIf="currentStep === 4" (click)="initializeProject()" [disabled]="loading"
+                        class="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-[0px_8px_16px_rgba(0,74,198,0.2)] hover:shadow-lg transition-all cursor-pointer disabled:opacity-50">
+                        <span *ngIf="loading" class="material-symbols-outlined animate-spin text-sm">sync</span>
+                        {{ loading ? 'Initializing...' : 'Initialize Project' }}
+                        <span *ngIf="!loading" class="material-symbols-outlined text-sm">rocket_launch</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Secondary Context / Bento Preview -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-surface-container-low rounded-xl p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="material-symbols-outlined text-primary">analytics</span>
+                        <h4 class="text-sm font-bold uppercase tracking-widest text-on-surface">Resource Forecast</h4>
+                    </div>
+                    <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden mb-2">
+                        <div class="h-full bg-primary rounded-full w-[45%]"></div>
+                    </div>
+                    <p class="text-[11px] text-on-surface-variant">Initial resource allocation based on project type and
+                        scope.</p>
+                </div>
+                <div class="bg-surface-container-low rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold uppercase tracking-widest text-on-surface mb-1">Auto-Sync Maps</h4>
+                        <p class="text-[11px] text-on-surface-variant">Topographic data linked.</p>
+                    </div>
+                    <div
+                        class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center ring-1 ring-outline-variant/20">
+                        <span class="material-symbols-outlined text-secondary"
+                            style="font-variation-settings: 'FILL' 1;">map</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
