@@ -1,4 +1,4 @@
-const {sequelize, connectDB, Model, Sequelize, DataTypes} = require('../config/db');
+const { sequelize, connectDB, Model, Sequelize, DataTypes } = require('../config/db');
 
 const db = {};
 
@@ -37,6 +37,12 @@ db.milestone = require("../modules/projects/models/milestone.model.js")(sequeliz
 db.project_team = require("../modules/projects/models/team.model.js")(sequelize, Sequelize);
 db.project_document = require("../modules/projects/models/document.model.js")(sequelize, Sequelize);
 
+// Task Management Models
+db.project_task = require("../modules/projects/models/task.model.js")(sequelize, Sequelize);
+db.task_attachment = require("../modules/projects/models/task-attachment.model.js")(sequelize, Sequelize);
+db.task_comment = require("../modules/projects/models/task-comment.model.js")(sequelize, Sequelize);
+db.task_activity = require("../modules/projects/models/task-activity.model.js")(sequelize, Sequelize);
+db.project_task_assignee = require("../modules/projects/models/task-assignee.model.js")(sequelize, Sequelize);
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
 db.project.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -49,6 +55,27 @@ db.project_document.belongsTo(db.project, { foreignKey: "project_id" });
 
 db.project.belongsToMany(db.user, { through: db.project_team, foreignKey: "project_id", as: "team_members" });
 db.user.belongsToMany(db.project, { through: db.project_team, foreignKey: "user_id", as: "projects" });
+
+// Task Management Associations
+db.project.hasMany(db.project_task, { foreignKey: "project_id", as: "tasks", onDelete: 'CASCADE' });
+db.project_task.belongsTo(db.project, { foreignKey: "project_id" });
+
+db.project_task.belongsTo(db.project_task, { foreignKey: "parent_id", as: "parent" });
+db.project_task.hasMany(db.project_task, { foreignKey: "parent_id", as: "subtasks", onDelete: 'CASCADE' });
+
+db.project_task.belongsToMany(db.user, { through: db.project_task_assignee, foreignKey: "task_id", as: "assignees" });
+db.user.belongsToMany(db.project_task, { through: db.project_task_assignee, foreignKey: "user_id", as: "assigned_tasks" });
+
+db.project_task.hasMany(db.task_attachment, { foreignKey: "task_id", as: "attachments", onDelete: 'CASCADE' });
+db.task_attachment.belongsTo(db.project_task, { foreignKey: "task_id" });
+
+db.project_task.hasMany(db.task_comment, { foreignKey: "task_id", as: "comments", onDelete: 'CASCADE' });
+db.task_comment.belongsTo(db.project_task, { foreignKey: "task_id" });
+db.task_comment.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
+
+db.project_task.hasMany(db.task_activity, { foreignKey: "task_id", as: "activities", onDelete: 'CASCADE' });
+db.task_activity.belongsTo(db.project_task, { foreignKey: "task_id" });
+db.task_activity.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
 // PROJECT MANAGEMENT END
 
 connectDB();

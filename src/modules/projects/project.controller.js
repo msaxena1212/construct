@@ -175,6 +175,81 @@ class ProjectController {
       res.status(500).json({ message: "Error fetching project details.", error: error.message });
     }
   }
+
+  /**
+   * Update an existing project
+   */
+  async updateProject(req, res) {
+    let t;
+    try {
+      const { id } = req.params;
+      const company_id = req.user.company_id;
+      
+      const projectData = req.body.data ? JSON.parse(req.body.data) : req.body;
+      const { name, type, address, completionDate, budgetTotal, milestones, team } = projectData;
+
+      // 1. Team Validation
+      if (team && team.length > 0) {
+        const userIds = team.map(member => member.user_id);
+        const validUsers = await db.user.findAll({
+          where: { id: userIds, company_id: company_id }
+        });
+        if (validUsers.length !== userIds.length) {
+          return res.status(400).json({ message: "Invalid team members assigned." });
+        }
+      }
+
+      t = await db.sequelize.transaction();
+
+      // 2. Update Project Header
+      await db.project.update({
+        name, type, address,
+        completion_date: completionDate,
+        budget_total: budgetTotal || 0,
+      }, { 
+        where: { id, company_id },
+        transaction: t 
+      });
+
+      // 3. Update Milestones (Delete and Recreate)
+      await db.milestone.destroy({ where: { project_id: id }, transaction: t });
+      if (milestones && milestones.length > 0) {
+        const milestoneData = milestones.map(ms => ({ ...ms, project_id: id }));
+        await db.milestone.bulkCreate(milestoneData, { transaction: t });
+      }
+
+      // 4. Update Team Assignments (Delete and Recreate)
+      await db.project_team.destroy({ where: { project_id: id }, transaction: t });
+      if (team && team.length > 0) {
+        const teamData = team.map(member => ({
+          project_id: id,
+          user_id: member.user_id,
+          role: member.role
+        }));
+        await db.project_team.bulkCreate(teamData, { transaction: t });
+      }
+
+      // 5. Handle New Documents
+      if (req.files && req.files.length > 0) {
+        const documentData = req.files.map(file => ({
+          project_id: id,
+          name: file.originalname,
+          size: (file.size / 1024).toFixed(2) + " KB",
+          url: `/uploads/projects/${file.filename}`,
+          mimetype: file.mimetype
+        }));
+        await db.project_document.bulkCreate(documentData, { transaction: t });
+      }
+
+      await t.commit();
+      res.status(200).json({ message: "Project updated successfully." });
+
+    } catch (error) {
+      if (t) await t.rollback();
+      console.error("[UPDATE_PROJECT_ERROR]", error);
+      res.status(500).json({ message: "Error updating project.", error: error.message });
+    }
+  }
 }
 
 module.exports = new ProjectController();

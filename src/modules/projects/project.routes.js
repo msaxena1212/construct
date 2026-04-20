@@ -15,4 +15,36 @@ module.exports = (router) => {
 
   // Get single project details
   router.get("/projects/:id", projectCtrl.getProjectById);
+
+  // Update existing project
+  router.put(
+    "/projects/:id",
+    upload.array("blueprints", 10),
+    projectCtrl.updateProject
+  );
+
+  // --- Task Management Routes ---
+  const taskCtrl = require("./task.controller");
+
+  // Get project tasks
+  router.get("/projects/:projectId/tasks", taskCtrl.getTasksByProject);
+
+  // Create task
+  router.post("/projects/:projectId/tasks", taskCtrl.createTask);
+
+  // Update task (details or status)
+  router.put("/tasks/:taskId", taskCtrl.updateTask);
+
+  // Delete task
+  router.delete("/tasks/:taskId", taskCtrl.deleteTask);
+
+  // Comments
+  router.post("/tasks/:taskId/comments", taskCtrl.addComment);
+
+  // Attachments
+  router.post(
+    "/tasks/:taskId/attachments", 
+    upload.array("attachments", 10), 
+    taskCtrl.uploadAttachment
+  );
 };
