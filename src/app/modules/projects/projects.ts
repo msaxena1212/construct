@@ -1,21 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ProjectService } from './services/project-service';
-
-interface Project {
-  id: number;
-  name: string;
-  type: string;
-  address: string;
-  completion_date: string;
-  budget_total: number;
-  budget_used: number;
-  status: string;
-  thumbnail?: string;
-  progress?: number; // Calculated field
-  milestones: any[];
-  team_members: any[];
-  createdAt: string;
-}
+import { IProject, IUser } from '../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-projects',
@@ -24,11 +9,11 @@ interface Project {
   styleUrl: './projects.scss',
 })
 export class Projects implements OnInit {
-  projects: Project[] = [];
+  projects: IProject[] = [];
   loading: boolean = true;
   error: string | null = null;
 
-  availableTeamMembers: any[] = [];
+  availableTeamMembers: string[] = ['All Members'];
   selectedMember = 'All Members';
 
   constructor(private projectService: ProjectService) {}
@@ -37,23 +22,23 @@ export class Projects implements OnInit {
     this.fetchProjects();
   }
 
-  get filteredProjects(): Project[] {
+  get filteredProjects(): IProject[] {
     if (this.selectedMember === 'All Members') return this.projects;
     return this.projects.filter((p) => 
-      p.team_members.some((m) => (m.firstname + ' ' + m.lastname) === this.selectedMember)
+      p.team_members?.some((m) => (m.firstname + ' ' + m.lastname) === this.selectedMember)
     );
   }
 
   fetchProjects(): void {
     this.loading = true;
     this.projectService.getProjects().subscribe({
-      next: (res: any) => {
+      next: (res) => {
         const rawProjects = res.data;
-        this.projects = rawProjects.map((p: any) => this.mapProject(p));
+        this.projects = rawProjects.map((p) => this.mapProject(p));
         this.extractUniqueMembers();
         this.loading = false;
       },
-      error: (err: any) => {
+      error: (err) => {
         this.error = 'Failed to load projects. Please try again.';
         this.loading = false;
         console.error(err);
@@ -61,9 +46,9 @@ export class Projects implements OnInit {
     });
   }
 
-  private mapProject(p: any): Project {
+  private mapProject(p: IProject): IProject {
     const totalMilestones = p.milestones?.length || 0;
-    const completedMilestones = p.milestones?.filter((m: any) => m.is_completed).length || 0;
+    const completedMilestones = p.milestones?.filter((m) => m.is_completed).length || 0;
     const progress = totalMilestones > 0 
       ? Math.round((completedMilestones / totalMilestones) * 100) 
       : 0;
@@ -77,7 +62,7 @@ export class Projects implements OnInit {
   private extractUniqueMembers() {
     const memberSet = new Set<string>();
     this.projects.forEach(p => {
-      p.team_members.forEach(m => {
+      p.team_members?.forEach(m => {
         memberSet.add(m.firstname + ' ' + m.lastname);
       });
     });

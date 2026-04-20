@@ -1,4 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ProjectService } from '../../services/project-service';
+import { ToastrService } from 'ngx-toastr';
+import { IProjectTask, IUser } from '../../../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-task-detail',
@@ -7,129 +10,179 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   styleUrl: './task-detail.scss',
 })
 export class TaskDetail implements OnInit {
-  @Input() task: any;
+  @Input() task!: IProjectTask;
   @Output() close = new EventEmitter<void>();
 
   isEditing = false;
   newComment = '';
-
-  teamMembers = [
-    { name: 'Elena Rodriguez', role: 'Lead Structural Eng.', avatar: 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop' },
-    { name: 'Marcus Thorne', role: 'Senior Manager', avatar: 'https://initials.io/avatar/MT/256' },
-    { name: 'Sarah Chen', role: 'Editor', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCy6kguFDpbdu22RXyzkZYEhqX6zZEB61_rkYQakGSdDaKyicjFqwYwX-xV5AeD4JAF9upktLl2kbkNOl3sxreIDp_iEcEWUdbCVjEz9nEXXpojx3wKwjlZF92kfgLYHm5oSnZe9N6e1e2YfXckf7J2h87fMzxNpkEyhzpr3Xf1vGcvdgdN7DSMD0iPxAN7SB3qZK_Q68q__M_ytxq4yEtFU89urVWQwwb00q9zAV-1Fegc3uv9XKviFvE0GKZzh7pIyTXBVUF2Pjd0' }
-  ];
-
-  loggedInUser = { name: 'James Wilson' };
-  showUploadModal = false;
   newSubTaskTitle = '';
+  showUploadModal = false;
+  isUploading = false;
 
-  checklist = [
-    { title: 'Verify rebar spacing against blueprint v4.2', completed: true },
-    { title: 'Check corrosion protection coating integrity', completed: true },
-    { title: 'Document weld points in the Northeast corner', completed: false },
-    { title: 'Final structural engineer sign-off', completed: false }
-  ];
+  teamMembers: IUser[] = [];
+  loggedInUser = { name: 'James Wilson' };
 
-  activities: any[] = [
-    { author: 'Marcus Thorne', action: 'updated status to In Review', time: '2 hours ago', isSystem: false },
-    { author: 'Elena Rodriguez', action: 'attached blueprint_v4.pdf', time: 'Yesterday 4:32 PM', isSystem: false },
-    { author: 'System', action: 'initialized task', time: 'Oct 12th 10:15 AM', isSystem: true }
-  ];
-
-  attachments: any[] = [
-    { name: 'blueprint_v4.pdf', size: '4.2 MB', date: 'Oct 12', icon: 'picture_as_pdf', color: 'red' },
-    { name: 'site_survey_photo.jpg', size: '1.8 MB', date: 'Oct 13', icon: 'image', color: 'blue' }
-  ];
+  constructor(
+    private projectService: ProjectService,
+    private toastr: ToastrService
+  ) { }
 
   ngOnInit() {
-    if (this.task && !this.task.assigneeName) {
-      this.task.assigneeName = 'Elena Rodriguez';
+    if (this.task) {
+      this.fetchTeamMembers();
     }
   }
 
+  fetchTeamMembers() {
+    this.projectService.getProjectById(this.task.project_id.toString()).subscribe({
+      next: (res) => {
+        this.teamMembers = res.data.team_members || [];
+      }
+    });
+  }
+
   toggleEditMode() {
+    if (this.isEditing) {
+      this.saveTaskUpdates();
+    }
     this.isEditing = !this.isEditing;
+  }
+
+  saveTaskUpdates() {
+    const payload = {
+      title: this.task.title,
+      description: this.task.description,
+      priority: this.task.priority,
+      status: this.task.status,
+      due_date: this.task.due_date
+    };
+
+    this.projectService.updateTask(this.task.id, payload).subscribe({
+      next: () => this.toastr.success('Task details updated'),
+      error: () => this.toastr.error('Failed to update task details')
+    });
   }
 
   onClose() {
     this.close.emit();
   }
 
-  logActivity(action: string) {
-    this.activities.unshift({
-      author: this.loggedInUser.name,
-      action: action,
-      time: 'Just now',
-      isSystem: false
-    });
-  }
-
   get checklistProgress() {
-    if (this.checklist.length === 0) return 0;
-    const completed = this.checklist.filter(i => i.completed).length;
-    return Math.round((completed / this.checklist.length) * 100);
+    if (!this.task?.subtasks || this.task.subtasks.length === 0) return 0;
+    const completed = this.task.subtasks.filter((i: IProjectTask) => i.is_completed).length;
+    return Math.round((completed / this.task.subtasks.length) * 100);
   }
 
-  toggleChecklist(item: any) {
-    item.completed = !item.completed;
-    if (this.task) {
-      this.task.progress = this.checklistProgress;
-    }
+  toggleChecklist(item: IProjectTask) {
+    const newStatus = !item.is_completed;
+    this.projectService.updateTask(item.id, { is_completed: newStatus }).subscribe({
+      next: () => {
+        item.is_completed = newStatus;
+        this.task.progress = this.checklistProgress;
+      }
+    });
   }
 
   addSubTask() {
     if (!this.newSubTaskTitle.trim()) return;
-    this.checklist.push({ title: this.newSubTaskTitle.trim(), completed: false });
-    this.logActivity(`added sub-task: "${this.newSubTaskTitle.trim()}"`);
-    this.newSubTaskTitle = '';
-    if (this.task) {
-      this.task.progress = this.checklistProgress;
-    }
+
+    const payload = {
+      title: this.newSubTaskTitle.trim(),
+      parent_id: this.task.id,
+      status: 'To Do',
+      priority: 'Medium Priority'
+    };
+
+    this.projectService.createTask(this.task.project_id.toString(), payload).subscribe({
+      next: (res) => {
+        if (!this.task.subtasks) this.task.subtasks = [];
+        this.task.subtasks.push(res.data);
+        this.newSubTaskTitle = '';
+        this.toastr.success('Sub-task added');
+      },
+      error: () => this.toastr.error('Error adding sub-task')
+    });
   }
 
-  removeSubTask(item: any) {
-    this.checklist = this.checklist.filter(i => i !== item);
-    this.logActivity(`deleted sub-task: "${item.title}"`);
-    if (this.task) {
-      this.task.progress = this.checklistProgress;
-    }
+  removeSubTask(item: IProjectTask) {
+    this.projectService.deleteTask(item.id).subscribe({
+      next: () => {
+        if (this.task.subtasks) {
+          this.task.subtasks = this.task.subtasks.filter((i: IProjectTask) => i.id !== item.id);
+        }
+        this.toastr.info('Sub-task removed');
+      }
+    });
   }
 
-  onSubTaskChange(item: any, newTitle: string) {
+  onSubTaskChange(item: IProjectTask, newTitle: string) {
     if (item.title !== newTitle) {
-      item.title = newTitle;
-      this.logActivity(`updated a sub-task`);
+      this.projectService.updateTask(item.id, { title: newTitle }).subscribe({
+        next: () => item.title = newTitle
+      });
     }
   }
 
   postComment() {
     if (!this.newComment.trim()) return;
-    this.logActivity(`commented: "${this.newComment}"`);
-    this.newComment = '';
+
+    this.projectService.addTaskComment(this.task.id, this.newComment).subscribe({
+      next: (res) => {
+        if (!this.task.comments) this.task.comments = [];
+        this.task.comments.unshift(res.data);
+
+        if (!this.task.activities) this.task.activities = [];
+        this.task.activities.unshift({
+          id: Date.now(),
+          task_id: Number(this.task.id),
+          user_id: 0,
+          user: { id: 0, firstname: 'You', lastname: '' },
+          detail: `commented: "${this.newComment}"`,
+          createdAt: new Date().toISOString(),
+          action_type: 'COMMENT'
+        });
+
+        this.newComment = '';
+        this.toastr.success('Comment posted');
+      }
+    });
   }
 
   openUploadModal() {
     this.showUploadModal = true;
   }
 
-  simulateUpload() {
-    this.attachments.push({
-      name: `new_document_${this.attachments.length + 1}.pdf`,
-      size: '1.1 MB',
-      date: 'Just now',
-      icon: 'description',
-      color: 'slate'
+  onFileSelected(event: any) {
+    const files: FileList = event.target.files;
+    if (files.length === 0) return;
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('attachments', files[i]);
+    }
+
+    this.isUploading = true;
+    this.projectService.uploadTaskAttachment(this.task.id, formData).subscribe({
+      next: (res) => {
+        if (!this.task.attachments) this.task.attachments = [];
+        this.task.attachments.push(...res.data);
+        this.isUploading = false;
+        this.showUploadModal = false;
+        this.toastr.success('Files uploaded');
+      },
+      error: () => {
+        this.isUploading = false;
+        this.toastr.error('Upload failed');
+      }
     });
-    this.logActivity(`attached new document`);
-    this.showUploadModal = false;
   }
 
-
   onAssigneeSelect(event: any) {
-    const selected = this.teamMembers.find(m => m.name === event.target.value);
-    if (selected && this.task) {
-      this.task.assigneeName = selected.name;
-      this.task.assignee = selected.avatar; // Assuming task.assignee stores avatar URL
-    }
+    const userId = event.target.value;
+    this.projectService.updateTask(this.task.id, { assignees: [userId] }).subscribe({
+      next: () => {
+        this.toastr.success('Assignee updated');
+      }
+    });
   }
 }

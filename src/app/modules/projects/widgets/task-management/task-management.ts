@@ -1,29 +1,15 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-
-
-interface TaskItem {
-  id?: string;
-  priority: string;
-  priorityClass: string;
-  title: string;
-  description?: string;
-  date?: string;
-  assignee?: string;
-  assignees?: string[];
-  progress?: number;
-  status?: string;
-  file?: string;
-  fileSize?: string;
-  completed?: boolean;
-}
+import { ProjectService } from '../../services/project-service';
+import { ToastrService } from 'ngx-toastr';
+import { IProjectTask } from '../../../../shared/interfaces/project.interface';
 
 interface TaskColumn {
   id: string;
   title: string;
   color: string;
   count: number;
-  tasks: TaskItem[];
+  tasks: IProjectTask[];
 }
 
 @Component({
@@ -33,155 +19,145 @@ interface TaskColumn {
   styleUrl: './task-management.scss',
 })
 export class TaskManagement implements OnInit {
+  @Input() projectId: string | number = '';
   @Input() selectedMember = 'All Members';
-  selectedTask: any = null;
+
+  loading = false;
+  selectedTask: IProjectTask | null = null;
   showAddTaskModal = false;
   targetStep: string = 'To Do';
 
-  selectedProject = 'Skyline Plaza';
-  projects = ['All Projects', 'Skyline Plaza', 'Harbor Bridge Renovation', 'Meridian Towers', 'Westside Condos'];
-
-  team = [
-    { name: 'All Members', avatar: '' },
-    { name: 'Marcus Thorne', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD4CZeaYB7fJXEtjKFkVujKuYnqc32Vz4RirffP91HCE-igMSlf58IRegCTvDiO-n6vn8GSii3hmQCT9wn7MZCO7LYC87Mix-nc0uOD0_dHzMdyYmVbfUFLAGo6sFmnu6r5xb66CI_FUi6YCEqOcUKyBiL2helT79G1OiGR1inPdCcO87KgZ9ygFt4Q9GbiYVVfSvdkQ-o38syvfzzZJtPCCht9KpCLNPH4NAfNB_nmM9iLmnFOQ8z1D6W3w9caWMwVul6E7XtJszA-' },
-    { name: 'Sarah Chen', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA1RmRziofMuKPCOGKlk1YnapBSbLaEfo01m3q_4lcO8xWYBy9DKhbId94OYnRLdh0YKtETgTw4OBQS76xCwa3GI8lqHXQEh4qQQyAWfHCmwY_elYYp6wMji5eXHwrqZcUD4iEoGkyYIRyKMxXR2lEAw34APWS_Omi6iwEz2PTn97envSoQbpymAyVXp1E00dhY0AgRi3UNTNPZdT8tKT6Oe6M4gpGCg1r2U1-D3cACjbZQSMZS2qrf08cBFkc50Xkbgk1epsoox4yv' },
-    { name: 'David Miller', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA8baYgQ3t4oMOHGPKXfFarqNItNIVVIfHOd53B1k7u3hLEDI1NYxbXwlB4obDhV4NFcKoh8XmJmz--LGSGjwi-6_5tek1bR_4g0zR8sP-PKdjXkmPZWQPWYZ_WxA4kNCyBSgF7hIdr8RLZJs4XGSqYbw-_kXxfo-jZFLySHpFqmRgQ_aH6iI-s-i2NZhe1wBHjRb3yN5siRJVrfnA1aetRFHVhFPPyPAuU9CJDj0_GJxvMIbyHt4DkCEkTrU9YIyXXMafDVs-F6tao' }
-  ];
-
-  isTaskVisible(task: TaskItem): boolean {
-    if (this.selectedMember === 'All Members') return true;
-    const member = this.team.find(m => m.name === this.selectedMember);
-    if (!member) return true;
-
-    if (task.assignee === member.avatar) return true;
-    if (task.assignees?.includes(member.avatar)) return true;
-
-    return false;
-  }
-
-  getFilteredCount(column: TaskColumn): number {
-    return column.tasks.filter(t => this.isTaskVisible(t)).length;
-  }
+  newComment = '';
+  isUploading = false;
+  activeTaskTab = 'Subtasks'; // Subtasks, Attachments, Discussion, History
 
   columns: TaskColumn[] = [
-    {
-      id: 'todo',
-      title: 'To Do',
-      color: 'bg-slate-400',
-      count: 2,
-      tasks: [
-        {
-          priority: 'High Priority',
-          priorityClass: 'bg-red-100 text-red-700',
-          title: 'Foundational Reinforcement Review',
-          description: 'Audit the steel rebar placement for Sector B-4 following the heavy rain inspection reports.',
-          date: 'Oct 24, 2023',
-          assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDoRMWgVC4z1Ua54NyduAyjaqUcpMABUCt4ymY7Pfze2n-lHdB9xejwHxBqWzXf1MnHt-PYbTmKhK7rkxBq6T6jQy-9ry53QiJWObXaTxUdsS9-1PjJ7MVlH497ZmKanP3mWVRWo1fiPmg5g7t07IR7Ur8fSxtaEiGPUHGbWPyjDkUL9ZllEX3Qh9zjND377JfowkMwBfEK7GtNG5QzKRZwOwVByMgaJJY0b1fxKo1KU3ppFfyO9gSUN8VHM4erWo2T1b3fnM0aeKgE'
-        },
-        {
-          priority: 'Medium Priority',
-          priorityClass: 'bg-blue-100 text-blue-700',
-          title: 'Material Delivery: Floor Tiles',
-          description: 'Coordinate unloading of 400 pallets of Grade A ceramic tiles for the lobby area.',
-          date: 'Oct 26, 2023',
-          assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAudk_c82wiM2MBWr7OTYj48W1CdiunBxuq780hcF8c0FR_xNiZD7b74yss6NA1haasX-d83uY4yfXbZ17M1EMJbaj4nB8OONUEz9fkJmrEVqLeKSimK04TbRyX7xRwouyUYAAH8G1JriFjc2HLcPWtOMnaIOpIQ_c1vQ67hBMGuLN3JTNwXf_7Ms3R4B-NJSHwD3EdlzwZrZWl8u0MDZqdkDK4-0h4cHczxpo73uWDlnzLpEbNbvQyW8CoYXlBDD5Vv8YmEHPXYyUV'
-        }
-      ]
-    },
-    {
-      id: 'inprogress',
-      title: 'In Progress',
-      color: 'bg-amber-500',
-      count: 1,
-      tasks: [
-        {
-          priority: 'Low Priority',
-          priorityClass: 'bg-amber-100 text-amber-700',
-          title: 'Electrical Conduit Installation',
-          progress: 65,
-          status: 'In Progress',
-          assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKm5P5NhrF5J7Dp0IwYlyOA0lRaYzLodVkuCShEp3I-fUxMCFkjvqP4KKnzMxPMSeO5aaHOaNkCrnFyPF9pkzRzVgsaxCXQEBjdb4j0uDsW_jTOkmVVoFTvg8xKMumaQdgrPnGJ8APU9CKo2yhoaxZbTe6dB3mklD0YtGUdYR0Xt3a3a8QKp8nRxkhShpKzsjqK9qVzohZOfZWDtMq6CGR1iZ_l4gNggbA-2n3Q-qN94jWZsoYpxPSrCFTvbN5a0CXhE5kC6nQ9g6o'
-        }
-      ]
-    },
-    {
-      id: 'review',
-      title: 'Review',
-      color: 'bg-blue-600',
-      count: 1,
-      tasks: [
-        {
-          priority: 'High Priority',
-          priorityClass: 'bg-red-100 text-red-700',
-          title: 'Structural Load Testing Report',
-          description: 'Review final stress test results for the cantilevered terrace on Floor 12.',
-          file: 'stress_test_v4.pdf',
-          fileSize: '4.2 MB',
-          status: 'Awaiting Approval',
-          assignees: [
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuBlzv382bQdBaspnd36QkLXo11nB579Hpv89hNV3TeHwFpafe7hZcM9F4hwi-QRJ_RRP-eMw0Pxo0Prl_QtK1pkQNxHbFk_2Zji8x8R4XKW6v4eqKw-fdGlLn85gbwFPWV95lMCHJiDGo8ubYq_p10cPXNeGdiKTrD2d4SRYxFDmKOROTQ2QnATLVPPlCNKooRk5HrUMNFuyiRPJUsEFVnRXEwNnjWXB7kceeqE-oKw5DjsTCP02iELJfnEHkcS418JPj-HxGodFbHl',
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuDCmAzMNPcrHEosxP83ZhZTbeAMcr579CBK2uRXchFewP4_T9n3A8y_6o4ZR7fy9QT3plAq31PxLkuGX2jmpvQMqEe_BjcBMQiCe7nXVc5S1pjlZA3-cnicOslYI7FdfOkbjFTkRUFIUZrhrkEDVlMrrSzKW2hlZjL65N0vkDPhLoCZLmOU2Ud5cuAkmsh3vAZvHoH8HnHuRqJMH5QkXAZGOcSdsywEzKwT2tDTDxA8f4xMs6gkge18qzHaH9NKV0Fimt4V0ChfSyAK'
-          ]
-        }
-      ]
-    },
-    {
-      id: 'completed',
-      title: 'Completed',
-      color: 'bg-green-500',
-      count: 1,
-      tasks: [
-        {
-          priority: 'Archived',
-          priorityClass: 'bg-slate-100 text-slate-500',
-          title: 'Demolition Sector A-1',
-          status: 'Verified Complete',
-          completed: true
-        }
-      ]
-    }
+    { id: 'todo', title: 'To Do', color: 'bg-slate-400', count: 0, tasks: [] },
+    { id: 'inprogress', title: 'In Progress', color: 'bg-amber-500', count: 0, tasks: [] },
+    { id: 'review', title: 'Review', color: 'bg-blue-600', count: 0, tasks: [] },
+    { id: 'completed', title: 'Completed', color: 'bg-green-500', count: 0, tasks: [] }
   ];
 
-  constructor() { }
+  constructor(
+    private projectService: ProjectService,
+    private toastr: ToastrService
+  ) { }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {
+    if (this.projectId) {
+      this.fetchTasks();
+    }
+  }
+
+  fetchTasks() {
+    this.loading = true;
+    this.projectService.getProjectTasks(this.projectId).subscribe({
+      next: (res) => {
+        this.mapTasksToColumns(res.data);
+        this.loading = false;
+      },
+      error: () => {
+        this.toastr.error('Failed to load project tasks');
+        this.loading = false;
+      }
+    });
+  }
+
+  mapTasksToColumns(tasks: IProjectTask[]) {
+    // Reset tasks
+    this.columns.forEach(col => col.tasks = []);
+
+    tasks.forEach(task => {
+      const mappedTask = this.transformTask(task);
+      const column = this.columns.find(c => c.title === mappedTask.status);
+      if (column) {
+        column.tasks.push(mappedTask);
+      }
+    });
+
+    this.updateCounts();
+  }
+
+  transformTask(t: IProjectTask): IProjectTask {
+    return {
+      ...t,
+      priorityClass: this.getPriorityClass(t.priority),
+      is_completed: t.status === 'Completed'
+    };
+  }
+
+  getPriorityClass(p: string): string {
+    switch (p) {
+      case 'High Priority': return 'bg-red-100 text-red-700';
+      case 'Medium Priority': return 'bg-blue-100 text-blue-700';
+      case 'Low Priority': return 'bg-amber-100 text-amber-700';
+      default: return 'bg-slate-100 text-slate-500';
+    }
+  }
+
+  updateCounts() {
+    this.columns.forEach(col => col.count = col.tasks.length);
+  }
 
   openAddTaskModal(columnTitle: string = 'To Do') {
     this.targetStep = columnTitle;
     this.showAddTaskModal = true;
   }
 
-  addNewTask(task: any) {
-    const column = this.columns.find(c => c.title === task.status);
-    if (column) {
-      column.tasks.unshift(task);
-      this.updateCounts();
-    }
-    this.showAddTaskModal = false;
+  addNewTask(taskData: any) {
+    const payload = {
+      ...taskData,
+      status: this.targetStep
+    };
+
+    this.projectService.createTask(this.projectId, payload).subscribe({
+      next: (res) => {
+        const newTask = this.transformTask(res.data);
+        const column = this.columns.find(c => c.title === newTask.status);
+        if (column) {
+          column.tasks.unshift(newTask);
+          this.updateCounts();
+        }
+        this.showAddTaskModal = false;
+        this.toastr.success('Task created successfully');
+      },
+      error: () => this.toastr.error('Error creating task')
+    });
   }
 
-  drop(event: CdkDragDrop<TaskItem[]>) {
+  drop(event: CdkDragDrop<IProjectTask[]>) {
     if (event.previousContainer === event.container) {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
+      const task = event.previousContainer.data[event.previousIndex];
+      const newStatus: any = event.container.id === 'todo' ? 'To Do'
+        : event.container.id === 'inprogress' ? 'In Progress'
+          : event.container.id === 'review' ? 'Review' : 'Completed';
+
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
         event.previousIndex,
         event.currentIndex
       );
+
+      // Persistence
+      this.projectService.updateTask(task.id, { status: newStatus }).subscribe({
+        next: () => {
+          task.status = newStatus;
+          task.priorityClass = this.getPriorityClass(task.priority);
+          this.updateCounts();
+        },
+        error: () => {
+          this.toastr.error('Failed to update task status');
+        }
+      });
     }
-    this.updateCounts();
   }
 
-  updateCounts() {
-    this.columns.forEach(col => {
-      col.count = col.tasks.length;
-    });
-  }
-
-  openTaskDetail(task: any) {
+  openTaskDetail(task: IProjectTask) {
     this.selectedTask = task;
+    this.activeTaskTab = 'Subtasks';
   }
 
   closeTaskDetail() {

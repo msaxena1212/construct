@@ -2,13 +2,13 @@
 <header
     class="bg-white/80 backdrop-blur-xl flex justify-between items-center h-16 px-8 border-b border-surface-container-high/50 sticky top-0 z-10 w-full mb-4">
     <div class="flex items-center gap-4">
-        <span class="text-xl font-bold tracking-tight text-on-surface">New Project Wizard</span>
+        <span class="text-xl font-bold tracking-tight text-on-surface">{{ editMode ? 'Update Project Blueprint' : 'New Project Wizard' }}</span>
     </div>
     <div class="flex items-center gap-6">
-        <a routerLink="/dashboard"
+        <a [routerLink]="editMode ? ['/master/projects', projectId] : '/dashboard'"
             class="text-on-surface-variant hover:text-error transition-colors flex items-center gap-1 cursor-pointer">
             <span class="material-symbols-outlined text-[20px]">close</span>
-            <span class="text-sm font-bold">Cancel & Exit</span>
+            <span class="text-sm font-bold">{{ editMode ? 'Exit Editor' : 'Cancel & Exit' }}</span>
         </a>
     </div>
 </header>
@@ -19,7 +19,7 @@
         <aside class="w-full md:w-72 shrink-0">
             <div class="space-y-8">
                 <div>
-                    <h2 class="text-3xl font-bold tracking-tight mb-2">Create Project</h2>
+                    <h2 class="text-3xl font-bold tracking-tight mb-2">{{ editMode ? 'Edit Project' : 'Create Project' }}</h2>
                     <p class="text-sm text-on-surface-variant leading-relaxed">Defining the structural foundation and
                         logistical parameters for your next milestone.</p>
                 </div>
@@ -181,7 +181,7 @@
                                         <img [src]="member.avatar || 'assets/default-avatar.png'" class="w-8 h-8 rounded-full">
                                         <div class="flex-1">
                                             <p class="text-sm font-bold text-slate-900 dark:text-slate-50">{{ member.firstname }} {{ member.lastname }}</p>
-                                            <p class="text-[10px] text-slate-500 uppercase tracking-widest">{{ member.role?.name || 'Staff' }}</p>
+                                            <p class="text-[10px] text-slate-500 uppercase tracking-widest">{{ member.role || 'Staff' }}</p>
                                         </div>
                                     </div>
                                     <div *ngIf="availableMembers.length === 0" class="p-4 text-center text-xs text-outline">
@@ -274,6 +274,18 @@
                                 Files</button>
                         </div>
 
+                        <div *ngIf="existingDocuments.length > 0" class="space-y-3">
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-outline">Existing Site Records</h4>
+                            <div *ngFor="let doc of existingDocuments; let i = index"
+                                class="flex items-center justify-between p-3 bg-surface-container-low/50 rounded-xl border border-outline-variant/10">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-outline">verified</span>
+                                    <span class="text-sm font-bold text-on-surface-variant">{{ doc.name }}</span>
+                                </div>
+                                <span class="text-[10px] text-outline font-bold uppercase">{{ doc.size }}</span>
+                            </div>
+                        </div>
+
                         <div *ngIf="documents.length > 0" class="space-y-3">
                             <h4 class="text-xs font-bold uppercase tracking-widest text-outline">Uploaded Documents</h4>
                             <div *ngFor="let doc of documents.value; let i = index"
@@ -334,11 +346,11 @@
                         <span class="material-symbols-outlined text-sm">arrow_forward</span>
                     </button>
 
-                    <button *ngIf="currentStep === 4" (click)="initializeProject()" [disabled]="loading"
+                    <button *ngIf="currentStep === 4" (click)="saveProject()" [disabled]="loading"
                         class="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-[0px_8px_16px_rgba(0,74,198,0.2)] hover:shadow-lg transition-all cursor-pointer disabled:opacity-50">
                         <span *ngIf="loading" class="material-symbols-outlined animate-spin text-sm">sync</span>
-                        {{ loading ? 'Initializing...' : 'Initialize Project' }}
-                        <span *ngIf="!loading" class="material-symbols-outlined text-sm">rocket_launch</span>
+                        {{ loading ? (editMode ? 'Updating...' : 'Initializing...') : (editMode ? 'Update Project' : 'Initialize Project') }}
+                        <span *ngIf="!loading" class="material-symbols-outlined text-sm">{{ editMode ? 'check_circle' : 'rocket_launch' }}</span>
                     </button>
                 </div>
             </div>

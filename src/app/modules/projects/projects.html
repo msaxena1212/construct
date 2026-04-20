@@ -50,7 +50,7 @@
       class="bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-xl group hover:shadow-2xl hover:border-blue-500/30 transition-all duration-500 flex flex-col h-full relative overflow-hidden">
 
       <!-- Project Image & Status Overlay -->
-      <div class="relative h-48 overflow-hidden">
+      <div class="relative h-48 overflow-hidden" [routerLink]="['/master/projects/edit-project/', project.id]">
         <img
           [src]="project.thumbnail || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=800&auto=format&fit=crop'"
           class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
@@ -76,7 +76,7 @@
       <!-- Project Body -->
       <div class="p-8 flex-1 flex flex-col">
         <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-2 font-medium mb-8">
-          A structural development located in {{ project.address }}. High-precision construction phase currently in
+          A structural development located in {{ project.address || 'Unknown Location' }}. High-precision construction phase currently in
           progress.
         </p>
 
@@ -85,11 +85,11 @@
           <div>
             <div class="flex justify-between items-end mb-2.5">
               <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Progress</span>
-              <span class="text-sm font-black text-slate-900 dark:text-slate-50">{{ project.progress }}%</span>
+              <span class="text-sm font-black text-slate-900 dark:text-slate-50">{{ project.progress || 0 }}%</span>
             </div>
             <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
               <div class="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-md shadow-blue-500/20"
-                [style.width.%]="project.progress"></div>
+                [style.width.%]="project.progress || 0"></div>
             </div>
           </div>
 
@@ -97,12 +97,12 @@
           <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/50">
             <div class="space-y-1">
               <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Est. Completion</p>
-              <p class="text-xs font-bold text-slate-900 dark:text-slate-50">{{ project.completion_date | date }}</p>
+              <p class="text-xs font-bold text-slate-900 dark:text-slate-50">{{ (project.completion_date || project.end_date) | date }}</p>
             </div>
             <div class="space-y-1 text-right">
               <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Budget Status</p>
-              <p class="text-xs font-bold text-slate-900 dark:text-slate-50">₹{{ (project.budget_used /
-                100000).toFixed(1) }}L / ₹{{ (project.budget_total / 100000).toFixed(1) }}L</p>
+              <p class="text-xs font-bold text-slate-900 dark:text-slate-50">₹{{ ((project.budget_used || 0) /
+                100000).toFixed(1) }}L / ₹{{ ((project.budget_total || 0) / 100000).toFixed(1) }}L</p>
             </div>
           </div>
 
@@ -133,10 +133,10 @@
       <div class="px-8 py-3 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
         <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2">
           <span class="material-symbols-outlined text-[14px]">update</span>
-          Created {{ project.createdAt | date:'short' }}
+          Created {{ (project.createdAt || project.start_date) | date:'short' }}
         </span>
-        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{{ project.address | slice:0:20 }}{{
-          project.address.length > 20 ? '...' : '' }}</span>
+        <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{{ (project.address || '') | slice:0:20 }}{{
+          (project.address || '').length > 20 ? '...' : '' }}</span>
       </div>
     </div>
     }

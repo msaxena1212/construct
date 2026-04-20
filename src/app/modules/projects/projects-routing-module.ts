@@ -7,6 +7,7 @@ import { ProjectDetail } from './project-detail/project-detail';
 const routes: Routes = [
   { path: '', component: Projects },
   { path: 'new-project', component: NewProjectWizard },
+  { path: 'edit-project/:id', component: NewProjectWizard },
   { path: ':id', component: ProjectDetail },
 ];
 

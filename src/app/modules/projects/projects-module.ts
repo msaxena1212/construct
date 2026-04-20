@@ -14,6 +14,7 @@ import { ProjectFiles } from './widgets/project-files/project-files';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TaskDetail } from './widgets/task-detail/task-detail';
 import { AddTask } from './widgets/add-task/add-task';
+import { SubtaskProgressPipe } from './widgets/task-management/subtask-progress.pipe';
 
 @NgModule({
   declarations: [
@@ -27,6 +28,7 @@ import { AddTask } from './widgets/add-task/add-task';
     ProjectFiles,
     TaskDetail,
     AddTask,
+    SubtaskProgressPipe,
   ],
   imports: [CommonModule, ProjectsRoutingModule, FormsModule, ReactiveFormsModule, DragDropModule],
 })

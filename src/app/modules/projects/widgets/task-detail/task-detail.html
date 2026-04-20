@@ -14,7 +14,7 @@
                 <span class="text-slate-300 dark:text-slate-700">|</span>
                 <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                     <span class="material-symbols-outlined text-[18px]">calendar_today</span>
-                    <span class="text-sm font-medium">Due: {{ task.date || 'No date set' }}</span>
+                    <span class="text-sm font-medium">Due: {{ task.due_date || 'No date set' }}</span>
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -62,13 +62,13 @@
                     </div>
                     <div
                         class="bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl p-2 space-y-1 border border-slate-100 dark:border-slate-800">
-                        @for (item of checklist; track item.title) {
+                        @for (item of task.subtasks; track item.id) {
                         <div
                             class="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100/50 dark:border-slate-800/50 group transition-colors hover:bg-slate-50 relative pr-10">
                             <div (click)="toggleChecklist(item)"
-                                [class]="item.completed ? 'border-blue-600 bg-blue-600' : 'border-slate-300 dark:border-slate-600 group-hover:border-blue-500'"
+                                [class]="item.is_completed ? 'border-blue-600 bg-blue-600' : 'border-slate-300 dark:border-slate-600 group-hover:border-blue-500'"
                                 class="cursor-pointer w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0">
-                                @if (item.completed) {
+                                @if (item.is_completed) {
                                 <span class="material-symbols-outlined text-white text-[16px]">check</span>
                                 }
                             </div>
@@ -81,7 +81,7 @@
                             </button>
                             } @else {
                             <span
-                                [class]="item.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300 font-semibold'"
+                                [class]="item.is_completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300 font-semibold'"
                                 class="text-sm transition-all">{{ item.title }}</span>
                             }
                         </div>
@@ -110,21 +110,21 @@
                         </button>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        @for (file of attachments; track file.name) {
+                        @for (file of task.attachments; track file.id) {
                         <div
                             class="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-500/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all cursor-pointer group shadow-sm bg-white dark:bg-slate-900/50">
-                            <div [class]="'bg-' + file.color + '-100 text-' + file.color + '-600'"
-                                class="w-12 h-12 rounded-xl flex items-center justify-center shadow-inner shrink-0">
-                                <span class="material-symbols-outlined text-[28px]">{{ file.icon }}</span>
+                            <div
+                                class="bg-blue-100 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center shadow-inner shrink-0">
+                                <span class="material-symbols-outlined text-[28px]">description</span>
                             </div>
                             <div class="flex-1 overflow-hidden">
                                 <p class="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{{ file.name }}
                                 </p>
                                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{{
-                                    file.size }} • {{ file.date }}</p>
+                                    file.size }} • {{ file.createdAt | date }}</p>
                             </div>
-                            <span
-                                class="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">download</span>
+                            <a [href]="file.url" target="_blank"
+                                class="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">download</a>
                         </div>
                         }
                     </div>
@@ -136,26 +136,27 @@
                 class="md:col-span-4 bg-slate-50/50 dark:bg-slate-800/20 p-8 space-y-8 flex flex-col h-full overflow-y-auto min-h-0">
                 <!-- Assignee Section -->
                 <div class="space-y-4">
-                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Assignee</h3>
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Assignee</h2>
                     <div
                         class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 relative">
                         <img class="w-12 h-12 rounded-xl object-cover ring-2 ring-slate-100 dark:ring-slate-800"
-                            [src]="task.assignee || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&h=256&auto=format&fit=crop'"
-                            [alt]="task.assigneeName || 'Assignee'">
+                            [src]="task.assignees?.[0]?.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&h=256&auto=format&fit=crop'"
+                            [alt]="task.assignees?.[0]?.firstname || 'Assignee'">
                         <div class="flex-1">
                             @if (isEditing) {
                             <select (change)="onAssigneeSelect($event)"
                                 class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-blue-500">
-                                <option disabled [selected]="!task.assigneeName">Select Assignee</option>
-                                @for (member of teamMembers; track member.name) {
-                                <option [value]="member.name" [selected]="member.name === task.assigneeName">{{
-                                    member.name }}</option>
+                                <option disabled selected>Select Assignee</option>
+                                @for (member of teamMembers; track member.id) {
+                                <option [value]="member.id">{{ member.firstname }} {{ member.lastname }}</option>
                                 }
                             </select>
                             } @else {
-                            <p class="text-sm font-bold text-slate-900 dark:text-slate-50">{{ task.assigneeName ||
-                                'Elena Rodriguez' }}</p>
-                            <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">Owner
+                            <p class="text-sm font-bold text-slate-900 dark:text-slate-50">{{
+                                task.assignees?.[0]?.firstname }} {{ task.assignees?.[0]?.lastname || 'Unassigned' }}
+                            </p>
+                            <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">Primary
+                                Contact
                             </p>
                             }
                         </div>
@@ -181,17 +182,17 @@
                     <div class="flex-1 overflow-y-auto pr-2 min-h-0">
                         <div
                             class="space-y-8 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-slate-800">
-                            @for (act of activities; track act.time) {
+                            @for (act of task.activities; track act.id) {
                             <div class="relative pl-8 animate-in fade-in duration-500">
-                                <div [class]="act.isSystem ? 'bg-slate-200 dark:bg-slate-700' : 'bg-blue-600'"
-                                    class="absolute left-0 top-1.5 w-4 h-4 rounded-full ring-4 ring-white dark:ring-slate-900 z-10">
+                                <div
+                                    class="bg-blue-600 absolute left-0 top-1.5 w-4 h-4 rounded-full ring-4 ring-white dark:ring-slate-900 z-10">
                                 </div>
                                 <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                    <span class="font-bold text-slate-900 dark:text-slate-50">{{ act.author }}</span> {{
-                                    act.action }}
+                                    <span class="font-bold text-slate-900 dark:text-slate-50">{{ act.user?.firstname || 'System' }}</span> 
+                                    {{ act.detail }}
                                 </p>
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{
-                                    act.time }}</p>
+                                    act.createdAt | date:'shortTime' }}</p>
                             </div>
                             }
                         </div>
@@ -213,7 +214,7 @@
         </div>
     </div>
 
-    <!-- Document Upload Simulation Modal -->
+    <!-- Document Upload Modal -->
     @if (showUploadModal) {
     <div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
         (click)="showUploadModal = false">
@@ -222,19 +223,16 @@
             <h3 class="text-xl font-bold text-slate-900 dark:text-slate-50 mb-2">Upload Document</h3>
             <p class="text-xs text-slate-500 mb-6">Select a file to attach to this task.</p>
 
-            <div
-                class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors mb-6">
-                <span class="material-symbols-outlined text-[32px] text-blue-500 mb-2">cloud_upload</span>
+            <label class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors mb-6 group">
+                <input type="file" class="hidden" (change)="onFileSelected($event)">
+                <span class="material-symbols-outlined text-[32px] text-blue-500 mb-2 group-hover:scale-110 transition-transform">cloud_upload</span>
                 <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Click to Browse Files</p>
-                <p class="text-[10px] text-slate-400 mt-1">PDF, JPG, PNG up to 50MB</p>
-            </div>
+                <p class="text-[10px] text-slate-400 mt-1">Select any document or image</p>
+            </label>
 
             <div class="flex items-center justify-end gap-3">
                 <button (click)="showUploadModal = false"
-                    class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancel</button>
-                <button (click)="simulateUpload()"
-                    class="px-6 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 shadow-md">Simulate
-                    Upload</button>
+                    class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
             </div>
         </div>
     </div>

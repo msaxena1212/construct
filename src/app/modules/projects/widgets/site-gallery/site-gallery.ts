@@ -7,7 +7,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   styleUrl: './site-gallery.scss',
 })
 export class SiteGallery implements OnInit {
-  @Input() projectId: string = '';
+  @Input() projectId: string | number = '';
   @Input() newlyUploaded: any[] = [];
   @Output() uploadMedia = new EventEmitter<void>();
 

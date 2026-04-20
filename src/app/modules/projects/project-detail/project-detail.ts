@@ -3,6 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 
+import { IProject, IUser, IAuditEntry, IMilestone } from '../../../shared/interfaces/project.interface';
+
 @Component({
   selector: 'app-project-detail',
   standalone: false,
@@ -10,14 +12,14 @@ import { ToastrService } from 'ngx-toastr';
   styleUrl: './project-detail.scss',
 })
 export class ProjectDetail implements OnInit {
-  project: any = null;
+  project: IProject | null = null;
   loading = true;
   error: string | null = null;
   
   activeTab = 'Overview';
   tabs = ['Overview', 'Tasks', 'Timeline', 'Budget', 'Gallery', 'Files', 'Updates'];
   
-  teamMembers: any[] = [{ name: 'All Members' }];
+  teamMembers: { name: string; avatar?: string; role?: string }[] = [{ name: 'All Members' }];
   selectedMember = 'All Members';
 
   showAddUpdateModal = false;
@@ -28,7 +30,7 @@ export class ProjectDetail implements OnInit {
   
   auditFilter = 'All';
   auditFilterOptions = ['All', 'Project', 'Task', 'Milestone', 'Document', 'Safety', 'Budget', 'Team'];
-  auditTrail: any[] = []; // Mocked for now
+  auditTrail: IAuditEntry[] = []; 
 
   constructor(
     private route: ActivatedRoute,
@@ -50,12 +52,12 @@ export class ProjectDetail implements OnInit {
   fetchProjectDetails(id: string) {
     this.loading = true;
     this.projectService.getProjectById(id).subscribe({
-      next: (res: any) => {
+      next: (res) => {
         this.project = this.mapProjectData(res.data);
         this.loading = false;
         this.syncTeamMembers();
       },
-      error: (err: any) => {
+      error: () => {
         this.loading = false;
         this.error = 'Failed to load project details.';
         this.toastr.error(this.error);
@@ -63,17 +65,15 @@ export class ProjectDetail implements OnInit {
     });
   }
 
-  private mapProjectData(p: any) {
-    // Progress calculation
+  private mapProjectData(p: IProject): IProject {
     const totalMs = p.milestones?.length || 0;
-    const completedMs = p.milestones?.filter((m: any) => m.is_completed).length || 0;
+    const completedMs = p.milestones?.filter((m: IMilestone) => m.is_completed).length || 0;
     const progress = totalMs > 0 ? Math.round((completedMs / totalMs) * 100) : 0;
 
-    // Milestone mapping (add colors if missing for UI)
-    const milestones = (p.milestones || []).map((m: any, i: number) => ({
+    const milestones: IMilestone[] = (p.milestones || []).map((m: IMilestone, i: number) => ({
       ...m,
       color: m.color || (i % 3 === 0 ? 'primary' : i % 3 === 1 ? 'secondary' : 'outline'),
-      progress: m.is_completed ? 100 : (i === completedMs ? 45 : 0) // Visual flair for active milestone
+      progress: m.is_completed ? 100 : (i === completedMs ? 45 : 0)
     }));
 
     return {
@@ -81,14 +81,13 @@ export class ProjectDetail implements OnInit {
       progress: progress,
       milestones: milestones,
       estimatedCompletion: p.completion_date,
-      budget: {
-        total: p.budget_total,
-        used: p.budget_used
+      budget_summary: {
+        total: p.budget_total || 0,
+        used: p.budget_used || 0
       },
-      // Map associations to the names expected by template
-      team: (p.team_members || []).map((m: any) => ({
+      team: (p.team_members || []).map((m: IUser) => ({
         name: `${m.firstname} ${m.lastname}`,
-        role: m.PROJECT_TEAM?.role || 'Technical Staff',
+        role: (m as any).PROJECT_TEAM?.role || 'Technical Staff',
         avatar: m.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop'
       }))
     };
@@ -104,7 +103,6 @@ export class ProjectDetail implements OnInit {
     this.activeTab = tab;
   }
 
-  // --- Mock Features for UI Interactivity ---
   openRFIComposer() { this.showRFIComposer = true; }
   sendRFI() {
     this.toastr.success('RFI Sent Successfully');
@@ -124,7 +122,7 @@ export class ProjectDetail implements OnInit {
     ];
   }
 
-  get filteredAudit() {
+  get filteredAudit(): IAuditEntry[] {
     if (this.auditFilter === 'All') return this.auditTrail;
     return this.auditTrail.filter((a) => a.type === this.auditFilter);
   }

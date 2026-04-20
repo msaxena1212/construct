@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { IProject, IUser } from '../../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-new-project-wizard',
@@ -13,42 +14,95 @@ import { Router } from '@angular/router';
 export class NewProjectWizard implements OnInit {
   currentStep: number = 1;
   projectForm: FormGroup;
-  availableMembers: any[] = [];
+  availableMembers: IUser[] = [];
   selectedFiles: File[] = [];
   loading = false;
   showAssignDropdown = false;
   newMilestoneName = '';
 
+  editMode = false;
+  projectId: string | null = null;
+  existingDocuments: any[] = [];
+
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
     private toastr: ToastrService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.projectForm = this.fb.group({
-      // Step 1: General Info
       name: ['', [Validators.required, Validators.minLength(3)]],
       type: ['Commercial Renovation', Validators.required],
       completionDate: ['', Validators.required],
       address: ['', Validators.required],
-      
-      // Step 2: Team (FormArray of objects { user_id, name, role, avatar })
       team: this.fb.array([]),
-      
-      // Step 3: Budget & Milestones
       budgetTotal: [null, [Validators.required, Validators.min(1000)]],
-      milestones: this.fb.array([
-        this.createMilestone('Site Preparation & Foundations', 'Phase 1', 'primary'),
-        this.createMilestone('Structural Framing', 'Phase 2', 'outline')
-      ]),
-
-      // Step 4: Documents (Tracking only for UI, binary files handled separately)
+      milestones: this.fb.array([]),
       documents: this.fb.array([])
     });
   }
 
   ngOnInit() {
     this.fetchTeamMembers();
+    
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.editMode = true;
+        this.projectId = id;
+        this.loadProjectForEdit(id);
+      } else {
+        // Default milestones for new project
+        this.addDefaultMilestones();
+      }
+    });
+  }
+
+  addDefaultMilestones() {
+    if (this.milestones.length === 0) {
+      this.milestones.push(this.createMilestone('Site Preparation & Foundations', 'Phase 1', 'primary'));
+      this.milestones.push(this.createMilestone('Structural Framing', 'Phase 2', 'outline'));
+    }
+  }
+
+  loadProjectForEdit(id: string) {
+    this.loading = true;
+    this.projectService.getProjectById(id).subscribe({
+      next: (res) => {
+        const p = res.data;
+        this.projectForm.patchValue({
+          name: p.name,
+          type: p.type || 'Commercial Renovation',
+          completionDate: p.completion_date?.split('T')[0],
+          budgetTotal: p.budget_total
+        });
+
+        // Patch Team
+        this.team.clear();
+        p.team_members?.forEach((m) => {
+          const role = (m as any).PROJECT_TEAM?.role || 'Technical Staff';
+          this.team.push(this.fb.group({
+            user_id: [m.id],
+            name: [`${m.firstname} ${m.lastname}`],
+            role: [role],
+            avatar: [m.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop']
+          }));
+        });
+
+        // Patch Milestones
+        this.milestones.clear();
+        p.milestones?.forEach((m) => {
+          this.milestones.push(this.createMilestone(m.name, (m as any).phase || 'Drafting', m.color || 'primary'));
+        });
+
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.toastr.error('Failed to load project details.');
+      }
+    });
   }
 
   // --- Getters ---
@@ -63,7 +117,7 @@ export class NewProjectWizard implements OnInit {
       next: (res) => {
         this.availableMembers = res.data;
       },
-      error: (err) => {
+      error: () => {
         this.toastr.error('Failed to load team members');
       }
     });
@@ -87,7 +141,6 @@ export class NewProjectWizard implements OnInit {
   }
 
   setStep(step: number) {
-    // Only allow jumping back, or jumping forward if the current step is valid
     if (step < this.currentStep || this.isStepValid(this.currentStep)) {
       this.currentStep = step;
     }
@@ -96,26 +149,26 @@ export class NewProjectWizard implements OnInit {
   isStepValid(step: number): boolean {
     switch (step) {
       case 1:
-        return this.f['name'].valid && this.f['type'].valid && this.f['address'].valid && this.f['completionDate'].valid;
+        return this.f['name'].valid && this.f['type'].valid && this.f['completionDate'].valid;
       case 2:
         return this.team.length > 0;
       case 3:
         return this.f['budgetTotal'].valid;
       case 4:
-        return true; // Documentation is optional in validation
+        return true;
       default:
         return true;
     }
   }
 
   // --- Step 2: Team Management ---
-  addMember(member: any) {
+  addMember(member: IUser) {
     const isAlreadyAdded = this.team.value.find((m: any) => m.user_id === member.id);
     if (!isAlreadyAdded) {
       this.team.push(this.fb.group({
         user_id: [member.id],
         name: [member.firstname + ' ' + member.lastname],
-        role: [member.role?.name || 'Technical Staff'],
+        role: [member.role || 'Technical Staff'],
         avatar: [member.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop']
       }));
     }
@@ -169,16 +222,15 @@ export class NewProjectWizard implements OnInit {
   }
 
   // --- Final Execution ---
-  initializeProject() {
+  saveProject() {
     if (this.projectForm.invalid) {
-      this.toastr.error('Please fix the errors in the form before initializing.');
+      this.toastr.error('Please fix the errors in the form before saving.');
       return;
     }
 
     this.loading = true;
     const formData = new FormData();
 
-    // Prepare the JSON data matching the backend ProjectController
     const payload = {
       name: this.projectForm.value.name,
       type: this.projectForm.value.type,
@@ -186,7 +238,6 @@ export class NewProjectWizard implements OnInit {
       completionDate: this.projectForm.value.completionDate,
       budgetTotal: this.projectForm.value.budgetTotal,
       milestones: this.projectForm.value.milestones,
-      // Map team array to just user_id and role for backend
       team: this.projectForm.value.team.map((m: any) => ({
         user_id: m.user_id,
         role: m.role
@@ -194,22 +245,23 @@ export class NewProjectWizard implements OnInit {
     };
 
     formData.append('data', JSON.stringify(payload));
-
-    // Append files
     this.selectedFiles.forEach((file) => {
       formData.append('blueprints', file);
     });
 
-    this.projectService.createProject(formData).subscribe({
-      next: (res) => {
+    const request = this.editMode && this.projectId
+      ? this.projectService.updateProject(this.projectId, formData)
+      : this.projectService.createProject(formData);
+
+    request.subscribe({
+      next: () => {
         this.loading = false;
-        this.toastr.success('Project initialized successfully!');
+        this.toastr.success(this.editMode ? 'Project updated!' : 'Project initialized!');
         this.router.navigate(['/master/projects']);
       },
       error: (err) => {
         this.loading = false;
-        console.error(err);
-        this.toastr.error(err.error?.message || 'Error initializing project');
+        this.toastr.error(err.error?.message || 'Error saving project');
       }
     });
   }
