@@ -12,9 +12,13 @@ const app = express();
 const db = require("./models");
 
 // table wise sycn
-db.company.sync({alter:true});
-db.user.sync({alter:true});
+// db.company.sync({alter:true});
+// db.user.sync({alter:true});
 // db.role_permission.sync({alter:true});
+// db.project.sync({alter:true});
+// db.milestone.sync({alter:true});
+// db.project_team.sync({alter:true});
+// db.project_document.sync({alter:true});
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));

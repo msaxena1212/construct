@@ -31,5 +31,25 @@ db.role_permission.belongsTo(db.rbac_module, { foreignKey: 'module_id', as: 'mod
 
 // RBAC END
 
+// PROJECT MANAGEMENT START
+db.project = require("../modules/projects/models/project.model.js")(sequelize, Sequelize);
+db.milestone = require("../modules/projects/models/milestone.model.js")(sequelize, Sequelize);
+db.project_team = require("../modules/projects/models/team.model.js")(sequelize, Sequelize);
+db.project_document = require("../modules/projects/models/document.model.js")(sequelize, Sequelize);
+
+// Associations
+db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
+db.project.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.project.hasMany(db.milestone, { foreignKey: "project_id", as: "milestones", onDelete: 'CASCADE' });
+db.milestone.belongsTo(db.project, { foreignKey: "project_id" });
+
+db.project.hasMany(db.project_document, { foreignKey: "project_id", as: "documents", onDelete: 'CASCADE' });
+db.project_document.belongsTo(db.project, { foreignKey: "project_id" });
+
+db.project.belongsToMany(db.user, { through: db.project_team, foreignKey: "project_id", as: "team_members" });
+db.user.belongsToMany(db.project, { through: db.project_team, foreignKey: "user_id", as: "projects" });
+// PROJECT MANAGEMENT END
+
 connectDB();
 module.exports = db;
