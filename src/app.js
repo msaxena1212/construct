@@ -13,7 +13,7 @@ const db = require("./models");
 
 // table wise sycn
 // db.company.sync({alter:true});
-db.user.sync({ alter: true });
+// db.user.sync({ alter: true });
 // db.role_permission.sync({alter:true});
 // db.project.sync({alter:true});
 // db.milestone.sync({alter:true});

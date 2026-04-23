@@ -10,7 +10,8 @@ const excludedRoutes = [
   "/api/auth/sendOTP",
   "/api/auth/forgotpassword",
   "/api/v1/accept-invite",
-  "/api/v1/invite-info"
+  "/api/v1/invite-info",
+  "/uploads"
 ];
 
 function isExcluded(req) {

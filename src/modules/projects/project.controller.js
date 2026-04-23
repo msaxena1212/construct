@@ -5,6 +5,45 @@ class ProjectController {
     this.createProject = this.createProject.bind(this);
     this.getAllProjects = this.getAllProjects.bind(this);
     this.getProjectById = this.getProjectById.bind(this);
+    this.getProjectTimeline = this.getProjectTimeline.bind(this);
+  }
+
+  /**
+   * Get timeline data for a project (tasks and milestones)
+   */
+  async getProjectTimeline(req, res) {
+    try {
+      const { projectId } = req.params;
+      const company_id = req.user.company_id;
+
+      const project = await db.project.findOne({
+        where: { id: projectId, company_id },
+        include: [
+          { 
+            model: db.milestone, 
+            as: 'milestones',
+            attributes: ['id', 'name', 'phase', 'is_completed', 'color', 'createdAt']
+          },
+          { 
+            model: db.project_task, 
+            as: 'tasks',
+            attributes: ['id', 'title', 'status', 'priority', 'due_date', 'createdAt', 'is_completed'],
+            include: [
+              { model: db.user, as: 'assignees', attributes: ['id', 'firstname', 'lastname', 'avatar'] }
+            ]
+          }
+        ]
+      });
+
+      if (!project) {
+        return res.status(404).json({ message: "Project not found or unauthorized." });
+      }
+
+      res.status(200).json({ data: project });
+    } catch (error) {
+      console.error("[GET_PROJECT_TIMELINE_ERROR]", error);
+      res.status(500).json({ message: "Error fetching timeline data.", error: error.message });
+    }
   }
 
   /**
@@ -248,6 +287,49 @@ class ProjectController {
       if (t) await t.rollback();
       console.error("[UPDATE_PROJECT_ERROR]", error);
       res.status(500).json({ message: "Error updating project.", error: error.message });
+    }
+  }
+
+  /**
+   * Upload additional documents/media to an existing project
+   */
+  async uploadDocuments(req, res) {
+    let t;
+    try {
+      const { id } = req.params;
+      const company_id = req.user.company_id;
+
+      // Verify project ownership
+      const project = await db.project.findOne({ where: { id, company_id } });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found or unauthorized." });
+      }
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded." });
+      }
+
+      t = await db.sequelize.transaction();
+
+      const documentData = req.files.map(file => ({
+        project_id: id,
+        name: file.originalname,
+        size: (file.size / 1024).toFixed(2) + " KB",
+        url: `/uploads/projects/${file.filename}`,
+        mimetype: file.mimetype
+      }));
+
+      const createdDocs = await db.project_document.bulkCreate(documentData, { transaction: t });
+
+      await t.commit();
+      res.status(201).json({ 
+        message: "Documents uploaded successfully.", 
+        data: createdDocs 
+      });
+    } catch (error) {
+      if (t) await t.rollback();
+      console.error("[UPLOAD_DOCUMENTS_ERROR]", error);
+      res.status(500).json({ message: "Error uploading documents.", error: error.message });
     }
   }
 }

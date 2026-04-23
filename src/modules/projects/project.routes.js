@@ -16,6 +16,16 @@ module.exports = (router) => {
   // Get single project details
   router.get("/projects/:id", projectCtrl.getProjectById);
 
+  // Get project timeline data
+  router.get("/projects/:projectId/timeline", projectCtrl.getProjectTimeline);
+  
+  // Upload project documents/media
+  router.post(
+    "/projects/:id/documents",
+    upload.array("files", 10),
+    projectCtrl.uploadDocuments
+  );
+
   // Update existing project
   router.put(
     "/projects/:id",
