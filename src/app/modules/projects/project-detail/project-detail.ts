@@ -26,7 +26,7 @@ export class ProjectDetail implements OnInit {
   showRFIComposer = false;
   showDrawingUpload = false;
   rfiForm = { to: '', cc: '', bcc: '', subject: '', content: '' };
-  uploadedDrawings: any[] = [];
+  selectedFiles: File[] = [];
   
   auditFilter = 'All';
   auditFilterOptions = ['All', 'Project', 'Task', 'Milestone', 'Document', 'Safety', 'Budget', 'Team'];
@@ -109,10 +109,38 @@ export class ProjectDetail implements OnInit {
     this.showRFIComposer = false;
   }
 
-  openDrawingUpload() { this.showDrawingUpload = true; }
+  openDrawingUpload() { 
+    this.showDrawingUpload = true; 
+    this.selectedFiles = [];
+  }
+
+  onFilesSelected(event: any) {
+    if (event.target.files) {
+      this.selectedFiles = Array.from(event.target.files);
+    }
+  }
+
   submitDrawing() {
-    this.toastr.success('Drawing uploaded for review');
-    this.showDrawingUpload = false;
+    if (this.selectedFiles.length === 0) {
+      this.toastr.warning('Please select files to upload.');
+      return;
+    }
+
+    if (!this.project) return;
+
+    this.projectService.uploadDocuments(this.project.id, this.selectedFiles).subscribe({
+      next: (res) => {
+        this.toastr.success('Files uploaded successfully');
+        this.showDrawingUpload = false;
+        this.selectedFiles = [];
+        // Refresh project details to show new files in gallery
+        this.fetchProjectDetails(this.project!.id.toString());
+      },
+      error: (err) => {
+        this.toastr.error('Failed to upload files.');
+        console.error(err);
+      }
+    });
   }
 
   private mockAuditTrail() {

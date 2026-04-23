@@ -1,24 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-
-
-interface TimelineItem {
-  id: string;
-  name: string;
-  color: string;
-  completion?: number;
-  width?: string;
-  left: string;
-  critical?: boolean;
-  isMilestone?: boolean;
-  milestoneTitle?: string;
-  status?: string;
-  assignee?: string;
-}
-
-interface TimelinePhase {
-  title: string;
-  tasks: TimelineItem[];
-}
+import { ProjectService } from '../../services/project-service';
+import { IProject, IProjectTask, IMilestone, ITimelinePhase, ITimelineItem } from '../../../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-project-timeline',
@@ -27,58 +9,162 @@ interface TimelinePhase {
   styleUrl: './project-timeline.scss',
 })
 export class ProjectTimeline implements OnInit {
+  @Input() projectId: string | number = '';
   @Input() selectedMember = 'All Members';
+
+  loading = true;
   viewType: 'day' | 'week' | 'month' = 'week';
   showCriticalPath = false;
   showTeamView = false;
-  currentMonthIndex = 0;
-  months = ['October 2024', 'November 2024', 'December 2024'];
-  selectedProject = 'Skyline Plaza';
-  projects = ['All Projects', 'Skyline Plaza', 'Harbor Bridge Renovation', 'Meridian Towers', 'Westside Condos'];
+  
+  // Dynamic Timeline Logic
+  timelineHeaders: any[] = [];
+  startDate: Date = new Date();
+  totalDurationDays = 90; // Default view window
 
-  team = [
-    { name: 'All Members', avatar: '' },
-    { name: 'James Wilson', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtGFAFvuDTZowiKMN-_86PVlfoW0s1Y1t2wIesJt_aUWgPzfdeDsBI62JTUgxDWTq1m-Ym9UTDzUgPdykM1NQMrfIACLf6ELlG-TFDXx0bY0i_pEacXyHWhO2hkaeoTxzFixMpxv19qT44QctQNTUZJIcUIdbYcNqhsodpWPPJ7sk33kwcSVJEXH4-Vw1iFudWnbRysUDa4wlBKgguYjpVnU4sisOx6--P1vua992aHyR4-yzZcdvfY2oGUCGKt7PKua6O7aWnX-He' },
-    { name: 'Sarah Chen', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCNzfoyCh9T5jGXyS1Z_oulE0qwVUs24lt_XGAkXFQSRqaWNCKxded51i1BCZ7dfp-pGHnok3QVO3dgouAGxmqT3qEbjdB3JWGLULu5QhLo2_g1Ypr5J3YmNDL67WiHAt0xRnjKXt0-Wvr61mKsmkea12mawD58a6haqRp3roTP4ozbi8Nts8AGacuP2xj84hy-YMnppdLzUQWRMoC5W26Nao_ycj91iOCEE5K6VFvm0nsNGnn5Uf459l4Dnx69QzvNITq3QrutFSpc' }
-  ];
+  selectedProject = '';
+  projects: string[] = [];
 
-  phases: TimelinePhase[] = [
-    {
-      title: '01. SITE PREPARATION',
-      tasks: [
-        { id: 't1', name: 'Land Clearing', color: 'bg-primary', completion: 100, width: '48%', left: '10%', assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtGFAFvuDTZowiKMN-_86PVlfoW0s1Y1t2wIesJt_aUWgPzfdeDsBI62JTUgxDWTq1m-Ym9UTDzUgPdykM1NQMrfIACLf6ELlG-TFDXx0bY0i_pEacXyHWhO2hkaeoTxzFixMpxv19qT44QctQNTUZJIcUIdbYcNqhsodpWPPJ7sk33kwcSVJEXH4-Vw1iFudWnbRysUDa4wlBKgguYjpVnU4sisOx6--P1vua992aHyR4-yzZcdvfY2oGUCGKt7PKua6O7aWnX-He' },
-        { id: 't2', name: 'Soil Testing', color: 'bg-primary', completion: 100, width: '24%', left: '48%', assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCNzfoyCh9T5jGXyS1Z_oulE0qwVUs24lt_XGAkXFQSRqaWNCKxded51i1BCZ7dfp-pGHnok3QVO3dgouAGxmqT3qEbjdB3JWGLULu5QhLo2_g1Ypr5J3YmNDL67WiHAt0xRnjKXt0-Wvr61mKsmkea12mawD58a6haqRp3roTP4ozbi8Nts8AGacuP2xj84hy-YMnppdLzUQWRMoC5W26Nao_ycj91iOCEE5K6VFvm0nsNGnn5Uf459l4Dnx69QzvNITq3QrutFSpc' },
-        { id: 't3', name: 'Utility Markout', color: 'bg-primary', completion: 85, width: '32%', left: '64%', assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtGFAFvuDTZowiKMN-_86PVlfoW0s1Y1t2wIesJt_aUWgPzfdeDsBI62JTUgxDWTq1m-Ym9UTDzUgPdykM1NQMrfIACLf6ELlG-TFDXx0bY0i_pEacXyHWhO2hkaeoTxzFixMpxv19qT44QctQNTUZJIcUIdbYcNqhsodpWPPJ7sk33kwcSVJEXH4-Vw1iFudWnbRysUDa4wlBKgguYjpVnU4sisOx6--P1vua992aHyR4-yzZcdvfY2oGUCGKt7PKua6O7aWnX-He' }
-      ]
-    },
-    {
-      title: '02. FOUNDATION',
-      tasks: [
-        { id: 't4', name: 'Excavation', color: 'bg-secondary', completion: 40, width: '56%', left: '28%', critical: true, assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCNzfoyCh9T5jGXyS1Z_oulE0qwVUs24lt_XGAkXFQSRqaWNCKxded51i1BCZ7dfp-pGHnok3QVO3dgouAGxmqT3qEbjdB3JWGLULu5QhLo2_g1Ypr5J3YmNDL67WiHAt0xRnjKXt0-Wvr61mKsmkea12mawD58a6haqRp3roTP4ozbi8Nts8AGacuP2xj84hy-YMnppdLzUQWRMoC5W26Nao_ycj91iOCEE5K6VFvm0nsNGnn5Uf459l4Dnx69QzvNITq3QrutFSpc' },
-        { id: 't5', name: 'Concrete Pouring', color: 'bg-secondary', isMilestone: true, left: '44%', milestoneTitle: 'Inspection Milestone' },
-        { id: 't6', name: 'Curing Period', color: 'bg-slate-200', completion: 0, width: '40%', left: '48%', assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCNzfoyCh9T5jGXyS1Z_oulE0qwVUs24lt_XGAkXFQSRqaWNCKxded51i1BCZ7dfp-pGHnok3QVO3dgouAGxmqT3qEbjdB3JWGLULu5QhLo2_g1Ypr5J3YmNDL67WiHAt0xRnjKXt0-Wvr61mKsmkea12mawD58a6haqRp3roTP4ozbi8Nts8AGacuP2xj84hy-YMnppdLzUQWRMoC5W26Nao_ycj91iOCEE5K6VFvm0nsNGnn5Uf459l4Dnx69QzvNITq3QrutFSpc' }
-      ]
-    },
-    {
-      title: '03. STRUCTURAL',
-      tasks: [
-        { id: 't7', name: 'Steel Framing', color: 'bg-slate-200', status: 'Pending', width: '80%', left: '56%', assignee: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtGFAFvuDTZowiKMN-_86PVlfoW0s1Y1t2wIesJt_aUWgPzfdeDsBI62JTUgxDWTq1m-Ym9UTDzUgPdykM1NQMrfIACLf6ELlG-TFDXx0bY0i_pEacXyHWhO2hkaeoTxzFixMpxv19qT44QctQNTUZJIcUIdbYcNqhsodpWPPJ7sk33kwcSVJEXH4-Vw1iFudWnbRysUDa4wlBKgguYjpVnU4sisOx6--P1vua992aHyR4-yzZcdvfY2oGUCGKt7PKua6O7aWnX-He' }
-      ]
+  team: any[] = [{ name: 'All Members', avatar: '' }];
+  phases: ITimelinePhase[] = [];
+  resources: any[] = [];
+
+  constructor(private projectService: ProjectService) { }
+
+  ngOnInit(): void {
+    this.initTimelineRange();
+    if (this.projectId) {
+      this.fetchTimelineData();
     }
-  ];
+  }
 
-  resources = [
-    { name: 'James Wilson', role: 'Lead Engineer', utilization: 85, avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtGFAFvuDTZowiKMN-_86PVlfoW0s1Y1t2wIesJt_aUWgPzfdeDsBI62JTUgxDWTq1m-Ym9UTDzUgPdykM1NQMrfIACLf6ELlG-TFDXx0bY0i_pEacXyHWhO2hkaeoTxzFixMpxv19qT44QctQNTUZJIcUIdbYcNqhsodpWPPJ7sk33kwcSVJEXH4-Vw1iFudWnbRysUDa4wlBKgguYjpVnU4sisOx6--P1vua992aHyR4-yzZcdvfY2oGUCGKt7PKua6O7aWnX-He' },
-    { name: 'Sarah Chen', role: 'Logistics', utilization: 110, avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCNzfoyCh9T5jGXyS1Z_oulE0qwVUs24lt_XGAkXFQSRqaWNCKxded51i1BCZ7dfp-pGHnok3QVO3dgouAGxmqT3qEbjdB3JWGLULu5QhLo2_g1Ypr5J3YmNDL67WiHAt0xRnjKXt0-Wvr61mKsmkea12mawD58a6haqRp3roTP4ozbi8Nts8AGacuP2xj84hy-YMnppdLzUQWRMoC5W26Nao_ycj91iOCEE5K6VFvm0nsNGnn5Uf459l4Dnx69QzvNITq3QrutFSpc', overAllocated: true }
-  ];
+  initTimelineRange() {
+    const today = new Date();
+    this.startDate = new Date(today);
+    
+    if (this.viewType === 'day') {
+      this.startDate.setDate(today.getDate() - 3);
+      this.totalDurationDays = 14;
+    } else if (this.viewType === 'week') {
+      this.startDate.setDate(today.getDate() - 21);
+      this.totalDurationDays = 70; // ~10 weeks
+    } else {
+      this.startDate.setDate(today.getDate() - 60);
+      this.totalDurationDays = 180; // ~6 months
+    }
+    
+    this.generateTimelineHeaders();
+  }
 
-  constructor() { }
+  generateTimelineHeaders() {
+    this.timelineHeaders = [];
+    const tempDate = new Date(this.startDate);
+    
+    if (this.viewType === 'day') {
+      for (let i = 0; i < 14; i++) {
+        this.timelineHeaders.push({
+          label: tempDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
+          isToday: tempDate.toDateString() === new Date().toDateString()
+        });
+        tempDate.setDate(tempDate.getDate() + 1);
+      }
+    } else if (this.viewType === 'week') {
+      for (let i = 0; i < 10; i++) {
+        this.timelineHeaders.push({
+          label: tempDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
+          isCurrent: tempDate <= new Date() && new Date() < new Date(tempDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+        });
+        tempDate.setDate(tempDate.getDate() + 7);
+      }
+    } else {
+      for (let i = 0; i < 6; i++) {
+        this.timelineHeaders.push({
+          label: tempDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+          isCurrent: tempDate.getMonth() === new Date().getMonth() && tempDate.getFullYear() === new Date().getFullYear()
+        });
+        tempDate.setMonth(tempDate.getMonth() + 1);
+      }
+    }
+  }
 
-  ngOnInit(): void { }
+  fetchTimelineData() {
+    this.loading = true;
+    this.projectService.getProjectTimeline(this.projectId).subscribe({
+      next: (res) => {
+        const project: IProject = res.data;
+        this.selectedProject = project.name;
+        this.projects = [project.name];
 
-  get filteredPhases(): TimelinePhase[] {
+        if (project.team_members) {
+          this.team = [{ name: 'All Members', avatar: '' }, ...project.team_members];
+          this.resources = project.team_members.map(m => ({
+            name: m.firstname + ' ' + m.lastname,
+            role: m.project_team?.role || 'Site Team',
+            utilization: Math.floor(Math.random() * 40) + 60,
+            avatar: m.avatar,
+            overAllocated: Math.random() > 0.8
+          }));
+        }
+
+        this.mapDataToPhases(project);
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      }
+    });
+  }
+
+  mapDataToPhases(project: IProject) {
+    const today = new Date();
+    const milestones: ITimelineItem[] = (project.milestones || []).map(m => ({
+      id: `m-${m.id}`,
+      name: m.name,
+      color: 'bg-secondary',
+      isMilestone: true,
+      milestoneTitle: m.name,
+      left: this.calculatePosition(new Date(m.createdAt || today))
+    }));
+
+    const tasks: ITimelineItem[] = (project.tasks || []).map(t => ({
+      id: `t-${t.id}`,
+      name: t.title,
+      color: t.status === 'Completed' ? 'bg-green-500' : (t.priority === 'High Priority' ? 'bg-error' : 'bg-primary'),
+      completion: t.is_completed ? 100 : (t.status === 'In Progress' ? 45 : 0),
+      status: t.status,
+      left: this.calculatePosition(new Date(t.createdAt || today)),
+      width: this.calculateWidth(new Date(t.createdAt || today), new Date(t.due_date || today)),
+      assignee: t.assignees?.[0]?.avatar,
+      critical: t.priority === 'High Priority'
+    }));
+
+    this.phases = [
+      { title: 'PROJECT MILESTONES', tasks: milestones },
+      { title: 'CONSTRUCTION TASKS', tasks: tasks }
+    ];
+  }
+
+  calculatePosition(date: Date): string {
+    const diffTime = date.getTime() - this.startDate.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+    let pos = (diffDays / this.totalDurationDays) * 100;
+    if (pos < 0) pos = 0;
+    if (pos > 98) pos = 98;
+    return pos + '%';
+  }
+
+  calculateWidth(start: Date, end: Date): string {
+    const diffTime = end.getTime() - start.getTime();
+    let diffDays = diffTime / (1000 * 3600 * 24);
+    if (diffDays < 2) diffDays = 2;
+    let width = (diffDays / this.totalDurationDays) * 100;
+    if (width > 40) width = 40;
+    return width + '%';
+  }
+
+  get filteredPhases(): ITimelinePhase[] {
     if (this.selectedMember === 'All Members') return this.phases;
-    const member = this.team.find(m => m.name === this.selectedMember);
+    const member = this.team.find(m => (m.firstname + ' ' + m.lastname) === this.selectedMember || m.name === this.selectedMember);
     return this.phases.map(p => ({
       ...p,
       tasks: p.tasks.filter(t => t.assignee === member?.avatar || t.isMilestone)
@@ -87,6 +173,8 @@ export class ProjectTimeline implements OnInit {
 
   setViewType(type: 'day' | 'week' | 'month') {
     this.viewType = type;
+    this.initTimelineRange();
+    if (this.projectId) this.fetchTimelineData();
   }
 
   toggleCriticalPath() {
@@ -98,10 +186,27 @@ export class ProjectTimeline implements OnInit {
   }
 
   navigate(direction: 'next' | 'prev') {
-    if (direction === 'next') {
-      this.currentMonthIndex = (this.currentMonthIndex + 1) % this.months.length;
-    } else {
-      this.currentMonthIndex = (this.currentMonthIndex - 1 + this.months.length) % this.months.length;
-    }
+    const days = direction === 'next' ? 7 : -7;
+    this.startDate.setDate(this.startDate.getDate() + days);
+    this.generateTimelineHeaders();
+    if (this.projectId) this.fetchTimelineData();
+  }
+
+  getCurrentDateLabel(): string {
+    return this.startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  getTodayPosition(): string {
+    const today = new Date();
+    const diffTime = today.getTime() - this.startDate.getTime();
+    const diffDays = diffTime / (1000 * 3600 * 24);
+    let pos = (diffDays / this.totalDurationDays) * 100;
+    if (pos < 0 || pos > 100) return '-100%';
+    return pos + '%';
+  }
+
+  resetToToday() {
+    this.initTimelineRange();
+    if (this.projectId) this.fetchTimelineData();
   }
 }

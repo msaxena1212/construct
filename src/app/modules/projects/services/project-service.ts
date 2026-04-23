@@ -66,4 +66,16 @@ export class ProjectService {
   getTasks(): Observable<ApiResponse<IProjectTask[]>> {
     return this.http.get<ApiResponse<IProjectTask[]>>(`${this.apiUrl}/tasks`);
   }
+
+  getProjectTimeline(projectId: string | number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/projects/${projectId}/timeline`);
+  }
+
+  uploadDocuments(projectId: string | number, files: File[]): Observable<ApiResponse<any>> {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/projects/${projectId}/documents`, formData);
+  }
 }

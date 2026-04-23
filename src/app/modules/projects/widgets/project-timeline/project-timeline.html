@@ -52,7 +52,7 @@
                     [class]="viewType === 'month' ? 'bg-white text-primary rounded shadow-sm' : 'text-slate-500'"
                     class="px-4 py-1.5 text-xs font-bold transition-all cursor-pointer">Month</button>
             </div>
-            <h3 class="text-sm font-bold text-slate-600 uppercase tracking-wider">{{ months[currentMonthIndex] }}</h3>
+            <h3 class="text-sm font-bold text-slate-600 uppercase tracking-wider">{{ getCurrentDateLabel() }}</h3>
         </div>
         <div class="flex gap-2">
             <button (click)="navigate('prev')"
@@ -65,7 +65,14 @@
     </div>
 
     <!-- Gantt Body -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex overflow-hidden relative">
+        @if (loading) {
+        <div class="absolute inset-0 z-50 bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-xs font-black uppercase tracking-widest text-slate-400">Assembling Schedule...</p>
+        </div>
+        }
+
         <!-- Task Labels Sidebar -->
         <div class="w-80 border-r border-slate-100 flex flex-col bg-slate-50/30">
             <div class="h-12 border-b border-slate-100 flex items-center px-6">
@@ -97,35 +104,13 @@
             <!-- Dates Header -->
             <div class="h-12 border-b border-slate-100 flex">
                 <div class="min-w-[1000px] flex">
-                    @if (viewType === 'day') {
-                    @for (day of [21, 22, 23, 24, 25, 26, 27]; track day) {
-                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center">
-                        <span class="text-[10px] font-bold" [class.text-primary]="day === 21">{{ day === 21 ? 'TODAY' :
-                            'OCT ' + day }}</span>
+                    @for (header of timelineHeaders; track header.label) {
+                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"
+                        [class.bg-blue-50/30]="header.isToday || header.isCurrent">
+                        <span class="text-[10px] font-bold" [class.text-primary]="header.isToday || header.isCurrent">
+                            {{ header.label }} {{ (header.isToday || header.isCurrent) ? '(NOW)' : '' }}
+                        </span>
                     </div>
-                    }
-                    } @else if (viewType === 'week') {
-                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
-                            class="text-[10px] font-bold text-slate-400">OCT 07</span></div>
-                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
-                            class="text-[10px] font-bold text-slate-400">OCT 14</span></div>
-                    <div
-                        class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center bg-blue-50/30">
-                        <span class="text-[10px] font-black text-primary">OCT 21 (NOW)</span></div>
-                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
-                            class="text-[10px] font-bold text-slate-400">OCT 28</span></div>
-                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
-                            class="text-[10px] font-bold text-slate-400">NOV 04</span></div>
-                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center"><span
-                            class="text-[10px] font-bold text-slate-400">NOV 11</span></div>
-                    <div class="flex-1 flex flex-col items-center justify-center"><span
-                            class="text-[10px] font-bold text-slate-400">NOV 18</span></div>
-                    } @else {
-                    @for (m of ['AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB']; track m) {
-                    <div class="flex-1 border-r border-slate-100/50 flex flex-col items-center justify-center">
-                        <span class="text-[10px] font-bold" [class.text-primary]="m === 'OCT'">{{ m }}</span>
-                    </div>
-                    }
                     }
                 </div>
             </div>
@@ -133,8 +118,9 @@
             <!-- Timeline Content Area -->
             <div class="py-4 space-y-6 min-w-[1000px] h-full relative">
                 <!-- Current Date Line Indicator -->
-                <div class="absolute left-[34%] top-0 bottom-0 w-px bg-primary z-10 transition-all duration-500"
-                    [style.opacity]="viewType === 'week' ? 1 : 0.2">
+                <div class="absolute top-0 bottom-0 w-px bg-primary z-10 transition-all duration-500"
+                    [style.left]="getTodayPosition()"
+                    [style.opacity]="getTodayPosition() === '-100%' ? 0 : 1">
                     <div class="w-3 h-3 bg-primary rounded-full absolute -top-1.5 -left-1 shadow-lg shadow-primary/40">
                     </div>
                 </div>
@@ -237,7 +223,7 @@
     </div>
 </div>
 
-<button
+<button (click)="resetToToday()"
     class="fixed bottom-8 right-8 w-14 h-14 bg-secondary shadow-xl rounded-full flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all z-50 cursor-pointer">
-    <span class="material-symbols-outlined text-3xl">edit_calendar</span>
+    <span class="material-symbols-outlined text-3xl">calendar_today</span>
 </button>

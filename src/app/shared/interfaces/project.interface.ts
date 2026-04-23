@@ -5,6 +5,9 @@ export interface IUser {
   email?: string;
   avatar?: string;
   role?: string;
+  project_team?: {
+    role: string;
+  };
 }
 
 export interface ITaskAttachment {
@@ -52,6 +55,7 @@ export interface IProjectTask {
   comments?: ITaskComment[];
   activities?: ITaskActivity[];
   subtasks?: IProjectTask[];
+  createdAt?: string;
 
   // UI helper fields
   priorityClass?: string;
@@ -64,6 +68,17 @@ export interface IMilestone {
   is_completed: boolean;
   progress: number;
   color: string;
+  createdAt?: string;
+}
+
+export interface IProjectDocument {
+  id: number;
+  project_id?: number;
+  name: string;
+  url: string;
+  size: string;
+  mimetype: string;
+  createdAt: string;
 }
 
 export interface IAuditEntry {
@@ -99,6 +114,26 @@ export interface IProject {
   team?: { name: string; role: string; avatar: string }[]; // Mapped field
   milestones?: IMilestone[];
   tasks?: IProjectTask[];
+  documents?: IProjectDocument[];
   thumbnail?: string;
   createdAt?: string;
+}
+
+export interface ITimelineItem {
+  id: string;
+  name: string;
+  color: string;
+  completion?: number;
+  width?: string;
+  left: string;
+  critical?: boolean;
+  isMilestone?: boolean;
+  milestoneTitle?: string;
+  status?: string;
+  assignee?: string;
+}
+
+export interface ITimelinePhase {
+  title: string;
+  tasks: ITimelineItem[];
 }

@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { IProjectDocument } from '../../../../shared/interfaces/project.interface';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-project-files',
@@ -6,136 +8,158 @@ import { Component, OnInit } from '@angular/core';
   templateUrl: './project-files.html',
   styleUrl: './project-files.scss',
 })
-export class ProjectFiles implements OnInit {
-  folders = [
-    { id: 1, name: 'Blueprints', fileCount: 124, size: '1.2 GB', color: 'text-secondary' },
-    { id: 2, name: 'Site Photos', fileCount: 842, size: '4.5 GB', color: 'text-primary' },
-    { id: 3, name: 'Contracts', fileCount: 12, size: '45 MB', color: 'text-tertiary-container' }
+export class ProjectFiles implements OnInit, OnChanges {
+  @Input() documents: IProjectDocument[] = [];
+  @Output() uploadMedia = new EventEmitter<void>();
+
+  apiUrl = environment.serverUrl;
+  searchQuery = '';
+  selectedCategory = 'All';
+  
+  categories = [
+    { name: 'All', icon: 'grid_view', count: 0, color: 'text-primary' },
+    { name: 'Drawings', icon: 'architecture', count: 0, color: 'text-secondary' },
+    { name: 'Photos', icon: 'image', count: 0, color: 'text-tertiary-container' },
+    { name: 'Legal', icon: 'gavel', count: 0, color: 'text-error' },
+    { name: 'Others', icon: 'description', count: 0, color: 'text-outline' }
   ];
 
-  allFiles = [
-    { id: 101, name: 'Ground_Floor_Structural_V3.cad', author: 'James W.', date: '2 hours ago', type: 'CAD', icon: 'architecture', color: 'bg-blue-100 text-blue-600', folderId: 1, status: 'Draft' },
-    { id: 102, name: 'Site_Inspection_Report_Aug_24.pdf', author: 'Sarah L.', date: 'Yesterday', type: 'PDF', icon: 'picture_as_pdf', color: 'bg-red-100 text-red-600', folderId: 3, status: 'Signed' },
-    { id: 103, name: 'North_Foundation_Pour_01.jpg', author: 'Mike T.', date: '3 days ago', type: 'IMG', icon: 'image', color: 'bg-amber-100 text-amber-600', folderId: 2, status: 'None' },
-    { id: 104, name: 'Vendor_Agreement_Q3.pdf', author: 'Elena R.', date: '4 days ago', type: 'PDF', icon: 'picture_as_pdf', color: 'bg-slate-100 text-slate-600', folderId: 3, status: 'Pending Signature' },
-    { id: 105, name: 'Plumbing_Layout_B.cad', author: 'David S.', date: '1 week ago', type: 'CAD', icon: 'architecture', color: 'bg-blue-100 text-blue-600', folderId: 1, status: 'None' },
-    { id: 106, name: 'Old_Draft_V1.pdf', author: 'Mark Z.', date: '2 weeks ago', type: 'PDF', icon: 'picture_as_pdf', color: 'bg-red-100 text-red-600', folderId: 1, status: 'None' }
-  ];
-
+  filteredFiles: any[] = [];
+  selectedFile: any = null;
   viewAllFiles = false;
-  editingFolderId: number | null = null;
-  newFolderName = '';
-  showDropdownForFolder: number | null = null;
-  showDropdownForFile: number | null = null;
 
   showSignatureAlert = false;
-  selectedFileForSignature: any = null;
+  showDropdownForFile: number | null = null;
 
   constructor() { }
 
   ngOnInit() {
-    this.selectedFileForSignature = this.allFiles.find(f => f.status === 'Pending Signature') || this.allFiles[0];
+    this.processDocuments();
+    if (this.filteredFiles.length > 0) {
+      this.selectedFile = this.filteredFiles[0];
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['documents']) {
+      this.processDocuments();
+    }
+  }
+
+  processDocuments() {
+    if (!this.documents) return;
+
+    const all = this.documents.map(doc => ({
+      ...doc,
+      fullUrl: doc.url.startsWith('http') ? doc.url : `${this.apiUrl}${doc.url}`,
+      type: this.getFileType(doc.name, doc.mimetype),
+      icon: this.getFileIcon(doc.mimetype),
+      color: this.getFileColor(doc.mimetype),
+      category: this.getFileCategory(doc.name, doc.mimetype),
+      dateLabel: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      author: 'System Admin' // Placeholder until we have uploader info
+    }));
+
+    // Update Category Counts
+    this.categories.forEach(cat => {
+      if (cat.name === 'All') cat.count = all.length;
+      else cat.count = all.filter(f => f.category === cat.name).length;
+    });
+
+    this.applyFilters(all);
+  }
+
+  applyFilters(all?: any[]) {
+    const source = all || this.documents.map(doc => ({
+        ...doc,
+        fullUrl: doc.url.startsWith('http') ? doc.url : `${this.apiUrl}${doc.url}`,
+        type: this.getFileType(doc.name, doc.mimetype),
+        icon: this.getFileIcon(doc.mimetype),
+        color: this.getFileColor(doc.mimetype),
+        category: this.getFileCategory(doc.name, doc.mimetype),
+        dateLabel: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        author: 'System Admin'
+    }));
+
+    this.filteredFiles = source.filter(f => {
+      const matchesSearch = f.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const matchesCategory = this.selectedCategory === 'All' || f.category === this.selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+
+    if (this.selectedFile && !this.filteredFiles.find(f => f.id === this.selectedFile.id)) {
+        this.selectedFile = this.filteredFiles[0] || null;
+    } else if (!this.selectedFile && this.filteredFiles.length > 0) {
+        this.selectedFile = this.filteredFiles[0];
+    }
+  }
+
+  selectCategory(name: string) {
+    this.selectedCategory = name;
+    this.applyFilters();
+  }
+
+  getFileType(name: string, mimetype: string): string {
+    if (mimetype?.includes('pdf')) return 'PDF';
+    if (mimetype?.startsWith('image/')) return 'IMG';
+    const ext = name.split('.').pop()?.toUpperCase();
+    return ext || 'FILE';
+  }
+
+  getFileIcon(mimetype: string): string {
+    if (mimetype?.includes('pdf')) return 'picture_as_pdf';
+    if (mimetype?.startsWith('image/')) return 'image';
+    if (mimetype?.includes('word') || mimetype?.includes('text')) return 'description';
+    if (mimetype?.includes('excel') || mimetype?.includes('sheet')) return 'table_chart';
+    return 'insert_drive_file';
+  }
+
+  getFileColor(mimetype: string): string {
+    if (mimetype?.includes('pdf')) return 'bg-red-100 text-red-600';
+    if (mimetype?.startsWith('image/')) return 'bg-amber-100 text-amber-600';
+    if (mimetype?.includes('word')) return 'bg-blue-100 text-blue-600';
+    return 'bg-slate-100 text-slate-600';
+  }
+
+  getFileCategory(name: string, mimetype: string): string {
+    const n = name.toLowerCase();
+    if (mimetype?.startsWith('image/')) return 'Photos';
+    if (n.includes('draw') || n.includes('blueprint') || n.includes('plan') || n.includes('cad')) return 'Drawings';
+    if (n.includes('contract') || n.includes('agree') || n.includes('legal')) return 'Legal';
+    return 'Others';
   }
 
   get recentFiles() {
-    return [...this.allFiles].slice(0, 5); // Return top 5
+    return [...this.filteredFiles].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
   }
 
   toggleViewAll() {
     this.viewAllFiles = !this.viewAllFiles;
   }
 
-  toggleFolderDropdown(id: number, event: Event) {
-    event.stopPropagation();
-    this.showDropdownForFolder = this.showDropdownForFolder === id ? null : id;
-    this.showDropdownForFile = null;
-  }
-
   toggleFileDropdown(id: number, event: Event) {
     event.stopPropagation();
     this.showDropdownForFile = this.showDropdownForFile === id ? null : id;
-    this.showDropdownForFolder = null;
   }
 
-  // Folder CRUD
-  addFolder() {
-    const newName = prompt('Enter new folder name:', 'New Folder');
-    if (newName) {
-      this.folders.push({
-        id: Date.now(),
-        name: newName,
-        fileCount: 0,
-        size: '0 KB',
-        color: 'text-slate-500'
-      });
-    }
-  }
-
-  renameFolder(folder: any) {
-    const newName = prompt('Enter new name for folder:', folder.name);
-    if (newName && newName.trim()) {
-      folder.name = newName.trim();
-    }
-    this.showDropdownForFolder = null;
-  }
-
-  deleteFolder(folder: any) {
-    if (confirm(`Are you sure you want to delete ${folder.name} and all its files?`)) {
-      this.allFiles = this.allFiles.filter(f => f.folderId !== folder.id);
-      this.folders = this.folders.filter(f => f.id !== folder.id);
-    }
-    this.showDropdownForFolder = null;
-  }
-
-  // File CRUD
-  simulateFileUpload() {
-    const fileName = prompt('Enter file name to upload:', 'new_document.pdf');
-    if (fileName) {
-      this.allFiles.unshift({
-        id: Date.now(),
-        name: fileName,
-        author: 'You',
-        date: 'Just now',
-        type: fileName.split('.').pop()?.toUpperCase() || 'FILE',
-        icon: 'description',
-        color: 'bg-slate-100 text-slate-600',
-        folderId: this.folders[0]?.id || 0,
-        status: 'None'
-      });
-    }
+  selectFile(file: any) {
+    this.selectedFile = file;
   }
 
   deleteFile(file: any) {
     if (confirm(`Delete ${file.name}?`)) {
-      this.allFiles = this.allFiles.filter(f => f.id !== file.id);
+        // Implementation for delete would go through service
+        alert('Delete functionality to be implemented');
     }
     this.showDropdownForFile = null;
-  }
-
-  moveFile(file: any) {
-    const folderNames = this.folders.map(f => `${f.id}: ${f.name}`).join('\n');
-    const targetFolder = prompt(`Enter Folder ID to move to:\n${folderNames}`);
-    if (targetFolder && !isNaN(Number(targetFolder))) {
-      const id = Number(targetFolder);
-      if (this.folders.find(f => f.id === id)) {
-        file.folderId = id;
-        alert(`${file.name} moved successfully!`);
-      }
-    }
-    this.showDropdownForFile = null;
-  }
-
-  // Signature Workflow
-  openSignatureWorkflow(file: any) {
-    this.selectedFileForSignature = file;
   }
 
   sendSignatureRequest() {
-    if (!this.selectedFileForSignature) return;
+    if (!this.selectedFile) return;
     this.showSignatureAlert = true;
     setTimeout(() => {
       this.showSignatureAlert = false;
-      this.selectedFileForSignature.status = 'Signed';
+      this.selectedFile.status = 'Signed';
     }, 2500);
   }
 }

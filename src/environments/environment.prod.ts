@@ -1,4 +1,4 @@
 export const environment = {
-    serverUrl: 'http://localhost:8080',
+    serverUrl: 'https://zynoconstructionapi.elitetraveltech.in',
     production: true,
 };

@@ -1,4 +1,6 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { IProjectDocument } from '../../../../shared/interfaces/project.interface';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-site-gallery',
@@ -6,18 +8,62 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   templateUrl: './site-gallery.html',
   styleUrl: './site-gallery.scss',
 })
-export class SiteGallery implements OnInit {
+export class SiteGallery implements OnInit, OnChanges {
   @Input() projectId: string | number = '';
-  @Input() newlyUploaded: any[] = [];
+  @Input() documents: IProjectDocument[] = [];
   @Output() uploadMedia = new EventEmitter<void>();
 
-  photos = [
-    { url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAQ6m0Gz8C9mN_W-vJ4kZ7y5_u9r5t1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o1_l8qW-o', title: 'Foundation Pouring', date: 'Oct 12, 2023', category: 'Construction' },
-    { url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAbaknLWnXup9P__CArLmzADSnktqSRmRxR__1ZsxrPnxJr9EF89Jl7DR9wLdJkWD-2RooG8S31pUCaBOV4UpPAqHJ_WDGdy2Rt7bbYcE0JH9joLHZQYYpFdJGvsKTDmyEjWfL9YNyBJFFHMKfa7G451JHGAKUXp3Gx3b96rafJL4XhiNZqwXzweVRi82KJrzrp3loSMhGqqEFHVjtioYZUDTqQ1N76FQ7Fek0infioZQYKC9Z8_bP7uudI4eqqbK2EcNJDdfldzOZk', title: 'Steel Frame Inspection', date: 'Oct 15, 2023', category: 'Structural' },
-    { url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBy4VSdkv6U8BtqZ6hyasfIDNpx-i808f9yWboZSUj5QY7VoQcXDQfJFoOHnBZ52ZcqnbdZQkTTffm2Ssn5grM20FAir2zJciQ3TaqKdU3GDyFia3p7j0BHkaz316xlh2PaXTQtdTPluF2dQruB3QQ0WV3GzveL5--UUvkSWIMkR1WmUE6V8hHwdGk2vtDoXMX560B0049U7JsM8xCfOTN_tZKF4jnjFL-4hP5gKpGOq8f5K9Zw8fVOQMqWc7Poik05KR6kWHOTCaa1', title: 'Site Overview - West Wing', date: 'Oct 18, 2023', category: 'General' }
-  ];
+  photos: any[] = [];
+  files: any[] = [];
+  apiUrl = environment.serverUrl;
 
   constructor() { }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {
+    this.processDocuments();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['documents']) {
+      this.processDocuments();
+    }
+  }
+
+  processDocuments() {
+    if (!this.documents) {
+        this.photos = [];
+        this.files = [];
+        return;
+    }
+    
+    // Process Photos
+    this.photos = this.documents
+      .filter(doc => doc.mimetype?.startsWith('image/'))
+      .map(doc => ({
+        url: doc.url.startsWith('http') ? doc.url : `${this.apiUrl}${doc.url}`,
+        title: doc.name,
+        date: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        category: this.getCategory(doc.name)
+      }));
+
+    // Process Other Files (Drawings, Docs)
+    this.files = this.documents
+      .filter(doc => !doc.mimetype?.startsWith('image/'))
+      .map(doc => ({
+        id: doc.id,
+        name: doc.name,
+        url: doc.url.startsWith('http') ? doc.url : `${this.apiUrl}${doc.url}`,
+        date: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        mimetype: doc.mimetype
+      }));
+  }
+
+  private getCategory(filename: string): string {
+    const name = filename.toLowerCase();
+    if (name.includes('site') || name.includes('view')) return 'Site Overview';
+    if (name.includes('found') || name.includes('pour')) return 'Foundation';
+    if (name.includes('steel') || name.includes('frame')) return 'Structural';
+    if (name.includes('finish') || name.includes('paint')) return 'Finishing';
+    return 'General';
+  }
 }
