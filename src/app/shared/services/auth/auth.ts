@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { AuthInterface } from '../../interfaces/auth.interface';
 
-const databaseKey: any = 'http://localhost:3000';
+const databaseKey: any = environment.serverUrl;
 
 const routes = {
   auth: {
