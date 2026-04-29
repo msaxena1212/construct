@@ -15,13 +15,30 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      progress: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+        validate: {
+          min: 0,
+          max: 100
+        }
+      },
       color: {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      is_completed: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
+      status: {
+        type: Sequelize.ENUM('Not Started', 'In Progress', 'On Hold', 'Completed'),
+        defaultValue: "Not Started",
+      },
+      startDate: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      endDate: {
+        type: Sequelize.DATE,
+        allowNull: true,
       },
     },
     {

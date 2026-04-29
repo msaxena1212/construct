@@ -5,14 +5,6 @@ module.exports = (sequelize, Sequelize) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    project_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
-    parent_id: {
-      type: Sequelize.INTEGER,
-      allowNull: true, // For subtasks
-    },
     title: {
       type: Sequelize.STRING,
       allowNull: false,
@@ -35,46 +27,13 @@ module.exports = (sequelize, Sequelize) => {
     due_date: {
       type: Sequelize.DATE,
     },
-    is_completed: {
-      type: Sequelize.BOOLEAN,
-      defaultValue: false,
+    created_by: {
+      type: Sequelize.INTEGER,
+      allowNull: true, // Allow for existing tasks, but should be set for new ones
     },
   }, {
     freezeTableName: true,
   });
-
-  ProjectTask.associate = (models) => {
-    ProjectTask.belongsTo(models.project, {
-      foreignKey: "project_id",
-      as: "project",
-    });
-    ProjectTask.belongsTo(models.project_task, {
-      foreignKey: "parent_id",
-      as: "parent",
-    });
-    ProjectTask.hasMany(models.project_task, {
-      foreignKey: "parent_id",
-      as: "subtasks",
-    });
-    ProjectTask.belongsToMany(models.user, {
-      through: "PROJECT_TASK_ASSIGNEE",
-      foreignKey: "task_id",
-      otherKey: "user_id",
-      as: "assignees",
-    });
-    ProjectTask.hasMany(models.task_attachment, {
-      foreignKey: "task_id",
-      as: "attachments",
-    });
-    ProjectTask.hasMany(models.task_comment, {
-      foreignKey: "task_id",
-      as: "comments",
-    });
-    ProjectTask.hasMany(models.task_activity, {
-      foreignKey: "task_id",
-      as: "activities",
-    });
-  };
 
   return ProjectTask;
 };

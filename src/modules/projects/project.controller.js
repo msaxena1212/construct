@@ -6,6 +6,8 @@ class ProjectController {
     this.getAllProjects = this.getAllProjects.bind(this);
     this.getProjectById = this.getProjectById.bind(this);
     this.getProjectTimeline = this.getProjectTimeline.bind(this);
+    this.createMilestone = this.createMilestone.bind(this);
+    this.updateMilestone = this.updateMilestone.bind(this);
   }
 
   /**
@@ -19,15 +21,15 @@ class ProjectController {
       const project = await db.project.findOne({
         where: { id: projectId, company_id },
         include: [
-          { 
-            model: db.milestone, 
+          {
+            model: db.milestone,
             as: 'milestones',
-            attributes: ['id', 'name', 'phase', 'is_completed', 'color', 'createdAt']
+            attributes: ['id', 'name', 'phase', 'color', 'createdAt']
           },
-          { 
-            model: db.project_task, 
+          {
+            model: db.project_task,
             as: 'tasks',
-            attributes: ['id', 'title', 'status', 'priority', 'due_date', 'createdAt', 'is_completed'],
+            attributes: ['id', 'title', 'status', 'priority', 'due_date', 'createdAt'],
             include: [
               { model: db.user, as: 'assignees', attributes: ['id', 'firstname', 'lastname', 'avatar'] }
             ]
@@ -78,8 +80,8 @@ class ProjectController {
         });
 
         if (validUsers.length !== userIds.length) {
-          return res.status(400).json({ 
-            message: "Some assigned team members do not belong to your company." 
+          return res.status(400).json({
+            message: "Some assigned team members do not belong to your company."
           });
         }
       }
@@ -139,9 +141,9 @@ class ProjectController {
         ]
       });
 
-      res.status(201).json({ 
-        message: "Project initialized successfully.", 
-        data: fullProject 
+      res.status(201).json({
+        message: "Project initialized successfully.",
+        data: fullProject
       });
 
     } catch (error) {
@@ -166,9 +168,9 @@ class ProjectController {
         include: [
           { model: db.milestone, as: 'milestones' },
           { model: db.project_document, as: 'documents' },
-          { 
-            model: db.user, 
-            as: 'team_members', 
+          {
+            model: db.user,
+            as: 'team_members',
             attributes: ['id', 'firstname', 'lastname'],
             through: { attributes: ['role'] }
           }
@@ -196,9 +198,9 @@ class ProjectController {
         include: [
           { model: db.milestone, as: 'milestones' },
           { model: db.project_document, as: 'documents' },
-          { 
-            model: db.user, 
-            as: 'team_members', 
+          {
+            model: db.user,
+            as: 'team_members',
             attributes: ['id', 'firstname', 'lastname', 'email'],
             through: { attributes: ['role'] }
           }
@@ -223,7 +225,7 @@ class ProjectController {
     try {
       const { id } = req.params;
       const company_id = req.user.company_id;
-      
+
       const projectData = req.body.data ? JSON.parse(req.body.data) : req.body;
       const { name, type, address, completionDate, budgetTotal, milestones, team } = projectData;
 
@@ -245,9 +247,9 @@ class ProjectController {
         name, type, address,
         completion_date: completionDate,
         budget_total: budgetTotal || 0,
-      }, { 
+      }, {
         where: { id, company_id },
-        transaction: t 
+        transaction: t
       });
 
       // 3. Update Milestones (Delete and Recreate)
@@ -322,14 +324,82 @@ class ProjectController {
       const createdDocs = await db.project_document.bulkCreate(documentData, { transaction: t });
 
       await t.commit();
-      res.status(201).json({ 
-        message: "Documents uploaded successfully.", 
-        data: createdDocs 
+      res.status(201).json({
+        message: "Documents uploaded successfully.",
+        data: createdDocs
       });
     } catch (error) {
       if (t) await t.rollback();
       console.error("[UPLOAD_DOCUMENTS_ERROR]", error);
       res.status(500).json({ message: "Error uploading documents.", error: error.message });
+    }
+  }
+
+  /**
+   * Create a milestone for a project
+   */
+  async createMilestone(req, res) {
+    try {
+      const { projectId } = req.params;
+      const company_id = req.user.company_id;
+      const { name, progress, color, startDate, endDate, parent_id } = req.body;
+
+      const project = await db.project.findOne({ where: { id: projectId, company_id } });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found or unauthorized." });
+      }
+
+      const milestone = await db.milestone.create({
+        project_id: projectId,
+        name,
+        progress: progress || 0,
+        color,
+        startDate,
+        endDate,
+        parent_id,
+        is_completed: progress === 100
+      });
+
+      res.status(201).json({ message: "Milestone created successfully.", data: milestone });
+    } catch (error) {
+      console.error("[CREATE_MILESTONE_ERROR]", error);
+      res.status(500).json({ message: "Error creating milestone.", error: error.message });
+    }
+  }
+
+  /**
+   * Update a milestone for a project
+   */
+  async updateMilestone(req, res) {
+    try {
+      const { projectId, milestoneId } = req.params;
+      const company_id = req.user.company_id;
+      const { name, progress, color, startDate, endDate, parent_id } = req.body;
+
+      const project = await db.project.findOne({ where: { id: projectId, company_id } });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found or unauthorized." });
+      }
+
+      const milestone = await db.milestone.findOne({ where: { id: milestoneId, project_id: projectId } });
+      if (!milestone) {
+        return res.status(404).json({ message: "Milestone not found." });
+      }
+
+      await milestone.update({
+        name,
+        progress: progress !== undefined ? progress : milestone.progress,
+        color,
+        startDate,
+        endDate,
+        parent_id,
+        is_completed: progress === 100
+      });
+
+      res.status(200).json({ message: "Milestone updated successfully.", data: milestone });
+    } catch (error) {
+      console.error("[UPDATE_MILESTONE_ERROR]", error);
+      res.status(500).json({ message: "Error updating milestone.", error: error.message });
     }
   }
 }

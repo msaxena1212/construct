@@ -18,6 +18,10 @@ module.exports = (router) => {
 
   // Get project timeline data
   router.get("/projects/:projectId/timeline", projectCtrl.getProjectTimeline);
+
+  // --- Milestone Routes ---
+  router.post("/projects/:projectId/milestones", projectCtrl.createMilestone);
+  router.put("/projects/:projectId/milestones/:milestoneId", projectCtrl.updateMilestone);
   
   // Upload project documents/media
   router.post(
@@ -57,4 +61,9 @@ module.exports = (router) => {
     upload.array("attachments", 10), 
     taskCtrl.uploadAttachment
   );
+
+  // Sub-tasks
+  router.post("/tasks/:taskId/subtasks", taskCtrl.createSubTask);
+  router.put("/subtasks/:subTaskId", taskCtrl.updateSubTask);
+  router.delete("/subtasks/:subTaskId", taskCtrl.deleteSubTask);
 };

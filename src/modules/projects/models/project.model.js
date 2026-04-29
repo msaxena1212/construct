@@ -40,6 +40,14 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      progress: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+        validate: {
+          min: 0,
+          max: 100
+        }
+      },
     },
     {
       freezeTableName: true,
