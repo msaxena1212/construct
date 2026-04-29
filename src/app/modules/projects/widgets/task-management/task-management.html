@@ -3,39 +3,64 @@
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary mb-2 block">Project</span>
         <div class="flex items-center gap-3">
             <h2 class="text-4xl font-black tracking-tight text-slate-900 leading-none">Task Management</h2>
-            <div class="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
-                <span class="material-symbols-outlined text-slate-400 text-sm">folder_open</span>
-                <span class="text-xs font-black uppercase tracking-widest text-slate-700">Project Workspace</span>
-            </div>
         </div>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 flex-wrap">
         <div class="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
+            <span class="material-symbols-outlined text-slate-400 text-sm">flag</span>
+            <select [ngModel]="selectedMilestoneId" (ngModelChange)="selectMilestone($event)"
+                class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4 w-40 text-ellipsis">
+                <option [ngValue]="null" disabled>Select Milestone</option>
+                @for(ms of milestones; track ms.id) {
+                <option [ngValue]="ms.id">{{ ms.name }}</option>
+                @for(sm of ms.subMilestones; track sm.id) {
+                <option [ngValue]="sm.id">&nbsp;&nbsp;&nbsp;↳ {{ sm.name }}</option>
+                }
+                }
+            </select>
+            <span
+                class="material-symbols-outlined absolute right-3 text-slate-400 text-sm pointer-events-none">expand_more</span>
+        </div>
+
+        <div class="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm relative">
             <span class="material-symbols-outlined text-slate-400 text-sm">filter_alt</span>
             <select [(ngModel)]="selectedMember"
                 class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4">
                 <option value="All Members">All Members</option>
                 <!-- Dynamically filled by actual project team members later -->
             </select>
+            <span
+                class="material-symbols-outlined absolute right-3 text-slate-400 text-sm pointer-events-none">expand_more</span>
         </div>
         <button (click)="fetchTasks()" [disabled]="loading"
-            class="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-200">
+            class="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-200 cursor-pointer">
             <span class="material-symbols-outlined text-lg" [class.animate-spin]="loading">sync</span>
             Refresh
         </button>
     </div>
 </div>
-
+@if (!selectedMilestoneId) {
+<div
+    class="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-3xl">task</span>
+    </div>
+    <h3 class="text-lg font-black tracking-tight text-slate-900 mb-2">Select a Milestone to View Tasks</h3>
+    <p class="text-sm font-bold text-slate-500 uppercase tracking-widest max-w-sm text-center">Tasks are organized by
+        milestones. Choose a phase from the dropdown above to load the kanban board.</p>
+</div>
+}
+@else {
 <!-- Kanban Board Layout -->
 <div class="relative">
-    <div *ngIf="loading"
-        class="absolute inset-0 z-10 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-3xl">
+    @if (loading) {
+    <div class="absolute inset-0 z-10 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-3xl">
         <div class="flex flex-col items-center">
             <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             <p class="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Synchronizing Board...</p>
         </div>
     </div>
-
+    }
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 min-h-[716px]" cdkDropListGroup>
         @for (column of columns; track column.id) {
         <div class="flex flex-col gap-4">
@@ -57,7 +82,7 @@
                 class="flex-1 flex flex-col gap-4 min-h-[200px]">
                 @for (task of column.tasks; track task.id) {
                 <div cdkDrag (click)="openTaskDetail(task)"
-                    [class]="'glass-card p-5 rounded-2xl shadow-sm border border-white/40 group hover:shadow-xl hover:-translate-y-1 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ' + (task.is_completed ? 'opacity-75 grayscale-[0.5]' : '')">
+                    [class]="'glass-card p-5 rounded-2xl shadow-sm border border-white/40 group hover:shadow-xl hover:-translate-y-1 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ' + (task.status === 'Completed' ? 'opacity-75 grayscale-[0.5]' : '')">
 
                     <div class="cdk-drag-placeholder" *cdkDragPlaceholder></div>
 
@@ -66,15 +91,17 @@
                             [class]="'px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter ' + task.priorityClass">{{
                             task.priority }}</span>
                         <div class="flex items-center gap-1">
-                            <span *ngIf="task.attachments?.length"
-                                class="material-symbols-outlined text-slate-400 text-xs">attach_file</span>
-                            <span *ngIf="task.comments?.length"
-                                class="material-symbols-outlined text-slate-400 text-xs">chat_bubble</span>
+                            @if (task.sub_tasks?.length) {
+                            <span class="material-symbols-outlined text-slate-400 text-xs">task</span>
+                            }
+                            @if (task.comments?.length) {
+                            <span class="material-symbols-outlined text-slate-400 text-xs">chat_bubble</span>
+                            }
                         </div>
                     </div>
 
                     <h4
-                        [class]="'font-bold text-slate-900 mb-2 leading-snug ' + (task.is_completed ? 'line-through text-slate-400' : '')">
+                        [class]="'font-bold text-slate-900 mb-2 leading-snug ' + (task.status === 'Completed' ? 'line-through text-slate-400' : '')">
                         {{ task.title }}</h4>
 
                     @if (task.description) {
@@ -82,17 +109,20 @@
                     }
 
                     <!-- Progress Indicator -->
-                    <div *ngIf="task.subtasks?.length" class="mb-4">
+                    @if (task.sub_tasks?.length) {
+                    <div class="mb-4">
                         <div class="flex justify-between items-center mb-1">
                             <span class="text-[10px] font-bold text-slate-400 uppercase">Subtasks</span>
-                            <span class="text-[10px] font-bold text-slate-500">{{ ((task.subtasks || []) | subtaskProgress)
+                            <span class="text-[10px] font-bold text-slate-500">{{ ((task.sub_tasks || []) |
+                                subtaskProgress)
                                 }}%</span>
                         </div>
                         <div class="w-full bg-slate-100 h-1 rounded-full">
                             <div class="bg-primary h-1 rounded-full transition-all"
-                                [style.width.%]="((task.subtasks || []) | subtaskProgress)"></div>
+                                [style.width.%]="((task.sub_tasks || []) | subtaskProgress)"></div>
                         </div>
                     </div>
+                    }
 
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 text-[10px] font-bold"
@@ -105,7 +135,7 @@
                                 (task.status === 'Review' ? 'visibility' :
                                 (task.status === 'Completed' ? 'check_circle' : 'calendar_today')) }}
                             </span>
-                            {{ task.due_date || task.status }}
+                            {{ task.due_date ? (task.due_date | date: 'MMM dd, yyyy') : task.status }}
                         </div>
 
                         <div class="flex -space-x-2">
@@ -125,12 +155,16 @@
 
 <!-- Contextual FAB -->
 <button (click)="openAddTaskModal()"
-    class="fixed bottom-8 right-8 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-container text-white shadow-2xl shadow-primary/40 flex items-center justify-center active:scale-90 transition-all z-50 group cursor-pointer">
+    class="fixed bottom-8 right-8 w-14 h-14 rounded-2xl bg-linear-to-br from-primary to-primary-container text-white shadow-2xl shadow-primary/40 flex items-center justify-center active:scale-90 transition-all z-50 group cursor-pointer">
     <span class="material-symbols-outlined text-3xl transition-transform group-hover:rotate-90">add</span>
 </button>
-
+}
 <!-- Modals -->
-<app-task-detail *ngIf="selectedTask" [task]="selectedTask" (close)="closeTaskDetail()"></app-task-detail>
+@if (selectedTask) {
+<app-task-detail [task]="selectedTask" (close)="closeTaskDetail()"></app-task-detail>
+}
 
-<app-add-task *ngIf="showAddTaskModal" [projectId]="projectId" [initialStatus]="targetStep"
-    (close)="showAddTaskModal = false" (save)="addNewTask($event)"></app-add-task>
+@if (showAddTaskModal) {
+<app-add-task [projectId]="projectId" [milestoneId]="selectedMilestoneId" [initialStatus]="targetStep" (close)="showAddTaskModal = false"
+    (save)="addNewTask($event)"></app-add-task>
+}

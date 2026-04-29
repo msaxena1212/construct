@@ -3,7 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 
-import { IProject, IUser, IAuditEntry, IMilestone } from '../../../shared/interfaces/project.interface';
+import { IProject, IUser, IAuditEntry, IMilestone, MilestoneStatus } from '../../../shared/interfaces/project.interface';
+import { MatDialog } from '@angular/material/dialog';
+import { MilestoneFormDialog } from '../dialogs/milestone-form-dialog/milestone-form-dialog';
 
 @Component({
   selector: 'app-project-detail',
@@ -15,10 +17,10 @@ export class ProjectDetail implements OnInit {
   project: IProject | null = null;
   loading = true;
   error: string | null = null;
-  
+
   activeTab = 'Overview';
   tabs = ['Overview', 'Tasks', 'Timeline', 'Budget', 'Gallery', 'Files', 'Updates'];
-  
+
   teamMembers: { name: string; avatar?: string; role?: string }[] = [{ name: 'All Members' }];
   selectedMember = 'All Members';
 
@@ -27,16 +29,17 @@ export class ProjectDetail implements OnInit {
   showDrawingUpload = false;
   rfiForm = { to: '', cc: '', bcc: '', subject: '', content: '' };
   selectedFiles: File[] = [];
-  
+
   auditFilter = 'All';
   auditFilterOptions = ['All', 'Project', 'Task', 'Milestone', 'Document', 'Safety', 'Budget', 'Team'];
-  auditTrail: IAuditEntry[] = []; 
+  auditTrail: IAuditEntry[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private projectService: ProjectService,
-    private toastr: ToastrService
-  ) {}
+    private toastr: ToastrService,
+    private dialog: MatDialog
+  ) { }
 
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
@@ -66,20 +69,28 @@ export class ProjectDetail implements OnInit {
   }
 
   private mapProjectData(p: IProject): IProject {
-    const totalMs = p.milestones?.length || 0;
-    const completedMs = p.milestones?.filter((m: IMilestone) => m.is_completed).length || 0;
-    const progress = totalMs > 0 ? Math.round((completedMs / totalMs) * 100) : 0;
+    const allMilestones = p.milestones || [];
 
-    const milestones: IMilestone[] = (p.milestones || []).map((m: IMilestone, i: number) => ({
-      ...m,
-      color: m.color || (i % 3 === 0 ? 'primary' : i % 3 === 1 ? 'secondary' : 'outline'),
-      progress: m.is_completed ? 100 : (i === completedMs ? 45 : 0)
-    }));
+    // Create a map to group sub-milestones under their parents
+    const parentMilestones: IMilestone[] = allMilestones
+      .filter((m) => !m.parent_id)
+      .map((m, i) => ({
+        ...m,
+        color: m.color || (i % 3 === 0 ? 'blue-600' : i % 3 === 1 ? 'indigo-600' : 'emerald-600'),
+        subMilestones: allMilestones.filter((sm) => sm.parent_id === m.id)
+      }));
+
+    const totalMs = parentMilestones.length;
+    let totalProgress = 0;
+    parentMilestones.forEach(m => {
+      totalProgress += (m.progress || 0);
+    });
+    const progress = totalMs > 0 ? Math.round(totalProgress / totalMs) : 0;
 
     return {
       ...p,
       progress: progress,
-      milestones: milestones,
+      milestones: parentMilestones,
       estimatedCompletion: p.completion_date,
       budget_summary: {
         total: p.budget_total || 0,
@@ -109,8 +120,8 @@ export class ProjectDetail implements OnInit {
     this.showRFIComposer = false;
   }
 
-  openDrawingUpload() { 
-    this.showDrawingUpload = true; 
+  openDrawingUpload() {
+    this.showDrawingUpload = true;
     this.selectedFiles = [];
   }
 
@@ -153,5 +164,80 @@ export class ProjectDetail implements OnInit {
   get filteredAudit(): IAuditEntry[] {
     if (this.auditFilter === 'All') return this.auditTrail;
     return this.auditTrail.filter((a) => a.type === this.auditFilter);
+  }
+
+
+  openAddMilestoneModal() {
+    const dialogRef = this.dialog.open(MilestoneFormDialog, {
+      width: '500px',
+      disableClose: false,
+      height: 'auto',
+      data: {
+        project: this.project
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      this.fetchProjectDetails(this.project!.id.toString());
+    });
+  }
+
+  openEditMilestoneModal(ms: IMilestone) {
+    const dialogRef = this.dialog.open(MilestoneFormDialog, {
+      width: '500px',
+      disableClose: false,
+      height: 'auto',
+      data: {
+        project: this.project,
+        milestone: ms
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result) {
+        this.fetchProjectDetails(this.project!.id.toString());
+      }
+    });
+  }
+
+  openEditSubMilestoneModal(msId: number, sm: IMilestone) {
+    const dialogRef = this.dialog.open(MilestoneFormDialog, {
+      width: '500px',
+      disableClose: false,
+      height: 'auto',
+      data: {
+        project: this.project,
+        milestone: sm,
+        parent_id: msId,
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result) {
+        this.fetchProjectDetails(this.project!.id.toString());
+      }
+    });
+  }
+
+  openLinkSubProjectModal(ms: IMilestone) {
+
+  }
+
+  openAddSubMilestoneModal(msId: number) {
+    const dialogRef = this.dialog.open(MilestoneFormDialog, {
+      width: '500px',
+      disableClose: false,
+      height: 'auto',
+      data: {
+        project: this.project,
+        parent_id: msId,
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: any) => {
+      if (result) {
+        this.fetchProjectDetails(this.project!.id.toString());
+      }
+    });
   }
 }

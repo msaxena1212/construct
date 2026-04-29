@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 import { Router, ActivatedRoute } from '@angular/router';
-import { IProject, IUser } from '../../../shared/interfaces/project.interface';
+import { IProject, ITeam, IUser } from '../../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-new-project-wizard',
@@ -14,7 +14,7 @@ import { IProject, IUser } from '../../../shared/interfaces/project.interface';
 export class NewProjectWizard implements OnInit {
   currentStep: number = 1;
   projectForm: FormGroup;
-  availableMembers: IUser[] = [];
+  availableMembers: ITeam[] = [];
   selectedFiles: File[] = [];
   loading = false;
   showAssignDropdown = false;
@@ -45,7 +45,7 @@ export class NewProjectWizard implements OnInit {
 
   ngOnInit() {
     this.fetchTeamMembers();
-    
+
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
@@ -162,13 +162,13 @@ export class NewProjectWizard implements OnInit {
   }
 
   // --- Step 2: Team Management ---
-  addMember(member: IUser) {
+  addMember(member: ITeam) {
     const isAlreadyAdded = this.team.value.find((m: any) => m.user_id === member.id);
     if (!isAlreadyAdded) {
       this.team.push(this.fb.group({
         user_id: [member.id],
         name: [member.firstname + ' ' + member.lastname],
-        role: [member.role || 'Technical Staff'],
+        role: [member.role?.name || 'Technical Staff'],
         avatar: [member.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop']
       }));
     }
@@ -191,8 +191,8 @@ export class NewProjectWizard implements OnInit {
   addMilestone() {
     if (this.newMilestoneName.trim()) {
       this.milestones.push(this.createMilestone(
-        this.newMilestoneName.trim(), 
-        `Phase ${this.milestones.length + 1}`, 
+        this.newMilestoneName.trim(),
+        `Phase ${this.milestones.length + 1}`,
         'secondary'
       ));
       this.newMilestoneName = '';
@@ -207,12 +207,12 @@ export class NewProjectWizard implements OnInit {
   onFileSelected(event: any) {
     const files: FileList = event.target.files;
     for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        this.selectedFiles.push(file);
-        this.documents.push(this.fb.group({
-            name: [file.name],
-            size: [(file.size / 1024).toFixed(2) + ' KB']
-        }));
+      const file = files[i];
+      this.selectedFiles.push(file);
+      this.documents.push(this.fb.group({
+        name: [file.name],
+        size: [(file.size / 1024).toFixed(2) + ' KB']
+      }));
     }
   }
 

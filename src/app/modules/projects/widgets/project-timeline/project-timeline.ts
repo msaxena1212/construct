@@ -16,7 +16,7 @@ export class ProjectTimeline implements OnInit {
   viewType: 'day' | 'week' | 'month' = 'week';
   showCriticalPath = false;
   showTeamView = false;
-  
+
   // Dynamic Timeline Logic
   timelineHeaders: any[] = [];
   startDate: Date = new Date();
@@ -41,7 +41,7 @@ export class ProjectTimeline implements OnInit {
   initTimelineRange() {
     const today = new Date();
     this.startDate = new Date(today);
-    
+
     if (this.viewType === 'day') {
       this.startDate.setDate(today.getDate() - 3);
       this.totalDurationDays = 14;
@@ -52,14 +52,14 @@ export class ProjectTimeline implements OnInit {
       this.startDate.setDate(today.getDate() - 60);
       this.totalDurationDays = 180; // ~6 months
     }
-    
+
     this.generateTimelineHeaders();
   }
 
   generateTimelineHeaders() {
     this.timelineHeaders = [];
     const tempDate = new Date(this.startDate);
-    
+
     if (this.viewType === 'day') {
       for (let i = 0; i < 14; i++) {
         this.timelineHeaders.push({
@@ -130,7 +130,7 @@ export class ProjectTimeline implements OnInit {
       id: `t-${t.id}`,
       name: t.title,
       color: t.status === 'Completed' ? 'bg-green-500' : (t.priority === 'High Priority' ? 'bg-error' : 'bg-primary'),
-      completion: t.is_completed ? 100 : (t.status === 'In Progress' ? 45 : 0),
+      completion: t.status === 'Completed' ? 100 : (t.status === 'In Progress' ? 45 : 0),
       status: t.status,
       left: this.calculatePosition(new Date(t.createdAt || today)),
       width: this.calculateWidth(new Date(t.createdAt || today), new Date(t.due_date || today)),

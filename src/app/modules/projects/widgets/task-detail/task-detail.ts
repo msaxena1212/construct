@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
 import { ProjectService } from '../../services/project-service';
 import { ToastrService } from 'ngx-toastr';
-import { IProjectTask, IUser } from '../../../../shared/interfaces/project.interface';
+import { IProjectSubTask, IProjectTask, IUser, IProjectTaskDependency, IProject } from '../../../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-task-detail',
@@ -13,22 +13,37 @@ export class TaskDetail implements OnInit {
   @Input() task!: IProjectTask;
   @Output() close = new EventEmitter<void>();
 
+  private projectService = inject(ProjectService);
+  private toastr = inject(ToastrService);
+  allTasks: IProjectTask[] = [];
+
   isEditing = false;
   newComment = '';
   newSubTaskTitle = '';
   showUploadModal = false;
   isUploading = false;
 
+  selectedPredecessorId: any = '';
+  selectedDepType: 'FS' | 'SS' | 'FF' | 'SF' = 'FS';
+  depLag = 0;
+
+  dependencyTypes = [
+    { id: 'FS', name: 'Finish-to-Start (FS)', desc: 'Predecessor must finish before Successor can start' },
+    { id: 'SS', name: 'Start-to-Start (SS)', desc: 'Predecessor must start before Successor can start' },
+    { id: 'FF', name: 'Finish-to-Finish (FF)', desc: 'Predecessor must finish before Successor can finish' },
+    { id: 'SF', name: 'Start-to-Finish (SF)', desc: 'Predecessor must start before Successor can finish' }
+  ];
+
   teamMembers: IUser[] = [];
   loggedInUser = { name: 'James Wilson' };
 
-  constructor(
-    private projectService: ProjectService,
-    private toastr: ToastrService
-  ) { }
+  constructor() { }
 
   ngOnInit() {
     if (this.task) {
+      this.projectService.getProjectTasks(this.task.project_id).subscribe((res: any) => {
+        this.allTasks = res.data;
+      });
       this.fetchTeamMembers();
     }
   }
@@ -54,7 +69,8 @@ export class TaskDetail implements OnInit {
       description: this.task.description,
       priority: this.task.priority,
       status: this.task.status,
-      due_date: this.task.due_date
+      due_date: this.task.due_date,
+      dependencies: this.task.dependencies
     };
 
     this.projectService.updateTask(this.task.id, payload).subscribe({
@@ -68,16 +84,16 @@ export class TaskDetail implements OnInit {
   }
 
   get checklistProgress() {
-    if (!this.task?.subtasks || this.task.subtasks.length === 0) return 0;
-    const completed = this.task.subtasks.filter((i: IProjectTask) => i.is_completed).length;
-    return Math.round((completed / this.task.subtasks.length) * 100);
+    if (!this.task?.sub_tasks || this.task.sub_tasks.length === 0) return 0;
+    const completed = this.task.sub_tasks.filter((i: IProjectSubTask) => i.completed).length;
+    return Math.round((completed / this.task.sub_tasks.length) * 100);
   }
 
-  toggleChecklist(item: IProjectTask) {
-    const newStatus = !item.is_completed;
-    this.projectService.updateTask(item.id, { is_completed: newStatus }).subscribe({
+  toggleChecklist(item: IProjectSubTask) {
+    const newStatus = !item.completed;
+    this.projectService.updateSubTask(item?.id!, { completed: newStatus }).subscribe({
       next: () => {
-        item.is_completed = newStatus;
+        item.completed = newStatus;
         this.task.progress = this.checklistProgress;
       }
     });
@@ -86,17 +102,10 @@ export class TaskDetail implements OnInit {
   addSubTask() {
     if (!this.newSubTaskTitle.trim()) return;
 
-    const payload = {
-      title: this.newSubTaskTitle.trim(),
-      parent_id: this.task.id,
-      status: 'To Do',
-      priority: 'Medium Priority'
-    };
-
-    this.projectService.createTask(this.task.project_id.toString(), payload).subscribe({
+    this.projectService.createSubTask(this.task.id, this.newSubTaskTitle.trim()).subscribe({
       next: (res) => {
-        if (!this.task.subtasks) this.task.subtasks = [];
-        this.task.subtasks.push(res.data);
+        if (!this.task.sub_tasks) this.task.sub_tasks = [];
+        this.task.sub_tasks.push(res.data as unknown as IProjectSubTask);
         this.newSubTaskTitle = '';
         this.toastr.success('Sub-task added');
       },
@@ -104,21 +113,22 @@ export class TaskDetail implements OnInit {
     });
   }
 
-  removeSubTask(item: IProjectTask) {
-    this.projectService.deleteTask(item.id).subscribe({
+  removeSubTask(subTaskId: number) {
+    this.projectService.deleteSubTask(subTaskId).subscribe({
       next: () => {
-        if (this.task.subtasks) {
-          this.task.subtasks = this.task.subtasks.filter((i: IProjectTask) => i.id !== item.id);
+        if (this.task.sub_tasks) {
+          this.task.sub_tasks = this.task.sub_tasks.filter((i: IProjectSubTask) => i.id !== subTaskId);
         }
         this.toastr.info('Sub-task removed');
       }
     });
   }
 
-  onSubTaskChange(item: IProjectTask, newTitle: string) {
+  onSubTaskChange(item: IProjectSubTask, newTitle: string) {
     if (item.title !== newTitle) {
-      this.projectService.updateTask(item.id, { title: newTitle }).subscribe({
-        next: () => item.title = newTitle
+      this.projectService.updateSubTask(item?.id!, { title: newTitle }).subscribe({
+        next: () => item.title = newTitle,
+        error: () => this.toastr.error('Error updating sub-task')
       });
     }
   }
@@ -184,5 +194,46 @@ export class TaskDetail implements OnInit {
         this.toastr.success('Assignee updated');
       }
     });
+  }
+
+  addDependency() {
+    if (!this.selectedPredecessorId) return;
+
+    const pred = this.allTasks.find(t => t.id === Number(this.selectedPredecessorId));
+    if (!pred) return;
+
+    if (!this.task.dependencies) this.task.dependencies = [];
+
+    // Check if already exists
+    if (this.task.dependencies.some(d => d.predecessor_id === Number(this.selectedPredecessorId))) {
+      this.toastr.warning('Dependency already exists');
+      return;
+    }
+
+    this.task.dependencies.push({
+      id: 0,
+      task_id: this.task.id,
+      predecessor_id: Number(this.selectedPredecessorId),
+      type: this.selectedDepType,
+      lag: this.depLag
+    });
+
+    this.selectedPredecessorId = '';
+    this.depLag = 0;
+  }
+
+  getSelectedDepDesc() {
+    return this.dependencyTypes.find(t => t.id === this.selectedDepType)?.desc || '';
+  }
+
+  removeDependency(dep: any) {
+    if (this.task.dependencies) {
+      this.task.dependencies = this.task.dependencies.filter((d: any) => d !== dep);
+    }
+  }
+
+  getTaskTitle(id: number | string) {
+    const taskId = typeof id === 'string' ? Number(id) : id;
+    return this.allTasks.find((t: IProjectTask) => t.id === taskId)?.title || `Task #${id}`;
   }
 }

@@ -10,6 +10,21 @@ export interface IUser {
   };
 }
 
+export interface ITeam {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email?: string;
+  avatar?: string;
+  role?: {
+    name: string;
+  };
+  role_id: number;
+  project_team?: {
+    role: string;
+  };
+}
+
 export interface ITaskAttachment {
   id: number;
   task_id: number;
@@ -39,36 +54,73 @@ export interface ITaskActivity {
   createdAt: string;
 }
 
+export interface IProjectSubTask {
+  id?: number;
+  title: string;
+  completed: boolean;
+  task_id: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type DependencyType = 'FS' | 'SS' | 'FF' | 'SF';
+
+export interface IProjectTaskDependency {
+  id: number;
+  task_id: number;
+  predecessor_id: number;
+  type: DependencyType;
+  lag: number;  // in days
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Completed';
+
 export interface IProjectTask {
-  id: string | number;
+  id: number;
   project_id: string | number;
-  parent_id?: string | number | null;
+  milestone_id?: string | number | null;
   title: string;
   description?: string;
   priority: 'High Priority' | 'Medium Priority' | 'Low Priority';
-  status: 'To Do' | 'In Progress' | 'Review' | 'Completed';
+  status: TaskStatus;
   progress?: number;
-  is_completed?: boolean;
   due_date?: string;
+  created_by?: number;
+  creator?: IUser;
   assignees?: IUser[];
   attachments?: ITaskAttachment[];
   comments?: ITaskComment[];
   activities?: ITaskActivity[];
-  subtasks?: IProjectTask[];
+  sub_tasks?: IProjectSubTask[];
+  dependencies?: IProjectTaskDependency[];
   createdAt?: string;
 
   // UI helper fields
   priorityClass?: string;
 }
 
+export enum MilestoneStatus {
+  NOT_STARTED = 'Not Started',
+  IN_PROGRESS = 'In Progress',
+  ON_HOLD = 'On Hold',
+  COMPLETED = 'Completed',
+}
+
 export interface IMilestone {
-  id?: number;
+  id: number;
   name: string;
   phase?: string;
-  is_completed: boolean;
   progress: number;
   color: string;
+  startDate: string;
+  endDate: string;
   createdAt?: string;
+  status: MilestoneStatus;
+  project_id: number;
+  parent_id: number;
+  subMilestones?: IMilestone[];
 }
 
 export interface IProjectDocument {
@@ -92,6 +144,12 @@ export interface IAuditEntry {
   color: string;
 }
 
+export interface IProjectBudget {
+  total?: number;
+  used?: number;
+  remaining?: number;
+}
+
 export interface IProject {
   id: string | number;
   name: string;
@@ -106,7 +164,7 @@ export interface IProject {
   completion_date?: string;
   completionDate?: string; // Wizard field
   estimatedCompletion?: string; // Mapped field
-  budget?: string;
+  budget?: IProjectBudget;
   budget_total?: number;
   budget_used?: number;
   budget_summary?: { total: number; used: number }; // Mapped field

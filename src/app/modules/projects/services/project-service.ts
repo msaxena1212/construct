@@ -59,6 +59,18 @@ export class ProjectService {
     return this.http.post<ApiResponse<any>>(`${this.apiUrl}/tasks/${taskId}/attachments`, formData);
   }
 
+  createSubTask(taskId: string | number, title: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/tasks/${taskId}/subtasks`, { title });
+  }
+
+  updateSubTask(subTaskId: number, data: { title?: string; completed?: boolean }): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/subtasks/${subTaskId}`, data);
+  }
+
+  deleteSubTask(subTaskId: number): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/subtasks/${subTaskId}`);
+  }
+
   getUpdates(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/updates`);
   }
@@ -77,5 +89,14 @@ export class ProjectService {
       formData.append('files', file);
     });
     return this.http.post<ApiResponse<any>>(`${this.apiUrl}/projects/${projectId}/documents`, formData);
+  }
+
+  // --- Milestone Management ---
+  createMilestone(projectId: string | number, data: any): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/projects/${projectId}/milestones`, data);
+  }
+
+  updateMilestone(projectId: string | number, milestoneId: string | number, data: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/projects/${projectId}/milestones/${milestoneId}`, data);
   }
 }

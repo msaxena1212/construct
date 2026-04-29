@@ -15,6 +15,9 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TaskDetail } from './widgets/task-detail/task-detail';
 import { AddTask } from './widgets/add-task/add-task';
 import { SubtaskProgressPipe } from './widgets/task-management/subtask-progress.pipe';
+import { MilestoneFormDialog } from './dialogs/milestone-form-dialog/milestone-form-dialog';
+import { MaterialModule } from '../../shared/material/material-module';
+import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
 
 @NgModule({
   declarations: [
@@ -29,7 +32,16 @@ import { SubtaskProgressPipe } from './widgets/task-management/subtask-progress.
     TaskDetail,
     AddTask,
     SubtaskProgressPipe,
+    MilestoneFormDialog,
+    TaskFormDialog,
   ],
-  imports: [CommonModule, ProjectsRoutingModule, FormsModule, ReactiveFormsModule, DragDropModule],
+  imports: [
+    CommonModule,
+    ProjectsRoutingModule,
+    FormsModule,
+    ReactiveFormsModule,
+    DragDropModule,
+    MaterialModule,
+  ],
 })
-export class ProjectsModule { }
+export class ProjectsModule {}

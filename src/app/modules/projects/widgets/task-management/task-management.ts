@@ -1,8 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ProjectService } from '../../services/project-service';
 import { ToastrService } from 'ngx-toastr';
-import { IProjectTask } from '../../../../shared/interfaces/project.interface';
+import { IProjectTask, IMilestone, TaskStatus } from '../../../../shared/interfaces/project.interface';
 
 interface TaskColumn {
   id: string;
@@ -18,9 +18,10 @@ interface TaskColumn {
   templateUrl: './task-management.html',
   styleUrl: './task-management.scss',
 })
-export class TaskManagement implements OnInit {
+export class TaskManagement implements OnInit, OnChanges {
   @Input() projectId: string | number = '';
   @Input() selectedMember = 'All Members';
+  @Input() milestones: IMilestone[] = [];
 
   loading = false;
   selectedTask: IProjectTask | null = null;
@@ -30,6 +31,9 @@ export class TaskManagement implements OnInit {
   newComment = '';
   isUploading = false;
   activeTaskTab = 'Subtasks'; // Subtasks, Attachments, Discussion, History
+
+  selectedMilestoneId: number | null = null;
+  allTasks: IProjectTask[] = [];
 
   columns: TaskColumn[] = [
     { id: 'todo', title: 'To Do', color: 'bg-slate-400', count: 0, tasks: [] },
@@ -49,11 +53,25 @@ export class TaskManagement implements OnInit {
     }
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['milestones'] && this.milestones.length > 0 && !this.selectedMilestoneId) {
+      // Default to first milestone if none selected
+      this.selectedMilestoneId = this.milestones[0].id;
+      this.filterTasks();
+    }
+  }
+
+  selectMilestone(milestoneId: number) {
+    this.selectedMilestoneId = milestoneId;
+    this.filterTasks();
+  }
+
   fetchTasks() {
     this.loading = true;
     this.projectService.getProjectTasks(this.projectId).subscribe({
       next: (res) => {
-        this.mapTasksToColumns(res.data);
+        this.allTasks = res.data;
+        this.filterTasks();
         this.loading = false;
       },
       error: () => {
@@ -61,6 +79,14 @@ export class TaskManagement implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  filterTasks() {
+    if (!this.selectedMilestoneId) return;
+
+    // Filter out tasks that belong to the selected milestone
+    const filtered = this.allTasks.filter(t => t.milestone_id === this.selectedMilestoneId);
+    this.mapTasksToColumns(filtered);
   }
 
   mapTasksToColumns(tasks: IProjectTask[]) {
@@ -81,8 +107,7 @@ export class TaskManagement implements OnInit {
   transformTask(t: IProjectTask): IProjectTask {
     return {
       ...t,
-      priorityClass: this.getPriorityClass(t.priority),
-      is_completed: t.status === 'Completed'
+      priorityClass: this.getPriorityClass(t.priority)
     };
   }
 
@@ -104,25 +129,16 @@ export class TaskManagement implements OnInit {
     this.showAddTaskModal = true;
   }
 
-  addNewTask(taskData: any) {
-    const payload = {
-      ...taskData,
-      status: this.targetStep
-    };
-
-    this.projectService.createTask(this.projectId, payload).subscribe({
-      next: (res) => {
-        const newTask = this.transformTask(res.data);
-        const column = this.columns.find(c => c.title === newTask.status);
-        if (column) {
-          column.tasks.unshift(newTask);
-          this.updateCounts();
-        }
-        this.showAddTaskModal = false;
-        this.toastr.success('Task created successfully');
-      },
-      error: () => this.toastr.error('Error creating task')
-    });
+  addNewTask(task: any) {
+    const newTask = this.transformTask(task);
+    this.allTasks.push(task); // Add to cache
+    const column = this.columns.find(c => c.title === newTask.status);
+    if (column) {
+      column.tasks.unshift(newTask);
+      this.updateCounts();
+    }
+    this.showAddTaskModal = false;
+    this.toastr.success('Task created successfully');
   }
 
   drop(event: CdkDragDrop<IProjectTask[]>) {
@@ -130,9 +146,16 @@ export class TaskManagement implements OnInit {
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
       const task = event.previousContainer.data[event.previousIndex];
-      const newStatus: any = event.container.id === 'todo' ? 'To Do'
-        : event.container.id === 'inprogress' ? 'In Progress'
-          : event.container.id === 'review' ? 'Review' : 'Completed';
+      const containerId = event.container.id;
+      let newStatus: TaskStatus;
+
+      switch (containerId) {
+        case 'todo': newStatus = 'To Do'; break;
+        case 'inprogress': newStatus = 'In Progress'; break;
+        case 'review': newStatus = 'Review'; break;
+        case 'completed': newStatus = 'Completed'; break;
+        default: newStatus = 'To Do';
+      }
 
       transferArrayItem(
         event.previousContainer.data,
@@ -150,6 +173,14 @@ export class TaskManagement implements OnInit {
         },
         error: () => {
           this.toastr.error('Failed to update task status');
+          // Revert visual move on error
+          transferArrayItem(
+            event.container.data,
+            event.previousContainer.data,
+            event.currentIndex,
+            event.previousIndex
+          );
+          this.updateCounts();
         }
       });
     }

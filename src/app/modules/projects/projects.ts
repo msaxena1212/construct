@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ProjectService } from './services/project-service';
-import { IProject, IUser } from '../../shared/interfaces/project.interface';
+import { IProject, IUser, MilestoneStatus } from '../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-projects',
@@ -16,7 +16,7 @@ export class Projects implements OnInit {
   availableTeamMembers: string[] = ['All Members'];
   selectedMember = 'All Members';
 
-  constructor(private projectService: ProjectService) {}
+  constructor(private projectService: ProjectService) { }
 
   ngOnInit(): void {
     this.fetchProjects();
@@ -24,7 +24,7 @@ export class Projects implements OnInit {
 
   get filteredProjects(): IProject[] {
     if (this.selectedMember === 'All Members') return this.projects;
-    return this.projects.filter((p) => 
+    return this.projects.filter((p) =>
       p.team_members?.some((m) => (m.firstname + ' ' + m.lastname) === this.selectedMember)
     );
   }
@@ -33,8 +33,7 @@ export class Projects implements OnInit {
     this.loading = true;
     this.projectService.getProjects().subscribe({
       next: (res) => {
-        const rawProjects = res.data;
-        this.projects = rawProjects.map((p) => this.mapProject(p));
+        this.projects = res.data;
         this.extractUniqueMembers();
         this.loading = false;
       },
@@ -44,19 +43,6 @@ export class Projects implements OnInit {
         console.error(err);
       },
     });
-  }
-
-  private mapProject(p: IProject): IProject {
-    const totalMilestones = p.milestones?.length || 0;
-    const completedMilestones = p.milestones?.filter((m) => m.is_completed).length || 0;
-    const progress = totalMilestones > 0 
-      ? Math.round((completedMilestones / totalMilestones) * 100) 
-      : 0;
-
-    return {
-      ...p,
-      progress: progress
-    };
   }
 
   private extractUniqueMembers() {

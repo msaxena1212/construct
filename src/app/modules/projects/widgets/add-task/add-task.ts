@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ProjectService } from '../../services/project-service';
-import { IUser } from '../../../../shared/interfaces/project.interface';
+import { IProjectTask, IUser } from '../../../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-add-task',
@@ -11,18 +12,26 @@ import { IUser } from '../../../../shared/interfaces/project.interface';
 })
 export class AddTask implements OnInit {
   @Input() projectId: string | number = '';
+  @Input() milestoneId: string | number | null = null;
   @Input() initialStatus: string = 'To Do';
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<any>();
 
-  task = {
-    title: '',
-    description: '',
-    priority: 'Medium Priority' as 'High Priority' | 'Medium Priority' | 'Low Priority',
-    date: new Date().toISOString().split('T')[0],
-    status: '' as 'To Do' | 'In Progress' | 'Review' | 'Completed',
-    assigneeId: ''
-  };
+  private projectService = inject(ProjectService);
+  private toast = inject(ToastrService);
+  private fb = inject(FormBuilder);
+
+  taskForm!: FormGroup;
+
+  checklist: { title: string, completed: boolean }[] = [];
+  dependencies: any[] = [];
+  attachments: any[] = [];
+
+  newSubTaskTitle = '';
+  selectedPredecessorId = '';
+  selectedDepType = 'FS';
+  depLag = 0;
+  allTasks: IProjectTask[] = [];
 
   priorities = [
     { label: 'High Priority', class: 'bg-red-100 text-red-700' },
@@ -30,18 +39,36 @@ export class AddTask implements OnInit {
     { label: 'Low Priority', class: 'bg-amber-100 text-amber-700' }
   ];
 
+  dependencyTypes = [
+    { id: 'FS', name: 'Finish-to-Start (FS)', desc: 'Predecessor must finish before Successor can start' },
+    { id: 'SS', name: 'Start-to-Start (SS)', desc: 'Predecessor must start before Successor can start' },
+    { id: 'FF', name: 'Finish-to-Finish (FF)', desc: 'Predecessor must finish before Successor can finish' },
+    { id: 'SF', name: 'Start-to-Finish (SF)', desc: 'Predecessor must start before Successor can finish' }
+  ];
+
   teamMembers: IUser[] = [];
 
-  constructor(
-    private projectService: ProjectService,
-    private toastr: ToastrService
-  ) { }
-
   ngOnInit() {
-    this.task.status = this.initialStatus as any;
+    this.initForm();
+    this.projectService.getProjectTasks(this.projectId).subscribe((res: any) => {
+      this.allTasks = res.data;
+    });
     if (this.projectId) {
       this.fetchTeamMembers();
     }
+  }
+
+  initForm() {
+    this.taskForm = this.fb.group({
+      title: ['', [Validators.required]],
+      description: [''],
+      priority: ['Medium Priority'],
+      status: [this.initialStatus],
+      startDate: [new Date().toISOString().split('T')[0]],
+      duration: [5],
+      assigneeId: [''],
+      initialComment: ['']
+    });
   }
 
   fetchTeamMembers() {
@@ -52,29 +79,80 @@ export class AddTask implements OnInit {
     });
   }
 
-  onAssigneeSelect(event: any) {
-    this.task.assigneeId = event.target.value;
+  addSubTask() {
+    if (this.newSubTaskTitle.trim()) {
+      this.checklist.push({ title: this.newSubTaskTitle.trim(), completed: false });
+      this.newSubTaskTitle = '';
+    }
+  }
+
+  removeSubTask(index: number) {
+    this.checklist.splice(index, 1);
+  }
+
+  addDependency() {
+    if (this.selectedPredecessorId) {
+      const pred = this.allTasks.find(t => t.id === Number(this.selectedPredecessorId));
+      const typeObj = this.dependencyTypes.find(t => t.id === this.selectedDepType);
+      this.dependencies.push({
+        predecessor_id: Number(this.selectedPredecessorId),
+        predecessorTitle: pred?.title,
+        type: this.selectedDepType,
+        typeName: typeObj?.name,
+        lag: this.depLag
+      });
+      this.selectedPredecessorId = '';
+    }
+  }
+
+  getSelectedDepDesc() {
+    return this.dependencyTypes.find(t => t.id === this.selectedDepType)?.desc || '';
+  }
+
+  removeDependency(index: number) {
+    this.dependencies.splice(index, 1);
+  }
+
+  onFileSelected(event: any) {
+    const files = event.target.files;
+    if (!files) return;
+    for (let i = 0; i < files.length; i++) {
+      this.attachments.push({
+        name: files[i].name,
+        size: (files[i].size / 1024).toFixed(1) + ' KB',
+        icon: 'description',
+        color: 'blue'
+      });
+    }
   }
 
   onSubmit() {
-    if (this.task.title.trim()) {
+    if (this.taskForm.valid) {
+      const formValue = this.taskForm.value;
       const payload = {
-        title: this.task.title,
-        description: this.task.description,
-        priority: this.task.priority,
-        status: this.task.status,
-        due_date: this.task.date,
-        assignees: this.task.assigneeId ? [this.task.assigneeId] : []
+        ...formValue,
+        milestone_id: this.milestoneId,
+        sub_tasks: this.checklist,
+        dependencies: this.dependencies,
+        assignees: formValue.assigneeId ? [Number(formValue.assigneeId)] : [],
+        // Convert startDate + duration to due_date for backend
+        due_date: this.calculateDueDate(formValue.startDate, formValue.duration)
       };
 
       this.projectService.createTask(this.projectId, payload).subscribe({
         next: (res) => {
           this.save.emit(res.data);
-          this.toastr.success('Task created successfully');
+          this.toast.success('Task initialized successfully');
           this.close.emit();
         },
-        error: () => this.toastr.error('Failed to create task')
+        error: () => this.toast.error('Failed to initialize task')
       });
     }
+  }
+
+  private calculateDueDate(startDate: string, duration: number): string {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + duration);
+    return date.toISOString().split('T')[0];
   }
 }
