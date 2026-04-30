@@ -45,6 +45,9 @@ db.task_activity = require("../modules/projects/models/task-activity.model.js")(
 db.project_task_assignee = require("../modules/projects/models/task-assignee.model.js")(sequelize, Sequelize);
 db.project_sub_task = require("../modules/projects/models/sub-task.model.js")(sequelize, Sequelize);
 db.project_task_dependency = require("../modules/projects/models/task-dependency.model.js")(sequelize, Sequelize);
+db.vendor = require("../modules/vendors/models/vendors_model.js")(sequelize, Sequelize);
+db.activity = require("../modules/vendors/models/vendors_activity_model.js")(sequelize, Sequelize);
+
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
 db.project.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -92,6 +95,11 @@ db.project_sub_task.belongsTo(db.project_task, { foreignKey: "task_id", as: "tas
 db.project_task.hasMany(db.project_task_dependency, { foreignKey: "task_id", as: "dependencies", onDelete: 'CASCADE' });
 db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "task_id" });
 db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "predecessor_id", as: "predecessor" });
+
+db.company.hasMany(db.vendor, { foreignKey: "company_id", as: "vendor" });
+db.vendor.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+db.company.hasMany(db.activity, { foreignKey: "company_id", as: "activity" });
+db.activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 // PROJECT MANAGEMENT END
 
 connectDB();

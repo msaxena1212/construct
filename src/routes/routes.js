@@ -18,6 +18,17 @@ class Routes {
     const authRouter = express.Router();
     require("../modules/auth/auth.routes")(authRouter);
     app.use("/api/auth", authRouter);
+  // Vendor routes
+    app.use(
+      "/api/v1/vendors",
+      require("../modules/vendors/vendors_routes")
+    );
+
+    // Activity routes
+    app.use(
+      "/api/v1/activities",
+      require("../modules/vendors/vendors_activity_routes")
+    );
   }
 }
 
