@@ -1,21 +1,25 @@
-// controllers/vendor.controller.js
 const { v4: uuidv4 } = require('uuid');
-const path           = require('path');
-const db = require("../../models");
+const { Op } = require('sequelize');
+const db = require('../../models');
+
 const VendorModel = db.vendor;
 const ActivityModel = db.activity;
-/* ─────────────────────────────────────────
-   VENDOR CONTROLLERS
-───────────────────────────────────────── */
 
-/**
- * GET /api/vendors
- * Query param: ?status=active | pending | inactive
- */
+const getCompanyId = (req) =>
+  req.user?.company_id || req.user?.companyId || null;
+
 const getAllVendors = async (req, res) => {
   try {
+    const company_id = getCompanyId(req);
     const { status } = req.query;
-    const vendors = await VendorModel.getAll(status || null);
+
+    const where = { company_id };
+    if (status) where.status = status;
+
+    const vendors = await VendorModel.findAll({
+      where,
+      order: [['createdAt', 'DESC']],
+    });
 
     return res.status(200).json({
       success: true,
@@ -28,18 +32,59 @@ const getAllVendors = async (req, res) => {
   }
 };
 
-/**
- * GET /api/vendors/:id
- */
+const getStats = async (req, res) => {
+  try {
+    const company_id = getCompanyId(req);
+
+    const totalActive = await VendorModel.count({
+      where: { company_id, status: 'active' },
+    });
+
+    const totalVendors = await VendorModel.count({ where: { company_id } });
+
+    const compliantCount = await VendorModel.count({
+      where: { company_id, compliance_score: { [Op.gte]: 90 } },
+    });
+
+    const totalBudget = await VendorModel.sum('budget_allocation', {
+      where: { company_id, status: 'active' },
+    });
+
+    const formatCurrency = (num) => {
+      if (!num) return '₹0';
+      if (num >= 1_00_00_000) return `₹${(num / 1_00_00_000).toFixed(1)}Cr`;
+      if (num >= 1_00_000) return `₹${(num / 1_00_000).toFixed(1)}L`;
+      if (num >= 1_000) return `₹${(num / 1_000).toFixed(1)}k`;
+      return `₹${num}`;
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalActive,
+        pendingPayments: formatCurrency(totalBudget),
+        compliantPartners:
+          totalVendors > 0
+            ? `${Math.round((compliantCount / totalVendors) * 100)}%`
+            : '0%',
+      },
+    });
+  } catch (err) {
+    console.error('[getStats]', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 const getVendorById = async (req, res) => {
   try {
-    const vendor = await VendorModel.getById(req.params.id);
+    const company_id = getCompanyId(req);
+
+    const vendor = await VendorModel.findOne({
+      where: { id: req.params.id, company_id },
+    });
 
     if (!vendor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vendor nahi mila',
-      });
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
     }
 
     return res.status(200).json({ success: true, data: vendor });
@@ -49,33 +94,25 @@ const getVendorById = async (req, res) => {
   }
 };
 
-/**
- * POST /api/vendors
- * Body: form fields + optional file upload (multer)
- * Angular form ke fields ke anusar:
- *   vendorLegalName, spocName, spocPhone,
- *   officialEmail, officialPhone,
- *   gstNo, panCardNo,
- *   physicalAddress, pincode,
- *   budgetAllocation, services
- */
 const createVendor = async (req, res) => {
   try {
+    const company_id = getCompanyId(req);
+
+    if (!company_id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: company_id not found in token',
+      });
+    }
+
     const {
-      vendorLegalName,
-      spocName,
-      spocPhone,
-      officialEmail,
-      officialPhone,
-      gstNo,
-      panCardNo,
-      physicalAddress,
-      pincode,
-      budgetAllocation,
-      services,
+      vendorLegalName, spocName, spocPhone,
+      officialEmail, officialPhone,
+      gstNo, panCardNo,
+      physicalAddress, pincode,
+      budgetAllocation, services,
     } = req.body;
 
-    // ── Validation ──
     const required = {
       vendorLegalName, spocName, spocPhone,
       officialEmail, officialPhone,
@@ -83,94 +120,78 @@ const createVendor = async (req, res) => {
       physicalAddress, pincode,
       budgetAllocation, services,
     };
-
     const missing = Object.keys(required).filter((k) => !required[k]);
     if (missing.length) {
       return res.status(400).json({
         success: false,
-        message: `Yeh fields required hain: ${missing.join(', ')}`,
+        message: `Required fields missing: ${missing.join(', ')}`,
       });
     }
 
-    // Email format check
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(officialEmail)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid email address chahiye',
-      });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(officialEmail)) {
+      return res.status(400).json({ success: false, message: 'Invalid email address' });
     }
 
-    // GST format check (basic: 15 alphanumeric chars)
     if (!/^[0-9A-Z]{15}$/.test(gstNo.toUpperCase())) {
       return res.status(400).json({
         success: false,
-        message: 'GST number format galat hai (e.g. 22AAAAA0000A1Z5)',
+        message: 'Invalid GST format (e.g. 22AAAAA0000A1Z5)',
       });
     }
 
-    // PAN format check (5 letters + 4 digits + 1 letter)
     if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCardNo.toUpperCase())) {
       return res.status(400).json({
         success: false,
-        message: 'PAN number format galat hai (e.g. ABCDE1234F)',
+        message: 'Invalid PAN format (e.g. ABCDE1234F)',
       });
     }
 
-    // ── Services string → array ──
     const servicesArray = services
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+      .split(',').map((s) => s.trim()).filter(Boolean);
 
-    // ── Budget: string se number nikalo (₹3,000,000 → 3000000) ──
-    const budgetNum = parseFloat(
-      budgetAllocation.replace(/[^0-9.]/g, '')
-    );
+    const budgetNum = parseFloat(budgetAllocation.replace(/[^0-9.]/g, '')) || 0;
 
-    // ── Contract file path (multer se aaya) ──
     const contractFile = req.file
       ? `/uploads/contracts/${req.file.filename}`
       : null;
 
-    // ── Vendor create karo ──
     const newVendor = await VendorModel.create({
-      id:               uuidv4(),
-      name:             vendorLegalName,
-      spoc_name:        spocName,
-      spoc_phone:       spocPhone,
-      official_email:   officialEmail,
-      official_phone:   officialPhone,
-      gst_no:           gstNo.toUpperCase(),
-      pan_card_no:      panCardNo.toUpperCase(),
+      id: uuidv4(),
+      company_id,
+      name: vendorLegalName,
+      spoc_name: spocName,
+      spoc_phone: spocPhone,
+      official_email: officialEmail,
+      official_phone: officialPhone,
+      gst_no: gstNo.toUpperCase(),
+      pan_card_no: panCardNo.toUpperCase(),
       physical_address: physicalAddress,
       pincode,
       budget_allocation: budgetNum,
-      services:          servicesArray,
-      contract_file:     contractFile,
-      status:            'active',
-      compliance_score:  95,
+      services: servicesArray,
+      contract_file: contractFile,
+      status: 'active',
+      compliance_score: 95,
     });
 
-    // ── Activity log add karo ──
-    await VendorModel.createActivity({
-      icon:        'assign',
-      title:       'New Vendor Onboarded',
+    await ActivityModel.create({
+      company_id,
+      icon: 'assign',
+      title: 'New Vendor Onboarded',
       description: `${vendorLegalName} has been successfully onboarded.`,
-      time_label:  'JUST NOW',
+      time_label: 'JUST NOW',
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Vendor successfully onboard ho gaya',
+      message: 'Vendor onboarded successfully',
       data: newVendor,
     });
   } catch (err) {
-    // MySQL duplicate entry error (GST/PAN already exists)
-    if (err.code === 'ER_DUP_ENTRY') {
+    if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(409).json({
         success: false,
-        message: 'GST number ya PAN card pehle se registered hai',
+        message: 'GST number, PAN card or email already registered',
       });
     }
     console.error('[createVendor]', err);
@@ -178,33 +199,30 @@ const createVendor = async (req, res) => {
   }
 };
 
-/**
- * PUT /api/vendors/:id
- */
 const updateVendor = async (req, res) => {
   try {
-    const vendor = await VendorModel.getById(req.params.id);
+    const company_id = getCompanyId(req);
+
+    const vendor = await VendorModel.findOne({
+      where: { id: req.params.id, company_id },
+    });
     if (!vendor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vendor nahi mila',
-      });
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
     }
 
-    // services string → array (agar aya)
     if (req.body.services && typeof req.body.services === 'string') {
       req.body.services = req.body.services
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
+        .split(',').map((s) => s.trim()).filter(Boolean);
     }
 
-    const updated = await VendorModel.update(req.params.id, req.body);
+    delete req.body.company_id;
+
+    await vendor.update(req.body);
 
     return res.status(200).json({
       success: true,
-      message: 'Vendor update ho gaya',
-      data: updated,
+      message: 'Vendor updated successfully',
+      data: vendor,
     });
   } catch (err) {
     console.error('[updateVendor]', err);
@@ -212,94 +230,84 @@ const updateVendor = async (req, res) => {
   }
 };
 
-/**
- * DELETE /api/vendors/:id
- */
 const deleteVendor = async (req, res) => {
   try {
-    const deleted = await VendorModel.remove(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({
-        success: false,
-        message: 'Vendor nahi mila',
-      });
+    const company_id = getCompanyId(req);
+
+    const vendor = await VendorModel.findOne({
+      where: { id: req.params.id, company_id },
+    });
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Vendor delete ho gaya',
-    });
+    await vendor.destroy();
+
+    return res.status(200).json({ success: true, message: 'Vendor deleted successfully' });
   } catch (err) {
     console.error('[deleteVendor]', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-/* ─────────────────────────────────────────
-   STATS CONTROLLER
-───────────────────────────────────────── */
-
-/**
- * GET /api/vendors/stats
- * Dashboard ke 3 stat cards ke liye
- */
-const getStats = async (req, res) => {
-  try {
-    const stats = await VendorModel.getStats();
-    return res.status(200).json({ success: true, data: stats });
-  } catch (err) {
-    console.error('[getStats]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-/* ─────────────────────────────────────────
-   ACTIVITY CONTROLLERS
-───────────────────────────────────────── */
-
-/**
- * GET /api/activities
- * Query param: ?limit=20
- */
 const getActivities = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 20;
-    const activities = await VendorModel.getAllActivities(limit);
+    const company_id = getCompanyId(req);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 
-    return res.status(200).json({
-      success: true,
-      count: activities.length,
-      data: activities,
+    const activities = await ActivityModel.findAll({
+      where: { company_id },
+      order: [['createdAt', 'DESC']],
+      limit,
     });
+
+    const now = Date.now();
+    const result = activities.map((a) => {
+      const data = a.toJSON();
+      const diffMs = now - new Date(a.createdAt).getTime();
+      const diffMins = Math.floor(diffMs / 60_000);
+      const diffHrs = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHrs / 24);
+
+      let time = data.time_label;
+      if (diffMins < 2) time = 'JUST NOW';
+      else if (diffMins < 60) time = `${diffMins} MINS AGO`;
+      else if (diffHrs < 24) time = `${diffHrs} HOUR${diffHrs > 1 ? 'S' : ''} AGO`;
+      else if (diffDays === 1) time = 'YESTERDAY';
+      else if (diffDays < 7) time = `${diffDays} DAYS AGO`;
+
+      return { ...data, time };
+    });
+
+    return res.status(200).json({ success: true, count: result.length, data: result });
   } catch (err) {
     console.error('[getActivities]', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-/**
- * POST /api/activities
- * Body: { icon, title, description, time_label }
- */
+
 const createActivity = async (req, res) => {
   try {
+    const company_id = getCompanyId(req);
     const { icon, title, description, time_label } = req.body;
 
     if (!icon || !title || !description) {
       return res.status(400).json({
         success: false,
-        message: 'icon, title, description required hain',
+        message: 'icon, title, description are required',
       });
     }
 
-    const activity = await VendorModel.createActivity({
-      icon, title, description, time_label,
+    const activity = await ActivityModel.create({
+      company_id,
+      icon,
+      title,
+      description,
+      time_label: time_label || 'JUST NOW',
     });
 
-    return res.status(201).json({
-      success: true,
-      data: activity,
-    });
+    return res.status(201).json({ success: true, data: activity });
   } catch (err) {
     console.error('[createActivity]', err);
     return res.status(500).json({ success: false, message: 'Server error' });

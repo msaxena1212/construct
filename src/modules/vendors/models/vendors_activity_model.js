@@ -28,5 +28,5 @@ module.exports = (sequelize, Sequelize) => {
     });
 
 
-  return Activity;
+    return Activity;
 }
