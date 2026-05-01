@@ -1,20 +1,17 @@
-<!-- ===== MAIN DASHBOARD ===== -->
 <div class="vp-wrapper">
-
-    <!-- Header -->
     <div class="vp-header">
         <div class="vp-header__left">
             <h1 class="vp-title">Vendors &amp; Partners</h1>
             <p class="vp-subtitle">
-                Coordinate with {{ totalActive }} active contractors and material suppliers.
+                Coordinate with <strong>{{ totalActive }}</strong> active contractors and material suppliers.
             </p>
         </div>
         <div class="vp-header__right">
-            <button class="btn-filter" [class.active]="filterActive" (click)="filterActive = !filterActive">
+            <button class="btn-filter" [class.active]="filterActive" (click)="toggleFilter()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
-                ALL MEMBERS
+                {{ filterActive ? 'ACTIVE ONLY' : 'ALL MEMBERS' }}
             </button>
             <button class="btn-add" (click)="openModal()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -28,7 +25,6 @@
         </div>
     </div>
 
-    <!-- Stats Cards -->
     <div class="vp-stats">
         <div class="stat-card">
             <span class="stat-label">TOTAL ACTIVE</span>
@@ -47,45 +43,66 @@
         </div>
     </div>
 
-    <!-- Vendor List (if any vendors exist) -->
-    <div class="vp-vendor-list" *ngIf="vendors.length > 0">
+    <div class="vp-loading" *ngIf="isLoading">
+        <div class="loading-spinner"></div>
+        <span>Loading vendors…</span>
+    </div>
+
+    <div class="vp-vendor-list" *ngIf="!isLoading && vendors.length > 0">
         <div class="vendor-card" *ngFor="let vendor of vendors">
             <div class="vendor-card__info">
-                <div class="vendor-avatar">{{ vendor.name.charAt(0) }}</div>
+                <div class="vendor-avatar">{{ getInitials(vendor.name) }}</div>
                 <div>
                     <div class="vendor-name">{{ vendor.name }}</div>
-                    <div class="vendor-services">{{ vendor.services.join(', ') }}</div>
+                    <div class="vendor-services">{{ servicesLabel(vendor) }}</div>
                 </div>
             </div>
             <div class="vendor-card__meta">
-                <span class="vendor-badge vendor-badge--active">Active</span>
-                <span class="vendor-compliance">{{ vendor.complianceScore }}% compliant</span>
+                <span class="vendor-badge" [ngClass]="{
+                        'vendor-badge--active':   vendor.status === 'active',
+                        'vendor-badge--pending':  vendor.status === 'pending',
+                        'vendor-badge--inactive': vendor.status === 'inactive'
+                    }">
+                    {{ statusLabel(vendor.status) }}
+                </span>
+                <span class="vendor-compliance">{{ vendor.compliance_score }}% compliant</span>
             </div>
         </div>
     </div>
 
-    <!-- Compliance & Billing Activity -->
+    <div class="vp-empty" *ngIf="!isLoading && vendors.length === 0">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="7" width="20" height="14" rx="2" />
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+        </svg>
+        <p>No vendors found. Click <strong>Add New Vendor</strong> to onboard your first partner.</p>
+    </div>
+
     <div class="vp-activity">
         <div class="vp-activity__header">
             <h2 class="activity-title">Compliance &amp; Billing Activity</h2>
-            <button class="btn-link">View All History</button>
+            <button class="btn-link" (click)="loadActivities()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="23 4 23 10 17 10" />
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+                Refresh
+            </button>
         </div>
+
         <div class="activity-list">
             <div class="activity-item" *ngFor="let item of activities">
                 <div class="activity-icon" [ngClass]="'activity-icon--' + item.icon">
-                    <!-- Invoice icon -->
                     <svg *ngIf="item.icon === 'invoice'" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="18" height="18" rx="2" />
                         <line x1="3" y1="9" x2="21" y2="9" />
                         <line x1="9" y1="21" x2="9" y2="9" />
                     </svg>
-                    <!-- Certification icon -->
                     <svg *ngIf="item.icon === 'cert'" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    <!-- Assignment icon -->
                     <svg *ngIf="item.icon === 'assign'" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <rect x="2" y="3" width="20" height="14" rx="2" />
@@ -97,14 +114,16 @@
                     <div class="activity-item__title">{{ item.title }}</div>
                     <div class="activity-item__desc">{{ item.description }}</div>
                 </div>
-                <span class="activity-time">{{ item.time }}</span>
+                <span class="activity-time">{{ item.time || item.time_label }}</span>
+            </div>
+
+            <div class="activity-empty" *ngIf="activities.length === 0 && !isLoading">
+                <p>No activity recorded yet.</p>
             </div>
         </div>
     </div>
 </div>
 
-
-<!-- ===== ONBOARD MODAL ===== -->
 <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
     <div class="modal" (click)="$event.stopPropagation()">
 
@@ -113,7 +132,7 @@
                 <h2 class="modal__title">Onboard New Partner</h2>
                 <p class="modal__subtitle">Complete the onboarding documentation to begin work.</p>
             </div>
-            <button class="modal__close" (click)="closeModal()">
+            <button class="modal__close" (click)="closeModal()" [disabled]="isSubmitting">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
@@ -122,88 +141,123 @@
         </div>
 
         <form [formGroup]="onboardForm" (ngSubmit)="onSubmit()" class="modal__form" novalidate>
+            <div class="form-api-error" *ngIf="errorMessage">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {{ errorMessage }}
+            </div>
 
-            <!-- Vendor Legal Name -->
             <div class="form-group form-group--full">
-                <label class="form-label">VENDOR LEGAL NAME</label>
+                <label class="form-label">VENDOR LEGAL NAME <span class="required-star">*</span></label>
                 <input class="form-input" [class.form-input--error]="isFieldInvalid('vendorLegalName')" type="text"
                     placeholder="e.g. Skyline Structural Engineering" formControlName="vendorLegalName">
-                <span class="form-error" *ngIf="isFieldInvalid('vendorLegalName')">This field is required</span>
+                <span class="form-error" *ngIf="isFieldInvalid('vendorLegalName')">
+                    {{ fieldError('vendorLegalName') }}
+                </span>
             </div>
 
-            <!-- SPOC + Official Email -->
             <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">SPOC PRIMARY CONTACT</label>
+                    <label class="form-label">SPOC PRIMARY CONTACT <span class="required-star">*</span></label>
+
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('spocName')" type="text"
-                        placeholder="Name" formControlName="spocName">
-                    <span class="form-error" *ngIf="isFieldInvalid('spocName')">Required</span>
-                    <input class="form-input mt-8" [class.form-input--error]="isFieldInvalid('spocPhone')" type="text"
-                        placeholder="Phone" formControlName="spocPhone">
-                    <span class="form-error" *ngIf="isFieldInvalid('spocPhone')">Required</span>
+                        placeholder="Full Name" formControlName="spocName">
+                    <span class="form-error" *ngIf="isFieldInvalid('spocName')">
+                        {{ fieldError('spocName') }}
+                    </span>
+
+                    <input class="form-input mt-8" [class.form-input--error]="isFieldInvalid('spocPhone')" type="number"
+                        placeholder="9876543210" formControlName="spocPhone" maxlength="10">
+                    <span class="form-error" *ngIf="isFieldInvalid('spocPhone')">
+                        {{ fieldError('spocPhone') }}
+                    </span>
                 </div>
+
                 <div class="form-col">
-                    <label class="form-label">OFFICIAL EMAIL &amp; PHONE</label>
+                    <label class="form-label">OFFICIAL EMAIL &amp; PHONE <span class="required-star">*</span></label>
+
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('officialEmail')" type="email"
                         placeholder="official@vendor.com" formControlName="officialEmail">
-                    <span class="form-error" *ngIf="isFieldInvalid('officialEmail')">Valid email required</span>
+                    <span class="form-error" *ngIf="isFieldInvalid('officialEmail')">
+                        {{ fieldError('officialEmail') }}
+                    </span>
+
                     <input class="form-input mt-8" [class.form-input--error]="isFieldInvalid('officialPhone')"
-                        type="text" placeholder="+1 (555) 000-0000" formControlName="officialPhone">
-                    <span class="form-error" *ngIf="isFieldInvalid('officialPhone')">Required</span>
+                        type="number" placeholder="+91 98765 43210" formControlName="officialPhone">
+                    <span class="form-error" *ngIf="isFieldInvalid('officialPhone')">
+                        {{ fieldError('officialPhone') }}
+                    </span>
                 </div>
             </div>
 
-            <!-- GST + PAN -->
             <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">GST NO.</label>
+                    <label class="form-label">GST NO. <span class="required-star">*</span></label>
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('gstNo')" type="text"
-                        placeholder="22AAAAA0000A1Z5" formControlName="gstNo">
-                    <span class="form-error" *ngIf="isFieldInvalid('gstNo')">Required</span>
+                        placeholder="22ABCDE1234F1Z5" formControlName="gstNo" maxlength="15"
+                        style="text-transform:uppercase">
+                    <span class="form-hint">15-character GST number</span>
+                    <span class="form-error" *ngIf="isFieldInvalid('gstNo')">
+                        {{ fieldError('gstNo') }}
+                    </span>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">PAN CARD NO.</label>
+                    <label class="form-label">PAN CARD NO. <span class="required-star">*</span></label>
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('panCardNo')" type="text"
-                        placeholder="ABCDE1234F" formControlName="panCardNo">
-                    <span class="form-error" *ngIf="isFieldInvalid('panCardNo')">Required</span>
+                        placeholder="ABCDE1234F" formControlName="panCardNo" maxlength="10"
+                        style="text-transform:uppercase">
+                    <span class="form-hint">10-character PAN number</span>
+                    <span class="form-error" *ngIf="isFieldInvalid('panCardNo')">
+                        {{ fieldError('panCardNo') }}
+                    </span>
                 </div>
             </div>
 
-            <!-- Address + Pincode -->
             <div class="form-row form-row--3-1">
                 <div class="form-col">
-                    <label class="form-label">PHYSICAL ADDRESS</label>
+                    <label class="form-label">PHYSICAL ADDRESS <span class="required-star">*</span></label>
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('physicalAddress')" type="text"
                         placeholder="Suite #, Industrial Area..." formControlName="physicalAddress">
-                    <span class="form-error" *ngIf="isFieldInvalid('physicalAddress')">Required</span>
+                    <span class="form-error" *ngIf="isFieldInvalid('physicalAddress')">
+                        {{ fieldError('physicalAddress') }}
+                    </span>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">PINCODE</label>
+                    <label class="form-label">PINCODE <span class="required-star">*</span></label>
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('pincode')" type="text"
-                        placeholder="600001" formControlName="pincode">
-                    <span class="form-error" *ngIf="isFieldInvalid('pincode')">Required</span>
+                        placeholder="600001" formControlName="pincode" maxlength="6">
+                    <span class="form-error" *ngIf="isFieldInvalid('pincode')">
+                        {{ fieldError('pincode') }}
+                    </span>
                 </div>
             </div>
 
-            <!-- Budget + Services -->
             <div class="form-row">
                 <div class="form-col">
-                    <label class="form-label">BUDGET ALLOCATION</label>
+                    <label class="form-label">BUDGET ALLOCATION <span class="required-star">*</span></label>
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('budgetAllocation')" type="text"
                         placeholder="₹3,000,000" formControlName="budgetAllocation">
-                    <span class="form-error" *ngIf="isFieldInvalid('budgetAllocation')">Required</span>
+                    <span class="form-error" *ngIf="isFieldInvalid('budgetAllocation')">
+                        {{ fieldError('budgetAllocation') }}
+                    </span>
                 </div>
                 <div class="form-col">
-                    <label class="form-label">SERVICES (COMMA SEPARATED)</label>
+                    <label class="form-label">SERVICES <span class="required-star">*</span></label>
                     <input class="form-input" [class.form-input--error]="isFieldInvalid('services')" type="text"
-                        placeholder="Painting, Electrical..." formControlName="services">
-                    <span class="form-error" *ngIf="isFieldInvalid('services')">Required</span>
+                        placeholder="Painting, Electrical, Plumbing…" formControlName="services">
+                    <span class="form-hint">Comma-separated list</span>
+                    <span class="form-error" *ngIf="isFieldInvalid('services')">
+                        {{ fieldError('services') }}
+                    </span>
                 </div>
             </div>
 
-            <!-- Contract Upload -->
             <div class="form-group form-group--full">
-                <label class="form-label">CONTRACT DOCUMENTATION</label>
+                <label class="form-label">CONTRACT DOCUMENTATION <span class="form-optional">(Optional —
+                        PDF)</span></label>
                 <div class="upload-zone" [class.upload-zone--dragging]="isDragging"
                     [class.upload-zone--filled]="uploadedFile" (dragover)="onDragOver($event)"
                     (dragleave)="onDragLeave()" (drop)="onDrop($event)" (click)="fileInput.click()">
@@ -221,16 +275,26 @@
                             <polyline points="20 6 9 17 4 12" />
                         </svg>
                         <span class="upload-zone__text" *ngIf="!uploadedFile">CLICK OR DRAG CONTRACT PDF</span>
-                        <span class="upload-zone__text upload-zone__text--filled" *ngIf="uploadedFile">{{
-                            uploadedFile.name }}</span>
+                        <span class="upload-zone__text upload-zone__text--filled" *ngIf="uploadedFile">
+                            {{ uploadedFile.name }}
+                        </span>
                     </div>
                 </div>
             </div>
-
-            <!-- Action Buttons -->
             <div class="modal__actions">
-                <button type="button" class="btn-cancel" (click)="closeModal()">CANCEL</button>
-                <button type="submit" class="btn-approve">APPROVE &amp; ONBOARD</button>
+                <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="isSubmitting">
+                    CANCEL
+                </button>
+                <button type="submit" class="btn-approve" [disabled]="isSubmitting">
+                    <span *ngIf="!isSubmitting">APPROVE &amp; ONBOARD</span>
+                    <span *ngIf="isSubmitting" class="btn-spinner">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" class="spin">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
+                        </svg>
+                        SUBMITTING…
+                    </span>
+                </button>
             </div>
 
         </form>
