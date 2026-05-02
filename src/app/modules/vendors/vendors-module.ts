@@ -9,4 +9,4 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   declarations: [Vendors],
   imports: [CommonModule, VendorsRoutingModule, FormsModule, ReactiveFormsModule],
 })
-export class VendorsModule {}
+export class VendorsModule { }

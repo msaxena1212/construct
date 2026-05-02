@@ -1,13 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import {
-  VendorsServices,
-  Vendor,
-  ActivityItem,
-  VendorStats,
-} from '../vendors/vendors-services';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { VendorsServices, Vendor, VendorStats, Activity } from '../vendors/services/vendors-services';
 
 @Component({
   selector: 'app-vendors',
@@ -15,243 +8,209 @@ import {
   templateUrl: './vendors.html',
   styleUrl: './vendors.scss',
 })
-export class Vendors implements OnInit, OnDestroy {
-  showModal = false;
-  filterActive = false;
-  uploadedFile: File | null = null;
-  isDragging = false;
-  isSubmitting = false;
-  isLoading = false;
-  errorMessage = '';
-  onboardForm: FormGroup;
+export class Vendors implements OnInit {
+  private vendorService = inject(VendorsServices);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
+  team = [{ name: 'All Members' }, { name: 'Marcus Thorne' }, { name: 'Sarah Chen' }];
+  selectedMember = 'All Members';
+
+  showAddModal = false;
+  showInvoiceModal = false;
+  showAuditModal = false;
+  showBillingModal = false;
+
+  isSaving = false;
+  isDeleting = false;
+  errorMsg = '';
+
+  viewingVendorId: string | null = null;
+  selectedVendor: Vendor | undefined = undefined;
+
   vendors: Vendor[] = [];
-  activities: ActivityItem[] = [];
-  totalActive: number | string = 0;
-  pendingPayments: string = '₹0';
-  compliantPartners: string = '0%';
+  stats: VendorStats = { totalActive: 0, pendingPayments: '₹0', compliantPartners: '0%' };
+  activities: Activity[] = [];
 
-  private destroy$ = new Subject<void>();
+  newVendor: any = this.defaultVendor();
+  contractFile: File | null = null;
 
-  constructor(
-    private fb: FormBuilder,
-    private vendorsService: VendorsServices
-  ) {
-    this.onboardForm = this.fb.group({
-      vendorLegalName: ['', [Validators.required, Validators.minLength(3)]],
-      spocName: ['', [Validators.required, Validators.minLength(2)]],
-      spocPhone: ['', [Validators.required, Validators.pattern(/^[6-9][0-9]{9}$/)]],
-      officialEmail: ['', [Validators.required, Validators.email]],
-      officialPhone: ['', [Validators.required, Validators.pattern(/^[0-9+\-\s]{7,15}$/)]],
-      gstNo: ['', [
-        Validators.required,
-        Validators.pattern(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/),
-      ]],
-      panCardNo: ['', [
-        Validators.required,
-        Validators.pattern(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/),
-      ]],
-      physicalAddress: ['', [Validators.required, Validators.minLength(5)]],
-      pincode: ['', [Validators.required, Validators.pattern(/^[1-9][0-9]{5}$/)]],
-      budgetAllocation: ['', [Validators.required, Validators.pattern(/^[₹]?[\d,]+(\.\d{1,2})?$/)]],
-      services: ['', Validators.required],
+  invoiceForm: any = this.defaultInvoice();
+
+  auditForm: any = { quality: 5, timeliness: 5, safety: 5, observations: '' };
+
+  ngOnInit(): void {
+    this.vendorService.vendors$.subscribe(v => {
+      this.vendors = v;
+      this.syncSelectedVendor();
+    });
+
+    this.vendorService.stats$.subscribe(s => this.stats = s);
+
+    this.vendorService.activities$.subscribe(a => this.activities = a);
+
+    this.route.paramMap.subscribe(params => {
+      this.viewingVendorId = params.get('id');
+      this.syncSelectedVendor();
     });
   }
 
-  ngOnInit(): void {
-    this.loadAll();
+  private syncSelectedVendor(): void {
+    this.selectedVendor = this.viewingVendorId
+      ? this.vendorService.getVendorById(this.viewingVendorId)
+      : undefined;
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-  private loadAll(): void {
-    this.isLoading = true;
-    this.loadStats();
-    this.loadVendors();
-    this.loadActivities();
+  get filteredVendors(): Vendor[] {
+    if (this.selectedMember === 'All Members') return this.vendors;
+    return this.vendors.filter(v => v.assignee === this.selectedMember);
   }
 
-  loadVendors(status?: string): void {
-    this.isLoading = true;
-    this.vendorsService
-      .getAllVendors(status)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          this.vendors = res.data.map(v => ({
-            ...v,
-            services: this.parseServices(v.services),
-          }));
-          this.isLoading = false;
-        },
-        error: (err) => {
-          console.error('[loadVendors]', err);
-          this.isLoading = false;
-        },
-      });
+  closeDetail(): void {
+    this.router.navigate(['../'], { relativeTo: this.route });
   }
 
-  loadStats(): void {
-    this.vendorsService
-      .getStats()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          this.totalActive = res.data.totalActive;
-          this.pendingPayments = res.data.pendingPayments;
-          this.compliantPartners = res.data.compliantPartners;
-        },
-        error: (err) => console.error('[loadStats]', err),
-      });
+  openAddModal(): void {
+    this.newVendor = this.defaultVendor();
+    this.contractFile = null;
+    this.errorMsg = '';
+    this.showAddModal = true;
   }
 
-  loadActivities(): void {
-    this.vendorsService
-      .getActivities(20)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => { this.activities = res.data; },
-        error: (err) => console.error('[loadActivities]', err),
-      });
-  }
-
-  toggleFilter(): void {
-    this.filterActive = !this.filterActive;
-    this.loadVendors(this.filterActive ? 'active' : undefined);
-  }
-
-  openModal(): void {
-    this.showModal = true;
-    this.errorMessage = '';
-    this.uploadedFile = null;
-    this.onboardForm.reset();
-  }
-
-  closeModal(): void {
-    if (this.isSubmitting) return;
-    this.showModal = false;
-    this.errorMessage = '';
-  }
-
-  onSubmit(): void {
-    if (this.onboardForm.invalid) {
-      this.onboardForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSubmitting = true;
-    this.errorMessage = '';
-
-    const fv = this.onboardForm.value;
-
-    this.vendorsService
-      .createVendor({
-        vendorLegalName: fv.vendorLegalName.trim(),
-        spocName: fv.spocName.trim(),
-        spocPhone: fv.spocPhone.trim(),
-        officialEmail: fv.officialEmail.trim().toLowerCase(),
-        officialPhone: fv.officialPhone.trim(),
-        gstNo: fv.gstNo.trim().toUpperCase(),
-        panCardNo: fv.panCardNo.trim().toUpperCase(),
-        physicalAddress: fv.physicalAddress.trim(),
-        pincode: fv.pincode.trim(),
-        budgetAllocation: fv.budgetAllocation.trim(),
-        services: fv.services.trim(),
-        contractFile: this.uploadedFile,
-      })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.isSubmitting = false;
-          this.closeModal();
-          this.loadAll();
-        },
-        error: (err) => {
-          this.isSubmitting = false;
-          this.errorMessage = err.message || 'Failed to onboard vendor. Please try again.';
-        },
-      });
-  }
-
-  onFileSelect(event: Event): void {
+  onContractFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files?.[0]) {
-      this.uploadedFile = input.files[0];
+    this.contractFile = input.files?.[0] ?? null;
+  }
+
+  addVendor(): void {
+    if (this.isSaving) return;
+    this.errorMsg = '';
+
+    const fd = new FormData();
+    fd.append('vendorLegalName', this.newVendor.name);
+    fd.append('spocName', this.newVendor.spoc.name);
+    fd.append('spocPhone', this.newVendor.spoc.phone);
+    fd.append('officialEmail', this.newVendor.email);
+    fd.append('officialPhone', this.newVendor.phone);
+    fd.append('gstNo', this.newVendor.kyc.gst);
+    fd.append('panCardNo', this.newVendor.kyc.pan);
+    fd.append('physicalAddress', this.newVendor.address.street);
+    fd.append('pincode', this.newVendor.address.pincode);
+    fd.append('budgetAllocation', this.newVendor.budget);
+    fd.append('services', this.newVendor.services);
+    if (this.contractFile) {
+      fd.append('contractFile', this.contractFile);
+    }
+
+    this.isSaving = true;
+    this.vendorService.createVendor(fd).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.showAddModal = false;
+      },
+      error: (err) => {
+        this.isSaving = false;
+        this.errorMsg = err?.error?.message ?? 'Vendor onboard failed. Please try again.';
+      },
+    });
+  }
+
+  deleteVendor(id: string): void {
+    if (this.isDeleting) return;
+    if (!confirm('Are you sure you want to remove this vendor?')) return;
+
+    this.isDeleting = true;
+    this.vendorService.deleteVendor(id).subscribe({
+      next: () => { this.isDeleting = false; },
+      error: (err) => {
+        this.isDeleting = false;
+        alert('Delete failed: ' + (err?.error?.message ?? 'Server error'));
+      },
+    });
+  }
+
+  openSubmission(): void {
+    this.invoiceForm = this.defaultInvoice();
+    this.showInvoiceModal = true;
+  }
+
+  addInvoiceItem(): void {
+    this.invoiceForm.items.push({ description: '', quantity: 1, unitPrice: 0, total: 0 });
+  }
+
+  removeInvoiceItem(index: number): void {
+    if (this.invoiceForm.items.length > 1) {
+      this.invoiceForm.items.splice(index, 1);
+      this.calculateInvoiceTotals();
     }
   }
 
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this.isDragging = true;
+  calculateInvoiceTotals(): void {
+    let subtotal = 0;
+    this.invoiceForm.items.forEach((item: any) => {
+      item.total = item.quantity * item.unitPrice;
+      subtotal += item.total;
+    });
+    this.invoiceForm.subtotal = subtotal;
+    this.invoiceForm.taxAmount = Math.round((subtotal * this.invoiceForm.taxRate) / 100);
+    this.invoiceForm.grandTotal = subtotal + this.invoiceForm.taxAmount;
   }
 
-  onDragLeave(): void {
-    this.isDragging = false;
+  submitInvoice(): void {
+    if (!this.selectedVendor) return;
+    const inv = {
+      number: this.invoiceForm.number,
+      amount: this.invoiceForm.grandTotal,
+      status: 'Pending',
+      date: this.invoiceForm.date,
+      items: [...this.invoiceForm.items],
+      taxAmount: this.invoiceForm.taxAmount,
+      taxRate: this.invoiceForm.taxRate,
+      subtotal: this.invoiceForm.subtotal,
+    };
+    this.selectedVendor.invoices = [inv, ...(this.selectedVendor.invoices ?? [])];
+    this.showInvoiceModal = false;
+    alert(`Invoice ${inv.number} submitted for ₹${inv.amount.toLocaleString('en-IN')}.`);
   }
 
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    this.isDragging = false;
-    const file = event.dataTransfer?.files[0];
-    if (file) this.uploadedFile = file;
+  openAudit(): void {
+    this.auditForm = { quality: 5, timeliness: 5, safety: 5, observations: '' };
+    this.showAuditModal = true;
   }
 
-  parseServices(raw: any): string[] {
-    if (Array.isArray(raw)) return raw;
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [raw];
-      } catch {
-        return raw.split(',').map((s: string) => s.trim()).filter(Boolean);
-      }
-    }
-    return [];
+  submitAudit(): void {
+    if (!this.selectedVendor) return;
+    const score = Math.round(((this.auditForm.quality + this.auditForm.timeliness + this.auditForm.safety) / 15) * 100);
+    alert(`Audit recorded for ${this.selectedVendor.name}. Score: ${score}%`);
+    this.showAuditModal = false;
   }
 
-  servicesLabel(vendor: Vendor): string {
-    const arr = this.parseServices(vendor.services);
-    return arr.join(', ');
+  openBilling(): void {
+    this.showBillingModal = true;
   }
 
-  getInitials(name: string): string {
-    return name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map(w => w[0]?.toUpperCase() ?? '')
-      .join('');
+  private defaultVendor() {
+    return {
+      name: '',
+      email: '',
+      phone: '',
+      spoc: { name: '', phone: '' },
+      kyc: { gst: '', pan: '' },
+      address: { street: '', pincode: '' },
+      budget: '',
+      services: '',
+    };
   }
 
-  statusLabel(status: string): string {
-    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-  }
-
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.onboardForm.get(fieldName);
-    return !!(field && field.invalid && field.touched);
-  }
-
-  fieldError(fieldName: string): string {
-    const ctrl = this.onboardForm.get(fieldName);
-    if (!ctrl || !ctrl.touched || !ctrl.errors) return '';
-
-    const e = ctrl.errors;
-    if (e['required']) return 'This field is required';
-    if (e['email']) return 'Enter a valid email address';
-    if (e['minlength']) return `Minimum ${e['minlength'].requiredLength} characters required`;
-    if (e['pattern']) {
-      switch (fieldName) {
-        case 'spocPhone': return 'Enter a valid 10-digit Indian mobile number';
-        case 'officialPhone': return 'Enter a valid phone number';
-        case 'gstNo': return 'Invalid GST format (e.g. 22ABCDE1234F1Z5)';
-        case 'panCardNo': return 'Invalid PAN format (e.g. ABCDE1234F)';
-        case 'pincode': return 'Enter a valid 6-digit pincode';
-        case 'budgetAllocation': return 'Enter a valid amount (e.g. ₹3,000,000)';
-        default: return 'Invalid format';
-      }
-    }
-    return 'Invalid value';
+  private defaultInvoice() {
+    return {
+      number: 'INV-' + Math.floor(Math.random() * 9000 + 1000),
+      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      items: [{ description: '', quantity: 1, unitPrice: 0, total: 0 }],
+      taxRate: 18,
+      taxAmount: 0,
+      subtotal: 0,
+      grandTotal: 0,
+    };
   }
 }

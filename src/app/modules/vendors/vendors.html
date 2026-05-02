@@ -1,302 +1,764 @@
-<div class="vp-wrapper">
-    <div class="vp-header">
-        <div class="vp-header__left">
-            <h1 class="vp-title">Vendors &amp; Partners</h1>
-            <p class="vp-subtitle">
-                Coordinate with <strong>{{ totalActive }}</strong> active contractors and material suppliers.
-            </p>
+<section class="p-8 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+       LIST VIEW
+  ══════════════════════════════════════════════════════════════════════════ -->
+  @if (!selectedVendor) {
+
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div class="space-y-1">
+      <h2 class="text-3xl font-black tracking-tight text-on-surface">Vendors &amp; Partners</h2>
+      <p class="text-on-surface-variant max-w-lg">
+        Coordinate with {{ stats.totalActive }} active contractors and material suppliers.
+      </p>
+    </div>
+
+    <!-- Member Filter -->
+    <div
+      class="flex items-center gap-3 bg-surface-container-low px-4 py-3 rounded-xl border border-outline-variant/10 shadow-sm">
+      <span class="material-symbols-outlined text-outline text-sm">filter_alt</span>
+      <select [(ngModel)]="selectedMember"
+        class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-on-surface outline-none cursor-pointer appearance-none pr-4">
+        <option *ngFor="let m of team" [value]="m.name">{{ m.name }}</option>
+      </select>
+    </div>
+
+    <button (click)="openAddModal()"
+      class="cursor-pointer bg-gradient-to-r from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-xl shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-95">
+      <span class="material-symbols-outlined">person_add</span>
+      Add New Vendor
+    </button>
+  </div>
+
+  <!-- ── Global Stats (bound to API /vendors/stats) ── -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-surface-container-low p-6 rounded-2xl space-y-2">
+      <p class="text-xs font-bold uppercase tracking-widest text-outline">Total Active</p>
+      <p class="text-4xl font-black text-on-surface">{{ stats.totalActive }}</p>
+      <div class="h-1 w-12 bg-primary rounded-full"></div>
+    </div>
+    <div class="bg-surface-container-low p-6 rounded-2xl space-y-2">
+      <p class="text-xs font-bold uppercase tracking-widest text-outline">Pending Payments</p>
+      <p class="text-4xl font-black text-secondary">{{ stats.pendingPayments }}</p>
+      <div class="h-1 w-12 bg-secondary rounded-full"></div>
+    </div>
+    <div class="bg-surface-container-low p-6 rounded-2xl space-y-2">
+      <p class="text-xs font-bold uppercase tracking-widest text-outline">Compliant Partners</p>
+      <p class="text-4xl font-black text-on-surface">{{ stats.compliantPartners }}</p>
+      <div class="h-1 w-12 bg-primary-container rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- ── Vendor Directory Grid ── -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    @for (v of filteredVendors; track v.id) {
+    <div [routerLink]="[v.id]"
+      class="cursor-pointer bg-surface-container-lowest p-6 rounded-2xl group hover:shadow-2xl hover:border-primary/20 border border-transparent transition-all duration-300 relative overflow-hidden">
+
+      <!-- Status badge -->
+      <div class="absolute top-0 right-0 p-4">
+        <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full" [ngClass]="v.statusColor">{{
+          v.status }}</span>
+      </div>
+
+      <!-- Name & icon -->
+      <div class="flex items-start gap-4 mb-6">
+        <div class="w-14 h-14 bg-surface-container-high rounded-xl flex items-center justify-center">
+          <span class="material-symbols-outlined text-outline">{{ v.icon }}</span>
         </div>
-        <div class="vp-header__right">
-            <button class="btn-filter" [class.active]="filterActive" (click)="toggleFilter()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                </svg>
-                {{ filterActive ? 'ACTIVE ONLY' : 'ALL MEMBERS' }}
+        <div>
+          <h3 class="font-bold text-lg text-on-surface leading-tight group-hover:text-primary transition-colors">
+            {{ v.name }}
+          </h3>
+          <p class="text-sm text-outline">{{ v.type }}</p>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 text-sm text-on-surface-variant">
+          <span class="material-symbols-outlined text-lg">mail</span> {{ v.email }}
+        </div>
+        <div class="flex items-center gap-3 text-sm text-on-surface-variant">
+          <span class="material-symbols-outlined text-lg">call</span> {{ v.phone }}
+        </div>
+      </div>
+
+      <!-- Services chips -->
+      <div class="mt-4 flex flex-wrap gap-1.5">
+        @for (svc of v.services.slice(0,3); track svc) {
+        <span class="px-2 py-0.5 bg-surface-container-low text-[10px] font-bold text-outline rounded-full">{{ svc
+          }}</span>
+        }
+        @if (v.services.length > 3) {
+        <span class="px-2 py-0.5 bg-surface-container-low text-[10px] font-bold text-outline rounded-full">+{{
+          v.services.length - 3 }}</span>
+        }
+      </div>
+
+      <!-- Compliance score & arrow -->
+      <div class="mt-5 flex items-center justify-between">
+        <div>
+          <p class="text-[10px] font-bold text-outline uppercase tracking-wider">Compliance Score</p>
+          <p class="font-black text-lg" [class.text-green-600]="v.compliance_score >= 90"
+            [class.text-amber-600]="v.compliance_score < 90 && v.compliance_score >= 70"
+            [class.text-error]="v.compliance_score < 70">
+            {{ v.compliance_score }}%
+          </p>
+        </div>
+        <button class="cursor-pointer p-2 text-primary hover:bg-primary/5 rounded-full transition-colors">
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+    }
+
+    @empty {
+    <div class="col-span-3 py-24 flex flex-col items-center gap-4 text-outline">
+      <span class="material-symbols-outlined text-5xl">storefront</span>
+      <p class="font-bold">No vendors found. Add your first vendor to get started.</p>
+    </div>
+    }
+  </div>
+
+  <!-- ── Compliance & Billing Activity (from API /activities) ── -->
+  <div class="bg-surface-container-low rounded-3xl p-8 mt-4">
+    <div class="flex items-center justify-between mb-8">
+      <h3 class="text-xl font-black text-on-surface">Compliance & Billing Activity</h3>
+      <button class="cursor-pointer text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+        View All History
+      </button>
+    </div>
+
+    <div class="space-y-6">
+      @for (act of activities; track act.id) {
+      <div class="flex items-center gap-6 group">
+        <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm flex-shrink-0">
+          <span class="material-symbols-outlined" [ngClass]="act.iconColor">{{ act.icon }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-on-surface font-bold">{{ act.title }}</p>
+          <p class="text-sm text-on-surface-variant truncate">{{ act.desc }}</p>
+        </div>
+        <p class="text-xs font-bold text-outline uppercase tracking-widest whitespace-nowrap">{{ act.time }}</p>
+      </div>
+      }
+      @empty {
+      <p class="text-center py-8 text-outline font-bold italic">No recent activity.</p>
+      }
+    </div>
+  </div>
+
+  } @else {
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+         DETAIL VIEW — Vendor Command Center
+    ══════════════════════════════════════════════════════════════════════════ -->
+  <div class="space-y-8 animate-in slide-in-from-right duration-500">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 flex-wrap">
+      <button (click)="closeDetail()"
+        class="p-2 hover:bg-surface-container rounded-lg cursor-pointer transition-colors">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div>
+        <h2 class="text-3xl font-black tracking-tight text-on-surface">{{ selectedVendor.name }}</h2>
+        <p class="text-sm text-outline font-medium">Partner Overview & Execution Hub</p>
+      </div>
+      <div class="ml-auto flex gap-3 flex-wrap">
+        <button
+          class="px-5 py-2.5 bg-surface-container-highest text-primary rounded-xl font-bold flex items-center gap-2 hover:bg-surface-dim transition-colors cursor-pointer"
+          (click)="openAudit()">
+          <span class="material-symbols-outlined text-lg">fact_check</span> Audits
+        </button>
+        <button
+          class="px-5 py-2.5 bg-primary text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform cursor-pointer"
+          (click)="openBilling()">
+          <span class="material-symbols-outlined text-lg">receipt</span> Billing
+        </button>
+      </div>
+    </div>
+
+    <!-- Bento Stats Panel -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div
+        class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32 border-l-4 border-primary">
+        <span class="text-xs font-bold text-outline uppercase tracking-widest">Budget Allocated</span>
+        <p class="text-2xl font-black">{{ selectedVendor.budget }}</p>
+      </div>
+      <div
+        class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32 border-l-4 border-secondary">
+        <span class="text-xs font-bold text-outline uppercase tracking-widest">Active Tasks</span>
+        <p class="text-2xl font-black">{{ selectedVendor.tasks.length }} Tasks</p>
+      </div>
+      <div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32">
+        <span class="text-xs font-bold text-outline uppercase tracking-widest">Status</span>
+        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider w-fit"
+          [ngClass]="selectedVendor.statusColor">{{ selectedVendor.status }}</span>
+      </div>
+      <div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-outline uppercase tracking-widest">Compliance</span>
+          <span class="text-sm font-black" [class.text-green-600]="selectedVendor.compliance_score >= 90"
+            [class.text-amber-600]="selectedVendor.compliance_score < 90">
+            {{ selectedVendor.compliance_score }}%
+          </span>
+        </div>
+        <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all" [class.bg-green-600]="selectedVendor.compliance_score >= 90"
+            [class.bg-amber-500]="selectedVendor.compliance_score < 90"
+            [style.width.%]="selectedVendor.compliance_score"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-Modules Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+      <!-- Tasks & Invoices -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- Tasks -->
+        <div class="bg-surface-container-lowest p-8 rounded-3xl shadow-sm border border-outline-variant/10">
+          <h3 class="text-xl font-black mb-6">Service Tasks & Performance</h3>
+          <div class="space-y-4">
+            @for (task of selectedVendor.tasks; track task.title) {
+            <div
+              class="flex items-center gap-6 p-4 bg-surface-container-low rounded-2xl border border-transparent hover:border-primary/20 transition-all group">
+              <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary">{{ selectedVendor.icon }}</span>
+              </div>
+              <div class="flex-1">
+                <p class="font-bold text-on-surface">{{ task.title }}</p>
+                <p class="text-xs text-outline">{{ task.date }}</p>
+              </div>
+              <span
+                class="px-3 py-1 bg-surface-container-lowest rounded-lg text-[10px] font-black uppercase tracking-widest">
+                {{ task.status }}
+              </span>
+            </div>
+            } @empty {
+            <p class="text-center py-12 text-outline font-bold italic">No active tasks detected.</p>
+            }
+          </div>
+        </div>
+
+        <!-- Invoices -->
+        <div class="bg-surface-container-lowest p-8 rounded-3xl shadow-sm border border-outline-variant/10">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-black">Vendor Invoicing</h3>
+            <button (click)="openSubmission()"
+              class="text-primary text-xs font-black uppercase tracking-widest cursor-pointer hover:underline">
+              + New Submission
             </button>
-            <button class="btn-add" (click)="openModal()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M20 21a8 8 0 1 0-16 0" />
-                    <line x1="12" y1="14" x2="12" y2="20" />
-                    <line x1="9" y1="17" x2="15" y2="17" />
-                </svg>
-                Add New Vendor
-            </button>
+          </div>
+          <table class="w-full text-left">
+            <thead>
+              <tr
+                class="text-[10px] font-black uppercase tracking-widest text-outline border-b border-surface-container">
+                <th class="py-4">Invoice #</th>
+                <th class="py-4">Amount</th>
+                <th class="py-4">Date</th>
+                <th class="py-4 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (inv of selectedVendor.invoices; track inv.number) {
+              <tr class="border-b border-surface-container/50 hover:bg-surface-container-low/30 transition-colors">
+                <td class="py-4 font-bold">{{ inv.number }}</td>
+                <td class="py-4 font-black">₹{{ inv.amount.toLocaleString('en-IN') }}</td>
+                <td class="py-4 text-sm text-outline">{{ inv.date }}</td>
+                <td class="py-4 text-right">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
+                    [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-secondary-container/20 text-secondary'">
+                    {{ inv.status }}
+                  </span>
+                </td>
+              </tr>
+              } @empty {
+              <tr>
+                <td colspan="4" class="text-center py-8 text-outline font-bold italic">No invoice records found.</td>
+              </tr>
+              }
+            </tbody>
+          </table>
         </div>
-    </div>
+      </div>
 
-    <div class="vp-stats">
-        <div class="stat-card">
-            <span class="stat-label">TOTAL ACTIVE</span>
-            <span class="stat-value">{{ totalActive }}</span>
-            <div class="stat-bar stat-bar--blue"></div>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">PENDING PAYMENTS</span>
-            <span class="stat-value stat-value--gold">{{ pendingPayments }}</span>
-            <div class="stat-bar stat-bar--gold"></div>
-        </div>
-        <div class="stat-card">
-            <span class="stat-label">COMPLIANT PARTNERS</span>
-            <span class="stat-value">{{ compliantPartners }}</span>
-            <div class="stat-bar stat-bar--blue"></div>
-        </div>
-    </div>
+      <!-- Secondary Cards -->
+      <div class="lg:col-span-4 space-y-6">
 
-    <div class="vp-loading" *ngIf="isLoading">
-        <div class="loading-spinner"></div>
-        <span>Loading vendors…</span>
-    </div>
-
-    <div class="vp-vendor-list" *ngIf="!isLoading && vendors.length > 0">
-        <div class="vendor-card" *ngFor="let vendor of vendors">
-            <div class="vendor-card__info">
-                <div class="vendor-avatar">{{ getInitials(vendor.name) }}</div>
-                <div>
-                    <div class="vendor-name">{{ vendor.name }}</div>
-                    <div class="vendor-services">{{ servicesLabel(vendor) }}</div>
-                </div>
+        <!-- Contract Details -->
+        <div class="bg-primary text-white p-8 rounded-3xl shadow-xl space-y-4">
+          <h3 class="text-xl font-black">Contract Details</h3>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest opacity-60">SPOC Info</p>
+            <p class="font-bold">{{ selectedVendor.spoc.name }}</p>
+            <p class="text-xs opacity-70">{{ selectedVendor.spoc.phone }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest opacity-60">KYC — GST</p>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">verified</span>
+              <p class="text-sm font-bold uppercase">{{ selectedVendor.kyc.gst }}</p>
             </div>
-            <div class="vendor-card__meta">
-                <span class="vendor-badge" [ngClass]="{
-                        'vendor-badge--active':   vendor.status === 'active',
-                        'vendor-badge--pending':  vendor.status === 'pending',
-                        'vendor-badge--inactive': vendor.status === 'inactive'
-                    }">
-                    {{ statusLabel(vendor.status) }}
-                </span>
-                <span class="vendor-compliance">{{ vendor.compliance_score }}% compliant</span>
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest opacity-60">KYC — PAN</p>
+            <p class="text-sm font-bold uppercase">{{ selectedVendor.kyc.pan }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest opacity-60">Services</p>
+            <div class="flex flex-wrap gap-2 mt-2">
+              @for (svc of selectedVendor.services; track svc) {
+              <span class="bg-white/20 px-2 py-1 rounded text-[10px] font-bold">{{ svc }}</span>
+              }
             </div>
-        </div>
-    </div>
-
-    <div class="vp-empty" *ngIf="!isLoading && vendors.length === 0">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="2" y="7" width="20" height="14" rx="2" />
-            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-        </svg>
-        <p>No vendors found. Click <strong>Add New Vendor</strong> to onboard your first partner.</p>
-    </div>
-
-    <div class="vp-activity">
-        <div class="vp-activity__header">
-            <h2 class="activity-title">Compliance &amp; Billing Activity</h2>
-            <button class="btn-link" (click)="loadActivities()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="23 4 23 10 17 10" />
-                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                </svg>
-                Refresh
-            </button>
+          </div>
+          @if (selectedVendor.contract_file) {
+          <a [href]="selectedVendor.contract_file" target="_blank"
+            class="mt-2 flex items-center gap-2 text-xs font-bold opacity-80 hover:opacity-100 transition-opacity">
+            <span class="material-symbols-outlined text-sm">download</span> View Contract PDF
+          </a>
+          }
         </div>
 
-        <div class="activity-list">
-            <div class="activity-item" *ngFor="let item of activities">
-                <div class="activity-icon" [ngClass]="'activity-icon--' + item.icon">
-                    <svg *ngIf="item.icon === 'invoice'" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <line x1="3" y1="9" x2="21" y2="9" />
-                        <line x1="9" y1="21" x2="9" y2="9" />
-                    </svg>
-                    <svg *ngIf="item.icon === 'cert'" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <svg *ngIf="item.icon === 'assign'" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <rect x="2" y="3" width="20" height="14" rx="2" />
-                        <line x1="8" y1="21" x2="16" y2="21" />
-                        <line x1="12" y1="17" x2="12" y2="21" />
-                    </svg>
-                </div>
-                <div class="activity-content">
-                    <div class="activity-item__title">{{ item.title }}</div>
-                    <div class="activity-item__desc">{{ item.description }}</div>
-                </div>
-                <span class="activity-time">{{ item.time || item.time_label }}</span>
-            </div>
-
-            <div class="activity-empty" *ngIf="activities.length === 0 && !isLoading">
-                <p>No activity recorded yet.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
-
-        <div class="modal__header">
+        <!-- Logistics -->
+        <div class="bg-surface-container-low p-8 rounded-3xl space-y-4">
+          <h3 class="text-xl font-black">Logistics</h3>
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined text-primary mt-0.5">location_on</span>
             <div>
-                <h2 class="modal__title">Onboard New Partner</h2>
-                <p class="modal__subtitle">Complete the onboarding documentation to begin work.</p>
+              <p class="text-sm font-bold">{{ selectedVendor.address.street }}</p>
+              <p class="text-[10px] text-outline font-black uppercase tracking-widest">
+                Pincode: {{ selectedVendor.address.pincode }}
+              </p>
             </div>
-            <button class="modal__close" (click)="closeModal()" [disabled]="isSubmitting">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- ── Add Vendor Modal ──────────────────────────────────────────────────────── -->
+@if (showAddModal) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"
+  (click)="showAddModal = false">
+  <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl p-8 my-auto"
+    (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h3 class="text-2xl font-black tracking-tight">Onboard New Partner</h3>
+        <p class="text-sm text-outline font-medium mt-1">Complete documentation to begin work.</p>
+      </div>
+      <button (click)="showAddModal = false"
+        class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Error message -->
+    @if (errorMsg) {
+    <div
+      class="mb-6 flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 px-4 py-3 rounded-xl">
+      <span class="material-symbols-outlined text-error text-lg">error</span>
+      <p class="text-sm font-bold text-error">{{ errorMsg }}</p>
+    </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Vendor name -->
+      <div class="md:col-span-2">
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Vendor Legal Name
+          *</label>
+        <input [(ngModel)]="newVendor.name" type="text" placeholder="e.g. Skyline Structural Engineering"
+          class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20">
+      </div>
+
+      <!-- SPOC -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">SPOC Name *</label>
+        <input [(ngModel)]="newVendor.spoc.name" type="text" placeholder="Full Name"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none mb-2">
+        <input [(ngModel)]="newVendor.spoc.phone" type="text" placeholder="Phone Number"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none">
+      </div>
+
+      <!-- Official Contact -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Official Email & Phone
+          *</label>
+        <input [(ngModel)]="newVendor.email" type="email" placeholder="official@vendor.com"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none mb-2">
+        <input [(ngModel)]="newVendor.phone" type="text" placeholder="+91 9XXXXXXXXX"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none">
+      </div>
+
+      <!-- KYC -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">GST No. *</label>
+        <input [(ngModel)]="newVendor.kyc.gst" type="text" placeholder="22AAAAA0000A1Z5"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none uppercase">
+      </div>
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">PAN Card No. *</label>
+        <input [(ngModel)]="newVendor.kyc.pan" type="text" placeholder="ABCDE1234F"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none uppercase">
+      </div>
+
+      <!-- Address -->
+      <div class="md:col-span-2 grid grid-cols-3 gap-4">
+        <div class="col-span-2">
+          <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Physical Address
+            *</label>
+          <input [(ngModel)]="newVendor.address.street" type="text" placeholder="Suite #, Industrial Area..."
+            class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none">
+        </div>
+        <div>
+          <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Pincode *</label>
+          <input [(ngModel)]="newVendor.address.pincode" type="text" placeholder="600001"
+            class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none">
+        </div>
+      </div>
+
+      <!-- Budget & Services -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Budget Allocation
+          *</label>
+        <input [(ngModel)]="newVendor.budget" type="text" placeholder="e.g. 5,00,000"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none">
+      </div>
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Services (Comma
+          Separated) *</label>
+        <input [(ngModel)]="newVendor.services" type="text" placeholder="Painting, Electrical, HVAC"
+          class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none">
+      </div>
+
+      <!-- Contract Upload -->
+      <div class="md:col-span-2">
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Contract Documentation
+          (PDF, max 10MB)</label>
+        <label
+          class="border-2 border-dashed border-outline-variant/20 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-primary text-3xl">upload_file</span>
+          @if (contractFile) {
+          <p class="text-xs font-bold text-primary">{{ contractFile.name }}</p>
+          } @else {
+          <p class="text-xs font-bold text-outline uppercase tracking-widest">Click to upload contract PDF</p>
+          }
+          <input type="file" accept="application/pdf" class="hidden" (change)="onContractFileSelected($event)">
+        </label>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-4 mt-10">
+      <button (click)="showAddModal = false"
+        class="flex-1 py-3.5 rounded-2xl border border-outline-variant/20 text-sm font-black uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition-colors">
+        Cancel
+      </button>
+      <button (click)="addVendor()" [disabled]="isSaving"
+        class="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-black uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+        @if (isSaving) {
+        <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Saving...
+        } @else {
+        Approve & Onboard
+        }
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ── New Invoice Submission Modal ─────────────────────────────────────────── -->
+@if (showInvoiceModal) {
+<div
+  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 lg:p-8 animate-in fade-in duration-300"
+  (click)="showInvoiceModal = false">
+  <div
+    class="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300"
+    (click)="$event.stopPropagation()">
+
+    <!-- Modal header -->
+    <div class="bg-gradient-to-br from-slate-800 to-slate-950 p-6 lg:p-10 text-white relative shrink-0">
+      <div class="absolute top-0 right-0 p-6 lg:p-10 opacity-10">
+        <span class="material-symbols-outlined text-[80px] lg:text-[120px]">receipt_long</span>
+      </div>
+      <div class="flex justify-between items-start relative z-10">
+        <div>
+          <span
+            class="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white/70 border border-white/10">
+            Invoicing Command
+          </span>
+          <h3 class="text-2xl lg:text-4xl font-black tracking-tight mt-2 mb-1">Generate Settlement Request</h3>
+          <p class="text-slate-400 font-medium text-xs lg:text-sm">Detailed line-item breakdown for vendor services.</p>
+        </div>
+        <button (click)="showInvoiceModal = false"
+          class="p-2 lg:p-3 hover:bg-white/10 rounded-2xl transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="p-6 lg:p-10 grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-10 overflow-y-auto">
+
+      <!-- Line Items -->
+      <div class="col-span-8 space-y-8">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Line Item Breakdown</h4>
+          <button (click)="addInvoiceItem()"
+            class="text-primary text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-2 hover:bg-primary/5 px-4 py-2 rounded-xl transition-all">
+            <span class="material-symbols-outlined text-sm">add_circle</span> Add Record
+          </button>
         </div>
 
-        <form [formGroup]="onboardForm" (ngSubmit)="onSubmit()" class="modal__form" novalidate>
-            <div class="form-api-error" *ngIf="errorMessage">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                {{ errorMessage }}
+        <div
+          class="bg-slate-50/50 dark:bg-slate-800/30 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <table class="w-full text-left">
+            <thead class="bg-slate-100/50 dark:bg-slate-800/50">
+              <tr>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Description</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center w-24">
+                  Qty</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right w-32">
+                  Unit Price</th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right w-32">
+                  Total</th>
+                <th class="px-6 py-4 w-12"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr *ngFor="let item of invoiceForm.items; let i = index"
+                class="group hover:bg-white dark:hover:bg-slate-800/50 transition-colors">
+                <td class="px-6 py-4">
+                  <input type="text" [(ngModel)]="item.description" placeholder="e.g. Structural Steel Installation"
+                    class="w-full bg-transparent border-none text-sm font-bold text-slate-900 dark:text-slate-100 outline-none placeholder:text-slate-300">
+                </td>
+                <td class="px-6 py-4">
+                  <input type="number" [(ngModel)]="item.quantity" (ngModelChange)="calculateInvoiceTotals()" min="1"
+                    class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg p-2 text-sm font-black text-center outline-none">
+                </td>
+                <td class="px-6 py-4">
+                  <input type="number" [(ngModel)]="item.unitPrice" (ngModelChange)="calculateInvoiceTotals()" min="0"
+                    class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg p-2 text-sm font-black text-right outline-none">
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <span class="text-sm font-black">₹{{ (item.quantity * item.unitPrice).toLocaleString('en-IN')
+                    }}</span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <button (click)="removeInvoiceItem(i)" class="text-slate-300 hover:text-error transition-colors">
+                    <span class="material-symbols-outlined text-lg">delete</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Summary Sidebar -->
+      <div
+        class="col-span-4 space-y-6 bg-slate-50 dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800">
+        <div>
+          <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Invoice
+            Reference</label>
+          <div class="bg-white dark:bg-slate-900 px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+            <p class="text-lg font-black tracking-tight">{{ invoiceForm.number }}</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase">{{ invoiceForm.date }}</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div class="flex justify-between text-sm font-bold text-slate-500">
+            <span>Subtotal</span>
+            <span>₹{{ invoiceForm.subtotal.toLocaleString('en-IN') }}</span>
+          </div>
+          <div class="flex justify-between items-center text-sm font-bold text-slate-500">
+            <div class="flex items-center gap-2">
+              <span>GST</span>
+              <input type="number" [(ngModel)]="invoiceForm.taxRate" (ngModelChange)="calculateInvoiceTotals()" min="0"
+                max="28"
+                class="w-12 bg-white dark:bg-slate-900 border-none rounded px-2 py-1 text-[10px] font-black text-center outline-none">
+              <span>%</span>
             </div>
-
-            <div class="form-group form-group--full">
-                <label class="form-label">VENDOR LEGAL NAME <span class="required-star">*</span></label>
-                <input class="form-input" [class.form-input--error]="isFieldInvalid('vendorLegalName')" type="text"
-                    placeholder="e.g. Skyline Structural Engineering" formControlName="vendorLegalName">
-                <span class="form-error" *ngIf="isFieldInvalid('vendorLegalName')">
-                    {{ fieldError('vendorLegalName') }}
-                </span>
+            <span>₹{{ invoiceForm.taxAmount.toLocaleString('en-IN') }}</span>
+          </div>
+          <div class="pt-4 border-t-2 border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-xs font-black uppercase tracking-widest">Grand Total</span>
+              <span class="text-2xl font-black text-primary">₹{{ invoiceForm.grandTotal.toLocaleString('en-IN')
+                }}</span>
             </div>
+            <p class="text-[10px] font-bold text-slate-400 italic">Inclusive of all taxes.</p>
+          </div>
+        </div>
 
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">SPOC PRIMARY CONTACT <span class="required-star">*</span></label>
-
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('spocName')" type="text"
-                        placeholder="Full Name" formControlName="spocName">
-                    <span class="form-error" *ngIf="isFieldInvalid('spocName')">
-                        {{ fieldError('spocName') }}
-                    </span>
-
-                    <input class="form-input mt-8" [class.form-input--error]="isFieldInvalid('spocPhone')" type="number"
-                        placeholder="9876543210" formControlName="spocPhone" maxlength="10">
-                    <span class="form-error" *ngIf="isFieldInvalid('spocPhone')">
-                        {{ fieldError('spocPhone') }}
-                    </span>
-                </div>
-
-                <div class="form-col">
-                    <label class="form-label">OFFICIAL EMAIL &amp; PHONE <span class="required-star">*</span></label>
-
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('officialEmail')" type="email"
-                        placeholder="official@vendor.com" formControlName="officialEmail">
-                    <span class="form-error" *ngIf="isFieldInvalid('officialEmail')">
-                        {{ fieldError('officialEmail') }}
-                    </span>
-
-                    <input class="form-input mt-8" [class.form-input--error]="isFieldInvalid('officialPhone')"
-                        type="number" placeholder="+91 98765 43210" formControlName="officialPhone">
-                    <span class="form-error" *ngIf="isFieldInvalid('officialPhone')">
-                        {{ fieldError('officialPhone') }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">GST NO. <span class="required-star">*</span></label>
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('gstNo')" type="text"
-                        placeholder="22ABCDE1234F1Z5" formControlName="gstNo" maxlength="15"
-                        style="text-transform:uppercase">
-                    <span class="form-hint">15-character GST number</span>
-                    <span class="form-error" *ngIf="isFieldInvalid('gstNo')">
-                        {{ fieldError('gstNo') }}
-                    </span>
-                </div>
-                <div class="form-col">
-                    <label class="form-label">PAN CARD NO. <span class="required-star">*</span></label>
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('panCardNo')" type="text"
-                        placeholder="ABCDE1234F" formControlName="panCardNo" maxlength="10"
-                        style="text-transform:uppercase">
-                    <span class="form-hint">10-character PAN number</span>
-                    <span class="form-error" *ngIf="isFieldInvalid('panCardNo')">
-                        {{ fieldError('panCardNo') }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="form-row form-row--3-1">
-                <div class="form-col">
-                    <label class="form-label">PHYSICAL ADDRESS <span class="required-star">*</span></label>
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('physicalAddress')" type="text"
-                        placeholder="Suite #, Industrial Area..." formControlName="physicalAddress">
-                    <span class="form-error" *ngIf="isFieldInvalid('physicalAddress')">
-                        {{ fieldError('physicalAddress') }}
-                    </span>
-                </div>
-                <div class="form-col">
-                    <label class="form-label">PINCODE <span class="required-star">*</span></label>
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('pincode')" type="text"
-                        placeholder="600001" formControlName="pincode" maxlength="6">
-                    <span class="form-error" *ngIf="isFieldInvalid('pincode')">
-                        {{ fieldError('pincode') }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-col">
-                    <label class="form-label">BUDGET ALLOCATION <span class="required-star">*</span></label>
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('budgetAllocation')" type="text"
-                        placeholder="₹3,000,000" formControlName="budgetAllocation">
-                    <span class="form-error" *ngIf="isFieldInvalid('budgetAllocation')">
-                        {{ fieldError('budgetAllocation') }}
-                    </span>
-                </div>
-                <div class="form-col">
-                    <label class="form-label">SERVICES <span class="required-star">*</span></label>
-                    <input class="form-input" [class.form-input--error]="isFieldInvalid('services')" type="text"
-                        placeholder="Painting, Electrical, Plumbing…" formControlName="services">
-                    <span class="form-hint">Comma-separated list</span>
-                    <span class="form-error" *ngIf="isFieldInvalid('services')">
-                        {{ fieldError('services') }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="form-group form-group--full">
-                <label class="form-label">CONTRACT DOCUMENTATION <span class="form-optional">(Optional —
-                        PDF)</span></label>
-                <div class="upload-zone" [class.upload-zone--dragging]="isDragging"
-                    [class.upload-zone--filled]="uploadedFile" (dragover)="onDragOver($event)"
-                    (dragleave)="onDragLeave()" (drop)="onDrop($event)" (click)="fileInput.click()">
-                    <input #fileInput type="file" accept=".pdf" style="display:none" (change)="onFileSelect($event)">
-                    <div class="upload-zone__content">
-                        <svg *ngIf="!uploadedFile" width="32" height="32" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="1.5">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="12" y1="18" x2="12" y2="12" />
-                            <line x1="9" y1="15" x2="15" y2="15" />
-                        </svg>
-                        <svg *ngIf="uploadedFile" width="32" height="32" viewBox="0 0 24 24" fill="none"
-                            stroke="#1a6bff" stroke-width="1.5">
-                            <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        <span class="upload-zone__text" *ngIf="!uploadedFile">CLICK OR DRAG CONTRACT PDF</span>
-                        <span class="upload-zone__text upload-zone__text--filled" *ngIf="uploadedFile">
-                            {{ uploadedFile.name }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal__actions">
-                <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="isSubmitting">
-                    CANCEL
-                </button>
-                <button type="submit" class="btn-approve" [disabled]="isSubmitting">
-                    <span *ngIf="!isSubmitting">APPROVE &amp; ONBOARD</span>
-                    <span *ngIf="isSubmitting" class="btn-spinner">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5" class="spin">
-                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4" />
-                        </svg>
-                        SUBMITTING…
-                    </span>
-                </button>
-            </div>
-
-        </form>
+        <div class="pt-6 space-y-3">
+          <button (click)="submitInvoice()"
+            class="w-full py-5 bg-primary text-white rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+            <span class="material-symbols-outlined">send_to_mobile</span> Finalize Settlement
+          </button>
+          <button (click)="showInvoiceModal = false"
+            class="w-full py-4 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
+            Discard Draft
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+}
+
+<!-- ── Quality Audit Modal ────────────────────────────────────────────────────── -->
+@if (showAuditModal) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+  (click)="showAuditModal = false">
+  <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg p-8" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h3 class="text-2xl font-black tracking-tight">Service Quality Audit</h3>
+        <p class="text-sm text-outline font-medium">Evaluate partner performance.</p>
+      </div>
+      <button (click)="showAuditModal = false"
+        class="p-2 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="space-y-6">
+      <div class="grid grid-cols-3 gap-4">
+        @for (metric of [
+        { key: 'quality', label: 'Quality', model: auditForm.quality, color: 'accent-primary' },
+        { key: 'timeliness', label: 'Timing', model: auditForm.timeliness, color: 'accent-secondary' },
+        { key: 'safety', label: 'Safety', model: auditForm.safety, color: 'accent-on-tertiary-fixed-variant' }
+        ]; track metric.key) {
+        <div class="p-4 bg-surface-container-low rounded-2xl space-y-4">
+          <p class="text-[10px] font-black uppercase tracking-widest text-outline text-center">{{ metric.label }}</p>
+          <div class="flex flex-col items-center gap-2">
+            <input type="range" min="1" max="5" [(ngModel)]="auditForm[metric.key]" class="w-full"
+              [class]="metric.color">
+            <span class="text-lg font-black text-primary">{{ auditForm[metric.key] }}/5</span>
+          </div>
+        </div>
+        }
+      </div>
+
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Observations & Field
+          Notes</label>
+        <textarea [(ngModel)]="auditForm.observations" rows="4"
+          placeholder="Document compliance issues or exceptional performance..."
+          class="w-full px-4 py-3 rounded-2xl border border-outline-variant/20 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 resize-none bg-surface-container-lowest">
+          </textarea>
+      </div>
+    </div>
+
+    <div class="flex gap-4 mt-8">
+      <button (click)="showAuditModal = false"
+        class="flex-1 py-3.5 rounded-2xl border border-outline-variant/20 text-sm font-black uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition-colors">
+        Cancel
+      </button>
+      <button (click)="submitAudit()"
+        class="flex-1 py-3.5 rounded-2xl bg-on-surface text-white text-sm font-black uppercase tracking-widest cursor-pointer hover:scale-[1.02] transition-transform">
+        Finalize Audit
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ── Billing Modal ───────────────────────────────────────────────────────────── -->
+@if (showBillingModal && selectedVendor) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+  (click)="showBillingModal = false">
+  <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl w-full max-w-3xl p-10 overflow-hidden"
+    (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-start mb-10">
+      <div class="space-y-1">
+        <h3 class="text-3xl font-black tracking-tight">Billing Reconciliation</h3>
+        <p class="text-sm text-outline font-medium">Financial overview — {{ selectedVendor.name }}</p>
+      </div>
+      <button (click)="showBillingModal = false"
+        class="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-2xl">close</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+      <div class="space-y-6">
+        <div class="bg-primary/5 p-8 rounded-[2rem] space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black uppercase tracking-widest text-primary/60">YTD Budget</span>
+            <span class="material-symbols-outlined text-primary text-xl">account_balance_wallet</span>
+          </div>
+          <p class="text-4xl font-black text-primary">{{ selectedVendor.budget }}</p>
+          <div class="w-full bg-primary/10 h-1.5 rounded-full">
+            <div class="bg-primary h-full w-[65%] rounded-full"></div>
+          </div>
+          <p class="text-[10px] font-bold text-primary/70 uppercase">65% of total utilisation</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-surface-container-low p-6 rounded-[1.5rem] space-y-1">
+            <p class="text-[10px] font-black uppercase tracking-widest text-outline">Paid Clean</p>
+            <p class="text-xl font-black text-green-600">₹4.25L</p>
+          </div>
+          <div class="bg-surface-container-low p-6 rounded-[1.5rem] space-y-1">
+            <p class="text-[10px] font-black uppercase tracking-widest text-outline">In Dispute</p>
+            <p class="text-xl font-black text-error">₹0.00</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <h4 class="text-sm font-black uppercase tracking-widest text-outline">Tax & Compliance</h4>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-secondary">verified</span>
+              <span class="text-xs font-bold">GST Compliance</span>
+            </div>
+            <span class="text-[10px] font-black uppercase text-green-600">VERIFIED</span>
+          </div>
+          <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-primary">history_edu</span>
+              <span class="text-xs font-bold">TDS Slab</span>
+            </div>
+            <span class="text-[10px] font-black uppercase text-outline">Section 194C (2%)</span>
+          </div>
+          <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-amber-600">warning</span>
+              <span class="text-xs font-bold">MSME Status</span>
+            </div>
+            <span class="text-[10px] font-black uppercase text-amber-700">Small Enterprise</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12 pt-8 border-t border-surface-container flex justify-end">
+      <button (click)="showBillingModal = false"
+        class="px-8 py-3.5 rounded-2xl bg-on-surface text-white text-sm font-black uppercase tracking-widest cursor-pointer shadow-lg hover:scale-[1.02] transition-transform">
+        Done
+      </button>
+    </div>
+  </div>
+</div>
+}
