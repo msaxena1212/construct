@@ -45,6 +45,11 @@ db.task_activity = require("../modules/projects/models/task-activity.model.js")(
 db.project_task_assignee = require("../modules/projects/models/task-assignee.model.js")(sequelize, Sequelize);
 db.project_sub_task = require("../modules/projects/models/sub-task.model.js")(sequelize, Sequelize);
 db.project_task_dependency = require("../modules/projects/models/task-dependency.model.js")(sequelize, Sequelize);
+
+
+//Material
+db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
+
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
 db.project.belongsTo(db.company, { foreignKey: "company_id", as: "company" });

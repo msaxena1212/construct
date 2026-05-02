@@ -13,6 +13,7 @@ class Routes {
     require("../modules/users/user.routes")(router);
     require("../modules/rbac/rbac.routes")(router);
     require("../modules/projects/project.routes")(router);
+    require("../modules/material/routes/material.routes")(router);
     app.use("/api/v1", router); // Use router with /api/v1 prefix
 
     const authRouter = express.Router();
