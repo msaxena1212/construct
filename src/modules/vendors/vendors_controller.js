@@ -154,6 +154,10 @@ const createVendor = async (req, res) => {
     const contractFile = req.file
       ? `/uploads/contracts/${req.file.filename}`
       : null;
+    if (req.file) {
+      const fs = require('fs');
+      const fullPath = require('path').join(req.file.destination, req.file.filename);
+    }
 
     const newVendor = await VendorModel.create({
       id: uuidv4(),
