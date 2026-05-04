@@ -104,7 +104,16 @@ db.company.hasMany(db.vendor, { foreignKey: "company_id", as: "vendor" });
 db.vendor.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 db.company.hasMany(db.activity, { foreignKey: "company_id", as: "activity" });
 db.activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.company.hasMany(db.material, { foreignKey: "company_id", as: "material" });
+db.material.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.vendor.hasMany(db.material, { foreignKey: "vendor_id", as: "material" });
+db.material.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+
 // PROJECT MANAGEMENT END
+
+
 
 connectDB();
 module.exports = db;
