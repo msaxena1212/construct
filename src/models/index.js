@@ -48,6 +48,10 @@ db.project_task_dependency = require("../modules/projects/models/task-dependency
 db.vendor = require("../modules/vendors/models/vendors_model.js")(sequelize, Sequelize);
 db.activity = require("../modules/vendors/models/vendors_activity_model.js")(sequelize, Sequelize);
 
+
+//Material
+db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
+
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
 db.project.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
