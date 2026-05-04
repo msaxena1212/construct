@@ -40,9 +40,11 @@ const routes: Routes = [
         path: 'timeline',
         loadChildren: () => import('./timeline/timeline-module').then((m) => m.TimelineModule),
       },
-      { path: 'resources', 
-        loadChildren: () => import('./resources/resources-module').then(m => m.ResourcesModule) },
-
+      {
+        path: 'resources',
+        loadChildren: () => import('./resources/resources-module').then(m => m.ResourcesModule)
+      },
+      { path: 'resources/vendors', loadChildren: () => import('./vendors/vendors-module').then(m => m.VendorsModule) },
     ],
   },
 ];
