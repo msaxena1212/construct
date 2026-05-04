@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
   name: 'subtaskProgress',
-  standalone: false
+  standalone: true
 })
 export class SubtaskProgressPipe implements PipeTransform {
   transform(subtasks: any[]): number {

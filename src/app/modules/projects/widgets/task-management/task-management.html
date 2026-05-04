@@ -27,7 +27,9 @@
             <select [(ngModel)]="selectedMember"
                 class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4">
                 <option value="All Members">All Members</option>
-                <!-- Dynamically filled by actual project team members later -->
+                @for(ms of team_members; track ms.id) {
+                <option [ngValue]="ms.id">{{ ms.firstname }} {{ ms.lastname }}</option>
+                }
             </select>
             <span
                 class="material-symbols-outlined absolute right-3 text-slate-400 text-sm pointer-events-none">expand_more</span>
@@ -165,6 +167,6 @@
 }
 
 @if (showAddTaskModal) {
-<app-add-task [projectId]="projectId" [milestoneId]="selectedMilestoneId" [initialStatus]="targetStep" (close)="showAddTaskModal = false"
-    (save)="addNewTask($event)"></app-add-task>
+<app-add-task [projectId]="projectId" [milestoneId]="selectedMilestoneId" [initialStatus]="targetStep"
+    (close)="showAddTaskModal = false" (save)="addNewTask($event)"></app-add-task>
 }

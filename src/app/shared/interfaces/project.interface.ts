@@ -151,7 +151,7 @@ export interface IProjectBudget {
 }
 
 export interface IProject {
-  id: string | number;
+  id: number;
   name: string;
   type?: string;
   address?: string;

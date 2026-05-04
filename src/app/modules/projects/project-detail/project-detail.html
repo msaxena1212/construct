@@ -390,7 +390,7 @@
   </div> -->
 </div>
 } @else if (activeTab === 'Tasks') {
-<app-task-management [projectId]="project.id" [selectedMember]="selectedMember"
+<app-task-management [projectId]="project.id" [team_members]="project.team_members || []"
   [milestones]="project.milestones || []"></app-task-management>
 } @else if (activeTab === 'Timeline') {
 <app-project-timeline [projectId]="project.id" [selectedMember]="selectedMember"></app-project-timeline>

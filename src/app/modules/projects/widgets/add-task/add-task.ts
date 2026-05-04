@@ -1,14 +1,16 @@
 import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ToastrService } from 'ngx-toastr';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ToastrModule, ToastrService } from 'ngx-toastr';
 import { ProjectService } from '../../services/project-service';
 import { IProjectTask, IUser } from '../../../../shared/interfaces/project.interface';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-add-task',
-  standalone: false,
+  standalone: true,
   templateUrl: './add-task.html',
   styleUrl: './add-task.scss',
+  imports: [CommonModule, FormsModule, ToastrModule, ReactiveFormsModule],
 })
 export class AddTask implements OnInit {
   @Input() projectId: string | number = '';

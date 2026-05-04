@@ -1,8 +1,13 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ProjectService } from '../../services/project-service';
-import { ToastrService } from 'ngx-toastr';
-import { IProjectTask, IMilestone, TaskStatus } from '../../../../shared/interfaces/project.interface';
+import { ToastrModule, ToastrService } from 'ngx-toastr';
+import { IProjectTask, IMilestone, TaskStatus, IUser } from '../../../../shared/interfaces/project.interface';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TaskDetail } from "../task-detail/task-detail";
+import { AddTask } from "../add-task/add-task";
+import { SubtaskProgressPipe } from '../../../../shared/pipes/subtask-progress.pipe';
 
 interface TaskColumn {
   id: string;
@@ -14,14 +19,24 @@ interface TaskColumn {
 
 @Component({
   selector: 'app-task-management',
-  standalone: false,
+  standalone: true,
   templateUrl: './task-management.html',
   styleUrl: './task-management.scss',
+  imports: [
+    DragDropModule,
+    CommonModule,
+    FormsModule,
+    ToastrModule,
+    TaskDetail,
+    AddTask,
+    SubtaskProgressPipe
+  ]
 })
 export class TaskManagement implements OnInit, OnChanges {
   @Input() projectId: string | number = '';
-  @Input() selectedMember = 'All Members';
-  @Input() milestones: IMilestone[] = [];
+  selectedMember = 'All Members';
+  @Input() team_members: IUser[] = [];
+  @Input() milestones?: IMilestone[] = [];
 
   loading = false;
   selectedTask: IProjectTask | null = null;
@@ -54,7 +69,7 @@ export class TaskManagement implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['milestones'] && this.milestones.length > 0 && !this.selectedMilestoneId) {
+    if (changes['milestones'] && this.milestones && this.milestones.length > 0 && !this.selectedMilestoneId) {
       // Default to first milestone if none selected
       this.selectedMilestoneId = this.milestones[0].id;
       this.filterTasks();
