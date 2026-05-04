@@ -6,16 +6,8 @@ import { Modules } from './modules';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from '../shared/material/material-module';
 
-
 @NgModule({
-  declarations: [
-    Modules
-  ],
-  imports: [
-    CommonModule,
-    ModulesRoutingModule,
-    RouterModule,
-    MaterialModule
-  ]
+  declarations: [Modules],
+  imports: [CommonModule, ModulesRoutingModule, RouterModule, MaterialModule],
 })
-export class ModulesModule { }
+export class ModulesModule {}
