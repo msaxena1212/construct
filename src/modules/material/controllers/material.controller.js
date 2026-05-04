@@ -25,8 +25,11 @@ class MaterialController {
         stock,
         cost,
         supplier,
-        status
+        status,
+        vendor_id
       } = req.body;
+
+      const company_id = req.user.company_id;
 
       if (!name || !sku) {
         return res.status(400).json({ message: "Name and SKU are required." });
@@ -48,7 +51,9 @@ class MaterialController {
 
         cost,
         supplier,
-        status
+        status,
+        company_id,
+        vendor_id
       });
 
       res.status(201).json({
@@ -70,8 +75,14 @@ class MaterialController {
    */
   async getAllMaterials(req, res) {
     try {
+
+      const company_id = req.user.company_id;
+      if (!company_id) {
+        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+      }
+
       const materials = await db.material.findAll({
-        where: { isDeleted: false },
+        where: { isDeleted: false, company_id },
         order: [['createdAt', 'DESC']]
       });
 
@@ -93,8 +104,14 @@ class MaterialController {
     try {
       const { id } = req.params;
 
+      const company_id = req.user.company_id;
+      if (!company_id) {
+        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+      }
+
+
       const material = await db.material.findOne({
-        where: { id, isDeleted: false }
+        where: { id, isDeleted: false, company_id }
       });
 
       if (!material) {
@@ -119,8 +136,14 @@ class MaterialController {
     try {
       const { id } = req.params;
 
+      const company_id = req.user.company_id;
+      if (!company_id) {
+        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+      }
+
+
       const material = await db.material.findOne({
-        where: { id, isDeleted: false }
+        where: { id, isDeleted: false, company_id }
       });
 
       if (!material) {
@@ -138,7 +161,8 @@ class MaterialController {
         stock,
         cost,
         supplier,
-        status
+        status,
+        vendor_id
       } = req.body;
 
       await material.update({
@@ -156,7 +180,8 @@ class MaterialController {
 
         cost,
         supplier,
-        status
+        status,
+        vendor_id
       });
 
       res.status(200).json({
@@ -180,8 +205,13 @@ class MaterialController {
     try {
       const { id } = req.params;
 
+      const company_id = req.user.company_id;
+      if (!company_id) {
+        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+      }
+
       const material = await db.material.findOne({
-        where: { id, isDeleted: false }
+        where: { id, isDeleted: false, company_id }
       });
 
       if (!material) {
