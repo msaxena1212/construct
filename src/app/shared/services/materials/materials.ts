@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, catchError, Observable, tap, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
@@ -11,13 +11,14 @@ export interface Material {
   bg: string;
   text: string;
   border?: string;
-  stock: {
-    current: number;
-    total: number;
-    percent: number;
-  };
+
+  stockCurrent: number;
+  stockTotal: number;
+  stockPercent: number;
+
   cost: string;
   supplier: string;
+  vendor_id: string; // added vendor_id to link with Vendor
   status: 'Optimal' | 'Adequate' | 'Critical';
 }
 
@@ -25,48 +26,70 @@ export interface Material {
   providedIn: 'root'
 })
 export class MaterialService {
-  private apiUrl = `${environment.serverUrl}/materials`;
+  private baseUrl = `${environment.serverUrl}/api/v1`;
+
+  private apiUrlGetAllMaterials = `${this.baseUrl}/getAllMaterials`;
+  private apiUrlCreateMaterial = `${this.baseUrl}/createMaterial`;
+  private apiUrlUpdateMaterial = `${this.baseUrl}/updateMaterial`;
+  private apiUrlDeleteMaterial = `${this.baseUrl}/deleteMaterial`;
+
   private materialsSubject = new BehaviorSubject<Material[]>([]);
   materials$ = this.materialsSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    this.loadMaterials();
   }
 
+
   loadMaterials() {
-    this.http.get<Material[]>(this.apiUrl).subscribe(data => {
-      this.materialsSubject.next(data);
+    this.http.get<any>(this.apiUrlGetAllMaterials).subscribe({
+      next: (res) => {
+        if (res?.message === 'Success') {
+          this.materialsSubject.next(res.data || []);
+        } else {
+          this.materialsSubject.next([]);
+        }
+      },
+      error: (err) => {
+        console.error('[loadMaterials]', err);
+        this.materialsSubject.next([]);
+      },
     });
   }
 
+  // 👇 agar sirf current value chahiye
   getMaterials() {
     return this.materialsSubject.value;
   }
 
   addMaterial(material: Material) {
-    // In a real app, this would be a POST call
-    const current = this.materialsSubject.value;
-    this.materialsSubject.next([...current, material]);
+    return this.http.post<any>(this.apiUrlCreateMaterial, material).pipe(
+      tap((res) => {
+        if (res?.success) {
+          const current = this.materialsSubject.value;
+          this.materialsSubject.next([...(current || []), res.data]);
+        }
+      }),
+      catchError((err) => {
+        console.error('[addMaterial]', err);
+        return throwError(() => err);
+      })
+    );
   }
 
-  updateMaterial(sku: string, updated: Partial<Material>) {
-    // In a real app, this would be a PUT/PATCH call
-    const current = this.materialsSubject.value;
-    const index = current.findIndex((m: Material) => m.sku === sku);
-    if (index !== -1) {
-      current[index] = { ...current[index], ...updated } as Material;
-      this.materialsSubject.next([...current]);
-    }
+  // UPDATE
+  updateMaterial(id: number, data: any) {
+    return this.http.put<any>(`${this.apiUrlUpdateMaterial}/${id}`, data);
   }
 
-  deleteMaterial(sku: string) {
-    // In a real app, this would be a DELETE call
-    const current = this.materialsSubject.value;
-    this.materialsSubject.next(current.filter((m: Material) => m.sku !== sku));
+  // DELETE
+  deleteMaterial(id: number) {
+    return this.http.delete<any>(`${this.apiUrlDeleteMaterial}/${id}`);
   }
 
   getMaterialBySku(sku: string) {
     return this.materialsSubject.value.find((m: Material) => m.sku === sku);
   }
+
+
 }
 
