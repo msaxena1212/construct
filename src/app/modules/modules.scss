@@ -15,9 +15,9 @@
 
 /* Header Toggle Button (when sidebar is closed) */
 .header-toggle-btn {
-    background: rgba(255, 255, 255, 0.1);
+    background: #3a66b0;
     border: none;
-    color: #fff;
+    color: #0b0b0b;
     cursor: pointer;
     padding: 8px;
     border-radius: 6px;
@@ -41,8 +41,8 @@
 
 /* ================= SIDEBAR ================= */
 .sidebar {
-    background: #0b3b49;
-    color: #fff;
+    background: #fff;
+    color: #090909;
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -66,7 +66,7 @@
     justify-content: space-between;
     padding: 20px 10px;
     margin-bottom: 10px;
-    background: #0b3b49;
+    background: #fff;
     position: relative;
     z-index: 2;
 }
@@ -87,7 +87,7 @@
 .sidebar-toggle-btn {
     background: rgba(255, 255, 255, 0.1);
     border: none;
-    color: #fff;
+    color: #070707;
     cursor: pointer;
     padding: 6px;
     border-radius: 6px;
@@ -100,7 +100,7 @@
 }
 
 .sidebar-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #3a66b0;
     transform: scale(1.05);
 }
 
@@ -150,7 +150,7 @@
 .sidebar-nav ul li .nav-link {
     display: flex;
     align-items: center;
-    color: #fff;
+    color: #060606;
     text-decoration: none;
     padding: 10px 12px;
     border-radius: 6px;
@@ -163,8 +163,10 @@
 }
 
 .sidebar-nav ul li .nav-link.activeRoute {
-    background: rgba(0, 188, 212, 0.2);
-    border-left: 3px solid #00bcd4;
+    background: #3a66b0;
+    border-left: 3px solid #16484f;
+    color: #fff;
+
 }
 
 .sidebar-nav ul li .nav-link .nav-icon,
@@ -174,17 +176,17 @@
     font-size: 20px;
     margin-right: 12px;
     flex-shrink: 0;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(7, 7, 7, 0.6);
     transition: color 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.sidebar-nav ul li .nav-link:hover .nav-icon-material,
-.sidebar-nav ul li .nav-link.activeRoute .nav-icon-material {
-    color: #fff;
-}
+// .sidebar-nav ul li .nav-link:hover .nav-icon-material,
+// .sidebar-nav ul li .nav-link.activeRoute .nav-icon-material {
+//     color: #fff;
+// }
 
 .sidebar-nav ul li .nav-link .nav-text {
     white-space: nowrap;
@@ -193,7 +195,7 @@
 
 .sidebar-nav ul li .nav-link .arrow {
     margin-left: auto;
-    border: solid #fff;
+    border: solid #101010;
     border-width: 0 2px 2px 0;
     padding: 4px;
     transform: rotate(45deg);
@@ -218,7 +220,7 @@
 .sidebar-nav ul li .submenu a {
     display: flex;
     align-items: center;
-    color: #fff;
+    color: #000000;
     text-decoration: none;
     padding: 8px 10px;
     border-radius: 6px;
@@ -230,7 +232,8 @@
 }
 
 .sidebar-nav ul li .submenu a.activeRoute {
-    background: rgba(0, 188, 212, 0.15);
+    background: #3a66b0;
+    color: #fff;
 }
 
 /* ================= MAIN AREA ================= */
@@ -244,8 +247,8 @@
 /* Header */
 .top-header {
     flex-shrink: 0;
-    background: #0a2f3a;
-    color: #fff;
+    background: #fff;
+    color: #000000;
     padding: 18px 25px;
     display: flex;
     justify-content: space-between;
@@ -264,19 +267,20 @@
 }
 
 .top-header .header-left h3 span {
-    color: #00bcd4;
+    color: #3a66b0;
 }
 
 .top-header .header-left p {
     margin: 5px 0 0;
     font-size: 13px;
-    color: #c7d1d4;
+    color: #3a66b0;
 }
 
 .top-header .header-right {
     display: flex;
     align-items: center;
     gap: 20px;
+   
 }
 
 .header-icon {
@@ -307,6 +311,8 @@
     cursor: pointer;
     display: flex;
     align-items: center;
+    color: #000000;
+
 }
 
 .top-header .header-right .user_profile mat-icon {
@@ -314,7 +320,7 @@
 }
 
 .top-header .header-right .user_profile mat-icon:hover {
-    color: #00bcd4;
+    color: #3a66b0;
 }
 
 .top-header .header-right .user_profile .dropdown-profile {
@@ -322,7 +328,7 @@
     right: 0;
     top: 35px;
     background: #fff;
-    color: #333;
+    color: #000000;
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
     overflow: hidden;
@@ -336,7 +342,7 @@
     gap: 10px;
     padding: 10px 15px;
     text-decoration: none;
-    color: #333;
+    color: #000000;
     font-weight: 500;
     transition: background 0.2s ease;
     cursor: pointer;

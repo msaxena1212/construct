@@ -1,9 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, Router,ActivatedRoute } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaterialService, Material } from '../../../shared/services/materials/materials';
 // import { VendorService, Vendor } from '../../services/vendor.service';
 import { CommonModule } from '@angular/common';
+import { VendorsServices } from '../../vendors/services/vendors-services';
 // import { RbacService } from '../../../shared/services/rbac/rbac.service';
 
 
@@ -13,11 +14,12 @@ import { CommonModule } from '@angular/common';
   templateUrl: './materials.html',
   styleUrl: './materials.scss',
 })
-export class Materials { private materialService = inject(MaterialService);
+export class Materials {
+  private materialService = inject(MaterialService);
   // private vendorService = inject(VendorService);
   private router = inject(Router);
-  // public rbac = inject(RbacService);
-  
+  private vendorService = inject(VendorsServices);
+
   team = [
     { name: 'All Members' },
     { name: 'Marcus Thorne' },
@@ -33,63 +35,62 @@ export class Materials { private materialService = inject(MaterialService);
   showDeleteModal = false;
   showFilters = false;
 
-  materialToEdit: Material | null = null;
-  materialToDelete: Material | null = null;
+  materialToEdit: any;
+  materialToDelete: any;
 
   newMaterial: Material = this.getDefaultMaterial();
 
   materials: Material[] = [];
-vendors: any[] = [
-  {
-    id: 1,
-    vendor_name: 'ABC Traders',
-    contact_person: 'Ravi Sharma',
-    mobile_no: '9876543210',
-    email: 'abc@gmail.com',
-    city: 'Delhi',
-    status: 'Active'
-  },
-  {
-    id: 2,
-    vendor_name: 'XYZ Enterprises',
-    contact_person: 'Amit Verma',
-    mobile_no: '9123456780',
-    email: 'xyz@gmail.com',
-    city: 'Mumbai',
-    status: 'Inactive'
-  },
-  {
-    id: 3,
-    vendor_name: 'Global Supplies',
-    contact_person: 'Neha Singh',
-    mobile_no: '9988776655',
-    email: 'global@gmail.com',
-    city: 'Bangalore',
-    status: 'Active'
-  },
-  {
-    id: 4,
-    vendor_name: 'Tech Solutions',
-    contact_person: 'Karan Mehta',
-    mobile_no: '9090909090',
-    email: 'tech@gmail.com',
-    city: 'Pune',
-    status: 'Pending'
-  },
-  {
-    id: 5,
-    vendor_name: 'Shree Industries',
-    contact_person: 'Pooja Gupta',
-    mobile_no: '8888888888',
-    email: 'shree@gmail.com',
-    city: 'Jaipur',
-    status: 'Active'
+  vendors: any[] = [];
+  page = 1;
+  pageSize = 5;
+  paginatedMaterials: any[] = [];
+Math: any;
+
+ngOnInit() {
+  this.materialService.loadMaterials();
+
+  this.materialService.materials$.subscribe(m => {
+    this.materials = m;
+    this.page = 1; // 🔥 reset page (important)
+    this.updatePagination(); // ✅ yahi sahi jagah hai
+  });
+
+  this.vendorService.vendors$.subscribe(v => {
+    this.vendors = v;
+  });
+}  
+
+
+  updatePagination() {
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    this.paginatedMaterials = this.materials.slice(start, end);
   }
-];
-  ngOnInit() {
-    this.materialService.materials$.subscribe(m => this.materials = m);
-    // this.vendorService.vendors$.subscribe(v => this.vendors = v);
+
+  nextPage() {
+    if (this.page < this.totalPages()) {
+      this.page++;
+      this.updatePagination();
+    }
   }
+
+  prevPage() {
+    if (this.page > 1) {
+      this.page--;
+      this.updatePagination();
+    }
+  }
+
+  goToPage(p: number) {
+    this.page = p;
+    this.updatePagination();
+  }
+
+  totalPages() {
+    return Math.ceil(this.materials.length / this.pageSize);
+  }
+
 
   onSupplierChange() {
     if (this.newMaterial.supplier === 'ADD_NEW') {
@@ -100,9 +101,9 @@ vendors: any[] = [
 
   get filteredMaterials() {
     let filtered = this.materials;
-    
+
     if (this.selectedTab === 'Low Stock') {
-      filtered = filtered.filter(m => m.status === 'Critical' || m.stock.percent < 20);
+      filtered = filtered.filter(m => m.status === 'Critical' || m.stockPercent < 20);
     } else if (this.selectedTab !== 'All Materials') {
       filtered = filtered.filter(m => m.category.toLowerCase() === this.selectedTab.toLowerCase());
     }
@@ -123,9 +124,12 @@ vendors: any[] = [
       icon: 'inventory_2',
       bg: 'bg-slate-100',
       text: 'text-slate-400',
-      stock: { current: 0, total: 100, percent: 0 },
+      stockCurrent: 0,
+      stockTotal: 100,
+      stockPercent: 0,
       cost: '₹0.00',
       supplier: '',
+      vendor_id: '',
       status: 'Optimal'
     };
   }
@@ -135,14 +139,40 @@ vendors: any[] = [
     this.showAddModal = true;
   }
 
+  getvendor(vendorId: any) {
+    console.log(vendorId.target.value, 'sdzfdsfds');
+    const vendor = this.vendors.find(v => v.id === vendorId.target.value);
+    this.newMaterial.supplier = vendor?.name || '';
+    this.newMaterial.vendor_id = vendorId.target.value || '';
+  }
+
   addMaterial() {
-    this.newMaterial.stock.percent = Math.round((this.newMaterial.stock.current / this.newMaterial.stock.total) * 100);
-    this.newMaterial.status = this.calculateStatus(this.newMaterial.stock.percent);
-    this.materialService.addMaterial({ ...this.newMaterial });
-    this.showAddModal = false;
+    this.newMaterial.stockPercent = Math.round(
+      (this.newMaterial.stockCurrent / this.newMaterial.stockTotal) * 100
+    );
+
+    this.newMaterial.status = this.calculateStatus(
+      this.newMaterial.stockPercent
+    );
+
+    this.materialService.addMaterial({ ...this.newMaterial }).subscribe({
+      next: (res) => {
+        console.log('Material created', res);
+        this.showAddModal = false;
+        this.materialService.loadMaterials();
+
+        // optional: form reset
+        this.getDefaultMaterial();
+      },
+      error: (err) => {
+        console.error('Error creating material', err);
+      }
+    });
   }
 
   openEditModal(event: Event, material: Material) {
+    console.log(material);
+
     event.stopPropagation();
     this.materialToEdit = { ...material };
     this.showEditModal = true;
@@ -150,10 +180,28 @@ vendors: any[] = [
 
   updateMaterial() {
     if (this.materialToEdit) {
-      this.materialToEdit.stock.percent = Math.round((this.materialToEdit.stock.current / this.materialToEdit.stock.total) * 100);
-      this.materialToEdit.status = this.calculateStatus(this.materialToEdit.stock.percent);
-      this.materialService.updateMaterial(this.materialToEdit.sku, this.materialToEdit);
-      this.showEditModal = false;
+
+      this.materialToEdit.stockPercent = Math.round(
+        (this.materialToEdit.stockCurrent / this.materialToEdit.stockTotal) * 100
+      );
+
+      this.materialToEdit.status = this.calculateStatus(
+        this.materialToEdit.stockPercent
+      );
+
+      this.materialService
+        .updateMaterial(this.materialToEdit.id, this.materialToEdit) // ✅ id use karo
+        .subscribe({
+          next: () => {
+            this.showEditModal = false;
+            this.materialToEdit = null; // ✅ cleanup
+            this.materialService.loadMaterials();
+
+          },
+          error: (err) => {
+            console.error('Update failed', err);
+          }
+        });
     }
   }
 
@@ -165,11 +213,22 @@ vendors: any[] = [
 
   confirmDelete() {
     if (this.materialToDelete) {
-      this.materialService.deleteMaterial(this.materialToDelete.sku);
-      this.showDeleteModal = false;
+
+      this.materialService
+        .deleteMaterial(this.materialToDelete.id) // ✅ id use karo
+        .subscribe({
+          next: () => {
+            this.showDeleteModal = false;
+            this.materialToDelete = null; // ✅ cleanup
+            this.materialService.loadMaterials();
+
+          },
+          error: (err) => {
+            console.error('Delete failed', err);
+          }
+        });
     }
   }
-
   calculateStatus(percent: number): 'Optimal' | 'Adequate' | 'Critical' {
     if (percent < 20) return 'Critical';
     if (percent < 60) return 'Adequate';
