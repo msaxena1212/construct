@@ -152,7 +152,7 @@ export class TaskDetail implements OnInit {
           id: Date.now(),
           task_id: Number(this.task.id),
           user_id: 0,
-          user: { id: 0, firstname: 'You', lastname: '' },
+          user: { id: 0, firstname: 'You', lastname: '' } as unknown as IUser,
           detail: `commented: "${this.newComment}"`,
           createdAt: new Date().toISOString(),
           action_type: 'COMMENT'

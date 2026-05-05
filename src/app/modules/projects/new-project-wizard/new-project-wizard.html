@@ -352,46 +352,20 @@
                         as Draft</button>
 
                     <button *ngIf="currentStep < 4" (click)="nextStep()"
-                        class="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-[0px_8px_16px_rgba(0,74,198,0.2)] hover:shadow-lg transition-all cursor-pointer">
+                        class="flex items-center gap-2 px-8 py-3 bg-linear-to-br from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-[0px_8px_16px_rgba(0,74,198,0.2)] hover:shadow-lg transition-all cursor-pointer">
                         {{ currentStep === 1 ? 'Next: Team & Roles' : (currentStep === 2 ? 'Next: Budget & Schedule' :
                         'Next: Documentation') }}
                         <span class="material-symbols-outlined text-sm">arrow_forward</span>
                     </button>
 
                     <button *ngIf="currentStep === 4" (click)="saveProject()" [disabled]="loading"
-                        class="flex items-center gap-2 px-8 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-[0px_8px_16px_rgba(0,74,198,0.2)] hover:shadow-lg transition-all cursor-pointer disabled:opacity-50">
+                        class="flex items-center gap-2 px-8 py-3 bg-linear-to-br from-primary to-primary-container text-white rounded-xl text-sm font-bold shadow-[0px_8px_16px_rgba(0,74,198,0.2)] hover:shadow-lg transition-all cursor-pointer disabled:opacity-50">
                         <span *ngIf="loading" class="material-symbols-outlined animate-spin text-sm">sync</span>
                         {{ loading ? (editMode ? 'Updating...' : 'Initializing...') : (editMode ? 'Update Project' :
                         'Initialize Project') }}
                         <span *ngIf="!loading" class="material-symbols-outlined text-sm">{{ editMode ? 'check_circle' :
                             'rocket_launch' }}</span>
                     </button>
-                </div>
-            </div>
-
-            <!-- Secondary Context / Bento Preview -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-surface-container-low rounded-xl p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <span class="material-symbols-outlined text-primary">analytics</span>
-                        <h4 class="text-sm font-bold uppercase tracking-widest text-on-surface">Resource Forecast</h4>
-                    </div>
-                    <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden mb-2">
-                        <div class="h-full bg-primary rounded-full w-[45%]"></div>
-                    </div>
-                    <p class="text-[11px] text-on-surface-variant">Initial resource allocation based on project type and
-                        scope.</p>
-                </div>
-                <div class="bg-surface-container-low rounded-xl p-6 flex items-center justify-between">
-                    <div>
-                        <h4 class="text-sm font-bold uppercase tracking-widest text-on-surface mb-1">Auto-Sync Maps</h4>
-                        <p class="text-[11px] text-on-surface-variant">Topographic data linked.</p>
-                    </div>
-                    <div
-                        class="w-12 h-12 rounded-lg bg-surface flex items-center justify-center ring-1 ring-outline-variant/20">
-                        <span class="material-symbols-outlined text-secondary"
-                            style="font-variation-settings: 'FILL' 1;">map</span>
-                    </div>
                 </div>
             </div>
         </section>

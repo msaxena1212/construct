@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
+import { ApiResponse } from '../../../../shared/interfaces/core.interface';
+import { ITeam } from '../../../../shared/interfaces/project.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -9,10 +11,10 @@ import { environment } from '../../../../../environments/environment';
 export class TeamService {
   private baseUrl = environment.serverUrl + '/api/v1';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  getTeamMembers(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/team`);
+  getTeamMembers(): Observable<ApiResponse<ITeam[]>> {
+    return this.http.get<ApiResponse<ITeam[]>>(`${this.baseUrl}/team`);
   }
 
   inviteUser(data: any): Observable<any> {
