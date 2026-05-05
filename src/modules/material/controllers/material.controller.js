@@ -22,7 +22,10 @@ class MaterialController {
         bg,
         text,
         border,
-        stock,
+        // stock,
+        stockCurrent,
+        stockTotal,
+        stockPercent,
         cost,
         supplier,
         status,
@@ -35,6 +38,18 @@ class MaterialController {
         return res.status(400).json({ message: "Name and SKU are required." });
       }
 
+      if (!category || !supplier) {
+        return res.status(400).json({ message: "Category and Supplier are required." });
+      }
+
+      if (!stockCurrent || !stockTotal) {
+        return res.status(400).json({ message: "stockCurrent and stockTotal are required." });
+      }
+
+      if (!cost) {
+        return res.status(400).json({ message: "Cost are required." });
+      }
+
       const material = await db.material.create({
         name,
         sku,
@@ -45,9 +60,13 @@ class MaterialController {
         border,
 
         // 👉 stock flatten
-        stockCurrent: stock?.current || 0,
-        stockTotal: stock?.total || 0,
-        stockPercent: stock?.percent || 0,
+        // stockCurrent: stock?.current || 0,
+        // stockTotal: stock?.total || 0,
+        // stockPercent: stock?.percent || 0,
+
+        stockCurrent,
+        stockTotal,
+        stockPercent,
 
         cost,
         supplier,
@@ -86,16 +105,29 @@ class MaterialController {
         order: [['createdAt', 'DESC']]
       });
 
-      res.status(200).json({ data: materials });
+      //     res.status(200).json({ data: materials });
 
+      //   } catch (error) {
+      //     console.error("[GET_ALL_MATERIALS_ERROR]", error);
+      //     res.status(500).json({
+      //       message: "Error fetching materials.",
+      //       error: error.message
+      //     });
+      //   }
+      // }
+      if (materials.length > 0) {
+        return res
+          .status(200)
+          .send({ code: 200, message: "Success", data: materials });
+      } else {
+        return res.status(404).send({ code: 404, message: "No data found" });
+      }
     } catch (error) {
-      console.error("[GET_ALL_MATERIALS_ERROR]", error);
-      res.status(500).json({
-        message: "Error fetching materials.",
-        error: error.message
-      });
+      return res
+        .status(500)
+        .send({ code: 500, message: error.message || "Server Error" });
     }
-  }
+  };
 
   /**
    * Get Material By ID
@@ -158,7 +190,10 @@ class MaterialController {
         bg,
         text,
         border,
-        stock,
+        // stock,
+        stockCurrent,
+        stockTotal,
+        stockPercent,
         cost,
         supplier,
         status,
@@ -174,9 +209,13 @@ class MaterialController {
         text,
         border,
 
-        stockCurrent: stock?.current ?? material.stockCurrent,
-        stockTotal: stock?.total ?? material.stockTotal,
-        stockPercent: stock?.percent ?? material.stockPercent,
+        // stockCurrent: stock?.current ?? material.stockCurrent,
+        // stockTotal: stock?.total ?? material.stockTotal,
+        // stockPercent: stock?.percent ?? material.stockPercent,
+
+        stockCurrent,
+        stockTotal,
+        stockPercent,
 
         cost,
         supplier,
