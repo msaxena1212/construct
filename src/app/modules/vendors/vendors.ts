@@ -189,6 +189,58 @@ export class Vendors implements OnInit {
     this.showBillingModal = true;
   }
 
+  onlyNumbers(event: KeyboardEvent): boolean {
+    const charCode = event.which ?? event.keyCode;
+    if ([8, 9, 13, 27, 46].includes(charCode) ||
+      (charCode >= 35 && charCode <= 40)) {
+      return true;
+    }
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  onlyAlphanumeric(event: KeyboardEvent): boolean {
+    const charCode = event.which ?? event.keyCode;
+    const isLetter = (charCode >= 65 && charCode <= 90) || (charCode >= 97 && charCode <= 122);
+    const isNumber = charCode >= 48 && charCode <= 57;
+    const isControl = [8, 9, 13, 27, 46].includes(charCode) || (charCode >= 35 && charCode <= 40);
+    if (!isLetter && !isNumber && !isControl) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * @param event  
+   * @param field 
+   * @param max 
+   */
+  stripNonNumericOnPaste(event: ClipboardEvent, field: string, max: number): void {
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData('text') ?? '';
+    const cleaned = pasted.replace(/\D/g, '').slice(0, max);
+    if (field === 'spocPhone') this.newVendor.spoc.phone = cleaned;
+    if (field === 'phone') this.newVendor.phone = cleaned;
+    if (field === 'pincode') this.newVendor.address.pincode = cleaned;
+  }
+
+  /**
+   * @param event
+   * @param field
+   * @param max
+   */
+  stripNonAlphanumericOnPaste(event: ClipboardEvent, field: string, max: number): void {
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData('text') ?? '';
+    const cleaned = pasted.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, max);
+    if (field === 'gst') this.newVendor.kyc.gst = cleaned;
+    if (field === 'pan') this.newVendor.kyc.pan = cleaned;
+  }
+
   private defaultVendor() {
     return {
       name: '',

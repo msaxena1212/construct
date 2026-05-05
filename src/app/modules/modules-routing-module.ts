@@ -19,6 +19,7 @@ const routes: Routes = [
       { path: 'company-management', loadChildren: () => import('./company-management/company-management-module').then(m => m.CompanyManagementModule) },
       { path: 'projects', loadChildren: () => import('./projects/projects-module').then(m => m.ProjectsModule) },
       { path: 'resources/vendors', loadChildren: () => import('./vendors/vendors-module').then(m => m.VendorsModule) },
+      { path: 'analytics/labor', loadChildren: () => import('./labor/labor-module').then(m => m.LaborModule) },
     ],
   },
 ];
