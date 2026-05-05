@@ -173,7 +173,8 @@ export class ProjectDetail implements OnInit {
       disableClose: false,
       height: 'auto',
       data: {
-        project: this.project
+        project: this.project,
+        title: 'Add Milestone'
       }
     });
 
@@ -189,7 +190,8 @@ export class ProjectDetail implements OnInit {
       height: 'auto',
       data: {
         project: this.project,
-        milestone: ms
+        milestone: ms,
+        title: 'Edit Milestone'
       }
     });
 
@@ -209,6 +211,7 @@ export class ProjectDetail implements OnInit {
         project: this.project,
         milestone: sm,
         parent_id: msId,
+        title: 'Edit Sub Milestone'
       }
     });
 
@@ -219,10 +222,6 @@ export class ProjectDetail implements OnInit {
     });
   }
 
-  openLinkSubProjectModal(ms: IMilestone) {
-
-  }
-
   openAddSubMilestoneModal(msId: number) {
     const dialogRef = this.dialog.open(MilestoneFormDialog, {
       width: '500px',
@@ -231,6 +230,7 @@ export class ProjectDetail implements OnInit {
       data: {
         project: this.project,
         parent_id: msId,
+        title: 'Add Sub Milestone'
       }
     });
 

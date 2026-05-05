@@ -1,7 +1,6 @@
 <form [formGroup]="form" class="">
     <div class="flex justify-between items-center">
-        <h3 mat-dialog-title class="">{{
-            isEditingMilestone ? 'Edit' : 'Create' }} Milestone</h3>
+        <h3 mat-dialog-title class="">{{data.title}}</h3>
         <button type="button" (click)="this.dialogRef.close()"
             class="material-symbols-outlined text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">close</button>
     </div>
@@ -15,14 +14,14 @@
             }
         </div>
         <div class="grid grid-cols-2 gap-4">
-            <div>
+            <!-- <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Progress
                     (%)</label>
                 <input type="number" formControlName="progress" min="0" max="100"
                     class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm text-slate-900 dark:text-slate-50 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none">
                 <div *ngIf="form.get('progress')?.invalid && form.get('progress')?.touched"
                     class="text-red-500 text-xs mt-1 ml-1 font-medium">Invalid progress</div>
-            </div>
+            </div> -->
             <div>
                 <label
                     class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Color</label>
