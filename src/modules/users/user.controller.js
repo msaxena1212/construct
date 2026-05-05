@@ -56,6 +56,8 @@ class UserController {
         password: bcrypt.hashSync(password, 8),
         company_id,
         role_id: role.id,
+        isActive: true,
+        isInviteAccepted: true,
       });
 
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {

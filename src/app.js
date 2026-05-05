@@ -12,7 +12,11 @@ const app = express();
 const db = require("./models");
 
 // table wise sycn
-// db.company.sync({alter:true});
+// db.sequelize.sync({ alter: true }).then(() => {
+//   console.log("Database synced successfully");
+// }).catch((err) => {
+//   console.error("Error syncing database", err);
+// });
 // db.user.sync({ alter: true });
 // db.role_permission.sync({alter:true});
 // db.project.sync({ alter: true });
