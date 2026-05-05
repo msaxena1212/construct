@@ -90,13 +90,19 @@ class ProjectController {
       t = await db.sequelize.transaction();
 
       // 3. Create Project
+      let thumbnailPath = null;
+      if (req.files && req.files['thumbnail'] && req.files['thumbnail'].length > 0) {
+        thumbnailPath = `/uploads/projects/${req.files['thumbnail'][0].filename}`;
+      }
+
       const project = await db.project.create({
         name,
         type,
         address,
         completion_date: completionDate,
         budget_total: budgetTotal || 0,
-        company_id
+        company_id,
+        thumbnail: thumbnailPath
       }, { transaction: t });
 
       // 4. Create Milestones
@@ -118,9 +124,9 @@ class ProjectController {
         await db.project_team.bulkCreate(teamData, { transaction: t });
       }
 
-      // 6. Handle Documents (Files uploaded via Multer)
-      if (req.files && req.files.length > 0) {
-        const documentData = req.files.map(file => ({
+      // 6. Handle Documents (Files uploaded via Multer - specifically blueprints)
+      if (req.files && req.files['blueprints'] && req.files['blueprints'].length > 0) {
+        const documentData = req.files['blueprints'].map(file => ({
           project_id: project.id,
           name: file.originalname,
           size: (file.size / 1024).toFixed(2) + " KB",
@@ -243,11 +249,17 @@ class ProjectController {
       t = await db.sequelize.transaction();
 
       // 2. Update Project Header
-      await db.project.update({
+      let updateData = {
         name, type, address,
         completion_date: completionDate,
         budget_total: budgetTotal || 0,
-      }, {
+      };
+
+      if (req.files && req.files['thumbnail'] && req.files['thumbnail'].length > 0) {
+        updateData.thumbnail = `/uploads/projects/${req.files['thumbnail'][0].filename}`;
+      }
+
+      await db.project.update(updateData, {
         where: { id, company_id },
         transaction: t
       });
@@ -270,9 +282,9 @@ class ProjectController {
         await db.project_team.bulkCreate(teamData, { transaction: t });
       }
 
-      // 5. Handle New Documents
-      if (req.files && req.files.length > 0) {
-        const documentData = req.files.map(file => ({
+      // 5. Handle New Documents (Blueprints)
+      if (req.files && req.files['blueprints'] && req.files['blueprints'].length > 0) {
+        const documentData = req.files['blueprints'].map(file => ({
           project_id: id,
           name: file.originalname,
           size: (file.size / 1024).toFixed(2) + " KB",
