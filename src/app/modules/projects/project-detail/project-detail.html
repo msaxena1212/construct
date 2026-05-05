@@ -10,14 +10,6 @@
     <div class="space-y-2">
       <div class="flex items-center gap-4">
         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tighter text-on-surface">{{ project.name }}</h1>
-        <span
-          [class]="project.status === 'On Track' ? 'bg-secondary-container text-on-secondary-container' : 'bg-error-container text-on-error-container'"
-          class="px-3 py-1 text-xs font-bold rounded-full tracking-wider flex items-center gap-1">
-          <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">
-            {{ project.status === 'On Track' ? 'check_circle' : 'warning' }}
-          </span>
-          {{ project.status | uppercase }}
-        </span>
       </div>
       <p class="text-on-surface-variant text-lg max-w-xl font-light">{{ project.description }}</p>
     </div>
@@ -390,7 +382,7 @@
   </div> -->
 </div>
 } @else if (activeTab === 'Tasks') {
-<app-task-management [projectId]="project.id" [selectedMember]="selectedMember"
+<app-task-management [projectId]="project.id" [team_members]="project.team_members || []"
   [milestones]="project.milestones || []"></app-task-management>
 } @else if (activeTab === 'Timeline') {
 <app-project-timeline [projectId]="project.id" [selectedMember]="selectedMember"></app-project-timeline>

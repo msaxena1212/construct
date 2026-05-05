@@ -5,6 +5,8 @@ export interface IUser {
   email?: string;
   avatar?: string;
   role?: string;
+  isActive?: boolean;
+  mobile?: string;
   project_team?: {
     role: string;
   };
@@ -16,6 +18,9 @@ export interface ITeam {
   lastname: string;
   email?: string;
   avatar?: string;
+  isInviteAccepted?: boolean;
+  isActive: boolean;
+  mobile?: string;
   role?: {
     name: string;
   };
@@ -151,7 +156,7 @@ export interface IProjectBudget {
 }
 
 export interface IProject {
-  id: string | number;
+  id: number;
   name: string;
   type?: string;
   address?: string;

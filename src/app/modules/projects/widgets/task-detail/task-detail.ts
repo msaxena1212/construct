@@ -2,12 +2,18 @@ import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular
 import { ProjectService } from '../../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 import { IProjectSubTask, IProjectTask, IUser, IProjectTaskDependency, IProject } from '../../../../shared/interfaces/project.interface';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-task-detail',
-  standalone: false,
+  standalone: true,
   templateUrl: './task-detail.html',
   styleUrl: './task-detail.scss',
+  imports: [
+    CommonModule,
+    FormsModule,
+  ]
 })
 export class TaskDetail implements OnInit {
   @Input() task!: IProjectTask;
@@ -146,7 +152,7 @@ export class TaskDetail implements OnInit {
           id: Date.now(),
           task_id: Number(this.task.id),
           user_id: 0,
-          user: { id: 0, firstname: 'You', lastname: '' },
+          user: { id: 0, firstname: 'You', lastname: '' } as unknown as IUser,
           detail: `commented: "${this.newComment}"`,
           createdAt: new Date().toISOString(),
           action_type: 'COMMENT'
