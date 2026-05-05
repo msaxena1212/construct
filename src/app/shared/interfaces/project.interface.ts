@@ -5,9 +5,7 @@ export interface IUser {
   email?: string;
   avatar?: string;
   role?: string;
-  isInviteAccepted?: boolean;
   isActive?: boolean;
-  status: string;
   mobile?: string;
   project_team?: {
     role: string;
@@ -21,8 +19,7 @@ export interface ITeam {
   email?: string;
   avatar?: string;
   isInviteAccepted?: boolean;
-  isActive?: boolean;
-  status: string;
+  isActive: boolean;
   mobile?: string;
   role?: {
     name: string;

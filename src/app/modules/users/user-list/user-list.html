@@ -1,32 +1,25 @@
 <div class="team-management-container m-4">
-  <div
-    class="header-section mb-6 flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-    <div>
-      <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 m-0">Team Management</h2>
-      <p class="text-slate-500 dark:text-slate-400 mt-1 m-0">Invite new members to your organization and assign roles
-        mapping system boundaries.</p>
-    </div>
-    <button (click)="openInviteModal()"
-      class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-blue-500/25 border-none cursor-pointer">
-      <mat-icon class="text-lg">person_add</mat-icon>
-      Invite Member
-    </button>
-  </div>
 
   <div
     class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
     <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
       <div>
-        <h3 class="text-xl font-black text-slate-900 dark:text-slate-50 m-0 tracking-tight">Team Environment Settings
+        <h3 class="text-xl font-black text-slate-900 dark:text-slate-50 m-0 tracking-tight">Team Management
         </h3>
-        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Platform Access & Role Perimeter
-          Matrix</p>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Invite new members to your
+          organization and assign roles mapping system boundaries.</p>
       </div>
       <div class="flex items-center gap-2">
         <span
           class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-700">
           {{ teamMembers.length }} Members
         </span>
+
+        <button (click)="openInviteModal()"
+          class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-blue-500/25 border-none cursor-pointer">
+          <mat-icon class="text-lg">person_add</mat-icon>
+          Invite Member
+        </button>
       </div>
     </div>
 
@@ -78,41 +71,25 @@
             </td>
             <td class="p-3 text-center">
               <div class="flex flex-col items-center gap-1.5">
-                <div class="flex items-center gap-2">
-                  <span class="relative flex h-2 w-2">
-                    <span [ngClass]="{
-                      'bg-amber-400': element.status === 'Pending Sign Up',
-                      'bg-emerald-500': element.status === 'Active',
-                      'bg-rose-500': element.status !== 'Pending Sign Up' && element.status !== 'Active'
-                    }" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
-                    <span [ngClass]="{
-                      'bg-amber-500': element.status === 'Pending Sign Up',
-                      'bg-emerald-600': element.status === 'Active',
-                      'bg-rose-600': element.status !== 'Pending Sign Up' && element.status !== 'Active'
-                    }" class="relative inline-flex rounded-full h-2 w-2"></span>
-                  </span>
-                  <span [ngClass]="{
-                    'text-amber-600': element.status === 'Pending Sign Up',
-                    'text-emerald-600': element.status === 'Active',
-                    'text-rose-600': element.status !== 'Pending Sign Up' && element.status !== 'Active'
-                  }" class="text-[10px] font-black uppercase tracking-widest">
-                    {{ element.status === 'Pending Sign Up' ? 'Invite Awaiting' : element.status }}
-                  </span>
-                </div>
+                <span [ngClass]="{
+                      'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50': element.isActive,
+                      'text-rose-600 bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-800/50': !element.isActive
+                    }" class="">{{element.isActive ? 'Active' : 'Inactive'}}</span>
               </div>
             </td>
             <td class="p-3 text-right">
               <div class="flex items-center justify-end gap-3">
                 @if (element.isInviteAccepted) {
-                <button (click)="toggleStatus(element)" [title]="element.isActive ? 'Sever Connection' : 'Allow Access'"
-                  [ngClass]="element.isActive ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20' : 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'"
+                <button (click)="toggleStatus(element)"
+                  [title]="element.isInviteAccepted ? 'Deactivate User' : 'Activate User'"
+                  [ngClass]="element.isInviteAccepted ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20' : 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'"
                   class="w-9 h-9 rounded-xl transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
-                  <mat-icon class="text-[20px]">{{ element.isActive ? 'block' : 'check_circle' }}</mat-icon>
+                  <mat-icon class="text-[20px]">{{ element.isInviteAccepted ? 'block' : 'check_circle' }}</mat-icon>
                 </button>
-                <button title="View Activity"
+                <!-- <button title="View Activity"
                   class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
                   <mat-icon class="text-[20px]">analytics</mat-icon>
-                </button>
+                </button> -->
                 } @else {
                 <div
                   class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 opacity-60">
