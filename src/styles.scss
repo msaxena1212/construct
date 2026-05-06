@@ -634,6 +634,12 @@ ul.tab_menu {
   border-radius: 10px !important;
 }
 
+.custom-dialog-container .mat-mdc-dialog-container .mdc-dialog__surface {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
 .Material-header {
   display: flex;
   align-items: center;

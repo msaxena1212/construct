@@ -1,170 +1,192 @@
-<div class="role-management-container">
-  <div class="header-section">
-    <h2>Company Roles & Permissions</h2>
-    <p>Manage access levels, edit custom roles, and assign complex operational permissions specifically within your company environment.</p>
-  </div>
-
-  <!-- Standard Split View -->
-  <div class="split-view" *ngIf="!managingPermissionsRoleId">
-    <!-- Form Card -->
-    <mat-card class="form-card">
-      <mat-card-header>
-        <mat-card-title>{{ isEditMode ? 'Edit Role' : 'Create New Role' }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="roleForm" (ngSubmit)="onSubmit()" class="role-form">
-          <mat-form-field appearance="outline" class="full-width mt-16">
-            <mat-label>Role Name</mat-label>
-            <input matInput formControlName="name" placeholder="e.g. Finance Director">
-            <mat-error *ngIf="roleForm.get('name')?.hasError('required')">Role Name is required</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Role Type</mat-label>
-            <mat-select formControlName="type">
-              <mat-option value="CUSTOM">Custom Entity Role</mat-option>
-              <mat-option value="STATIC" [disabled]="true">Static Core System Role</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <div class="form-actions">
-            <button *ngIf="isEditMode" mat-button type="button" (click)="cancelEdit()">Cancel</button>
-            <button mat-raised-button color="primary" type="submit" [disabled]="roleForm.invalid">
-              <mat-icon>{{ isEditMode ? 'save' : 'add_circle' }}</mat-icon> 
-              {{ isEditMode ? 'Save Changes' : 'Create Role' }}
-            </button>
-          </div>
-        </form>
-      </mat-card-content>
-    </mat-card>
-
-    <!-- Table Card -->
-    <mat-card class="table-card">
-      <mat-card-header>
-        <mat-card-title>Your Active Roles</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="table-container mat-elevation-z1">
-          <table mat-table [dataSource]="roles">
-
-            <ng-container matColumnDef="id">
-              <th mat-header-cell *matHeaderCellDef> ID </th>
-              <td mat-cell *matCellDef="let element"> <span class="light-code">{{element.id}}</span> </td>
-            </ng-container>
-
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef> Role Name </th>
-              <td mat-cell *matCellDef="let element"> <strong>{{element.name}}</strong> </td>
-            </ng-container>
-
-            <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef> Access Type </th>
-              <td mat-cell *matCellDef="let element">
-                <span class="badge" [ngClass]="element.type === 'STATIC' ? 'badge-static' : 'badge-custom'">
-                  {{element.type}}
-                </span>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef class="actions-header" style="text-align:center;"> Manage </th>
-              <td mat-cell *matCellDef="let element" class="actions-cell">
-                <button mat-icon-button color="accent" (click)="openPermissions(element)" matTooltip="Manage User Permissions">
-                  <mat-icon>verified_user</mat-icon>
-                </button>
-                <button *ngIf="element.type !== 'STATIC'" mat-icon-button color="primary" (click)="onEdit(element)" matTooltip="Edit custom role">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button *ngIf="element.type !== 'STATIC'" mat-icon-button color="warn" (click)="onDelete(element.id, element.type)" matTooltip="Soft Delete custom role">
-                  <mat-icon>delete_outline</mat-icon>
-                </button>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="interactive-row" [class.editing-row]="editingRoleId === row.id"></tr>
-          </table>
-          <div *ngIf="roles.length === 0" class="no-data">
-            No active roles instantiated for your company yet.
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <!-- Permissions View -->
-  <mat-card *ngIf="managingPermissionsRoleId" class="permissions-card fade-in">
-    <mat-card-header class="permissions-header">
-      <mat-card-title>
-        <mat-icon>security</mat-icon>
-        Configuring Permissions: <span class="highlight">{{ managingPermissionsRoleName }}</span>
-      </mat-card-title>
-      <button mat-icon-button class="close-btn" (click)="closePermissions()">
-        <mat-icon>close</mat-icon>
+<div class="role-management-container p-6 space-y-6">
+  <!-- Header Section -->
+  <div
+    class="flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 m-0">Company Roles & Permissions</h2>
+      <p class="text-slate-500 dark:text-slate-400 mt-1 m-0 max-w-2xl">Manage access levels, edit custom roles, and
+        assign complex operational permissions specifically within your company environment.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      @if(managingPermissionsRoleId){
+      <button (click)="closePermissions()"
+        class="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all font-bold text-xs uppercase tracking-widest bg-transparent border-none cursor-pointer">
+        <mat-icon class="text-sm">arrow_back</mat-icon>
+        Back to Roles
       </button>
-    </mat-card-header>
-    
-    <mat-card-content>
-      <div class="table-container mat-elevation-z1 max-h-permissions">
-        <table mat-table [dataSource]="rolePermissions">
+      } @else {
+      <button (click)="openRoleDialog()"
+        class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-blue-500/25 border-none cursor-pointer">
+        <mat-icon class="text-lg">add_circle</mat-icon>
+        Create New Role
+      </button>
+      }
+    </div>
+  </div>
 
-          <ng-container matColumnDef="moduleName">
-            <th mat-header-cell *matHeaderCellDef> Application Module </th>
-            <td mat-cell *matCellDef="let element">
-              <div [ngStyle]="{'padding-left': (element.depth * 30) + 'px'}" class="tree-cell">
-                <mat-icon *ngIf="element.depth > 0" class="tree-icon">subdirectory_arrow_right</mat-icon>
-                <mat-icon class="module-icon text-primary">{{element.icon || 'domain'}}</mat-icon>
-                <strong>{{element.name}}</strong> 
-                <span class="dim ml-2" *ngIf="element.title">({{element.title}})</span>
+  @if (!managingPermissionsRoleId) {
+  <!-- Roles Listing -->
+  <div
+    class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
+    <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
+      <div>
+        <h3 class="text-xl font-black text-slate-900 dark:text-slate-50 m-0 tracking-tight">Active Organizational Roles
+        </h3>
+        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">System Boundaries & Custom Access
+          Definitions</p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr
+            class="bg-slate-50/50 dark:bg-slate-800/30 text-[10px] uppercase tracking-widest text-slate-400 font-black border-b border-slate-100 dark:border-slate-800">
+            <th class="p-6">Role Identity</th>
+            <th class="p-6">Access Type</th>
+            <th class="p-6 text-right">Operational Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50 dark:divide-slate-800/50">
+          @for (role of roles; track role.id) {
+          <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group">
+            <td class="p-6">
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 font-black text-xs border border-white dark:border-slate-700 shadow-sm uppercase">
+                  {{ role.name.charAt(0) }}
+                </div>
+                <div>
+                  <p class="text-sm font-black text-slate-900 dark:text-slate-100 m-0">{{ role.name }}</p>
+                  <p class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">UID: {{ role.id }}
+                  </p>
+                </div>
               </div>
             </td>
-          </ng-container>
-
-          <ng-container matColumnDef="create">
-            <th mat-header-cell *matHeaderCellDef class="center-col"> Create </th>
-            <td mat-cell *matCellDef="let element" class="center-col">
-              <mat-checkbox [checked]="element.permissions.can_create" color="primary" 
-                (change)="togglePermission(element, 'can_create', $event.checked)"></mat-checkbox>
+            <td class="p-6">
+              <span [ngClass]="{
+                  'text-blue-600 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800/50': role.type === 'STATIC',
+                  'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50': role.type === 'CUSTOM'
+                }" class="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border">
+                {{ role.type === 'STATIC' ? 'System Protected' : 'Custom Defined' }}
+              </span>
             </td>
-          </ng-container>
-
-          <ng-container matColumnDef="read">
-            <th mat-header-cell *matHeaderCellDef class="center-col"> Read </th>
-            <td mat-cell *matCellDef="let element" class="center-col">
-              <mat-checkbox [checked]="element.permissions.can_read" color="primary"
-                (change)="togglePermission(element, 'can_read', $event.checked)"></mat-checkbox>
+            <td class="p-6 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <button (click)="openPermissions(role)" title="Configure Permissions"
+                  class="w-9 h-9 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
+                  <mat-icon class="text-[20px]">security</mat-icon>
+                </button>
+                @if (role.type !== 'STATIC') {
+                <button (click)="onEdit(role)" title="Edit Role"
+                  class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
+                  <mat-icon class="text-[20px]">edit</mat-icon>
+                </button>
+                <button (click)="onDelete(role.id, role.type)" title="Delete Role"
+                  class="w-9 h-9 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
+                  <mat-icon class="text-[20px]">delete_outline</mat-icon>
+                </button>
+                }
+              </div>
             </td>
-          </ng-container>
-
-          <ng-container matColumnDef="update">
-            <th mat-header-cell *matHeaderCellDef class="center-col"> Update </th>
-            <td mat-cell *matCellDef="let element" class="center-col">
-              <mat-checkbox [checked]="element.permissions.can_update" color="primary"
-                (change)="togglePermission(element, 'can_update', $event.checked)"></mat-checkbox>
+          </tr>
+          } @empty {
+          <tr>
+            <td colspan="3" class="p-20 text-center text-slate-400 font-medium">
+              No active roles discovered in your company environment.
             </td>
-          </ng-container>
-
-          <ng-container matColumnDef="delete">
-            <th mat-header-cell *matHeaderCellDef class="center-col"> Delete </th>
-            <td mat-cell *matCellDef="let element" class="center-col">
-              <mat-checkbox [checked]="element.permissions.can_delete" color="warn"
-                (change)="togglePermission(element, 'can_delete', $event.checked)"></mat-checkbox>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="permissionsColumns; sticky: true"></tr>
-          <tr mat-row *matRowDef="let row; columns: permissionsColumns;" class="interactive-row"></tr>
-        </table>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  } @else {
+  <!-- Permissions View -->
+  <div
+    class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden fade-in">
+    <div
+      class="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-900 text-white">
+      <div>
+        <h3 class="text-xl font-black m-0 tracking-tight flex items-center gap-2">
+          <mat-icon class="text-blue-400">security</mat-icon>
+          Access Configuration: <span class="text-blue-400 uppercase tracking-tighter">{{ managingPermissionsRoleName
+            }}</span>
+        </h3>
+        <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">Define CRUD matrix for core
+          application modules</p>
       </div>
-      
-      <div class="form-actions mt-20">
-        <button mat-button (click)="closePermissions()">Cancel Configuration</button>
-        <button mat-raised-button color="accent" (click)="savePermissions()">
-          <mat-icon>verified</mat-icon> Apply Permissions Globally
-        </button>
-      </div>
+      <button (click)="closePermissions()"
+        class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center border-none text-white cursor-pointer">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
 
-    </mat-card-content>
-  </mat-card>
+    <div class="overflow-x-auto max-h-[600px]">
+      <table class="w-full text-left border-collapse sticky-header">
+        <thead class="sticky top-0 z-10">
+          <tr
+            class="bg-slate-50 dark:bg-slate-800 text-[10px] uppercase tracking-widest text-slate-400 font-black border-b border-slate-100 dark:border-slate-800">
+            <th class="p-6">Application Module</th>
+            <th class="p-6 text-center">Create</th>
+            <th class="p-6 text-center">Read</th>
+            <th class="p-6 text-center">Update</th>
+            <th class="p-6 text-center">Delete</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50 dark:divide-slate-800/50">
+          @for (item of rolePermissions; track item.id) {
+          <tr class="hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors">
+            <td class="p-6">
+              <div [style.padding-left.px]="item.depth * 32" class="flex items-center gap-3">
+                @if (item.depth > 0) {
+                <mat-icon class="text-slate-300 text-sm">subdirectory_arrow_right</mat-icon>
+                }
+                <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                  <mat-icon class="text-blue-500 text-sm">{{ item.icon || 'domain' }}</mat-icon>
+                </div>
+                <div>
+                  <p class="text-xs font-black text-slate-800 dark:text-slate-200 m-0 uppercase tracking-tight">{{
+                    item.name }}</p>
+                  @if (item.title) {
+                  <p class="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{{ item.title }}</p>
+                  }
+                </div>
+              </div>
+            </td>
+            <td class="p-6 text-center">
+              <mat-checkbox [checked]="item.permissions.can_create" color="primary"
+                (change)="togglePermission(item, 'can_create', $event.checked)"></mat-checkbox>
+            </td>
+            <td class="p-6 text-center">
+              <mat-checkbox [checked]="item.permissions.can_read" color="primary"
+                (change)="togglePermission(item, 'can_read', $event.checked)"></mat-checkbox>
+            </td>
+            <td class="p-6 text-center">
+              <mat-checkbox [checked]="item.permissions.can_update" color="primary"
+                (change)="togglePermission(item, 'can_update', $event.checked)"></mat-checkbox>
+            </td>
+            <td class="p-6 text-center">
+              <mat-checkbox [checked]="item.permissions.can_delete" color="warn"
+                (change)="togglePermission(item, 'can_delete', $event.checked)"></mat-checkbox>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
+    <div class="p-6 bg-slate-50 dark:bg-slate-950 border-t dark:border-slate-800 flex justify-end gap-4">
+      <button (click)="closePermissions()"
+        class="px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all bg-transparent border-none cursor-pointer">
+        Cancel Configuration
+      </button>
+      <button (click)="savePermissions()"
+        class="flex items-center gap-2 px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-emerald-500/25 border-none cursor-pointer">
+        <mat-icon class="text-lg">verified</mat-icon>
+        Apply Permissions Globally
+      </button>
+    </div>
+  </div>
+  }
 </div>

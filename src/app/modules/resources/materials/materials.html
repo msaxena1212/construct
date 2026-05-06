@@ -1,0 +1,501 @@
+<!-- Content Area -->
+<section class="p-8 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <!-- Page Header & Key Metrics -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="space-y-1">
+            <h2 class="text-2xl md:text-3xl font-black tracking-tighter text-on-surface uppercase">Materials Inventory
+            </h2>
+            <p class="text-on-surface-variant/80 font-medium">Precision tracking across 4 active construction sites</p>
+        </div>
+        <div class="flex gap-3">
+            <div
+                class="flex items-center gap-3 bg-surface-container-highest px-4 py-2 rounded-xl border border-outline-variant/10 shadow-sm">
+                <span class="material-symbols-outlined text-outline text-sm">filter_alt</span>
+                <select [(ngModel)]="selectedMember"
+                    class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-on-surface outline-none cursor-pointer appearance-none pr-4">
+                    <option *ngFor="let m of team" [value]="m.name">{{ m.name }}</option>
+                </select>
+            </div>
+            <button (click)="showFilters = !showFilters"
+                class="px-5 py-2.5 bg-surface-container-highest text-primary rounded-xl font-bold flex items-center gap-2 hover:bg-surface-dim transition-colors cursor-pointer">
+                <span class="material-symbols-outlined text-lg"
+                    style="font-variation-settings: 'FILL' 1;">filter_list</span>
+                Filters
+            </button>
+            <button (click)="exportReport()"
+                class="px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center gap-2 hover:scale-[1.02] transition-transform cursor-pointer">
+                <span class="material-symbols-outlined text-lg">download</span>
+                Export Report
+            </button>
+            <button (click)="openAddModal()"
+                class="hidden md:flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface font-bold rounded-xl shadow-sm border border-outline-variant/20 hover:border-primary/30 transition-all cursor-pointer">
+                <span class="material-symbols-outlined" style="font-size: 20px;">add_box</span>
+                New Material
+            </button>
+        </div>
+    </div>
+
+    <!-- Bento Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div
+            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+            <span class="text-xs font-bold uppercase tracking-widest text-outline">Total SKU</span>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black">1,248</span>
+                <span class="text-xs font-bold text-green-600">+12%</span>
+            </div>
+        </div>
+        <div
+            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32 border-l-4 border-l-secondary-container">
+            <span class="text-xs font-bold uppercase tracking-widest text-outline">Low Stock Alerts</span>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-secondary">24</span>
+                <span class="material-symbols-outlined text-secondary-container"
+                    style="font-variation-settings: 'FILL' 1;">warning</span>
+            </div>
+        </div>
+        <div
+            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+            <span class="text-xs font-bold uppercase tracking-widest text-outline">Inventory Value</span>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black text-primary">₹412.5k</span>
+            </div>
+        </div>
+        <div
+            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+            <span class="text-xs font-bold uppercase tracking-widest text-outline">Awaiting Delivery</span>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-black">8</span>
+                <span class="material-symbols-outlined text-outline">local_shipping</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
+        @for (tab of tabs; track tab) {
+        <button (click)="selectedTab = tab"
+            [class]="selectedTab === tab ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-dim'"
+            class="px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap cursor-pointer transition-colors">
+            {{ tab }}
+        </button>
+        }
+        <div
+            class="ml-auto flex items-center gap-4 text-xs font-bold text-outline uppercase tracking-widest px-4 cursor-pointer hover:text-primary transition-colors">
+            Sorted by: Usage Rate
+            <span class="material-symbols-outlined text-sm">unfold_more</span>
+        </div>
+    </div>
+
+    <!-- Inventory Table Container -->
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-surface-container-low/50">
+                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Material Name</th>
+                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Category</th>
+                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline w-64">Stock Level
+                    </th>
+                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Unit Cost</th>
+                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Supplier</th>
+                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline text-right">Status
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-container">
+                @for (item of filteredMaterials; track item.sku) {
+                <tr [routerLink]="['/materials', item.sku]" class="transition-colors group cursor-pointer"
+                    [ngClass]="item.status === 'Critical' ? 'hover:bg-error-container/5' : (item.status === 'Optimal' || item.status === 'Adequate' ? 'hover:bg-surface-container-low/30' : '')">
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center border"
+                                [ngClass]="item.bg + ' ' + (item.border || 'border-transparent')">
+                                <span class="material-symbols-outlined" [ngClass]="item.text">{{ item.icon }}</span>
+                            </div>
+                            <div>
+                                <p class="font-bold text-on-surface group-hover:text-primary transition-colors">{{
+                                    item.name }}</p>
+                                <p class="text-xs text-outline">SKU: {{ item.sku }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5">
+                        <span
+                            class="px-3 py-1 bg-surface-container text-xs font-bold rounded-full text-outline uppercase">{{
+                            item.category }}</span>
+                    </td>
+                    <td class="px-6 py-5">
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex justify-between text-xs font-bold"
+                                [ngClass]="item.status === 'Critical' ? 'text-error' : (item.stockPercent < 20 ? 'text-secondary' : '')">
+                                <span [ngClass]="item.status === 'Critical' ? '' : 'text-on-surface'">{{
+                                    item.stockCurrent }}/{{ item.stockTotal }} Units</span>
+                                <span [ngClass]="item.status === 'Critical' ? '' : 'text-outline'">{{ item.stockPercent
+                                    }}%</span>
+                            </div>
+                            <div class="w-full h-2 rounded-full overflow-hidden"
+                                [ngClass]="item.status === 'Critical' ? 'bg-error-container/30' : 'bg-surface-container'">
+                                <div class="h-full rounded-full"
+                                    [ngClass]="item.status === 'Critical' ? 'bg-error' : (item.stockPercent > 70 ? 'bg-primary' : 'bg-primary-container')"
+                                    [style.width]="item.stockPercent + '%'"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-5 font-medium text-on-surface">{{ item.cost }}</td>
+                    <td class="px-6 py-5 text-sm text-on-surface-variant font-medium">{{ item.supplier }}</td>
+                    <td class="px-6 py-5 text-right flex items-center justify-end gap-4 h-full relative">
+                        @if (item.status === 'Critical') {
+                        <div
+                            class="flex items-center justify-end gap-1.5 text-error font-black text-[10px] uppercase tracking-tighter animate-pulse">
+                            <span class="material-symbols-outlined text-sm">emergency</span>
+                            Critical
+                        </div>
+                        } @else if (item.status === 'Optimal') {
+                        <span
+                            class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-tighter rounded-md">Optimal</span>
+                        } @else {
+                        <span
+                            class="px-3 py-1 bg-surface-container-high text-outline text-[10px] font-black uppercase tracking-tighter rounded-md">Adequate</span>
+                        }
+                        <!-- Hover Actions -->
+                        <div
+                            class="absolute right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 scale-90 group-hover:scale-100">
+                            <button (click)="openEditModal($event, item)"
+                                class="p-2 bg-surface-container-highest text-primary hover:bg-primary hover:text-white rounded-lg transition-all shadow-sm cursor-pointer">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                            </button>
+                            <button (click)="openDeleteModal($event, item)"
+                                class="p-2 bg-error-container/20 text-error hover:bg-error hover:text-white rounded-lg transition-all shadow-sm cursor-pointer">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                        </div>
+
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        <div
+            class="bg-surface-container-low/30 px-6 py-4 flex items-center justify-between border-t border-surface-container">
+
+            <!-- 🔥 Dynamic count -->
+            <p class="text-xs font-bold text-outline uppercase tracking-wider">
+                Showing {{ (page - 1) * pageSize + 1 }}
+                to {{ Math?.min(page * pageSize, materials.length) }}
+                of {{ materials.length }} materials
+            </p>
+
+            <div class="flex gap-2">
+
+                <!-- Prev -->
+                <button (click)="prevPage()"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-outline-variant/20 cursor-pointer">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                </button>
+
+                <!-- Page Numbers -->
+                @for (p of [].constructor(totalPages()); track $index) {
+                <button (click)="goToPage($index + 1)" [class]="page === ($index + 1) 
+          ? 'bg-primary text-white' 
+          : 'bg-white border border-outline-variant/20 text-outline'"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs cursor-pointer">
+                    {{ $index + 1 }}
+                </button>
+                }
+
+                <!-- Next -->
+                <button (click)="nextPage()"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-outline-variant/20 cursor-pointer">
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Asymmetric Bottom Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Upcoming Deliveries -->
+        <div
+            class="lg:col-span-2 bg-white rounded-xl p-8 border border-outline-variant/10 shadow-sm overflow-hidden relative">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-12 -mt-12"></div>
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h3 class="text-xl font-black text-on-surface">Scheduled Deliveries</h3>
+                    <p class="text-sm text-outline font-medium">Next 48 hours activity log</p>
+                </div>
+                <button (click)="exportReport()"
+                    class="text-primary font-bold text-sm hover:underline cursor-pointer">View Logistics Map</button>
+            </div>
+
+            <div class="space-y-6">
+                @for (delivery of filteredDeliveries; track delivery.item) {
+                <div class="flex items-center gap-6 group">
+                    <div class="flex flex-col items-center min-w-[40px]">
+                        <span class="text-lg font-black"
+                            [ngClass]="delivery.status === 'In Transit' ? 'text-primary' : 'text-on-surface'">{{
+                            delivery.time }}</span>
+                        <span class="text-[10px] font-bold text-outline uppercase">{{ delivery.period }}</span>
+                    </div>
+                    <div class="w-px h-12 bg-slate-200"></div>
+                    <div class="flex-1">
+                        <p class="text-sm font-black text-on-surface">{{ delivery.item }}</p>
+                        <p class="text-xs text-outline">{{ delivery.location }}</p>
+                    </div>
+                    <span class="px-3 py-1 text-[10px] font-black uppercase rounded" [ngClass]="delivery.statusColor">{{
+                        delivery.status }}</span>
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Vendor Performance Heatmap -->
+        <div class="bg-primary p-8 rounded-xl text-white shadow-xl shadow-primary/30 flex flex-col justify-between">
+            <div>
+                <h3 class="text-xl font-black mb-1">Vendor Health</h3>
+                <p class="text-primary-fixed-dim text-xs font-bold uppercase tracking-widest">Global Supply Efficiency
+                </p>
+            </div>
+            <div class="mt-8 space-y-4">
+                <div class="flex justify-between text-xs font-bold">
+                    <span>Fulfillment Rate</span>
+                    <span>98.4%</span>
+                </div>
+                <div class="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-white rounded-full" style="width: 98%;"></div>
+                </div>
+                <div class="flex justify-between text-xs font-bold mt-4">
+                    <span>Lead Time Variance</span>
+                    <span>-1.2 Days</span>
+                </div>
+                <div class="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div class="h-full bg-secondary-container rounded-full" style="width: 75%;"></div>
+                </div>
+            </div>
+            <button routerLink="/vendors"
+                class="cursor-pointer mt-8 w-full py-3 bg-white text-primary rounded-xl font-black text-sm hover:bg-slate-50 transition-colors">
+                Manage Suppliers
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Modals -->
+<!-- Add Material Modal -->
+@if (showAddModal) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+    (click)="showAddModal = false">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
+        (click)="$event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black tracking-tight">New Inventory Item</h3>
+            <button (click)="showAddModal = false"
+                class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Material
+                    Name</label>
+                <input [(ngModel)]="newMaterial.name" type="text" placeholder="e.g. Portland Cement Grade-C"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">SKU Code</label>
+                <input [(ngModel)]="newMaterial.sku" type="text" placeholder="SKU-XXX-X"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
+                <select [(ngModel)]="newMaterial.category"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+                    <option value="Concrete">Concrete</option>
+                    <option value="Steel">Steel</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Lumber">Lumber</option>
+                    <option value="Finishing">Finishing</option>
+                    <option value="Chemicals">Chemicals</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Current
+                    Stock</label>
+                <input [(ngModel)]="newMaterial.stockCurrent" type="number"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Total
+                    Capacity</label>
+                <input [(ngModel)]="newMaterial.stockTotal" type="number"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Unit
+                    Cost</label>
+                <input [(ngModel)]="newMaterial.cost" type="text" placeholder="₹0.00"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
+                <select [(ngModel)]="newMaterial.vendor_id" (change)="getvendor($event)"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+                    <option value="" disabled selected>Select Supplier</option>
+                    @for (v of vendors; track v.id) {
+                    <option [value]="v.id">{{ v.name }}</option>
+                    }
+                    <option value="ADD_NEW" class="text-primary font-bold">+ Add New Vendor</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+            <button (click)="showAddModal = false"
+                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
+            <button (click)="addMaterial()"
+                class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Add
+                to Inventory</button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Edit Material Modal -->
+@if (showEditModal && materialToEdit) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+    (click)="showEditModal = false">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
+        (click)="$event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black tracking-tight">Edit material</h3>
+            <button (click)="showEditModal = false"
+                class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Material
+                    Name</label>
+                <input [(ngModel)]="materialToEdit.name" type="text"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">SKU Code</label>
+                <input [(ngModel)]="materialToEdit.sku" type="text" readonly
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none cursor-not-allowed">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
+                <select [(ngModel)]="materialToEdit.category"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+                    <option value="Concrete">Concrete</option>
+                    <option value="Steel">Steel</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Lumber">Lumber</option>
+                    <option value="Finishing">Finishing</option>
+                    <option value="Chemicals">Chemicals</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Current
+                    Stock</label>
+                <input [(ngModel)]="materialToEdit.stockCurrent" type="number"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Total
+                    Capacity</label>
+                <input [(ngModel)]="materialToEdit.stockTotal" type="number"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Unit
+                    Cost</label>
+                <input [(ngModel)]="materialToEdit.cost" type="text"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
+                <select [(ngModel)]="materialToEdit.vendor_id" (change)="getvendor($event)"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+                    @for (v of vendors; track v.id) {
+                    <option [value]="v.id">{{ v.name }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+            <button (click)="showEditModal = false"
+                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
+            <button (click)="updateMaterial()"
+                class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Save
+                Changes</button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal && materialToDelete) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"
+        (click)="$event.stopPropagation()">
+        <div
+            class="w-20 h-20 bg-error-container/20 text-error rounded-full flex items-center justify-center mx-auto mb-6">
+            <span class="material-symbols-outlined text-4xl">delete_forever</span>
+        </div>
+        <h3 class="text-xl font-black mb-2">Delete Material?</h3>
+        <p class="text-outline text-sm font-medium mb-8">Are you sure you want to remove <span
+                class="text-on-surface font-black">"{{ materialToDelete.name }}"</span>? This action cannot be undone.
+        </p>
+
+        <div class="flex gap-3">
+            <button (click)="showDeleteModal = false"
+                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
+            <button (click)="confirmDelete()"
+                class="flex-1 py-3 rounded-xl bg-error text-white text-sm font-bold cursor-pointer shadow-lg shadow-error/20 hover:scale-[1.02] transition-transform">Delete
+                Item</button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Filters Dropdown Overlay -->
+@if (showFilters) {
+<div class="fixed inset-0 z-[90]" (click)="showFilters = false">
+    <div class="absolute top-32 right-8 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-outline-variant/20 p-6 w-72 animate-in fade-in slide-in-from-top-4 duration-300"
+        (click)="$event.stopPropagation()">
+        <h4 class="text-xs font-black uppercase tracking-widest text-outline mb-4">Advanced Filters</h4>
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-outline mb-1 block">Sort Order</label>
+                <select class="w-full p-2 bg-surface-container rounded-lg text-xs font-bold outline-none">
+                    <option>Usage Rate (Highest)</option>
+                    <option>Usage Rate (Lowest)</option>
+                    <option>Stock Level (Asc)</option>
+                    <option>Stock Level (Desc)</option>
+                    <option>Newest Additions</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-outline mb-1 block">Supplier Status</label>
+                <div class="flex flex-wrap gap-2">
+                    <button class="px-2 py-1 bg-primary text-white rounded text-[10px] font-bold">Active</button>
+                    <button
+                        class="px-2 py-1 bg-surface-container text-outline rounded text-[10px] font-bold">Preferred</button>
+                    <button
+                        class="px-2 py-1 bg-surface-container text-outline rounded text-[10px] font-bold">New</button>
+                </div>
+            </div>
+        </div>
+        <button (click)="showFilters = false"
+            class="w-full mt-6 py-2 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest">Apply
+            Filters</button>
+    </div>
+</div>
+}

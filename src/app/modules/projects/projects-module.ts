@@ -14,7 +14,7 @@ import { ProjectFiles } from './widgets/project-files/project-files';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TaskDetail } from './widgets/task-detail/task-detail';
 import { AddTask } from './widgets/add-task/add-task';
-import { SubtaskProgressPipe } from './widgets/task-management/subtask-progress.pipe';
+import { SubtaskProgressPipe } from '../../shared/pipes/subtask-progress.pipe';
 import { MilestoneFormDialog } from './dialogs/milestone-form-dialog/milestone-form-dialog';
 import { MaterialModule } from '../../shared/material/material-module';
 import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
@@ -24,14 +24,10 @@ import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
     Projects,
     ProjectDetail,
     NewProjectWizard,
-    TaskManagement,
     ProjectTimeline,
     ProjectBudget,
     SiteGallery,
     ProjectFiles,
-    TaskDetail,
-    AddTask,
-    SubtaskProgressPipe,
     MilestoneFormDialog,
     TaskFormDialog,
   ],
@@ -42,6 +38,7 @@ import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
     ReactiveFormsModule,
     DragDropModule,
     MaterialModule,
+    TaskManagement
   ],
 })
-export class ProjectsModule {}
+export class ProjectsModule { }
