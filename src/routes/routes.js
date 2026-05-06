@@ -6,7 +6,7 @@ class Routes {
 
   initializeRoutes(app) {
     const router = express.Router();
-    app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+    app.use("/uploads", express.static(path.join(__dirname, "..", "static", "uploads")));
 
     require("../modules/users/user.routes")(router);
     require("../modules/rbac/rbac.routes")(router);

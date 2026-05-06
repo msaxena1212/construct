@@ -41,6 +41,7 @@ class AuthController {
         company_id: user.company_id,
         accessToken: token,
         roleName: user.role.name,
+        avatar: user.avatar
       });
     } catch (error) {
       console.log(error);

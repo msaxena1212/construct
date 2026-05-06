@@ -6,7 +6,10 @@ module.exports = (router) => {
   // 'blueprints' is the field name for multiple file uploads
   router.post(
     "/projects", 
-    upload.array("blueprints", 10), 
+    upload.fields([
+      { name: 'thumbnail', maxCount: 1 },
+      { name: 'blueprints', maxCount: 10 }
+    ]), 
     projectCtrl.createProject
   );
 
@@ -33,7 +36,10 @@ module.exports = (router) => {
   // Update existing project
   router.put(
     "/projects/:id",
-    upload.array("blueprints", 10),
+    upload.fields([
+      { name: 'thumbnail', maxCount: 1 },
+      { name: 'blueprints', maxCount: 10 }
+    ]),
     projectCtrl.updateProject
   );
 
