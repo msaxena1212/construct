@@ -1,6 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
   const Material = sequelize.define(
-    "INVENTORY_MATERIAL",
+    "MATERIAL_INVENTORY",
     {
       id: {
         type: Sequelize.INTEGER,
@@ -16,43 +16,14 @@ module.exports = (sequelize, Sequelize) => {
       sku: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true,
       },
 
       category: {
         type: Sequelize.STRING,
       },
 
-      icon: {
-        type: Sequelize.STRING,
-      },
-
-      bg: {
-        type: Sequelize.STRING,
-      },
-
-      text: {
-        type: Sequelize.STRING,
-      },
-
-      border: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-
-      // 👉 stock object ko flatten kiya
-      stockCurrent: {
+      stockIn: {
         type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-
-      stockTotal: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-
-      stockPercent: {
-        type: Sequelize.FLOAT,
         defaultValue: 0,
       },
 
@@ -60,13 +31,16 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
       },
 
-      supplier: {
+      vendor_name: {
+        type: Sequelize.STRING,
+      },
+
+      project_name: {
         type: Sequelize.STRING,
       },
 
       status: {
-        type: Sequelize.ENUM("Optimal", "Adequate", "Critical"),
-        defaultValue: "Adequate",
+        type: Sequelize.STRING,
       },
 
       isDeleted: {

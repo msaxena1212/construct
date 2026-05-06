@@ -18,32 +18,28 @@ class MaterialController {
         name,
         sku,
         category,
-        icon,
-        bg,
-        text,
-        border,
-        // stock,
-        stockCurrent,
-        stockTotal,
-        stockPercent,
+        stockIn,
+        vendor_name,
+        project_name,
+        project_id,
         cost,
-        supplier,
         status,
-        vendor_id
+        vendor_id,
+        material_id
       } = req.body;
 
       const company_id = req.user.company_id;
 
-      if (!name || !sku) {
-        return res.status(400).json({ message: "Name and SKU are required." });
+      if (!material_id) {
+        return res.status(400).json({ message: "Material are required." });
       }
 
-      if (!category || !supplier) {
-        return res.status(400).json({ message: "Category and Supplier are required." });
+      if (!vendor_name) {
+        return res.status(400).json({ message: "vendor_name are required." });
       }
 
-      if (!stockCurrent || !stockTotal) {
-        return res.status(400).json({ message: "stockCurrent and stockTotal are required." });
+      if (!stockIn) {
+        return res.status(400).json({ message: "stockIn are required." });
       }
 
       if (!cost) {
@@ -54,26 +50,18 @@ class MaterialController {
         name,
         sku,
         category,
-        icon,
-        bg,
-        text,
-        border,
-
-        // 👉 stock flatten
-        // stockCurrent: stock?.current || 0,
-        // stockTotal: stock?.total || 0,
-        // stockPercent: stock?.percent || 0,
-
-        stockCurrent,
-        stockTotal,
-        stockPercent,
-
+        stockIn,
+        vendor_name,
+        project_name,
+        project_id,
         cost,
-        supplier,
         status,
-        company_id,
-        vendor_id
+        vendor_id,
+        material_id,
+        company_id
       });
+
+
 
       res.status(201).json({
         message: "Material created successfully.",
@@ -105,16 +93,7 @@ class MaterialController {
         order: [['createdAt', 'DESC']]
       });
 
-      //     res.status(200).json({ data: materials });
 
-      //   } catch (error) {
-      //     console.error("[GET_ALL_MATERIALS_ERROR]", error);
-      //     res.status(500).json({
-      //       message: "Error fetching materials.",
-      //       error: error.message
-      //     });
-      //   }
-      // }
       if (materials.length > 0) {
         return res
           .status(200)
@@ -186,41 +165,28 @@ class MaterialController {
         name,
         sku,
         category,
-        icon,
-        bg,
-        text,
-        border,
-        // stock,
-        stockCurrent,
-        stockTotal,
-        stockPercent,
+        stockIn,
+        vendor_name,
+        project_name,
+        project_id,
         cost,
-        supplier,
         status,
-        vendor_id
+        vendor_id,
+        material_id,
       } = req.body;
 
       await material.update({
         name,
         sku,
         category,
-        icon,
-        bg,
-        text,
-        border,
-
-        // stockCurrent: stock?.current ?? material.stockCurrent,
-        // stockTotal: stock?.total ?? material.stockTotal,
-        // stockPercent: stock?.percent ?? material.stockPercent,
-
-        stockCurrent,
-        stockTotal,
-        stockPercent,
-
+        stockIn,
+        vendor_name,
+        project_name,
+        project_id,
         cost,
-        supplier,
         status,
-        vendor_id
+        vendor_id,
+        material_id
       });
 
       res.status(200).json({
