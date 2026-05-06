@@ -58,27 +58,36 @@
                 <!-- <img src="../../../../assets/image/notification-icon.png" class="header-icon" alt="Notifications"> -->
                 <a class="header-icons" style="cursor:pointer;"><mat-icon class="header-icons"
                         style="cursor:pointer;">notifications</mat-icon></a>
-                <div class="user_profile">
-                    <ul>
-                        <li (click)="showDropdown($event)">
-                            <a class="header-icons" style="cursor:pointer;"><mat-icon>power_settings_new</mat-icon></a>
-                            <div class="dropdown-profile" *ngIf="showList">
-                                <a (click)="profile()"><img src="../../../../assets/image/profile-photo.png"
-                                        alt="Profile">Profile</a>
-                                <a (click)="onLogout()"><img src="../../../../assets/image/profile-photo.png"
-                                        alt="Log Out">Log Out</a>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="profile-info">
-                    <img src="../../../../assets/image/profile-photo.png" class="profile-img" alt="User">
-                    <div>
-                        <h4>{{ currentUser?.roleName || 'Administrator' }}</h4>
-                        <div class="stars">
-                            <img src="../../../../assets/image/star.png" *ngFor="let s of [1,2,3,4,5]" alt="star">
+                <!-- Consolidated Profile Trigger -->
+                <div class="relative">
+                    <div class="profile-trigger" (click)="showDropdown($event)" [class.active]="showList">
+                        <div class="profile-avatar-container">
+                            <img [src]="currentUser?.avatar ? serverUrl + currentUser?.avatar : '../../../../assets/image/profile-photo.png'" 
+                                 class="profile-img" alt="User">
+                            <div class="status-indicator"></div>
                         </div>
+                        <div class="profile-meta hidden md:block">
+                            <h4>{{ currentUser?.firstname }} {{ currentUser?.lastname }}</h4>
+                            <p>{{ currentUser?.roleName || 'Administrator' }}</p>
+                        </div>
+                        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
+                    </div>
+
+                    <!-- Enhanced Dropdown Menu -->
+                    <div class="dropdown-profile-menu" *ngIf="showList" @fadeInOut>
+                        <div class="dropdown-header">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Signed in as</p>
+                            <p class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{{ currentUser?.email }}</p>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a (click)="profile()" class="dropdown-item">
+                            <mat-icon>person_outline</mat-icon>
+                            <span>My Profile</span>
+                        </a>
+                        <a (click)="onLogout()" class="dropdown-item logout">
+                            <mat-icon>logout</mat-icon>
+                            <span>Sign Out</span>
+                        </a>
                     </div>
                 </div>
             </div>

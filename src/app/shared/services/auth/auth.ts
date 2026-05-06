@@ -24,7 +24,9 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private route: Router,
-  ) { }
+  ) {
+    this.userS.next(this.getAuthUser());
+  }
 
   public getAuthUser(): AuthInterface | null {
     const data = localStorage.getItem(this.LS_KEY);
@@ -54,7 +56,8 @@ export class AuthService {
             res.roleName,
             res.role_id,
             res.accessToken,
-            res.company_id
+            res.company_id,
+            res.avatar
           );
         }
       }),
@@ -74,7 +77,8 @@ export class AuthService {
             res.data.roleName,
             res.data.role_id,
             res.accessToken,
-            res.data.company_id
+            res.data.company_id,
+            res.data.avatar
           );
         }
       }),
@@ -96,7 +100,8 @@ export class AuthService {
     roleName: string,
     roleId: string,
     accessToken: string,
-    company_id: number
+    company_id: number,
+    avatar?: string
   ) {
     const userS: AuthInterface = {
       id,
@@ -107,10 +112,35 @@ export class AuthService {
       roleName,
       roleId,
       accessToken,
-      company_id: company_id
+      company_id: company_id,
+      avatar: avatar
     };
     this.userS.next(userS);
     localStorage.setItem(this.LS_KEY, JSON.stringify(userS));
     return userS;
+  }
+
+  updateProfile(formData: FormData): Observable<any> {
+    return this.http.put<any>(`${databaseKey}/api/v1/profile`, formData).pipe(
+      tap((res) => {
+        if (res.data) {
+          const currentUser = this.getAuthUser();
+          if (currentUser) {
+            this.authenticationUser(
+              res.data.id,
+              res.data.email,
+              res.data.name || currentUser.name,
+              res.data.firstname,
+              res.data.lastname,
+              currentUser.roleName,
+              currentUser.roleId,
+              currentUser.accessToken,
+              res.data.company_id,
+              res.data.avatar
+            );
+          }
+        }
+      })
+    );
   }
 }

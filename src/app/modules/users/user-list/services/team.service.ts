@@ -25,6 +25,10 @@ export class TeamService {
     return this.http.put<any>(`${this.baseUrl}/team/${id}/status`, { isActive });
   }
 
+  updateUser(id: number, formData: FormData): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/team/${id}`, formData);
+  }
+
   getRoles(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/roles`);
   }

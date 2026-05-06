@@ -1,0 +1,118 @@
+<div class="max-w-4xl mx-auto p-8 animate-in">
+    <!-- Header Section -->
+    <div class="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <button (click)="goBack()" class="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border-none cursor-pointer shadow-sm">
+                <mat-icon>arrow_back</mat-icon>
+            </button>
+            <div>
+                <h1 class="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 dark:text-slate-50">My Profile</h1>
+                <p class="text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed text-lg font-light mt-1">Manage your personal information, security, and profile identity.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl p-2 rounded-2xl border border-white dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
+            <span class="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl border border-emerald-100 dark:border-emerald-800/50 flex items-center gap-2">
+                <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                {{ currentUser?.roleName || 'Member' }}
+            </span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Sidebar: Profile Identity -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none relative overflow-hidden group">
+                <div class="absolute inset-0 bg-linear-to-br from-blue-600/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="relative group/avatar mb-6">
+                        <div class="w-32 h-32 rounded-[40px] bg-slate-100 dark:bg-slate-800 overflow-hidden border-4 border-white dark:border-slate-800 shadow-2xl transition-transform duration-500 group-hover/avatar:scale-[1.02]">
+                            <img [src]="avatarPreview || (currentUser?.avatar ? serverUrl + currentUser?.avatar : 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop')" 
+                                 class="w-full h-full object-cover" alt="Avatar">
+                        </div>
+                        <label for="profile-avatar-upload" class="absolute inset-0 flex items-center justify-center bg-slate-900/60 opacity-0 group-hover/avatar:opacity-100 transition-all rounded-[40px] cursor-pointer backdrop-blur-sm border-2 border-white/20">
+                            <mat-icon class="text-white text-3xl">photo_camera</mat-icon>
+                        </label>
+                        <input id="profile-avatar-upload" type="file" class="hidden" (change)="onFileSelected($event)" accept="image/*">
+                    </div>
+
+                    <h3 class="text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none">{{ currentUser?.firstname }} {{ currentUser?.lastname }}</h3>
+                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-3 bg-slate-50 dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-100 dark:border-slate-700">{{ currentUser?.email }}</p>
+                </div>
+            </div>
+
+            <!-- Stats/Info Card -->
+            <div class="bg-linear-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-950 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl"></div>
+                <div class="relative z-10 space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+                            <mat-icon class="text-blue-400">verified_user</mat-icon>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-white/50">Status</p>
+                            <p class="text-sm font-bold">Verified Account</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content: Settings Form -->
+        <div class="lg:col-span-8">
+            <div class="bg-white dark:bg-slate-900 rounded-[32px] p-10 border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+                <form [formGroup]="profileForm" (ngSubmit)="updateProfile()" class="space-y-8">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4 mb-2">
+                            <div class="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                            <h4 class="text-lg font-black text-slate-900 dark:text-slate-50 uppercase tracking-widest">General Information</h4>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">First Name</label>
+                                <input formControlName="firstname" type="text"
+                                    class="w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner dark:text-slate-100"
+                                    placeholder="First Name">
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
+                                <input formControlName="lastname" type="text"
+                                    class="w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner dark:text-slate-100"
+                                    placeholder="Last Name">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                            <input formControlName="email" type="email"
+                                class="w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner dark:text-slate-100"
+                                placeholder="Email Address">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                            <input formControlName="mobile" type="text"
+                                class="w-full px-6 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner dark:text-slate-100"
+                                placeholder="Phone Number">
+                        </div>
+                    </div>
+
+                    <div class="pt-8 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                        <button type="submit" [disabled]="loading"
+                            class="px-10 py-4 bg-linear-to-br from-slate-900 to-slate-800 dark:from-white dark:to-slate-200 text-white dark:text-slate-900 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.05] active:scale-[0.98] transition-all border-none cursor-pointer flex items-center gap-3">
+                            @if (loading) {
+                                <div class="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin"></div>
+                                Updating Profile...
+                            } @else {
+                                <mat-icon class="text-sm">sync_alt</mat-icon>
+                                Synchronize Profile
+                            }
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

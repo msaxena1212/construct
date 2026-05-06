@@ -4,6 +4,7 @@ import {
   provideZoneChangeDetection,
 } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
@@ -19,6 +20,7 @@ import { authInterceptor } from './core/interceptors/auth-interceptor';
   ],
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideAnimations(),
     provideZoneChangeDetection({ eventCoalescing: true }), // Use Zone.js
     provideHttpClient(withInterceptors([authInterceptor]), withInterceptorsFromDi()),
     provideToastr({
@@ -29,4 +31,4 @@ import { authInterceptor } from './core/interceptors/auth-interceptor';
   ],
   bootstrap: [App],
 })
-export class AppModule {}
+export class AppModule { }
