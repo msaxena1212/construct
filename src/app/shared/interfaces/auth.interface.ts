@@ -9,4 +9,5 @@ export interface AuthInterface {
   accessToken: string;
   company_id: any;
   company_name?: string;
+  avatar?: string;
 }

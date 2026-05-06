@@ -41,8 +41,12 @@
             <td class="p-3">
               <div class="flex items-center gap-4">
                 <div
-                  class="w-10 h-10 rounded-2xl bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-slate-500 font-black text-sm border border-white dark:border-slate-700 shadow-sm">
+                  class="w-10 h-10 rounded-2xl bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-slate-500 font-black text-sm border border-white dark:border-slate-700 shadow-sm overflow-hidden">
+                  @if (element.avatar) {
+                  <img [src]="serverUrl + element.avatar" class="w-full h-full object-cover" alt="Avatar">
+                  } @else {
                   {{ element.firstname.charAt(0) || '?' }}{{ element.lastname.charAt(0) || '' }}
+                  }
                 </div>
                 <div>
                   <p class="text-sm font-black text-slate-900 dark:text-slate-100 m-0">{{ element.firstname }} {{
@@ -79,17 +83,17 @@
             </td>
             <td class="p-3 text-right">
               <div class="flex items-center justify-end gap-3">
+                <button (click)="openEditModal(element)" title="Edit User"
+                  class="w-9 h-9 rounded-xl text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
+                  <mat-icon class="text-[20px]">edit</mat-icon>
+                </button>
                 @if (element.isInviteAccepted) {
                 <button (click)="toggleStatus(element)"
-                  [title]="element.isInviteAccepted ? 'Deactivate User' : 'Activate User'"
-                  [ngClass]="element.isInviteAccepted ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20' : 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'"
+                  [title]="element.isActive ? 'Deactivate User' : 'Activate User'"
+                  [ngClass]="element.isActive ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20' : 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'"
                   class="w-9 h-9 rounded-xl transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
-                  <mat-icon class="text-[20px]">{{ element.isInviteAccepted ? 'block' : 'check_circle' }}</mat-icon>
+                  <mat-icon class="text-[20px]">{{ element.isActive ? 'block' : 'check_circle' }}</mat-icon>
                 </button>
-                <!-- <button title="View Activity"
-                  class="w-9 h-9 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer flex items-center justify-center border-none bg-transparent">
-                  <mat-icon class="text-[20px]">analytics</mat-icon>
-                </button> -->
                 } @else {
                 <div
                   class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 opacity-60">

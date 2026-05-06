@@ -6,12 +6,14 @@ import { UserList } from './user-list';
 import { MaterialModule } from '../../../shared/material/material-module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { InviteUserModalComponent } from './invite-user-modal/invite-user-modal';
+import { EditUserModalComponent } from './edit-user-modal/edit-user-modal';
 
 
 @NgModule({
   declarations: [
     UserList,
-    InviteUserModalComponent
+    InviteUserModalComponent,
+    EditUserModalComponent
   ],
   imports: [
     CommonModule,

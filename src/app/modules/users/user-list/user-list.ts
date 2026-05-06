@@ -4,8 +4,10 @@ import { ToastrService } from 'ngx-toastr';
 import { TeamService } from './services/team.service';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteUserModalComponent } from './invite-user-modal/invite-user-modal';
+import { EditUserModalComponent } from './edit-user-modal/edit-user-modal';
 import { ITeam } from '../../../shared/interfaces/project.interface';
 import { ApiResponse } from '../../../shared/interfaces/core.interface';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-user-list',
@@ -16,6 +18,7 @@ import { ApiResponse } from '../../../shared/interfaces/core.interface';
 export class UserList implements OnInit {
   teamMembers: ITeam[] = [];
   roles: any[] = [];
+  serverUrl = environment.serverUrl;
 
   constructor(
     private fb: FormBuilder,
@@ -55,6 +58,20 @@ export class UserList implements OnInit {
     const dialogRef = this.dialog.open(InviteUserModalComponent, {
       width: '500px',
       data: { roles: this.roles },
+      panelClass: 'custom-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadTeam();
+      }
+    });
+  }
+
+  openEditModal(user: any) {
+    const dialogRef = this.dialog.open(EditUserModalComponent, {
+      width: '500px',
+      data: { user, roles: this.roles },
       panelClass: 'custom-dialog-container'
     });
 
