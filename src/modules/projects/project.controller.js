@@ -177,7 +177,7 @@ class ProjectController {
           {
             model: db.user,
             as: 'team_members',
-            attributes: ['id', 'firstname', 'lastname'],
+            attributes: ['id', 'firstname', 'lastname', 'avatar'],
             through: { attributes: ['role'] }
           }
         ],
@@ -207,7 +207,7 @@ class ProjectController {
           {
             model: db.user,
             as: 'team_members',
-            attributes: ['id', 'firstname', 'lastname', 'email'],
+            attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
             through: { attributes: ['role'] }
           }
         ]
