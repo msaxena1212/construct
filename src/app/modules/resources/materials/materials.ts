@@ -5,6 +5,8 @@ import { MaterialService, Material } from '../../../shared/services/materials/ma
 // import { VendorService, Vendor } from '../../services/vendor.service';
 import { CommonModule } from '@angular/common';
 import { VendorsServices } from '../../vendors/services/vendors-services';
+import { MaterialMasterService } from '../../../shared/services/master/material-master';
+import { Toast, ToastrService } from 'ngx-toastr';
 // import { RbacService } from '../../../shared/services/rbac/rbac.service';
 
 
@@ -16,9 +18,11 @@ import { VendorsServices } from '../../vendors/services/vendors-services';
 })
 export class Materials {
   private materialService = inject(MaterialService);
+  private MaterialMasterService = inject(MaterialMasterService);
   // private vendorService = inject(VendorService);
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
+  private toast = inject(ToastrService);
 
   team = [
     { name: 'All Members' },
@@ -45,28 +49,53 @@ export class Materials {
   page = 1;
   pageSize = 5;
   paginatedMaterials: any[] = [];
-Math: any;
+  Math: any;
+  MaterialMaster: any;
+  projects: any[] = [];
 
-ngOnInit() {
-  this.materialService.loadMaterials();
+  ngOnInit() {
+    this.materialService.loadMaterials();
 
-  this.materialService.materials$.subscribe(m => {
-    this.materials = m;
-    this.page = 1; // 🔥 reset page (important)
-    this.updatePagination(); // ✅ yahi sahi jagah hai
-  });
+    this.materialService.materials$.subscribe(m => {
+      this.materials = m;
+       this.page = 1; // 🔥 reset page (important)
+       this.updatePagination(); // ✅ yahi sahi jagah hai
+    });
+//  this.materialService.materials$.subscribe(m => this.materials = m);
+    this.MaterialMasterService.loadMaterials();
+    this.loadProjects();
 
-  this.vendorService.vendors$.subscribe(v => {
-    this.vendors = v;
-  });
-}  
+    this.MaterialMasterService.materials$.subscribe(m => {
+      this.MaterialMaster = m;
+    });
 
-
-  updatePagination() {
-    const start = (this.page - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    this.paginatedMaterials = this.materials.slice(start, end);
+    this.vendorService.vendors$.subscribe(v => {
+      this.vendors = v;
+    });
   }
+
+  loadProjects() {
+    this.materialService.getProjects().subscribe({
+      next: (res: any) => {
+        this.projects = res?.data || [];
+        console.log('Projects =>', this.projects);
+      },
+      error: (err) => {
+        console.log(err);
+      }
+    });
+  }
+
+
+updatePagination() {
+
+  const start = (this.page - 1) * this.pageSize;
+  const end = start + this.pageSize;
+
+  this.paginatedMaterials =
+    this.filteredMaterials.slice(start, end);
+
+}
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -93,7 +122,7 @@ ngOnInit() {
 
 
   onSupplierChange() {
-    if (this.newMaterial.supplier === 'ADD_NEW') {
+    if (this.newMaterial.vendor_name === 'ADD_NEW') {
       this.showAddModal = false;
       this.router.navigate(['/vendors']);
     }
@@ -101,9 +130,9 @@ ngOnInit() {
 
   get filteredMaterials() {
     let filtered = this.materials;
-
+    
     if (this.selectedTab === 'Low Stock') {
-      filtered = filtered.filter(m => m.status === 'Critical' || m.stockPercent < 20);
+      filtered = filtered.filter(m => m.status === 'ACTIVE' || m.stockIn < 20);
     } else if (this.selectedTab !== 'All Materials') {
       filtered = filtered.filter(m => m.category.toLowerCase() === this.selectedTab.toLowerCase());
     }
@@ -115,23 +144,35 @@ ngOnInit() {
 
     return filtered;
   }
-
   getDefaultMaterial(): Material {
     return {
       name: '',
       sku: '',
       category: 'Concrete',
-      icon: 'inventory_2',
-      bg: 'bg-slate-100',
-      text: 'text-slate-400',
-      stockCurrent: 0,
-      stockTotal: 100,
-      stockPercent: 0,
-      cost: '₹0.00',
-      supplier: '',
+      cost: '',
+      project_id: 0,
+      project_name: '',
+      material_master_id: 0,
+      stockIn: 0,
+      vendor_name: '',
       vendor_id: '',
-      status: 'Optimal'
+      status: 'ACTIVE',
+
     };
+  }
+  formatCost() {
+
+    const value = Number(this.newMaterial.cost || 0);
+
+    this.newMaterial.cost = value.toFixed(2);
+
+  }
+  formatCostEdit() {
+
+    const value = Number(this.materialToEdit.cost || 0);
+
+    this.materialToEdit.cost = value.toFixed(2);
+
   }
 
   openAddModal() {
@@ -142,23 +183,30 @@ ngOnInit() {
   getvendor(vendorId: any) {
     console.log(vendorId.target.value, 'sdzfdsfds');
     const vendor = this.vendors.find(v => v.id === vendorId.target.value);
-    this.newMaterial.supplier = vendor?.name || '';
+    this.newMaterial.vendor_name = vendor?.name || '';
     this.newMaterial.vendor_id = vendorId.target.value || '';
   }
 
+
+
+  getProject(projectId: any) {
+
+    const selectedId = Number(projectId.target.value);
+
+    const project = this.projects.find((p: any) => p.id === selectedId);
+
+    console.log(project, 'project');
+
+    this.newMaterial.project_name = project?.name || '';
+    this.newMaterial.project_id = selectedId || 0;
+  }
+
   addMaterial() {
-    this.newMaterial.stockPercent = Math.round(
-      (this.newMaterial.stockCurrent / this.newMaterial.stockTotal) * 100
-    );
-
-    this.newMaterial.status = this.calculateStatus(
-      this.newMaterial.stockPercent
-    );
-
     this.materialService.addMaterial({ ...this.newMaterial }).subscribe({
       next: (res) => {
         console.log('Material created', res);
         this.showAddModal = false;
+        this.toast.success('Material added successfully');
         this.materialService.loadMaterials();
 
         // optional: form reset
@@ -166,6 +214,7 @@ ngOnInit() {
       },
       error: (err) => {
         console.error('Error creating material', err);
+        this.toast.error(err?.error?.message || 'Failed to add material');
       }
     });
   }
@@ -195,11 +244,14 @@ ngOnInit() {
           next: () => {
             this.showEditModal = false;
             this.materialToEdit = null; // ✅ cleanup
+            this.toast.success('Material updated successfully');
             this.materialService.loadMaterials();
+
 
           },
           error: (err) => {
             console.error('Update failed', err);
+            this.toast.error(err?.error?.message || 'Failed to update material');
           }
         });
     }
@@ -220,19 +272,20 @@ ngOnInit() {
           next: () => {
             this.showDeleteModal = false;
             this.materialToDelete = null; // ✅ cleanup
+            this.toast.success('Material deleted successfully');
             this.materialService.loadMaterials();
 
           },
           error: (err) => {
             console.error('Delete failed', err);
+            this.toast.error(err?.error?.message || 'Failed to delete material');
+
           }
         });
     }
   }
-  calculateStatus(percent: number): 'Optimal' | 'Adequate' | 'Critical' {
-    if (percent < 20) return 'Critical';
-    if (percent < 60) return 'Adequate';
-    return 'Optimal';
+  calculateStatus(percent: number): 'ACTIVE' {
+    return 'ACTIVE';
   }
 
   exportReport() {
@@ -248,5 +301,34 @@ ngOnInit() {
   get filteredDeliveries() {
     if (this.selectedMember === 'All Members') return this.deliveries;
     return this.deliveries.filter(d => d.assignee === this.selectedMember);
+  }
+
+  getSelectedMat(event: any) {
+
+    const id = Number(event.target.value);
+
+    if (!id) return;
+
+    this.MaterialMasterService.getMaterialMasterById(id).subscribe({
+      next: (res: any) => {
+
+        const data = res?.data || res;
+
+        this.newMaterial = {
+          ...this.newMaterial,
+
+          name: data?.name || '', // 👈 name bhi jayega
+          sku: data?.sku || '',
+          category: data?.category || '',
+          material_master_id: data?.id || 0,
+        };
+
+        console.log('Selected Material =>', this.newMaterial);
+
+      },
+      error: (err) => {
+        console.log(err);
+      }
+    });
   }
 }

@@ -88,130 +88,276 @@
     </div>
 
     <!-- Inventory Table Container -->
-    <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-surface-container-low/50">
-                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Material Name</th>
-                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Category</th>
-                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline w-64">Stock Level
-                    </th>
-                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Unit Cost</th>
-                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline">Supplier</th>
-                    <th class="px-6 py-4 text-xs font-black uppercase tracking-widest text-outline text-right">Status
-                    </th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-surface-container">
-                @for (item of filteredMaterials; track item.sku) {
-                <tr [routerLink]="['/materials', item.sku]" class="transition-colors group cursor-pointer"
-                    [ngClass]="item.status === 'Critical' ? 'hover:bg-error-container/5' : (item.status === 'Optimal' || item.status === 'Adequate' ? 'hover:bg-surface-container-low/30' : '')">
-                    <td class="px-6 py-5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center border"
-                                [ngClass]="item.bg + ' ' + (item.border || 'border-transparent')">
-                                <span class="material-symbols-outlined" [ngClass]="item.text">{{ item.icon }}</span>
-                            </div>
-                            <div>
-                                <p class="font-bold text-on-surface group-hover:text-primary transition-colors">{{
-                                    item.name }}</p>
-                                <p class="text-xs text-outline">SKU: {{ item.sku }}</p>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5">
-                        <span
-                            class="px-3 py-1 bg-surface-container text-xs font-bold rounded-full text-outline uppercase">{{
-                            item.category }}</span>
-                    </td>
-                    <td class="px-6 py-5">
-                        <div class="flex flex-col gap-1.5">
-                            <div class="flex justify-between text-xs font-bold"
-                                [ngClass]="item.status === 'Critical' ? 'text-error' : (item.stockPercent < 20 ? 'text-secondary' : '')">
-                                <span [ngClass]="item.status === 'Critical' ? '' : 'text-on-surface'">{{
-                                    item.stockCurrent }}/{{ item.stockTotal }} Units</span>
-                                <span [ngClass]="item.status === 'Critical' ? '' : 'text-outline'">{{ item.stockPercent
-                                    }}%</span>
-                            </div>
-                            <div class="w-full h-2 rounded-full overflow-hidden"
-                                [ngClass]="item.status === 'Critical' ? 'bg-error-container/30' : 'bg-surface-container'">
-                                <div class="h-full rounded-full"
-                                    [ngClass]="item.status === 'Critical' ? 'bg-error' : (item.stockPercent > 70 ? 'bg-primary' : 'bg-primary-container')"
-                                    [style.width]="item.stockPercent + '%'"></div>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5 font-medium text-on-surface">{{ item.cost }}</td>
-                    <td class="px-6 py-5 text-sm text-on-surface-variant font-medium">{{ item.supplier }}</td>
-                    <td class="px-6 py-5 text-right flex items-center justify-end gap-4 h-full relative">
-                        @if (item.status === 'Critical') {
-                        <div
-                            class="flex items-center justify-end gap-1.5 text-error font-black text-[10px] uppercase tracking-tighter animate-pulse">
-                            <span class="material-symbols-outlined text-sm">emergency</span>
-                            Critical
-                        </div>
-                        } @else if (item.status === 'Optimal') {
-                        <span
-                            class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-tighter rounded-md">Optimal</span>
-                        } @else {
-                        <span
-                            class="px-3 py-1 bg-surface-container-high text-outline text-[10px] font-black uppercase tracking-tighter rounded-md">Adequate</span>
-                        }
-                        <!-- Hover Actions -->
-                        <div
-                            class="absolute right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 scale-90 group-hover:scale-100">
-                            <button (click)="openEditModal($event, item)"
-                                class="p-2 bg-surface-container-highest text-primary hover:bg-primary hover:text-white rounded-lg transition-all shadow-sm cursor-pointer">
-                                <span class="material-symbols-outlined text-sm">edit</span>
-                            </button>
-                            <button (click)="openDeleteModal($event, item)"
-                                class="p-2 bg-error-container/20 text-error hover:bg-error hover:text-white rounded-lg transition-all shadow-sm cursor-pointer">
-                                <span class="material-symbols-outlined text-sm">delete</span>
-                            </button>
-                        </div>
+    <div
+        class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
 
-                    </td>
-                </tr>
-                }
-            </tbody>
-        </table>
+        <!-- Table Wrapper -->
+        <div class="overflow-x-auto">
 
+            <table class="w-full min-w-[950px] border-collapse">
+
+                <!-- Table Head -->
+                <thead class="bg-slate-50 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
+
+                    <tr>
+
+                        <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-widest text-slate-500">
+                            Material
+                        </th>
+
+                        <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-widest text-slate-500">
+                            Category
+                        </th>
+
+                        <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-widest text-slate-500">
+                            Stock
+                        </th>
+
+                        <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-widest text-slate-500">
+                            Cost
+                        </th>
+
+                        <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-widest text-slate-500">
+                            Vendor
+                        </th>
+
+                        <th
+                            class="px-6 py-4 text-right text-[11px] font-black uppercase tracking-widest text-slate-500">
+                            Status
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <!-- Table Body -->
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+
+                    @for (item of paginatedMaterials; track item.sku) {
+
+                    <tr [routerLink]="['/materials', item.sku]"
+                        class="group transition-all duration-200 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 cursor-pointer">
+
+                        <!-- Material -->
+                        <td class="px-6 py-5">
+
+                            <div class="flex items-center gap-4">
+
+                                <!-- Icon -->
+                                <div
+                                    class="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+
+                                    <span class="material-symbols-outlined text-[20px]">
+                                        inventory_2
+                                    </span>
+
+                                </div>
+
+                                <!-- Name -->
+                                <div class="space-y-1">
+
+                                    <p
+                                        class="font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-primary transition-colors">
+
+                                        {{ item.name }}
+
+                                    </p>
+
+                                    <p class="text-xs text-slate-400 font-medium">
+                                        SKU : {{ item.sku }}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <!-- Category -->
+                        <td class="px-6 py-5">
+
+                            <span
+                                class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wide">
+
+                                {{ item.category }}
+
+                            </span>
+
+                        </td>
+
+                        <!-- Stock -->
+                        <td class="px-6 py-5">
+
+                            <div class="flex flex-col gap-2 w-[180px]">
+
+                                <div class="flex items-center justify-between">
+
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200">
+                                        {{ item.stockIn }}
+                                    </span>
+
+                                    <span class="text-[11px] text-slate-400 font-semibold">
+                                        Available
+                                    </span>
+
+                                </div>
+
+                                <!-- Progress -->
+                                <div class="w-full h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+
+                                    <div class="h-full rounded-full bg-primary"
+                                        [style.width.%]="item.stockIn > 100 ? 100 : item.stockIn">
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <!-- Cost -->
+                        <td class="px-6 py-5">
+
+                            <p class="font-bold text-slate-800 dark:text-slate-100">
+                                ₹{{ item.cost }}
+                            </p>
+
+                        </td>
+
+                        <!-- Vendor -->
+                        <td class="px-6 py-5">
+
+                            <div class="flex items-center gap-2">
+
+                                <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+
+                                <div>
+
+                                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                        {{ item.vendor_name }}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        <!-- Status -->
+                        <td class="px-6 py-5">
+
+                            <div class="flex items-center justify-end gap-3">
+
+                                <!-- Badge -->
+                                <span
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-200 bg-green-50 text-green-700 text-[11px] font-black uppercase tracking-wide">
+
+                                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+
+                                    {{ item.status }}
+
+                                </span>
+
+                                <!-- Actions -->
+                                <div
+                                    class="flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200">
+
+                                    <!-- Edit -->
+                                    <button (click)="openEditModal($event, item)"
+                                        class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center shadow-sm transition-all cursor-pointer">
+
+                                        <span class="material-symbols-outlined text-[18px]">
+                                            edit
+                                        </span>
+
+                                    </button>
+
+                                    <!-- Delete -->
+                                    <button (click)="openDeleteModal($event, item)"
+                                        class="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white flex items-center justify-center shadow-sm transition-all cursor-pointer">
+
+                                        <span class="material-symbols-outlined text-[18px]">
+                                            delete
+                                        </span>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <!-- Pagination -->
         <div
-            class="bg-surface-container-low/30 px-6 py-4 flex items-center justify-between border-t border-surface-container">
+            class="flex flex-col md:flex-row items-center justify-between gap-4 px-6 py-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
 
-            <!-- 🔥 Dynamic count -->
-            <p class="text-xs font-bold text-outline uppercase tracking-wider">
-                Showing {{ (page - 1) * pageSize + 1 }}
-                to {{ Math?.min(page * pageSize, materials.length) }}
-                of {{ materials.length }} materials
+            <!-- Count -->
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
+
+                Showing
+                {{ (page - 1) * pageSize + 1 }}
+                -
+                {{ Math?.min(page * pageSize, materials.length) }}
+
+                of
+
+                {{ materials.length }} Materials
+
             </p>
 
-            <div class="flex gap-2">
+            <!-- Pagination Buttons -->
+            <div class="flex items-center gap-2">
 
                 <!-- Prev -->
                 <button (click)="prevPage()"
-                    class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-outline-variant/20 cursor-pointer">
-                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
+
+                    <span class="material-symbols-outlined text-[18px]">
+                        chevron_left
+                    </span>
+
                 </button>
 
-                <!-- Page Numbers -->
+                <!-- Numbers -->
                 @for (p of [].constructor(totalPages()); track $index) {
-                <button (click)="goToPage($index + 1)" [class]="page === ($index + 1) 
-          ? 'bg-primary text-white' 
-          : 'bg-white border border-outline-variant/20 text-outline'"
-                    class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs cursor-pointer">
+
+                <button (click)="goToPage($index + 1)"
+                    class="w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer"
+                    [ngClass]="page === ($index + 1)
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary'">
+
                     {{ $index + 1 }}
+
                 </button>
+
                 }
 
                 <!-- Next -->
                 <button (click)="nextPage()"
-                    class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-outline-variant/20 cursor-pointer">
-                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
+
+                    <span class="material-symbols-outlined text-[18px]">
+                        chevron_right
+                    </span>
+
                 </button>
 
             </div>
+
         </div>
+
     </div>
 
     <!-- Asymmetric Bottom Grid -->
@@ -273,7 +419,7 @@
                     <div class="h-full bg-secondary-container rounded-full" style="width: 75%;"></div>
                 </div>
             </div>
-            <button routerLink="/vendors"
+            <button routerLink="/master/resources/vendors"
                 class="cursor-pointer mt-8 w-full py-3 bg-white text-primary rounded-xl font-black text-sm hover:bg-slate-50 transition-colors">
                 Manage Suppliers
             </button>
@@ -300,8 +446,18 @@
             <div class="md:col-span-2">
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Material
                     Name</label>
-                <input [(ngModel)]="newMaterial.name" type="text" placeholder="e.g. Portland Cement Grade-C"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+                <!-- <input [(ngModel)]="newMaterial.name" type="text" placeholder="e.g. Portland Cement Grade-C"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30"> -->
+                <select [(ngModel)]="newMaterial.material_master_id" (change)="getSelectedMat($event)"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+
+                    <option value="" disabled>Select Material</option>
+
+                    <option *ngFor="let material of MaterialMaster" [value]="material.id">
+                        {{ material.name }}
+                    </option>
+
+                </select>
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">SKU Code</label>
@@ -321,28 +477,31 @@
                 </select>
             </div>
             <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Current
-                    Stock</label>
-                <input [(ngModel)]="newMaterial.stockCurrent" type="number"
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Project</label>
+                <select [(ngModel)]="newMaterial.project_id" (change)="getProject($event)"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+                    @for (p of projects; track p.id) {
+                    <option [value]="p.id">{{ p.name }}</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
+                    Stock In</label>
+                <input [(ngModel)]="newMaterial.stockIn" type="number" min="1"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
             <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Total
-                    Capacity</label>
-                <input [(ngModel)]="newMaterial.stockTotal" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Unit
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
                     Cost</label>
-                <input [(ngModel)]="newMaterial.cost" type="text" placeholder="₹0.00"
+                <input [(ngModel)]="newMaterial.cost" min="1" type="number" (blur)="formatCost()" placeholder="0.00"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
             <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Vendor</label>
                 <select [(ngModel)]="newMaterial.vendor_id" (change)="getvendor($event)"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="" disabled selected>Select Supplier</option>
+                    <option value="" disabled selected>Select Vendor</option>
                     @for (v of vendors; track v.id) {
                     <option [value]="v.id">{{ v.name }}</option>
                     }
@@ -401,21 +560,25 @@
                 </select>
             </div>
             <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Current
-                    Stock</label>
-                <input [(ngModel)]="materialToEdit.stockCurrent" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Project</label>
+                <select [(ngModel)]="materialToEdit.project_id" (change)="getProject($event)"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+                    @for (p of projects; track p.id) {
+                    <option [value]="p.id">{{ p.name }}</option>
+                    }
+                </select>
             </div>
             <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Total
-                    Capacity</label>
-                <input [(ngModel)]="materialToEdit.stockTotal" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
+                    Stock In</label>
+                <input [(ngModel)]="materialToEdit.stockIn" type="number"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30"
+                    readonly>
             </div>
             <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Unit
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
                     Cost</label>
-                <input [(ngModel)]="materialToEdit.cost" type="text"
+                <input [(ngModel)]="materialToEdit.cost" type="number" (blur)="formatCostEdit()"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
             <div>

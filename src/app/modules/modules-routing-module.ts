@@ -44,6 +44,10 @@ const routes: Routes = [
         path: 'resources',
         loadChildren: () => import('./resources/resources-module').then(m => m.ResourcesModule)
       },
+      {
+        path: 'masters',
+        loadChildren: () => import('./master/master-module').then(m => m.MasterModule)
+      },
       { path: 'resources/vendors', loadChildren: () => import('./vendors/vendors-module').then(m => m.VendorsModule) },
     ],
   },

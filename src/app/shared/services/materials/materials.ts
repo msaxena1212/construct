@@ -2,24 +2,22 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, catchError, Observable, tap, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { ApiResponse } from '../../interfaces/core.interface';
+import { IProject } from '../../interfaces/project.interface';
 
 export interface Material {
   name: string;
   sku: string;
   category: string;
-  icon: string;
-  bg: string;
-  text: string;
-  border?: string;
-
-  stockCurrent: number;
-  stockTotal: number;
-  stockPercent: number;
-
+  project_id: number; // added project_id to link with Project
+  project_name: string; // optional, for easier display 
   cost: string;
-  supplier: string;
-  vendor_id: string; // added vendor_id to link with Vendor
-  status: 'Optimal' | 'Adequate' | 'Critical';
+  stockIn: number;
+  material_master_id: number;
+  vendor_name: string;
+  vendor_id: string;
+  status: 'ACTIVE';
+
 }
 
 @Injectable({
@@ -88,6 +86,10 @@ export class MaterialService {
 
   getMaterialBySku(sku: string) {
     return this.materialsSubject.value.find((m: Material) => m.sku === sku);
+  }
+
+ getProjects(): Observable<ApiResponse<IProject[]>> {
+    return this.http.get<ApiResponse<IProject[]>>(`${this.baseUrl}/projects`);
   }
 
 
