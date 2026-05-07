@@ -31,7 +31,7 @@
     <div class="flex -space-x-3">
       @for (member of project.team; track member.name) {
       <div class="w-12 h-12 rounded-full ring-4 ring-background overflow-hidden" [title]="member.role">
-        <img [src]="member.avatar" [alt]="member.name">
+        <img [src]="serverUrl + member.avatar" [alt]="member.name">
       </div>
       }
     </div>
