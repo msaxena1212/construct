@@ -54,6 +54,8 @@ db.material_master = require("../modules/material/models/material_master.model.j
 
 db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
 
+db.material_history = require("../modules/material/models/material_history.model.js")(sequelize, Sequelize);
+
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
 db.project.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -121,6 +123,21 @@ db.material.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
 
 db.project.hasMany(db.material, { foreignKey: "project_id", as: "material" });
 db.material.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.material_master.hasMany(db.material_history, { foreignKey: "material_master_id", as: "material_history" });
+db.material_history.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
+
+db.material.hasMany(db.material_history, { foreignKey: "material_id", as: "material_history" });
+db.material_history.belongsTo(db.material, { foreignKey: "material_id", as: "material" });
+
+db.company.hasMany(db.material_history, { foreignKey: "company_id", as: "material_history" });
+db.material_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.vendor.hasMany(db.material_history, { foreignKey: "vendor_id", as: "material_history" });
+db.material_history.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+
+db.project.hasMany(db.material_history, { foreignKey: "project_id", as: "material_history" });
+db.material_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
 
 // PROJECT MANAGEMENT END
 
