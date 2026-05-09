@@ -28,6 +28,10 @@ class Routes {
       "/api/v1/activities",
       require("../modules/vendors/vendors_activity_routes")
     );
+    app.use(
+      "/api/v1/labor",
+      require("../modules/labor/routes/labor_routes")
+    );
   }
 }
 

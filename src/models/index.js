@@ -52,6 +52,9 @@ db.activity = require("../modules/vendors/models/vendors_activity_model.js")(seq
 //Material
 db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
 
+//Labor
+db.labor = require("../modules/labor/models/labor_models.js")(sequelize, Sequelize);
+
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
 db.project.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -105,6 +108,62 @@ db.vendor.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 db.company.hasMany(db.activity, { foreignKey: "company_id", as: "activity" });
 db.activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 // PROJECT MANAGEMENT END
+// ════════════════════════════════════════════════
+//  LABOR MODULE — all models
+// ════════════════════════════════════════════════
+db.labor = require('../modules/labor/models/labor_models.js')(sequelize, Sequelize);
+
+db.labor_contractor_metric = require('../modules/labor/models/labor_contractor_metric_model.js')(sequelize, Sequelize);
+db.labor_stats = require('../modules/labor/models/labor_stats_model.js')(sequelize, Sequelize);
+db.labor_skills = require('../modules/labor/models/labor_skills_model.js')(sequelize, Sequelize);
+db.labor_financials = require('../modules/labor/models/labor_financials_model.js')(sequelize, Sequelize);
+db.labor_heatmap = require('../modules/labor/models/labor_heatmap_model.js')(sequelize, Sequelize);
+db.labor_report = require('../modules/labor/models/labor_report_model.js')(sequelize, Sequelize);
+db.labor_worker_activity = require('../modules/labor/models/labor_worker_activity_model.js')(sequelize, Sequelize);
+
+// ── Labor (Workers) associations ─────────────────────────
+// Labor belongs to Company
+db.company.hasMany(db.labor, { foreignKey: 'company_id', as: 'laborWorkers' });
+db.labor.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// Labor belongs to Vendor (fixed: was wrongly set on company before)
+db.vendor.hasMany(db.labor, { foreignKey: 'vendor_id', as: 'laborWorkers' });
+db.labor.belongsTo(db.vendor, { foreignKey: 'vendor_id', as: 'vendor' });
+
+// Worker Activities
+db.labor.hasMany(db.labor_worker_activity, { foreignKey: 'labor_id', as: 'activities', onDelete: 'CASCADE' });
+db.labor_worker_activity.belongsTo(db.labor, { foreignKey: 'labor_id', as: 'worker' });
+
+// ── LaborContractorMetric associations ────────────────────
+// Metric belongs to Company
+db.company.hasMany(db.labor_contractor_metric, { foreignKey: 'company_id', as: 'contractorMetrics' });
+db.labor_contractor_metric.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// Metric belongs to Vendor
+db.vendor.hasMany(db.labor_contractor_metric, { foreignKey: 'vendor_id', as: 'contractorMetrics' });
+db.labor_contractor_metric.belongsTo(db.vendor, { foreignKey: 'vendor_id', as: 'vendor' });
+
+// ── LaborStats associations ───────────────────────────────
+db.company.hasMany(db.labor_stats, { foreignKey: 'company_id', as: 'laborStats' });
+db.labor_stats.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// ── LaborSkillsDistribution associations ─────────────────
+db.company.hasMany(db.labor_skills, { foreignKey: 'company_id', as: 'laborSkills' });
+db.labor_skills.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// ── LaborFinancials associations ──────────────────────────
+db.company.hasMany(db.labor_financials, { foreignKey: 'company_id', as: 'laborFinancials' });
+db.labor_financials.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// ── LaborHeatmap associations ─────────────────────────────
+db.company.hasMany(db.labor_heatmap, { foreignKey: 'company_id', as: 'laborHeatmap' });
+db.labor_heatmap.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// ── LaborReport associations ──────────────────────────────
+db.company.hasMany(db.labor_report, { foreignKey: 'company_id', as: 'laborReports' });
+db.labor_report.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// ════════════════════════════════════════════════
 
 connectDB();
 module.exports = db;
