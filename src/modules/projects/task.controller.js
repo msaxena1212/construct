@@ -213,14 +213,14 @@ class ProjectTaskController {
       if (task) {
         const milestoneId = task.milestone_id;
         const projectId = task.project_id;
-        
+
         t = await db.sequelize.transaction();
         await task.destroy({ transaction: t });
-        
+
         // Trigger Progress Sync
         if (milestoneId) await syncMilestoneProgress(milestoneId, t);
         await syncProjectProgress(projectId, t);
-        
+
         await t.commit();
       }
       res.status(200).json({ message: "Task deleted." });
@@ -298,10 +298,10 @@ class ProjectTaskController {
     try {
       const { taskId } = req.params;
       const { title } = req.body;
-      
+
       t = await db.sequelize.transaction();
       const subTask = await db.project_sub_task.create({ task_id: taskId, title }, { transaction: t });
-      
+
       // Trigger Progress Sync
       await syncTaskProgress(taskId, t);
 
@@ -319,7 +319,7 @@ class ProjectTaskController {
       const { title, completed } = req.body;
       const subTask = await db.project_sub_task.findByPk(subTaskId);
       if (!subTask) return res.status(404).json({ message: "Sub-task not found." });
-      
+
       t = await db.sequelize.transaction();
       await subTask.update({ title, completed }, { transaction: t });
 
