@@ -24,12 +24,27 @@ export class AddTask implements OnInit {
   private fb = inject(FormBuilder);
 
   taskForm!: FormGroup;
+checklist: {
+  title: string;
+  itemName: string;
+  qty: number;
+  equipment: string;
+  completed: boolean;
+}[] = [];
 
-  checklist: { title: string, completed: boolean }[] = [];
+showSubTaskForm = false;
+editingIndex: number | null = null;
+
+newSubTask = {
+   title: '',
+  itemName: '',
+  qty: 1,
+  equipment: ''
+};
+
   dependencies: any[] = [];
   attachments: any[] = [];
 
-  newSubTaskTitle = '';
   selectedPredecessorId = '';
   selectedDepType = 'FS';
   depLag = 0;
@@ -49,6 +64,7 @@ export class AddTask implements OnInit {
   ];
 
   teamMembers: IUser[] = [];
+  vendors: any[] = [];
 
   ngOnInit() {
     this.initForm();
@@ -57,6 +73,7 @@ export class AddTask implements OnInit {
     });
     if (this.projectId) {
       this.fetchTeamMembers();
+      this.fetchVendors();
     }
   }
 
@@ -69,6 +86,7 @@ export class AddTask implements OnInit {
       startDate: [new Date().toISOString().split('T')[0]],
       duration: [5],
       assigneeId: [''],
+      vendorId: [''],
       initialComment: ['']
     });
   }
@@ -81,12 +99,68 @@ export class AddTask implements OnInit {
     });
   }
 
-  addSubTask() {
-    if (this.newSubTaskTitle.trim()) {
-      this.checklist.push({ title: this.newSubTaskTitle.trim(), completed: false });
-      this.newSubTaskTitle = '';
+  fetchVendors() {
+  this.projectService.getVendors().subscribe({
+    next: (res) => {
+      this.vendors = res.data || [];
     }
+  });
+}
+
+ addSubTask() {
+
+  if (
+    this.newSubTask.title.trim() &&
+    this.newSubTask.itemName.trim()
+  ) {
+
+    const payload = {
+      title: this.newSubTask.title,
+      itemName: this.newSubTask.itemName,
+      qty: this.newSubTask.qty,
+      equipment: this.newSubTask.equipment,
+      completed: false
+    };
+
+    // EDIT
+    if (this.editingIndex !== null) {
+
+      this.checklist[this.editingIndex] = payload;
+
+      this.editingIndex = null;
+
+    } else {
+
+      // CREATE
+      this.checklist.push(payload);
+    }
+
+    // RESET
+    this.newSubTask = {
+      title: '',
+      itemName: '',
+      qty: 1,
+      equipment: ''
+    };
+
+    this.showSubTaskForm = false;
   }
+}
+
+  editSubTask(index: number) {
+
+  const item = this.checklist[index];
+
+  this.newSubTask = {
+    title: item.title,
+    itemName: item.itemName,
+    qty: item.qty,
+    equipment: item.equipment
+  };
+
+  this.editingIndex = index;
+  this.showSubTaskForm = true;
+}
 
   removeSubTask(index: number) {
     this.checklist.splice(index, 1);
@@ -134,6 +208,7 @@ export class AddTask implements OnInit {
       const payload = {
         ...formValue,
         milestone_id: this.milestoneId,
+        vendor_id: formValue.vendorId,
         sub_tasks: this.checklist,
         dependencies: this.dependencies,
         assignees: formValue.assigneeId ? [Number(formValue.assigneeId)] : [],

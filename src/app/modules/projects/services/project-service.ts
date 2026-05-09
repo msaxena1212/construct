@@ -6,6 +6,7 @@ import { ApiResponse } from '../../../shared/interfaces/core.interface';
 import { IProject, IProjectTask } from '../../../shared/interfaces/project.interface';
 
 
+
 @Injectable({
   providedIn: 'root',
 })
@@ -99,4 +100,10 @@ export class ProjectService {
   updateMilestone(projectId: string | number, milestoneId: string | number, data: any): Observable<ApiResponse<any>> {
     return this.http.put<ApiResponse<any>>(`${this.apiUrl}/projects/${projectId}/milestones/${milestoneId}`, data);
   }
+
+    // Vendors
+  getVendors(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/vendors`);
+  }
 }
+
