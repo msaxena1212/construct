@@ -500,6 +500,38 @@ class MaterialController {
       });
     }
   }
+
+  async getMaterialByprojectId(req, res) {
+    try {
+      const { id } = req.params;
+
+      const company_id = req.user.company_id;
+      if (!company_id) {
+        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+      }
+
+
+      const material = await db.material.findOne({
+        where: { project_id:id, isDeleted: false, company_id }
+      });
+
+      if (!material) {
+        return res.status(404).json({ message: "Material not found." });
+      }
+
+      res.status(200).json({ data: material });
+
+    } catch (error) {
+      console.error("[GET_MATERIAL_BY_ID_ERROR]", error);
+      res.status(500).json({
+        message: "Error fetching material.",
+        error: error.message
+      });
+    }
+  }
+
+
+
 }
 
 module.exports = new MaterialController();

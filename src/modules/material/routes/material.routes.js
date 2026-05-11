@@ -17,4 +17,7 @@ module.exports = (router) => {
   // Delete material (Soft Delete)
   router.delete("/deleteMaterial/:id", materialCtrl.deleteMaterial);
 
+  // Get material by project ID
+  router.get("/getMaterialByprojectId/:id", materialCtrl.getMaterialByprojectId);
+
 };
