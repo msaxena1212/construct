@@ -105,5 +105,11 @@ export class ProjectService {
   getVendors(): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/vendors`);
   }
+  // materials
+  getMaterialByprojectId(projectId: string | number): Observable<ApiResponse<any[]>> {
+  return this.http.get<ApiResponse<any[]>>(
+    `${this.apiUrl}/getMaterialByprojectId/${projectId}`
+  );
+}
 }
 

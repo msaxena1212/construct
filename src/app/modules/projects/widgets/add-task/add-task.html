@@ -175,31 +175,52 @@
                                 [ngModelOptions]="{standalone: true}"
                                 placeholder="e.g. Concrete Work"
                                 class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
-
                         </div>
 
-                        <!-- Item Name -->
+                        <!-- Qty + Material -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Material -->
                         <div class="space-y-2">
-
                             <label
                                 class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                Material
+                            </label>
+                    <!-- AFTER -->
+                        <select
+                        [(ngModel)]="newSubTask.materialId"
+                        [ngModelOptions]="{ standalone: true }">
+                        <option [ngValue]="null" disabled>Select Material</option>
+                        @for(material of materials; track material.id) {
+                            <option [ngValue]="material.id">{{ material.name }}</option>
+                        }
+                        </select>
+                        </div>
+                      <!-- Qty -->
+                        <div class="space-y-2">
 
-                                Item Name
+                            <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                Quantity
                             </label>
 
                             <input
-                                type="text"
-                                [(ngModel)]="newSubTask.itemName"
+                                type="number"
+                                [(ngModel)]="newSubTask.qty"
                                 [ngModelOptions]="{standalone: true}"
-                                placeholder="Enter item name"
+                                min="1"
+                                [max]="materials.find(m => m.id == newSubTask.materialId)?.stockIn"
                                 class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
 
+                            @if(newSubTask.materialId){
+                                <p class="text-[10px] text-primary font-bold px-1">
+                                    Available Stock:
+                                    {{ materials.find(m => m.id == newSubTask.materialId)?.stockIn }}
+                                </p>
+                            }
+
+                        </div>
                         </div>
 
-                        <!-- Qty + Equipment -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                        <!-- Equipment -->
+                           <!-- Equipment -->
                             <div class="space-y-2">
 
                                 <label
@@ -216,27 +237,6 @@
                                     class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
 
                             </div>
-
-                            <!-- Qty -->
-                            <div class="space-y-2">
-
-                                <label
-                                    class="text-[10px] font-black uppercase tracking-widest text-outline">
-
-                                    Quantity
-                                </label>
-
-                                <input
-                                    type="number"
-                                    [(ngModel)]="newSubTask.qty"
-                                    [ngModelOptions]="{standalone: true}"
-                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
-
-                            </div>
-
-                     
-
-                        </div>
 
                         <!-- Actions -->
                         <div class="flex justify-end gap-3 pt-2">

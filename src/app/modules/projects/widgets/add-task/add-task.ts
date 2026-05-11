@@ -26,8 +26,10 @@ export class AddTask implements OnInit {
   taskForm!: FormGroup;
 checklist: {
   title: string;
+  material_id: number;
   itemName: string;
   qty: number;
+  stockIn: number;
   equipment: string;
   completed: boolean;
 }[] = [];
@@ -36,8 +38,10 @@ showSubTaskForm = false;
 editingIndex: number | null = null;
 
 newSubTask = {
-   title: '',
+  title: '',
+  materialId: null as number | null,
   itemName: '',
+  stockIn: 0,
   qty: 1,
   equipment: ''
 };
@@ -65,6 +69,7 @@ newSubTask = {
 
   teamMembers: IUser[] = [];
   vendors: any[] = [];
+  materials: any[] = [];
 
   ngOnInit() {
     this.initForm();
@@ -74,6 +79,7 @@ newSubTask = {
     if (this.projectId) {
       this.fetchTeamMembers();
       this.fetchVendors();
+      this.fetchMaterials();
     }
   }
 
@@ -107,16 +113,45 @@ newSubTask = {
   });
 }
 
- addSubTask() {
+fetchMaterials() {
+  this.projectService.getMaterialByprojectId(this.projectId).subscribe({
+    next: (res) => {
+      // Handle both array and wrapped response
+      this.materials = Array.isArray(res.data) ? res.data : [res.data];
+      console.log('Materials loaded:', this.materials);
+    }
+  });
+}
+
+addSubTask() {
 
   if (
     this.newSubTask.title.trim() &&
-    this.newSubTask.itemName.trim()
+    this.newSubTask.materialId
   ) {
+
+    const selectedMaterial = this.materials.find(
+      m => m.id == this.newSubTask.materialId
+    );
+
+    if (!selectedMaterial) {
+      this.toast.error('Material not found');
+      return;
+    }
+
+    // VALIDATE STOCK
+    if (this.newSubTask.qty > selectedMaterial.stockIn) {
+      this.toast.error(
+        `Only ${selectedMaterial.stockIn} items available in stock`
+      );
+      return;
+    }
 
     const payload = {
       title: this.newSubTask.title,
-      itemName: this.newSubTask.itemName,
+      material_id: selectedMaterial.id,
+      itemName: selectedMaterial.name,
+      stockIn: selectedMaterial.stockIn,
       qty: this.newSubTask.qty,
       equipment: this.newSubTask.equipment,
       completed: false
@@ -126,19 +161,21 @@ newSubTask = {
     if (this.editingIndex !== null) {
 
       this.checklist[this.editingIndex] = payload;
-
       this.editingIndex = null;
 
     } else {
 
       // CREATE
       this.checklist.push(payload);
+
     }
 
     // RESET
     this.newSubTask = {
       title: '',
+     materialId: null,
       itemName: '',
+      stockIn: 0,
       qty: 1,
       equipment: ''
     };
@@ -147,13 +184,15 @@ newSubTask = {
   }
 }
 
-  editSubTask(index: number) {
+editSubTask(index: number) {
 
   const item = this.checklist[index];
 
   this.newSubTask = {
     title: item.title,
+    materialId: item.material_id,
     itemName: item.itemName,
+    stockIn: item.stockIn,
     qty: item.qty,
     equipment: item.equipment
   };
