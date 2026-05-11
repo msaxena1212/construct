@@ -110,7 +110,12 @@
 
                                         Qty: {{ item.qty }}
                                     </div>
-
+                                    @if (item.pendingRequest) {
+                                    <div class="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+                                        <span class="material-symbols-outlined text-[14px]">pending</span>
+                                        +{{ item.shortage }} Requested
+                                    </div>
+}
                                     <!-- Equipment -->
                                     <div
                                         class="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
@@ -432,4 +437,76 @@
             </div>
         </div>
     </div>
+
+    <!-- Stock Shortage Dialog -->
+@if (showStockDialog && stockDialogData) {
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+  <div class="w-full max-w-sm bg-surface-container-lowest rounded-3xl shadow-2xl border border-outline-variant/10 overflow-hidden animate-in zoom-in-95 duration-300">
+    
+    <!-- Icon + Header -->
+    <div class="px-6 pt-6 pb-4 flex flex-col items-center text-center gap-3">
+      <div class="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center">
+        <span class="material-symbols-outlined text-orange-600 text-3xl">inventory_2</span>
+      </div>
+      <h4 class="text-base font-black text-on-surface uppercase tracking-tight">
+        Insufficient Stock
+      </h4>
+      <p class="text-xs text-outline font-medium leading-relaxed">
+        Only 
+        <span class="font-black text-on-surface">{{ stockDialogData.available }}</span> 
+        units available in stock.
+        <br/>
+        You requested 
+        <span class="font-black text-on-surface">{{ newSubTask.qty }}</span> units.
+      </p>
+    </div>
+
+    <!-- Split Info Cards -->
+    <div class="px-6 pb-4 grid grid-cols-2 gap-3">
+      
+      <!-- Allocate Now -->
+      <div class="bg-green-50 rounded-2xl p-3 text-center space-y-1">
+        <span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>
+        <p class="text-[10px] font-black uppercase tracking-widest text-green-700">Allocate Now</p>
+        <p class="text-xl font-black text-green-700">{{ stockDialogData.available }}</p>
+        <p class="text-[9px] text-green-600 font-bold">from current stock</p>
+      </div>
+
+      <!-- Request from Manager -->
+      <div class="bg-orange-50 rounded-2xl p-3 text-center space-y-1">
+        <span class="material-symbols-outlined text-orange-600 text-xl">pending</span>
+        <p class="text-[10px] font-black uppercase tracking-widest text-orange-700">Request More</p>
+        <p class="text-xl font-black text-orange-700">{{ stockDialogData.shortage }}</p>
+        <p class="text-[9px] text-orange-600 font-bold">sent to site manager</p>
+      </div>
+
+    </div>
+
+    <!-- Info note -->
+    <div class="mx-6 mb-4 flex items-start gap-2 bg-blue-50 rounded-xl p-3">
+      <span class="material-symbols-outlined text-blue-500 text-sm mt-0.5">info</span>
+      <p class="text-[10px] text-blue-700 font-semibold leading-relaxed">
+        {{ stockDialogData.available }} units will be deducted from material stock immediately. 
+        Site manager will be notified for the remaining {{ stockDialogData.shortage }} units.
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="px-6 pb-6 flex gap-3">
+      <button 
+        (click)="cancelStockRequest()"
+        class="flex-1 py-3 text-xs font-black text-outline border border-outline-variant/20 rounded-2xl hover:bg-surface-container-low transition-colors uppercase tracking-widest">
+        Cancel
+      </button>
+      <button 
+        (click)="confirmStockRequest()"
+        class="flex-1 py-3 text-xs font-black text-white bg-primary rounded-2xl shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest">
+        Confirm & Request
+      </button>
+    </div>
+
+  </div>
+</div>
+}
+
 </div>

@@ -110,6 +110,16 @@ export class ProjectService {
   return this.http.get<ApiResponse<any[]>>(
     `${this.apiUrl}/getMaterialByprojectId/${projectId}`
   );
+  
+}
+requestAdditionalStock(payload: {
+  material_id: number;
+  task_title: string;
+  requested_qty: number;
+  available_qty: number;
+  project_id: string | number;
+}): Observable<ApiResponse<any>> {
+  return this.http.post<ApiResponse<any>>(`${this.apiUrl}/stock-requests`, payload);
 }
 }
 

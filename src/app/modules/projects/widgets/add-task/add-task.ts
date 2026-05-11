@@ -32,6 +32,9 @@ checklist: {
   stockIn: number;
   equipment: string;
   completed: boolean;
+    requestedQty?: number;   // original requested
+  shortage?: number;        // how much is pending
+  pendingRequest?: boolean;
 }[] = [];
 
 showSubTaskForm = false;
@@ -123,6 +126,21 @@ fetchMaterials() {
   });
 }
 
+private resetSubTaskForm() {
+  this.newSubTask = { title: '', materialId: null, itemName: '', stockIn: 0, qty: 1, equipment: '' };
+  this.showSubTaskForm = false;
+  this.editingIndex = null;
+}
+
+// Add these new properties
+showStockDialog = false;
+stockDialogData: {
+  available: number;
+  shortage: number;
+  selectedMaterial: any;
+} | null = null;
+
+
 addSubTask() {
 
   if (
@@ -140,12 +158,28 @@ addSubTask() {
     }
 
     // VALIDATE STOCK
-    if (this.newSubTask.qty > selectedMaterial.stockIn) {
-      this.toast.error(
-        `Only ${selectedMaterial.stockIn} items available in stock`
-      );
-      return;
-    }
+if (this.newSubTask.qty > selectedMaterial.stockIn) {
+
+  if (selectedMaterial.stockIn === 0) {
+    // Zero stock — directly show dialog with full qty as shortage
+    this.stockDialogData = {
+      available: 0,
+      shortage: this.newSubTask.qty,
+      selectedMaterial
+    };
+    this.showStockDialog = true;
+    return;
+  }
+
+  // Partial stock — show dialog
+  this.stockDialogData = {
+    available: selectedMaterial.stockIn,
+    shortage: this.newSubTask.qty - selectedMaterial.stockIn,
+    selectedMaterial
+  };
+  this.showStockDialog = true;
+  return;  // ← don't save yet, wait for user confirmation
+}
 
     const payload = {
       title: this.newSubTask.title,
@@ -193,12 +227,68 @@ editSubTask(index: number) {
     materialId: item.material_id,
     itemName: item.itemName,
     stockIn: item.stockIn,
-    qty: item.qty,
+      qty: item.requestedQty ?? item.qty,
     equipment: item.equipment
   };
 
   this.editingIndex = index;
   this.showSubTaskForm = true;
+}
+
+confirmStockRequest() {
+  if (!this.stockDialogData) return;
+
+  const { available, shortage, selectedMaterial } = this.stockDialogData;
+
+  // Add to checklist only if something is available
+  if (available > 0) {
+    const payload = {
+      title: this.newSubTask.title,
+      material_id: selectedMaterial.id,
+      itemName: selectedMaterial.name,
+      stockIn: available,
+      qty: available,
+      requestedQty: this.newSubTask.qty,
+      shortage: shortage,
+      pendingRequest: true,
+      equipment: this.newSubTask.equipment,
+      completed: false
+    };
+
+    if (this.editingIndex !== null) {
+      this.checklist[this.editingIndex] = payload;
+    } else {
+      this.checklist.push(payload);
+    }
+  }
+
+  // Send request to site manager
+  this.projectService.requestAdditionalStock({
+    material_id: selectedMaterial.id,
+    task_title: this.newSubTask.title,
+    requested_qty: shortage,
+    available_qty: available,
+    project_id: this.projectId
+  }).subscribe({
+    next: () => {
+      this.toast.success(`Request sent to site manager for ${shortage} items`);
+      if (available > 0) {
+        this.toast.info(`${available} items allocated from current stock`);
+      }
+    },
+    error: () => this.toast.error('Failed to send stock request')
+  });
+
+  // Close dialog and reset
+  this.showStockDialog = false;
+  this.stockDialogData = null;
+  this.resetSubTaskForm();
+}
+
+cancelStockRequest() {
+  this.showStockDialog = false;
+  this.stockDialogData = null;
+  // Don't reset form — let user change qty
 }
 
   removeSubTask(index: number) {
