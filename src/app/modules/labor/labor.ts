@@ -1,51 +1,127 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { LaborServices, ContractorMetric, LaborStats } from '../labor/services/labor-services';
+// src/app/labor/labor.ts
+
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import {
+  LaborServices,
+  ContractorMetric,
+  LaborStats,
+  ShiftWorker,
+  Vendor,
+} from './services/labor-services';
 
 @Component({
-  selector: 'app-labor',
-  standalone: false,
-  templateUrl: './labor.html',
-  styleUrl: './labor.scss',
+  selector    : 'app-labor',
+  standalone  : false,
+  templateUrl : './labor.html',
+  styleUrl    : './labor.scss',
 })
-export class Labor implements OnInit {
-  private analyticsService = inject(LaborServices);
+export class Labor implements OnInit, OnDestroy {
+  private svc      = inject(LaborServices);
+  private destroy$ = new Subject<void>();
+
   Math = Math;
 
-  contractors: ContractorMetric[] = [];
-  stats: LaborStats | null = null;
+  // ── Context ─────────────────────────────────────────────
+  // AuthService se inject karo real app mein
+  companyId = 1;
 
-  team = [
-    { name: 'All Members' },
-    { name: 'Sarah Jenkins' },
-    { name: 'Mark Thompson' }
-  ];
-  selectedMember = 'All Members';
+  // ── Data (API se aata hai) ───────────────────────────────
+  contractors  : ContractorMetric[] = [];
+  stats        : LaborStats | null  = null;
+  heatmap      : number[][]         = [];
+  shiftActivity: ShiftWorker[]      = [];
+  vendors      : Vendor[]           = [];
 
-  shiftActivity = [
-    { name: 'Sarah Jenkins', role: 'Foreman', status: 'On Site', statusClass: 'bg-green-100 text-green-700', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCAyOvDxwm7IY0fGzIcQewafXbHLkhV-OUeDRgpe-ymlTiSF9hWPY5xwBf-2prAqKdk9IcvsKvxTko5295kb7C7PYVsBgmb3T34K9pNFtGtJe89fMaS9GJ_8EjbgAxjAnY6Zm1m1Zw7sE2he8Oi2cJrVb6qMCuHA6g-_aA0cl19DhNAsXu41XLTSob64u0jvX1TDdqkvRc-gdbpX9OsXR1e3DVpAX0AknzrS7cwF9FPuxoMlyvVopoOqU3Y7xwR0OlwYFxh5RBNaWkr', activities: [{ label: 'Site Supervision: North Wing', left: '10%', width: '60%', type: 'primary' }, { label: 'Safety Audit', left: '75%', width: '15%', type: 'secondary' }] },
-    { name: 'Mark Thompson', role: 'Specialist', status: 'Active', statusClass: 'bg-blue-100 text-blue-700', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCvmrDmdNuYaE5vTixXe6B6Wbv3m1nAaRGc5AeHwtiGjCNtTkdqJt9_thcbj1ZTdTZzag-PHoimyOwQO-Vt9i1fHGa5hBC6XudSDWNKFcdtksoSSOKHlB79jV_dagoeD4b3vfmR_Bsh83DuEKlVupf5xcxS4MMW8a97mPzfu6gEuMVHsF1KdGw7q3xZYIemN0C8ANuiM4AAK9Q5krlxO6bnYXlmTEc04Fx6DJArq8ABEhFBOzFNsqzpEv5lj_YDyQGf9wughldNujAP', activities: [{ label: 'HVAC Installation & Testing', left: '5%', width: '80%', type: 'solid' }] }
-  ];
+  // ── UI State ─────────────────────────────────────────────
+  loading            = false;
+  error: string|null = null;
+  selectedVendorId: number | null = null;
+  selectedMember      = 'All Members';
 
-  heatmap = Array(3).fill(0).map(() => Array(7).fill(0).map(() => Math.floor(Math.random() * 5)));
-
-  profitabilityLeaks = [
-    { zone: 'North Wing - Level 4', contractor: 'Vanguard Electrical', delta: -4200, trend: 'increasing', resolution: 'Investigate overtime logs' },
-    { zone: 'East Plaza - Civil', contractor: 'Apex Concrete Solutions', delta: -1850, trend: 'stable', resolution: 'Material delay incurred holding costs' }
-  ];
-
-  ngOnInit(): void {
-    this.analyticsService.contractors$.subscribe(c => this.contractors = c);
-    this.analyticsService.laborStats$.subscribe(s => this.stats = s);
+  // ── Computed ─────────────────────────────────────────────
+  get vendorOptions(): { id: number | null; name: string }[] {
+    return [
+      { id: null, name: 'All Vendors' },
+      ...this.vendors.map(v => ({ id: v.id, name: v.name })),
+    ];
   }
 
-  get filteredShiftActivity() {
+  get teamMembers(): string[] {
+    return ['All Members', ...this.shiftActivity.map(w => w.name)];
+  }
+
+  get filteredShiftActivity(): ShiftWorker[] {
     if (this.selectedMember === 'All Members') return this.shiftActivity;
     return this.shiftActivity.filter(w => w.name === this.selectedMember);
   }
 
-  getEfficiencyColor(efficiency: number): string {
-    if (efficiency > 90) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
-    if (efficiency > 75) return 'text-amber-600 bg-amber-50 border-amber-100';
-    return 'text-rose-600 bg-rose-50 border-rose-100';
+  // ── Lifecycle ────────────────────────────────────────────
+  ngOnInit(): void {
+    // Subscribe sab streams pe
+    this.svc.contractors$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(c => (this.contractors = c));
+
+    this.svc.laborStats$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(s => (this.stats = s));
+
+    this.svc.heatmap$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(h => (this.heatmap = h));
+
+    this.svc.shiftActivity$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(sa => (this.shiftActivity = sa));
+
+    this.svc.vendors$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(v => (this.vendors = v));
+
+    this.svc.loading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(l => (this.loading = l));
+
+    this.svc.error$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(e => (this.error = e));
+
+    // API call karo — sab data aayega
+    this.svc.loadDashboard(this.companyId);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Vendor filter ─────────────────────────────────────────
+  onVendorChange(vendorId: number | null): void {
+    this.selectedVendorId = vendorId;
+    this.svc.filterByVendor(this.companyId, vendorId ?? undefined);
+  }
+
+  // ── Refresh ───────────────────────────────────────────────
+  refresh(): void {
+    this.svc.loadDashboard(this.companyId, this.selectedVendorId ?? undefined);
+  }
+
+  // ── Dismiss error ─────────────────────────────────────────
+  dismissError(): void {
+    this.svc.clearError();
+  }
+
+  // ── Helpers ───────────────────────────────────────────────
+  getEfficiencyColor(e: number): string {
+    if (e > 90) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+    if (e > 75) return 'text-amber-600  bg-amber-50  border-amber-100';
+    return              'text-rose-600   bg-rose-50   border-rose-100';
+  }
+
+  skillBarWidth(count: number): number {
+    const max = this.stats?.totalPersonnel || 1;
+    return Math.min((count / max) * 300, 100);
   }
 }
