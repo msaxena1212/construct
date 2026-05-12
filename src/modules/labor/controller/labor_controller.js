@@ -1,627 +1,777 @@
-const db = require('../../../models');          // adjust path if your models index is elsewhere
-const { Op, QueryTypes } = db.Sequelize;
-const { v4: uuidv4 } = require('uuid');
+const db = require('../../../models');
+const { QueryTypes } = db.Sequelize;
 
-/* ─────────────────────────────────────────────────────────────
-   HELPER – safe integer parse
-───────────────────────────────────────────────────────────── */
-const toInt = (val) => {
-    const n = parseInt(val, 10);
-    return isNaN(n) ? null : n;
+const toInt = (v) => {
+  const n = parseInt(v, 10);
+  return Number.isNaN(n) ? null : n;
 };
 
-/* ─────────────────────────────────────────────────────────────
-   HELPER – today's date string (YYYY-MM-DD)
-───────────────────────────────────────────────────────────── */
-const today = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => new Date().toISOString().slice(0, 10);
 
-/* ═════════════════════════════════════════════════════════════
-   1.  CONTRACTOR METRICS
-       GET /api/v1/labor/contractor-metrics?company_id=1[&vendor_id=2]
-═════════════════════════════════════════════════════════════ */
-exports.getContractorMetrics = async (req, res) => {
-    try {
-        const companyId = toInt(req.query.company_id);
-        const vendorId = toInt(req.query.vendor_id);
+const autoAvatar = (name) =>
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    name || 'V'
+  )}&background=6366f1&color=fff&bold=true&size=64`;
 
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
-
-        // Build where clause
-        const where = { company_id: companyId };
-        if (vendorId) where.vendor_id = vendorId;
-
-        // Get latest recorded_date per vendor
-        const latestDates = await db.labor_contractor_metric.findAll({
-            where,
-            attributes: [
-                'vendor_id',
-                [db.sequelize.fn('MAX', db.sequelize.col('recorded_date')), 'max_date'],
-            ],
-            group: ['vendor_id'],
-            raw: true,
-        });
-
-        if (!latestDates.length) {
-            return res.json({ success: true, data: [] });
-        }
-
-        // Fetch metrics for latest dates
-        const orConditions = latestDates.map((r) => ({
-            vendor_id: r.vendor_id,
-            recorded_date: r.max_date,
-        }));
-
-        const metrics = await db.labor_contractor_metric.findAll({
-            where: {
-                company_id: companyId,
-                [Op.or]: orConditions,
-            },
-            include: [
-                {
-                    model: db.vendor,
-                    as: 'vendor',
-                    attributes: ['id', 'name', 'logo_url'],
-                },
-            ],
-            order: [['efficiency', 'DESC']],
-        });
-
-        const data = metrics.map((m) => ({
-            id: m.id,
-            vendor_id: m.vendor_id,
-            company_id: m.company_id,
-            name: m.vendor?.name || 'Unknown',
-            logo: m.vendor?.logo_url || null,
-            efficiency: parseFloat(m.efficiency),
-            safetyScore: parseFloat(m.safety_score),
-            retentionRate: m.retention_rate,
-            adherenceToSchedule: m.adherence_to_schedule,
-            personnel: m.personnel_count,
-            tasks: `${m.tasks_completed}/${m.tasks_total}`,
-            trend: m.trend,
-        }));
-
-        res.json({ success: true, data });
-    } catch (err) {
-        console.error('getContractorMetrics:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
+const SKILL_COLORS = {
+  Masonry: '#3b82f6',
+  Electrical: '#f59e0b',
+  'Structural Steel': '#ef4444',
+  Plumbing: '#10b981',
+  Foremen: '#6366f1',
+  'Safety Officers': '#ec4899',
+  Other: '#94a3b8',
 };
 
-/* ═════════════════════════════════════════════════════════════
-   2.  LABOR STATS
-       GET /api/v1/labor/stats?company_id=1
-═════════════════════════════════════════════════════════════ */
-exports.getLaborStats = async (req, res) => {
-    try {
-        const companyId = toInt(req.query.company_id);
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
-
-        // Latest stats row
-        const statsRow = await db.labor_stats.findOne({
-            where: { company_id: companyId },
-            order: [['recorded_date', 'DESC']],
-        });
-
-        if (!statsRow) {
-            return res.status(404).json({ success: false, message: 'No labor stats found for this company' });
-        }
-
-        // Skills distribution
-        const skillsRows = await db.labor_skills.findAll({
-            where: { company_id: companyId },
-            order: [['sort_order', 'ASC']],
-            attributes: ['skill_name', 'personnel_count', 'color'],
-        });
-
-        // Financials
-        const finRow = await db.labor_financials.findOne({
-            where: { company_id: companyId },
-            order: [['recorded_date', 'DESC']],
-        });
-
-        res.json({
-            success: true,
-            data: {
-                activeCrews: statsRow.active_crews,
-                totalPersonnel: statsRow.total_personnel,
-                skillCompliance: parseFloat(statsRow.skill_compliance),
-                overtimeAlerts: statsRow.overtime_alerts,
-                skillsDistribution: skillsRows.map((s) => ({
-                    name: s.skill_name,
-                    count: s.personnel_count,
-                    color: s.color,
-                })),
-                financials: finRow
-                    ? {
-                        earnedValue: parseFloat(finRow.earned_value),
-                        actualCost: parseFloat(finRow.actual_cost),
-                        cpi: parseFloat(finRow.cpi),
-                        phase: finRow.phase,
-                        budgetWarning: !!finRow.budget_warning,
-                    }
-                    : null,
-            },
-        });
-    } catch (err) {
-        console.error('getLaborStats:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
+const STATUS_CLASS = {
+  'On Site': 'bg-green-100 text-green-700',
+  Active: 'bg-blue-100 text-blue-700',
+  'Off Site': 'bg-slate-100 text-slate-500',
+  Break: 'bg-amber-100 text-amber-700',
+  Overtime: 'bg-rose-100 text-rose-700',
 };
 
-/* ═════════════════════════════════════════════════════════════
-   3.  PRODUCTIVITY HEATMAP
-       GET /api/v1/labor/heatmap?company_id=1
-═════════════════════════════════════════════════════════════ */
-exports.getHeatmap = async (req, res) => {
-    try {
-        const companyId = toInt(req.query.company_id);
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
 
-        // Latest recorded_date for this company
-        const latest = await db.labor_heatmap.findOne({
-            where: { company_id: companyId },
-            attributes: [[db.sequelize.fn('MAX', db.sequelize.col('recorded_date')), 'max_date']],
-            raw: true,
-        });
-
-        const maxDate = latest?.max_date;
-        if (!maxDate) {
-            // Return empty 3×7 grid if no data
-            return res.json({
-                success: true,
-                data: Array(3).fill(null).map(() => Array(7).fill(0)),
-            });
-        }
-
-        const rows = await db.labor_heatmap.findAll({
-            where: { company_id: companyId, recorded_date: maxDate },
-            order: [['week_row', 'ASC'], ['day_col', 'ASC']],
-            attributes: ['week_row', 'day_col', 'intensity'],
-        });
-
-        // Build 2D grid
-        const grid = Array(3).fill(null).map(() => Array(7).fill(0));
-        rows.forEach((r) => {
-            if (r.week_row < 3 && r.day_col < 7) grid[r.week_row][r.day_col] = r.intensity;
-        });
-
-        res.json({ success: true, data: grid });
-    } catch (err) {
-        console.error('getHeatmap:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-/* ═════════════════════════════════════════════════════════════
-   4.  SHIFT ACTIVITY (Active Pulse)
-       GET /api/v1/labor/shift-activity?company_id=1[&vendor_id=2&worker_id=uuid]
-═════════════════════════════════════════════════════════════ */
-exports.getShiftActivity = async (req, res) => {
-    try {
-        const companyId = toInt(req.query.company_id);
-        const vendorId = toInt(req.query.vendor_id);
-        const workerId = req.query.worker_id || null;
-
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
-
-        const where = { company_id: companyId, is_active: true };
-        if (vendorId) where.vendor_id = vendorId;
-        if (workerId) where.id = workerId;
-
-        const workers = await db.labor.findAll({
-            where,
-            include: [
-                {
-                    model: db.vendor,
-                    as: 'vendor',
-                    attributes: ['id', 'name'],
-                    required: false,
-                },
-                {
-                    model: db.labor_worker_activity,
-                    as: 'activities',
-                    where: { activity_date: today() },
-                    required: false,
-                    attributes: ['label', 'activity_type', 'position_left', 'width'],
-                    order: [['start_time', 'ASC']],
-                },
-            ],
-            order: [['name', 'ASC']],
-        });
-
-        const statusClassMap = {
-            'On Site': 'bg-green-100 text-green-700',
-            'Active': 'bg-blue-100 text-blue-700',
-            'Off Site': 'bg-slate-100 text-slate-500',
-            'Break': 'bg-amber-100 text-amber-700',
-            'Overtime': 'bg-rose-100 text-rose-700',
-        };
-
-        const data = workers.map((w) => ({
-            id: w.id,
-            name: w.name,
-            role: w.role,
-            avatar: w.avatar_url,
-            status: w.status,
-            vendorName: w.vendor?.name || null,
-            statusClass: statusClassMap[w.status] || 'bg-slate-100 text-slate-500',
-            activities: (w.activities || []).map((a) => ({
-                label: a.label,
-                type: a.activity_type,
-                left: a.position_left,
-                width: a.width,
-            })),
-        }));
-
-        res.json({ success: true, data });
-    } catch (err) {
-        console.error('getShiftActivity:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-/* ═════════════════════════════════════════════════════════════
-   5.  REPORTS VAULT
-       GET  /api/v1/labor/reports?company_id=1[&status=Published&type=Safety]
-       POST /api/v1/labor/reports
-═════════════════════════════════════════════════════════════ */
-exports.getReports = async (req, res) => {
-    try {
-        const companyId = toInt(req.query.company_id);
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
-
-        const where = { company_id: companyId };
-        if (req.query.status) where.status = req.query.status;
-        if (req.query.type) where.type = req.query.type;
-
-        const rows = await db.labor_report.findAll({
-            where,
-            order: [['report_date', 'DESC']],
-            attributes: ['id', 'title', 'type', 'report_date', 'author', 'status', 'file_size'],
-        });
-
-        const data = rows.map((r) => ({
-            id: r.id,
-            title: r.title,
-            type: r.type,
-            date: r.report_date,
-            author: r.author,
-            status: r.status,
-            fileSize: r.file_size,
-        }));
-
-        res.json({ success: true, data });
-    } catch (err) {
-        console.error('getReports:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-exports.createReport = async (req, res) => {
-    try {
-        const { company_id, title, type, author } = req.body;
-
-        if (!company_id || !title || !type) {
-            return res.status(400).json({ success: false, message: 'company_id, title, and type are required' });
-        }
-
-        const validTypes = ['Technical', 'Financial', 'Safety', 'Quality', 'Milestone'];
-        if (!validTypes.includes(type)) {
-            return res.status(400).json({
-                success: false,
-                message: `type must be one of: ${validTypes.join(', ')}`,
-            });
-        }
-
-        const newReport = await db.labor_report.create({
-            id: `r_${uuidv4().split('-')[0]}`,
-            company_id: toInt(company_id),
-            title,
-            type,
-            author: author || 'Current User',
-            status: 'Draft',
-            file_size: '0 KB',
-            report_date: today(),
-        });
-
-        res.status(201).json({
-            success: true,
-            data: {
-                id: newReport.id,
-                title: newReport.title,
-                type: newReport.type,
-                status: newReport.status,
-                fileSize: newReport.file_size,
-                date: newReport.report_date,
-                author: newReport.author,
-            },
-        });
-    } catch (err) {
-        console.error('createReport:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-/* ═════════════════════════════════════════════════════════════
-   6.  VENDORS LIST
-       GET /api/v1/labor/vendors?company_id=1
-═════════════════════════════════════════════════════════════ */
-exports.getVendors = async (req, res) => {
-    try {
-        const companyId = toInt(req.query.company_id);
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
-
-        const rows = await db.vendor.findAll({
-            where: { company_id: companyId },
-            attributes: ['id', 'name', 'logo_url', 'specialty'],
-            order: [['name', 'ASC']],
-        });
-
-        const data = rows.map((v) => ({
-            id: v.id,
-            name: v.name,
-            logo: v.logo_url,
-            specialty: v.specialty,
-        }));
-
-        res.json({ success: true, data });
-    } catch (err) {
-        console.error('getVendors:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-/* ═════════════════════════════════════════════════════════════
-   7.  UPDATE CONTRACTOR METRIC (PATCH)
-       PATCH /api/v1/labor/contractor-metrics/:id
-═════════════════════════════════════════════════════════════ */
-exports.updateContractorMetric = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const companyId = toInt(req.body.company_id);
-
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
-
-        const allowedFields = [
-            'efficiency',
-            'safety_score',
-            'retention_rate',
-            'adherence_to_schedule',
-            'trend',
-            'personnel_count',
-            'tasks_completed',
-            'tasks_total',
-        ];
-
-        const updates = {};
-        allowedFields.forEach((f) => {
-            if (req.body[f] !== undefined) updates[f] = req.body[f];
-        });
-
-        if (!Object.keys(updates).length) {
-            return res.status(400).json({ success: false, message: 'No valid fields to update' });
-        }
-
-        const [affected] = await db.labor_contractor_metric.update(updates, {
-            where: { id, company_id: companyId },
-        });
-
-        if (!affected) {
-            return res.status(404).json({ success: false, message: 'Record not found or access denied' });
-        }
-
-        res.json({ success: true, message: 'Updated successfully' });
-    } catch (err) {
-        console.error('updateContractorMetric:', err);
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-/* ═════════════════════════════════════════════════════════════
-   8.  DASHBOARD (all-in-one)
-       GET /api/v1/labor/dashboard?company_id=1[&vendor_id=2]
-═════════════════════════════════════════════════════════════ */
 exports.getDashboard = async (req, res) => {
-    try {
-        const companyId = toInt(req.query.company_id);
-        const vendorId = toInt(req.query.vendor_id);
+  try {
+    const companyId = toInt(req.query.company_id);
+    const vendorId = req.query.vendor_id || null;
 
-        if (!companyId) {
-            return res.status(400).json({ success: false, message: 'company_id is required' });
-        }
-
-        // Build contractor metric where
-        const metricWhere = { company_id: companyId };
-        if (vendorId) metricWhere.vendor_id = vendorId;
-
-        // Worker where
-        const workerWhere = { company_id: companyId, is_active: true };
-        if (vendorId) workerWhere.vendor_id = vendorId;
-
-        // ── Run all queries in parallel ────────────────────────
-        const [
-            latestDates,
-            statsRow,
-            skillsRows,
-            finRow,
-            latestHeatmap,
-            workers,
-        ] = await Promise.all([
-
-            // Latest date per vendor for contractor metrics
-            db.labor_contractor_metric.findAll({
-                where: metricWhere,
-                attributes: [
-                    'vendor_id',
-                    [db.sequelize.fn('MAX', db.sequelize.col('recorded_date')), 'max_date'],
-                ],
-                group: ['vendor_id'],
-                raw: true,
-            }),
-
-            // Labor stats
-            db.labor_stats.findOne({
-                where: { company_id: companyId },
-                order: [['recorded_date', 'DESC']],
-            }),
-
-            // Skills distribution
-            db.labor_skills.findAll({
-                where: { company_id: companyId },
-                order: [['sort_order', 'ASC']],
-                attributes: ['skill_name', 'personnel_count', 'color'],
-            }),
-
-            // Financials
-            db.labor_financials.findOne({
-                where: { company_id: companyId },
-                order: [['recorded_date', 'DESC']],
-            }),
-
-            // Heatmap latest date
-            db.labor_heatmap.findOne({
-                where: { company_id: companyId },
-                attributes: [[db.sequelize.fn('MAX', db.sequelize.col('recorded_date')), 'max_date']],
-                raw: true,
-            }),
-
-            // Workers with today's activities
-            db.labor.findAll({
-                where: workerWhere,
-                include: [
-                    {
-                        model: db.vendor,
-                        as: 'vendor',
-                        attributes: ['id', 'name'],
-                        required: false,
-                    },
-                    {
-                        model: db.labor_worker_activity,
-                        as: 'activities',
-                        where: { activity_date: today() },
-                        required: false,
-                        attributes: ['label', 'activity_type', 'position_left', 'width'],
-                    },
-                ],
-                order: [['name', 'ASC']],
-            }),
-        ]);
-
-        // ── Fetch contractor metrics with vendor info ──────────
-        let contractorsData = [];
-        if (latestDates.length) {
-            const orConditions = latestDates.map((r) => ({
-                vendor_id: r.vendor_id,
-                recorded_date: r.max_date,
-            }));
-
-            const metrics = await db.labor_contractor_metric.findAll({
-                where: { company_id: companyId, [Op.or]: orConditions },
-                include: [{ model: db.vendor, as: 'vendor', attributes: ['id', 'name', 'logo_url'] }],
-                order: [['efficiency', 'DESC']],
-            });
-
-            contractorsData = metrics.map((m) => ({
-                id: m.id,
-                vendor_id: m.vendor_id,
-                name: m.vendor?.name || 'Unknown',
-                logo: m.vendor?.logo_url || null,
-                efficiency: parseFloat(m.efficiency),
-                safetyScore: parseFloat(m.safety_score),
-                retentionRate: m.retention_rate,
-                adherenceToSchedule: m.adherence_to_schedule,
-                personnel: m.personnel_count,
-                tasks: `${m.tasks_completed}/${m.tasks_total}`,
-                trend: m.trend,
-            }));
-        }
-
-        // ── Build heatmap grid ─────────────────────────────────
-        let grid = Array(3).fill(null).map(() => Array(7).fill(0));
-        if (latestHeatmap?.max_date) {
-            const heatRows = await db.labor_heatmap.findAll({
-                where: { company_id: companyId, recorded_date: latestHeatmap.max_date },
-                attributes: ['week_row', 'day_col', 'intensity'],
-                order: [['week_row', 'ASC'], ['day_col', 'ASC']],
-            });
-            heatRows.forEach((r) => {
-                if (r.week_row < 3 && r.day_col < 7) grid[r.week_row][r.day_col] = r.intensity;
-            });
-        }
-
-        // ── Build shift activity ───────────────────────────────
-        const statusClassMap = {
-            'On Site': 'bg-green-100 text-green-700',
-            'Active': 'bg-blue-100 text-blue-700',
-            'Off Site': 'bg-slate-100 text-slate-500',
-            'Break': 'bg-amber-100 text-amber-700',
-            'Overtime': 'bg-rose-100 text-rose-700',
-        };
-
-        const shiftActivity = workers.map((w) => ({
-            id: w.id,
-            name: w.name,
-            role: w.role,
-            avatar: w.avatar_url,
-            status: w.status,
-            vendorName: w.vendor?.name || null,
-            statusClass: statusClassMap[w.status] || 'bg-slate-100 text-slate-500',
-            activities: (w.activities || []).map((a) => ({
-                label: a.label,
-                type: a.activity_type,
-                left: a.position_left,
-                width: a.width,
-            })),
-        }));
-
-        // ── Assemble response ──────────────────────────────────
-        res.json({
-            success: true,
-            data: {
-                contractors: contractorsData,
-                stats: statsRow
-                    ? {
-                        activeCrews: statsRow.active_crews,
-                        totalPersonnel: statsRow.total_personnel,
-                        skillCompliance: parseFloat(statsRow.skill_compliance),
-                        overtimeAlerts: statsRow.overtime_alerts,
-                        skillsDistribution: skillsRows.map((s) => ({
-                            name: s.skill_name,
-                            count: s.personnel_count,
-                            color: s.color,
-                        })),
-                        financials: finRow
-                            ? {
-                                earnedValue: parseFloat(finRow.earned_value),
-                                actualCost: parseFloat(finRow.actual_cost),
-                                cpi: parseFloat(finRow.cpi),
-                                phase: finRow.phase,
-                                budgetWarning: !!finRow.budget_warning,
-                            }
-                            : null,
-                    }
-                    : null,
-                heatmap: grid,
-                shiftActivity,
-            },
-        });
-    } catch (err) {
-        console.error('getDashboard:', err);
-        res.status(500).json({ success: false, message: err.message });
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'company_id is required',
+      });
     }
+
+    const today = todayStr();
+
+    const heatFrom = new Date();
+    heatFrom.setDate(heatFrom.getDate() - 20);
+
+    const heatFromStr = heatFrom.toISOString().slice(0, 10);
+
+    const vendorClause = vendorId
+      ? `AND l.vendor_id = :vendorId`
+      : '';
+
+    const replacements = {
+      companyId,
+      vendorId,
+      today,
+      heatFrom: heatFromStr,
+    };
+
+    const [
+      contractorRows,
+      kpiRow,
+      skillRows,
+      finRow,
+      shiftWorkers,
+      heatRows,
+      vendorList,
+    ] = await Promise.all([
+
+      // Contractor Metrics
+      db.sequelize.query(
+        `
+        SELECT
+          l.vendor_id,
+          v.name AS vendor_name,
+          l.trend,
+          AVG(l.efficiency) AS avg_efficiency,
+          AVG(l.safety_score) AS avg_safety,
+          AVG(l.retention_rate) AS avg_retention,
+          AVG(l.adherence_to_schedule) AS avg_schedule,
+          COUNT(l.id) AS personnel_count,
+          COALESCE(SUM(l.tasks_completed), 0) AS total_done,
+          COALESCE(SUM(l.tasks_total), 0) AS total_tasks
+        FROM Labor l
+        LEFT JOIN VENDOR v ON v.id = l.vendor_id
+        WHERE l.company_id = :companyId
+          AND l.is_active = 1
+          ${vendorClause}
+        GROUP BY l.vendor_id, l.trend, v.name
+        ORDER BY avg_efficiency DESC
+        `,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      ),
+
+      // KPI
+      db.sequelize.query(
+        `
+        SELECT
+          COUNT(id) AS total_personnel,
+          COUNT(DISTINCT vendor_id) AS active_crews,
+          COALESCE(AVG(efficiency), 0) AS skill_compliance,
+          COALESCE(SUM(CASE WHEN is_overtime = 1 THEN 1 ELSE 0 END), 0) AS overtime_alerts
+        FROM Labor
+        WHERE company_id = :companyId
+          AND is_active = 1
+        `,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      ),
+
+      // Skills
+      db.sequelize.query(
+        `
+        SELECT
+          skill_category,
+          COUNT(id) AS personnel_count
+        FROM Labor
+        WHERE company_id = :companyId
+          AND is_active = 1
+        GROUP BY skill_category
+        ORDER BY personnel_count DESC
+        `,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      ),
+
+      // Financials
+      db.sequelize.query(
+        `
+        SELECT
+          COALESCE(SUM(earned_value), 0) AS total_ev,
+          COALESCE(SUM(actual_cost), 0) AS total_ac
+        FROM Labor
+        WHERE company_id = :companyId
+          AND is_active = 1
+        `,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      ),
+
+      // Shift Activity
+      db.sequelize.query(
+        `
+        SELECT
+          l.id,
+          l.name,
+          l.role,
+          l.avatar_url,
+          l.status,
+          l.activity_label,
+          l.activity_type,
+          l.activity_left,
+          l.activity_width,
+          l.activity_label_2,
+          l.activity_type_2,
+          l.activity_left_2,
+          l.activity_width_2,
+          v.name AS vendor_name
+        FROM Labor l
+        LEFT JOIN VENDOR v ON v.id = l.vendor_id
+        WHERE l.company_id = :companyId
+          AND l.is_active = 1
+          AND DATE(l.work_date) = :today
+          ${vendorClause}
+        ORDER BY l.name ASC
+        `,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      ),
+
+      // Heatmap
+      db.sequelize.query(
+        `
+        SELECT
+          DATE(work_date) AS work_date,
+          COUNT(id) AS worker_count
+        FROM Labor
+        WHERE company_id = :companyId
+          AND is_active = 1
+          AND DATE(work_date) >= :heatFrom
+        GROUP BY DATE(work_date)
+        ORDER BY DATE(work_date) ASC
+        `,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      ),
+
+      // Vendors
+      db.sequelize.query(
+        `
+        SELECT
+          id,
+          name
+        FROM VENDOR
+        WHERE company_id = :companyId
+        ORDER BY name ASC
+        `,
+        {
+          replacements,
+          type: QueryTypes.SELECT,
+        }
+      ),
+    ]);
+
+    // Contractors
+    const contractors = contractorRows.map((r) => ({
+      id: r.vendor_id,
+      vendor_id: r.vendor_id,
+      name: r.vendor_name || 'Unknown',
+      logo: autoAvatar(r.vendor_name),
+      efficiency: Number(parseFloat(r.avg_efficiency || 0).toFixed(1)),
+      safetyScore: Number(parseFloat(r.avg_safety || 0).toFixed(1)),
+      retentionRate: Math.round(r.avg_retention || 0),
+      adherenceToSchedule: Math.round(r.avg_schedule || 0),
+      personnel: parseInt(r.personnel_count || 0, 10),
+      tasks: `${r.total_done || 0}/${r.total_tasks || 0}`,
+      trend: r.trend || 'stable',
+    }));
+
+    // Stats
+    const kpi = kpiRow[0] || {};
+
+    const ev = parseFloat(finRow[0]?.total_ev || 0);
+    const ac = parseFloat(finRow[0]?.total_ac || 0);
+
+    const cpi = ac > 0
+      ? Number((ev / ac).toFixed(3))
+      : 1;
+
+    const stats = {
+      totalPersonnel: parseInt(kpi.total_personnel || 0, 10),
+      activeCrews: parseInt(kpi.active_crews || 0, 10),
+      skillCompliance: Number(
+        parseFloat(kpi.skill_compliance || 0).toFixed(1)
+      ),
+      overtimeAlerts: parseInt(kpi.overtime_alerts || 0, 10),
+
+      skillsDistribution: skillRows.map((s) => ({
+        name: s.skill_category || 'Other',
+        count: parseInt(s.personnel_count || 0, 10),
+        color:
+          SKILL_COLORS[s.skill_category] ||
+          SKILL_COLORS.Other,
+      })),
+
+      financials: {
+        earnedValue: ev,
+        actualCost: ac,
+        cpi,
+        phase: 'Phase 05',
+        budgetWarning: cpi < 1,
+      },
+    };
+
+    // Heatmap
+    const countMap = {};
+    let maxCount = 1;
+
+    heatRows.forEach((r) => {
+      const key = r.work_date?.toString().slice(0, 10);
+
+      countMap[key] = parseInt(r.worker_count || 0, 10);
+
+      if (countMap[key] > maxCount) {
+        maxCount = countMap[key];
+      }
+    });
+
+    const grid = Array(3)
+      .fill(null)
+      .map(() => Array(7).fill(0));
+
+    const todayDt = new Date();
+
+    for (let d = 20; d >= 0; d--) {
+      const dt = new Date(todayDt);
+
+      dt.setDate(todayDt.getDate() - d);
+
+      const ds = dt.toISOString().slice(0, 10);
+
+      const wRow = Math.floor(d / 7);
+      const wCol = (dt.getDay() + 6) % 7;
+
+      if (wRow < 3 && wCol < 7) {
+        const cnt = countMap[ds] || 0;
+
+        grid[2 - wRow][wCol] =
+          cnt === 0
+            ? 0
+            : Math.min(
+              Math.ceil((cnt / maxCount) * 4),
+              4
+            );
+      }
+    }
+
+    // Shift Activity
+    const shiftActivity = shiftWorkers.map((w) => {
+      const activities = [];
+
+      if (w.activity_label) {
+        activities.push({
+          label: w.activity_label,
+          type: w.activity_type || 'primary',
+          left: w.activity_left || '5%',
+          width: w.activity_width || '70%',
+        });
+      }
+
+      if (w.activity_label_2) {
+        activities.push({
+          label: w.activity_label_2,
+          type: w.activity_type_2 || 'secondary',
+          left: w.activity_left_2 || '78%',
+          width: w.activity_width_2 || '15%',
+        });
+      }
+
+      return {
+        id: w.id,
+        name: w.name,
+        role: w.role,
+        avatar: w.avatar_url || autoAvatar(w.name),
+        status: w.status || 'Active',
+        vendorName: w.vendor_name || null,
+        statusClass:
+          STATUS_CLASS[w.status] ||
+          STATUS_CLASS.Active,
+        activities,
+      };
+    });
+
+    // Response
+    return res.json({
+      success: true,
+      data: {
+        contractors,
+        stats,
+        heatmap: grid,
+        shiftActivity,
+
+        vendors: vendorList.map((v) => ({
+          id: v.id,
+          name: v.name,
+          logo: autoAvatar(v.name),
+        })),
+      },
+    });
+
+  } catch (err) {
+    console.error('getDashboard error:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// CONTRACTOR METRICS
+exports.getContractorMetrics = async (req, res) => {
+  try {
+
+    const companyId = toInt(req.query.company_id);
+    const vendorId = req.query.vendor_id || null;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'company_id is required',
+      });
+    }
+
+    const vendorClause = vendorId
+      ? `AND l.vendor_id = :vendorId`
+      : '';
+
+    const rows = await db.sequelize.query(
+      `
+      SELECT
+        l.vendor_id,
+        v.name AS vendor_name,
+        l.trend,
+        AVG(l.efficiency) AS avg_efficiency,
+        AVG(l.safety_score) AS avg_safety,
+        AVG(l.retention_rate) AS avg_retention,
+        AVG(l.adherence_to_schedule) AS avg_schedule,
+        COUNT(l.id) AS personnel_count,
+        COALESCE(SUM(l.tasks_completed), 0) AS total_done,
+        COALESCE(SUM(l.tasks_total), 0) AS total_tasks
+      FROM Labor l
+      LEFT JOIN VENDOR v ON v.id = l.vendor_id
+      WHERE l.company_id = :companyId
+        AND l.is_active = 1
+        ${vendorClause}
+      GROUP BY l.vendor_id, l.trend, v.name
+      ORDER BY avg_efficiency DESC
+      `,
+      {
+        replacements: {
+          companyId,
+          vendorId,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    const data = rows.map((r) => ({
+      id: r.vendor_id,
+      vendor_id: r.vendor_id,
+      name: r.vendor_name || 'Unknown',
+      logo: autoAvatar(r.vendor_name),
+      efficiency: Number(parseFloat(r.avg_efficiency || 0).toFixed(1)),
+      safetyScore: Number(parseFloat(r.avg_safety || 0).toFixed(1)),
+      retentionRate: Math.round(r.avg_retention || 0),
+      adherenceToSchedule: Math.round(r.avg_schedule || 0),
+      personnel: parseInt(r.personnel_count || 0, 10),
+      tasks: `${r.total_done || 0}/${r.total_tasks || 0}`,
+      trend: r.trend || 'stable',
+    }));
+
+    return res.json({
+      success: true,
+      data,
+    });
+
+  } catch (err) {
+    console.error('getContractorMetrics:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// SHIFT ACTIVITY
+exports.getShiftActivity = async (req, res) => {
+  try {
+
+    const companyId = toInt(req.query.company_id);
+    const vendorId = req.query.vendor_id || null;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'company_id is required',
+      });
+    }
+
+    const vendorClause = vendorId
+      ? `AND l.vendor_id = :vendorId`
+      : '';
+
+    const workers = await db.sequelize.query(
+      `
+      SELECT
+        l.id,
+        l.name,
+        l.role,
+        l.avatar_url,
+        l.status,
+        l.activity_label,
+        l.activity_type,
+        l.activity_left,
+        l.activity_width,
+        l.activity_label_2,
+        l.activity_type_2,
+        l.activity_left_2,
+        l.activity_width_2,
+        v.name AS vendor_name
+      FROM Labor l
+      LEFT JOIN VENDOR v ON v.id = l.vendor_id
+      WHERE l.company_id = :companyId
+        AND l.is_active = 1
+        AND DATE(l.work_date) = :today
+        ${vendorClause}
+      ORDER BY l.name ASC
+      `,
+      {
+        replacements: {
+          companyId,
+          vendorId,
+          today: todayStr(),
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    const data = workers.map((w) => {
+      const activities = [];
+
+      if (w.activity_label) {
+        activities.push({
+          label: w.activity_label,
+          type: w.activity_type || 'primary',
+          left: w.activity_left || '5%',
+          width: w.activity_width || '70%',
+        });
+      }
+
+      if (w.activity_label_2) {
+        activities.push({
+          label: w.activity_label_2,
+          type: w.activity_type_2 || 'secondary',
+          left: w.activity_left_2 || '78%',
+          width: w.activity_width_2 || '15%',
+        });
+      }
+
+      return {
+        id: w.id,
+        name: w.name,
+        role: w.role,
+        avatar: w.avatar_url || autoAvatar(w.name),
+        status: w.status || 'Active',
+        vendorName: w.vendor_name || null,
+        statusClass:
+          STATUS_CLASS[w.status] ||
+          STATUS_CLASS.Active,
+        activities,
+      };
+    });
+
+    return res.json({
+      success: true,
+      data,
+    });
+
+  } catch (err) {
+    console.error('getShiftActivity:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// VENDORS
+exports.getVendors = async (req, res) => {
+  try {
+
+    const companyId = toInt(req.query.company_id);
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'company_id is required',
+      });
+    }
+
+    const rows = await db.sequelize.query(
+      `
+      SELECT
+        id,
+        name
+      FROM VENDOR
+      WHERE company_id = :companyId
+      ORDER BY name ASC
+      `,
+      {
+        replacements: { companyId },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return res.json({
+      success: true,
+      data: rows.map((v) => ({
+        id: v.id,
+        name: v.name,
+        logo: autoAvatar(v.name),
+      })),
+    });
+
+  } catch (err) {
+    console.error('getVendors:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// CREATE LABOR
+exports.createLabor = async (req, res) => {
+  try {
+
+    const { company_id, name } = req.body;
+
+    if (!company_id || !name) {
+      return res.status(400).json({
+        success: false,
+        message: 'company_id aur name required hain',
+      });
+    }
+
+    const worker = await db.labor.create({
+      ...req.body,
+
+      company_id: toInt(req.body.company_id),
+
+      // UUID direct
+      vendor_id: req.body.vendor_id || null,
+
+      work_date: req.body.work_date || todayStr(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: worker,
+    });
+
+  } catch (err) {
+    console.error('createLabor:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// UPDATE LABOR
+exports.updateLabor = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const companyId = toInt(req.body.company_id);
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'company_id required hai',
+      });
+    }
+
+    const allowed = [
+      'name',
+      'role',
+      'avatar_url',
+      'status',
+      'skill_category',
+      'efficiency',
+      'safety_score',
+      'retention_rate',
+      'adherence_to_schedule',
+      'tasks_completed',
+      'tasks_total',
+      'trend',
+      'earned_value',
+      'actual_cost',
+      'is_overtime',
+      'is_active',
+      'work_date',
+      'vendor_id',
+      'activity_label',
+      'activity_type',
+      'activity_left',
+      'activity_width',
+      'activity_label_2',
+      'activity_type_2',
+      'activity_left_2',
+      'activity_width_2',
+    ];
+
+    const updates = {};
+
+    allowed.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Koi valid field nahi mili update ke liye',
+      });
+    }
+
+    const [affected] = await db.labor.update(updates, {
+      where: {
+        id,
+        company_id: companyId,
+      },
+    });
+
+    if (!affected) {
+      return res.status(404).json({
+        success: false,
+        message: 'Record nahi mila',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Updated successfully',
+    });
+
+  } catch (err) {
+    console.error('updateLabor:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// DELETE LABOR
+exports.deleteLabor = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const companyId = toInt(
+      req.query.company_id || req.body.company_id
+    );
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: 'company_id required hai',
+      });
+    }
+
+    const deleted = await db.labor.destroy({
+      where: {
+        id,
+        company_id: companyId,
+      },
+    });
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Record nahi mila',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Deleted successfully',
+    });
+
+  } catch (err) {
+    console.error('deleteLabor:', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };

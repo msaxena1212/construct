@@ -25,7 +25,7 @@ const db = require("./models");
 // db.task_activity.sync({ alter: true });
 // db.task_attachment.sync({ alter: true });
 // db.user.sync({ alter: true });
-// db.labor_worker_activity.sync({ alter: true });
+// db.labor.sync({ alter: true });
 // db.material.sync({ alter: true });
 
 app.use(bodyParser.json({ limit: "50mb" }));
