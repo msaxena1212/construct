@@ -50,7 +50,20 @@ db.activity = require("../modules/vendors/models/vendors_activity_model.js")(seq
 
 
 //Material
+db.material_master = require("../modules/material/models/material_master.model.js")(sequelize, Sequelize);
+
 db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
+
+db.material_history = require("../modules/material/models/material_history.model.js")(sequelize, Sequelize);
+
+//equipment
+db.equipment_master = require("../modules/equipment/models/equipment_master.model.js")(sequelize, Sequelize);
+
+db.equipment = require("../modules/equipment/models/equipment.model.js")(sequelize, Sequelize);
+
+db.equipment_history = require("../modules/equipment/models/equipment_history.model.js")(sequelize, Sequelize);
+
+
 
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
@@ -105,11 +118,66 @@ db.vendor.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 db.company.hasMany(db.activity, { foreignKey: "company_id", as: "activity" });
 db.activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
+db.company.hasMany(db.material_master, { foreignKey: "company_id", as: "material_master" });
+db.material_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.material_master.hasMany(db.material, { foreignKey: "material_master_id", as: "material" });
+db.material.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
+
 db.company.hasMany(db.material, { foreignKey: "company_id", as: "material" });
 db.material.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
 db.vendor.hasMany(db.material, { foreignKey: "vendor_id", as: "material" });
 db.material.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+
+db.project.hasMany(db.material, { foreignKey: "project_id", as: "material" });
+db.material.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.material_master.hasMany(db.material_history, { foreignKey: "material_master_id", as: "material_history" });
+db.material_history.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
+
+db.material.hasMany(db.material_history, { foreignKey: "material_id", as: "material_history" });
+db.material_history.belongsTo(db.material, { foreignKey: "material_id", as: "material" });
+
+db.company.hasMany(db.material_history, { foreignKey: "company_id", as: "material_history" });
+db.material_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.vendor.hasMany(db.material_history, { foreignKey: "vendor_id", as: "material_history" });
+db.material_history.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+
+db.project.hasMany(db.material_history, { foreignKey: "project_id", as: "material_history" });
+db.material_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+
+db.company.hasMany(db.equipment_master, { foreignKey: "company_id", as: "equipment_master" });
+db.equipment_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.equipment_master.hasMany(db.equipment, { foreignKey: "equipment_master_id", as: "equipment" });
+db.equipment.belongsTo(db.equipment_master, { foreignKey: "equipment_master_id", as: "equipment_master" });
+
+db.company.hasMany(db.equipment, { foreignKey: "company_id", as: "equipment" });
+db.equipment.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.vendor.hasMany(db.equipment, { foreignKey: "vendor_id", as: "equipment" });
+db.equipment.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+
+db.project.hasMany(db.equipment, { foreignKey: "project_id", as: "equipment" });
+db.equipment.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.equipment_master.hasMany(db.equipment_history, { foreignKey: "equipment_master_id", as: "equipment_history" });
+db.equipment_history.belongsTo(db.equipment_master, { foreignKey: "equipment_master_id", as: "equipment_master" });
+
+db.equipment.hasMany(db.equipment_history, { foreignKey: "equipment_id", as: "equipment_history" });
+db.equipment_history.belongsTo(db.equipment, { foreignKey: "equipment_id", as: "equipment" });
+
+db.company.hasMany(db.equipment_history, { foreignKey: "company_id", as: "equipment_history" });
+db.equipment_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.vendor.hasMany(db.equipment_history, { foreignKey: "vendor_id", as: "equipment_history" });
+db.equipment_history.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+
+db.project.hasMany(db.equipment_history, { foreignKey: "project_id", as: "equipment_history" });
+db.equipment_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
 
 // PROJECT MANAGEMENT END
 
