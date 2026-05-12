@@ -1,8 +1,5 @@
-<!-- labor.html — 100% Dynamic, API driven -->
-
 <div class="max-w-full mx-auto p-4 md:p-8 animate-in fade-in duration-700">
 
-  <!-- ══ LOADING OVERLAY ═════════════════════════════════════ -->
   @if (loading) {
   <div class="fixed inset-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm z-50
               flex flex-col items-center justify-center gap-4">
@@ -11,7 +8,6 @@
   </div>
   }
 
-  <!-- ══ ERROR BANNER ════════════════════════════════════════ -->
   @if (error) {
   <div class="mb-6 flex items-center gap-4 bg-rose-50 border border-rose-200 text-rose-700
               px-6 py-4 rounded-2xl shadow-sm">
@@ -22,15 +18,13 @@
         class="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-black hover:bg-rose-700 transition-all">
         Retry
       </button>
-      <button (click)="dismissError()"
-        class="text-rose-400 hover:text-rose-600 transition-all">
+      <button (click)="dismissError()" class="text-rose-400 hover:text-rose-600 transition-all">
         <span class="material-symbols-outlined text-sm">close</span>
       </button>
     </div>
   </div>
   }
 
-  <!-- ══ HEADER ══════════════════════════════════════════════ -->
   <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
     <div>
       <p class="text-indigo-600 font-black tracking-[0.3em] uppercase text-[10px] mb-2">
@@ -46,7 +40,6 @@
       </p>
     </div>
 
-    <!-- KPI Cards — live from API -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full lg:w-auto">
 
       <div class="glass-card p-6 rounded-[2rem] border border-white/40 dark:border-slate-800/50 shadow-xl">
@@ -93,7 +86,7 @@
     </div>
   </header>
 
-  <!-- ══ VENDOR FILTER ════════════════════════════════════════ -->
+
   @if (!loading && vendors.length > 0) {
   <div class="flex items-center gap-3 mb-8 overflow-x-auto pb-2 flex-wrap">
     <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 shrink-0">
@@ -109,8 +102,7 @@
     </button>
     }
 
-    <button (click)="refresh()"
-      class="ml-auto flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800
+    <button (click)="refresh()" class="ml-auto flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800
              text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest
              hover:bg-slate-200 transition-all shrink-0">
       <span class="material-symbols-outlined text-sm">refresh</span>
@@ -119,13 +111,10 @@
   </div>
   }
 
-  <!-- ══ MAIN GRID ═══════════════════════════════════════════ -->
   <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 mb-12">
 
-    <!-- ── LEFT COLUMN ──────────────────────────────────── -->
     <div class="xl:col-span-8 space-y-8">
 
-      <!-- Contractor Performance Vault -->
       <div class="glass-card rounded-[2.5rem] border border-white/40 dark:border-slate-800/50
                   shadow-2xl overflow-hidden">
 
@@ -145,7 +134,6 @@
           </button>
         </div>
 
-        <!-- Skeleton rows while loading -->
         @if (loading) {
         <div class="p-8 space-y-4">
           @for (i of [1,2,3,4]; track i) {
@@ -154,7 +142,7 @@
         </div>
         }
 
-        <!-- No data state -->
+
         @else if (contractors.length === 0) {
         <div class="p-16 text-center">
           <span class="material-symbols-outlined text-5xl text-slate-200 mb-4 block">
@@ -167,7 +155,7 @@
         </div>
         }
 
-        <!-- Table -->
+
         @else {
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
@@ -187,9 +175,8 @@
                 <td class="px-8 py-5">
                   <div class="flex items-center gap-4">
                     <img [src]="c.logo || ('https://ui-avatars.com/api/?name='
-                           + c.name + '&background=6366f1&color=fff')"
-                         [alt]="c.name"
-                         class="w-10 h-10 rounded-xl bg-slate-100 p-1 object-contain shadow-sm">
+                           + c.name + '&background=6366f1&color=fff')" [alt]="c.name"
+                      class="w-10 h-10 rounded-xl bg-slate-100 p-1 object-contain shadow-sm">
                     <div>
                       <p class="text-sm font-black text-slate-900 dark:text-slate-50">
                         {{ c.name }}
@@ -202,7 +189,7 @@
                 </td>
                 <td class="px-6 py-5 text-center">
                   <span [class]="getEfficiencyColor(+c.efficiency)"
-                        class="px-3 py-1 rounded-lg text-[10px] font-black border">
+                    class="px-3 py-1 rounded-lg text-[10px] font-black border">
                     {{ c.efficiency }}%
                   </span>
                 </td>
@@ -219,8 +206,7 @@
                 <td class="px-6 py-5 text-center">
                   <div class="flex flex-col items-center gap-1">
                     <div class="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div class="h-full bg-indigo-500"
-                           [style.width.%]="c.adherenceToSchedule">
+                      <div class="h-full bg-indigo-500" [style.width.%]="c.adherenceToSchedule">
                       </div>
                     </div>
                     <span class="text-[9px] font-black text-slate-400">
@@ -229,13 +215,12 @@
                   </div>
                 </td>
                 <td class="px-8 py-5 text-right">
-                  <span class="material-symbols-outlined"
-                        [ngClass]="c.trend==='up'   ? 'text-emerald-500'
+                  <span class="material-symbols-outlined" [ngClass]="c.trend==='up'   ? 'text-emerald-500'
                                  : c.trend==='down' ? 'text-rose-500'
                                  :                    'text-slate-300'">
                     {{ c.trend==='up' ? 'trending_up'
-                     : c.trend==='down' ? 'trending_down'
-                     : 'horizontal_rule' }}
+                    : c.trend==='down' ? 'trending_down'
+                    : 'horizontal_rule' }}
                   </span>
                 </td>
               </tr>
@@ -246,7 +231,6 @@
         }
       </div>
 
-      <!-- Productivity Heatmap -->
       <div class="glass-card rounded-[2.5rem] p-8 border border-white/40
                   dark:border-slate-800/50 shadow-2xl overflow-hidden">
         <div class="flex justify-between items-start mb-10">
@@ -270,7 +254,6 @@
           </div>
         </div>
 
-        <!-- Skeleton -->
         @if (loading) {
         <div class="grid grid-cols-7 gap-4">
           @for (i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21]; track i) {
@@ -279,43 +262,38 @@
         </div>
         }
 
-        <!-- No data -->
         @else if (heatmap.length === 0) {
         <div class="h-32 flex items-center justify-center">
           <p class="text-slate-400 font-bold text-sm">Koi heatmap data nahi hai.</p>
         </div>
         }
 
-        <!-- Grid -->
         @else {
         <div class="grid grid-cols-7 gap-4">
           @for (row of heatmap; track $index) {
-            @for (val of row; track $index) {
-            <div [class]="'aspect-[2/1] rounded-2xl transition-all hover:scale-105 cursor-help shadow-sm '
+          @for (val of row; track $index) {
+          <div [class]="'aspect-[2/1] rounded-2xl transition-all hover:scale-105 cursor-help shadow-sm '
                 + (val >= 4 ? 'bg-indigo-700'
                 : val === 3 ? 'bg-indigo-500'
                 : val === 2 ? 'bg-indigo-300'
                 : val === 1 ? 'bg-indigo-100'
                 : 'bg-slate-50 dark:bg-slate-800/50')">
-            </div>
-            }
+          </div>
+          }
           }
         </div>
         }
       </div>
     </div>
 
-    <!-- ── RIGHT COLUMN ─────────────────────────────────── -->
     <div class="xl:col-span-4 space-y-8">
 
-      <!-- Skills Composition -->
       <div class="glass-card rounded-[2.5rem] p-8 border border-white/40
                   dark:border-slate-800/50 shadow-2xl">
         <h3 class="text-xl font-black text-slate-900 dark:text-slate-50 tracking-tight mb-8">
           Skills Composition
         </h3>
 
-        <!-- Skeleton -->
         @if (loading) {
         <div class="space-y-5">
           @for (i of [1,2,3,4,5,6]; track i) {
@@ -327,14 +305,12 @@
         </div>
         }
 
-        <!-- No data -->
         @else if (!stats?.skillsDistribution?.length) {
         <p class="text-slate-400 text-sm font-bold text-center py-8">
           Skills data nahi mili.
         </p>
         }
 
-        <!-- Bars -->
         @else {
         <div class="space-y-6">
           @for (skill of stats!.skillsDistribution; track skill.name) {
@@ -348,9 +324,8 @@
               </span>
             </div>
             <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div class="h-full rounded-full transition-all duration-700"
-                   [style.width.%]="skillBarWidth(skill.count)"
-                   [style.background-color]="skill.color">
+              <div class="h-full rounded-full transition-all duration-700" [style.width.%]="skillBarWidth(skill.count)"
+                [style.background-color]="skill.color">
               </div>
             </div>
           </div>
@@ -371,12 +346,10 @@
         }
       </div>
 
-      <!-- Financial ROI -->
       <div class="glass-card rounded-[2.5rem] p-8 border border-white/40
                   dark:border-slate-800/50 shadow-2xl bg-slate-900 text-white">
         <h3 class="text-xl font-black tracking-tight mb-8">Financial ROI (EV vs AC)</h3>
 
-        <!-- Skeleton -->
         @if (loading) {
         <div class="space-y-6">
           <div class="h-10 bg-white/10 rounded-2xl animate-pulse"></div>
@@ -385,14 +358,12 @@
         </div>
         }
 
-        <!-- No data -->
         @else if (!stats?.financials) {
         <p class="text-slate-400 text-sm font-bold text-center py-8">
           Financial data available nahi hai.
         </p>
         }
 
-        <!-- Data -->
         @else {
         <div class="space-y-8">
           <div>
@@ -405,8 +376,7 @@
               </span>
             </div>
             <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-              <div class="h-full bg-emerald-400"
-                   [style.width.%]="Math.min(
+              <div class="h-full bg-emerald-400" [style.width.%]="Math.min(
                      (stats!.financials!.earnedValue / stats!.financials!.actualCost) * 100,
                      100)">
               </div>
@@ -451,7 +421,6 @@
     </div>
   </div>
 
-  <!-- ══ ACTIVE PULSE ACTIVITY ════════════════════════════════ -->
   <section class="mt-20">
     <div class="flex items-center gap-6 mb-12">
       <h2 class="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
@@ -459,8 +428,7 @@
       </h2>
       <div class="h-px flex-1 bg-slate-100 dark:bg-slate-800"></div>
       <div class="flex items-center gap-3">
-        <select [(ngModel)]="selectedMember"
-          class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px]
+        <select [(ngModel)]="selectedMember" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px]
                  font-black uppercase tracking-widest text-slate-500 border-0
                  outline-none cursor-pointer">
           @for (m of teamMembers; track m) {
@@ -475,7 +443,6 @@
       </div>
     </div>
 
-    <!-- Skeleton -->
     @if (loading) {
     <div class="space-y-4">
       @for (i of [1,2,3]; track i) {
@@ -484,7 +451,6 @@
     </div>
     }
 
-    <!-- No data -->
     @else if (filteredShiftActivity.length === 0) {
     <div class="py-20 text-center">
       <span class="material-symbols-outlined text-5xl text-slate-200 mb-4 block">
@@ -497,7 +463,6 @@
     </div>
     }
 
-    <!-- Worker cards -->
     @else {
     <div class="grid grid-cols-1 gap-4">
       @for (worker of filteredShiftActivity; track worker.id) {
@@ -505,13 +470,11 @@
                   shadow-xl flex flex-col md:flex-row items-center gap-8
                   group hover:border-indigo-200 transition-all">
 
-        <!-- Worker info -->
         <div class="flex items-center gap-4 min-w-[240px]">
           <img [src]="worker.avatar
                    || ('https://ui-avatars.com/api/?name='
-                   + worker.name + '&background=6366f1&color=fff&size=128')"
-               [alt]="worker.name"
-               class="w-14 h-14 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                   + worker.name + '&background=6366f1&color=fff&size=128')" [alt]="worker.name"
+            class="w-14 h-14 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
           <div>
             <p class="font-black text-slate-900 dark:text-slate-50">{{ worker.name }}</p>
             <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">
@@ -525,7 +488,6 @@
           </div>
         </div>
 
-        <!-- Timeline bar -->
         <div class="flex-1 w-full relative h-10 px-4">
           <div class="absolute inset-0 top-1/2 -translate-y-1/2 h-2
                       bg-slate-50 dark:bg-slate-800/50 rounded-full">
@@ -537,9 +499,7 @@
                   ? 'bg-indigo-600 border-indigo-200 text-white shadow-lg'
                   : act.type === 'secondary'
                   ? 'bg-amber-100 border-amber-200 text-amber-700'
-                  : 'bg-slate-900 border-slate-700 text-white')"
-               [style.left]="act.left"
-               [style.width]="act.width">
+                  : 'bg-slate-900 border-slate-700 text-white')" [style.left]="act.left" [style.width]="act.width">
             <span class="text-[9px] font-black uppercase tracking-widest truncate">
               {{ act.label }}
             </span>
@@ -547,10 +507,8 @@
           }
         </div>
 
-        <!-- Status badge -->
         <div class="min-w-[120px] text-right">
-          <div [class]="worker.statusClass"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-full
+          <div [class]="worker.statusClass" class="inline-flex items-center gap-2 px-4 py-2 rounded-full
                       text-[10px] font-black uppercase tracking-widest shadow-sm">
             <div class="w-2 h-2 rounded-full bg-current animate-pulse"></div>
             {{ worker.status }}
@@ -565,7 +523,6 @@
 
 </div>
 
-<!-- FAB -->
 <button class="fixed bottom-10 right-10 w-16 h-16 bg-slate-900 dark:bg-slate-50
                text-white dark:text-slate-900 rounded-full shadow-2xl
                flex items-center justify-center hover:scale-110 active:scale-95
