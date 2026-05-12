@@ -111,6 +111,7 @@ export class ProjectService {
     `${this.apiUrl}/getMaterialByprojectId/${projectId}`
   );
   
+  
 }
 requestAdditionalStock(payload: {
   material_id: number;
@@ -119,7 +120,14 @@ requestAdditionalStock(payload: {
   available_qty: number;
   project_id: string | number;
 }): Observable<ApiResponse<any>> {
-  return this.http.post<ApiResponse<any>>(`${this.apiUrl}/stock-requests`, payload);
+  return this.http.post<ApiResponse<any>>(`${this.apiUrl}/stock-request`, payload);
+}
+
+updateAdditionalStockRequest(id: number, payload: any) {
+  return this.http.put(
+    `${this.apiUrl}/stock-request/${id}`,
+    payload
+  );
 }
 }
 

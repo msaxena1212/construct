@@ -32,9 +32,10 @@ checklist: {
   stockIn: number;
   equipment: string;
   completed: boolean;
-    requestedQty?: number;   // original requested
-  shortage?: number;        // how much is pending
+  requestedQty?: number;  
+  shortage?: number;  
   pendingRequest?: boolean;
+  stock_request_id?: number;
 }[] = [];
 
 showSubTaskForm = false;
@@ -236,50 +237,91 @@ editSubTask(index: number) {
 }
 
 confirmStockRequest() {
+
   if (!this.stockDialogData) return;
 
   const { available, shortage, selectedMaterial } = this.stockDialogData;
 
-  // Add to checklist only if something is available
-  if (available > 0) {
-    const payload = {
-      title: this.newSubTask.title,
-      material_id: selectedMaterial.id,
-      itemName: selectedMaterial.name,
-      stockIn: available,
-      qty: available,
-      requestedQty: this.newSubTask.qty,
-      shortage: shortage,
-      pendingRequest: true,
-      equipment: this.newSubTask.equipment,
-      completed: false
+  const payload = {
+    title: this.newSubTask.title,
+    material_id: selectedMaterial.id,
+    itemName: selectedMaterial.name,
+    stockIn: available,
+    qty: available,
+    requestedQty: this.newSubTask.qty,
+    shortage,
+    pendingRequest: true,
+    equipment: this.newSubTask.equipment,
+    completed: false
+  };
+
+  // ================= EDIT =================
+
+  if (this.editingIndex !== null) {
+
+    const oldItem = this.checklist[this.editingIndex];
+
+    // UPDATE CHECKLIST
+    this.checklist[this.editingIndex] = {
+      ...payload,
+      stock_request_id: oldItem.stock_request_id
     };
 
-    if (this.editingIndex !== null) {
-      this.checklist[this.editingIndex] = payload;
-    } else {
-      this.checklist.push(payload);
-    }
+    // PUT API
+        if (!oldItem.stock_request_id) {
+        this.toast.error('Stock request id not found');
+        return;
+      }
+      this.projectService.updateAdditionalStockRequest(
+      oldItem.stock_request_id,
+      {
+        material_id: selectedMaterial.id,
+        task_title: this.newSubTask.title,
+        requested_qty: shortage,
+        available_qty: available,
+        project_id: this.projectId
+      }
+    ).subscribe({
+      next: () => {
+        this.toast.success('Stock request updated');
+      },
+      error: () => {
+        this.toast.error('Failed to update stock request');
+      }
+    });
+
   }
 
-  // Send request to site manager
-  this.projectService.requestAdditionalStock({
-    material_id: selectedMaterial.id,
-    task_title: this.newSubTask.title,
-    requested_qty: shortage,
-    available_qty: available,
-    project_id: this.projectId
-  }).subscribe({
-    next: () => {
-      this.toast.success(`Request sent to site manager for ${shortage} items`);
-      if (available > 0) {
-        this.toast.info(`${available} items allocated from current stock`);
-      }
-    },
-    error: () => this.toast.error('Failed to send stock request')
-  });
+  // ================= CREATE =================
 
-  // Close dialog and reset
+  else {
+
+    this.projectService.requestAdditionalStock({
+      material_id: selectedMaterial.id,
+      task_title: this.newSubTask.title,
+      requested_qty: shortage,
+      available_qty: available,
+      project_id: this.projectId
+    }).subscribe({
+
+      next: (res:any) => {
+
+        this.checklist.push({
+          ...payload,
+          stock_request_id: res.data.id
+        });
+
+        this.toast.success(`Request sent for ${shortage} items`);
+      },
+
+      error: () => {
+        this.toast.error('Failed to send stock request');
+      }
+
+    });
+
+  }
+
   this.showStockDialog = false;
   this.stockDialogData = null;
   this.resetSubTaskForm();
@@ -341,7 +383,6 @@ cancelStockRequest() {
         sub_tasks: this.checklist,
         dependencies: this.dependencies,
         assignees: formValue.assigneeId ? [Number(formValue.assigneeId)] : [],
-        // Convert startDate + duration to due_date for backend
         due_date: this.calculateDueDate(formValue.startDate, formValue.duration)
       };
 
