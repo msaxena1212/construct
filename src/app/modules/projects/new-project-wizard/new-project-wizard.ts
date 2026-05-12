@@ -186,9 +186,13 @@ export class NewProjectWizard implements OnInit {
       this.team.push(this.fb.group({
         user_id: [member.id],
         name: [member.firstname + ' ' + member.lastname],
+        firstname: [member.firstname],
+        lastname: [member.lastname],
         role: [member.role?.name || 'Technical Staff'],
-        avatar: [member.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop']
+        avatar: [member.avatar || null]
       }));
+    } else {
+      this.toastr.warning('Member already added');
     }
     this.showAssignDropdown = false;
   }
@@ -276,7 +280,7 @@ export class NewProjectWizard implements OnInit {
     };
 
     formData.append('data', JSON.stringify(payload));
-    
+
     if (this.thumbnailFile) {
       formData.append('thumbnail', this.thumbnailFile);
     }

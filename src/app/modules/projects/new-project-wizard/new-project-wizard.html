@@ -114,22 +114,27 @@
                 <div>
                     <div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <h3 class="text-2xl font-black text-slate-900 dark:text-slate-50 mb-1 tracking-tight">General Project Information</h3>
-                            <p class="text-sm text-slate-400 font-medium">Establish the identity and physical location of the project site.</p>
+                            <h3 class="text-2xl font-black text-slate-900 dark:text-slate-50 mb-1 tracking-tight">
+                                General Project Information</h3>
+                            <p class="text-sm text-slate-400 font-medium">Establish the identity and physical location
+                                of the project site.</p>
                         </div>
                         <!-- Thumbnail Upload -->
                         <div class="relative group shrink-0">
-                            <input type="file" #thumbInput class="hidden" (change)="onThumbnailSelected($event)" accept="image/*">
-                            <div (click)="thumbInput.click()" 
+                            <input type="file" #thumbInput class="hidden" (change)="onThumbnailSelected($event)"
+                                accept="image/*">
+                            <div (click)="thumbInput.click()"
                                 class="w-32 h-32 rounded-3xl bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all hover:border-blue-500 group-hover:shadow-xl shadow-slate-200/50 dark:shadow-none">
                                 @if (thumbnailPreview) {
-                                    <img [src]="thumbnailPreview" class="w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <mat-icon class="text-white">edit</mat-icon>
-                                    </div>
+                                <img [src]="thumbnailPreview" class="w-full h-full object-cover">
+                                <div
+                                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <mat-icon class="text-white">edit</mat-icon>
+                                </div>
                                 } @else {
-                                    <mat-icon class="text-slate-300 mb-1">add_photo_alternate</mat-icon>
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Add Thumbnail</span>
+                                <mat-icon class="text-slate-300 mb-1">add_photo_alternate</mat-icon>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Add
+                                    Thumbnail</span>
                                 }
                             </div>
                         </div>
@@ -204,8 +209,16 @@
                             @for (member of team.value; track i; let i = $index) {
                             <div
                                 class="flex items-center gap-5 p-5 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-3xl group relative transition-all hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none">
-                                <img [src]="member.avatar"
+
+                                @if (member.avatar) {
+                                <img [src]="serverUrl + member.avatar"
                                     class="w-14 h-14 rounded-2xl object-cover shadow-md border-2 border-white dark:border-slate-700" />
+                                } @else {
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-black text-xs uppercase">
+                                    {{ member.firstname.charAt(0) }}{{ member.lastname.charAt(0) }}
+                                </div>
+                                }
                                 <div class="flex-1">
                                     <p class="text-sm font-black text-slate-900 dark:text-slate-50 m-0">{{ member.name
                                         }}</p>
@@ -235,10 +248,15 @@
                                     @for (member of availableMembers; track member.id) {
                                     <div (click)="addMember(member)"
                                         class="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl cursor-pointer transition-all">
+                                        @if (member.avatar) {
+                                        <img [src]="serverUrl + member.avatar"
+                                            class="w-10 h-10 rounded-xl object-cover shadow-md border-2 border-white dark:border-slate-700" />
+                                        } @else {
                                         <div
                                             class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-black text-xs uppercase">
                                             {{ member.firstname.charAt(0) }}{{ member.lastname.charAt(0) }}
                                         </div>
+                                        }
                                         <div class="flex-1">
                                             <p class="text-sm font-black text-slate-900 dark:text-slate-50 m-0">{{
                                                 member.firstname }} {{ member.lastname }}</p>

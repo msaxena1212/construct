@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { IProject, IUser, IAuditEntry, IMilestone, MilestoneStatus } from '../../../shared/interfaces/project.interface';
 import { MatDialog } from '@angular/material/dialog';
 import { MilestoneFormDialog } from '../dialogs/milestone-form-dialog/milestone-form-dialog';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-project-detail',
@@ -33,6 +34,7 @@ export class ProjectDetail implements OnInit {
   auditFilter = 'All';
   auditFilterOptions = ['All', 'Project', 'Task', 'Milestone', 'Document', 'Safety', 'Budget', 'Team'];
   auditTrail: IAuditEntry[] = [];
+  serverUrl = environment.serverUrl;
 
   constructor(
     private route: ActivatedRoute,
