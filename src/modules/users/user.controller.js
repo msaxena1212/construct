@@ -13,6 +13,8 @@ class UserController {
     this.getInviteInfo = this.getInviteInfo.bind(this);
     this.getTeamUsers = this.getTeamUsers.bind(this);
     this.toggleUserStatus = this.toggleUserStatus.bind(this);
+    this.updateUser = this.updateUser.bind(this);
+    this.updateProfile = this.updateProfile.bind(this);
   }
 
   async registerCompany(req, res) {
@@ -56,6 +58,8 @@ class UserController {
         password: bcrypt.hashSync(password, 8),
         company_id,
         role_id: role.id,
+        isActive: true,
+        isInviteAccepted: true,
       });
 
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
@@ -263,6 +267,76 @@ class UserController {
       res.status(200).json({ message: `Team member ${isActive ? 'enabled' : 'disabled'} successfully.` });
     } catch (error) {
       res.status(500).json({ message: "Error toggling user status", error });
+    }
+  }
+
+  /**
+   * Update User Details (Admin Only)
+   */
+  async updateUser(req, res) {
+    try {
+      const company_id = req.user.company_id;
+      const { id } = req.params;
+      
+      const userData = req.body.data ? JSON.parse(req.body.data) : req.body;
+      const { firstname, lastname, email, role_id } = userData;
+
+      const user = await db.user.findOne({ where: { id, company_id } });
+      if (!user) {
+        return res.status(404).json({ message: "User not found or unauthorized." });
+      }
+
+      let avatarPath = user.avatar;
+      if (req.file) {
+        avatarPath = `/uploads/avatars/${req.file.filename}`;
+      }
+
+      await user.update({
+        firstname,
+        lastname,
+        email: email ? email.toLowerCase().trim() : user.email,
+        role_id,
+        avatar: avatarPath
+      });
+
+      res.status(200).json({ message: "User updated successfully.", data: user });
+    } catch (error) {
+      console.error("[UPDATE_USER_ERROR]", error);
+      res.status(500).json({ message: "Error updating user.", error: error.message });
+    }
+  }
+
+  /**
+   * Update Self Profile
+   */
+  async updateProfile(req, res) {
+    try {
+      const id = req.user.id;
+      const userData = req.body.data ? JSON.parse(req.body.data) : req.body;
+      const { firstname, lastname, email, mobile } = userData;
+
+      const user = await db.user.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      let avatarPath = user.avatar;
+      if (req.file) {
+        avatarPath = `/uploads/avatars/${req.file.filename}`;
+      }
+
+      await user.update({
+        firstname,
+        lastname,
+        email: email ? email.toLowerCase().trim() : user.email,
+        mobile,
+        avatar: avatarPath
+      });
+
+      res.status(200).json({ message: "Profile updated successfully.", data: user });
+    } catch (error) {
+      console.error("[UPDATE_PROFILE_ERROR]", error);
+      res.status(500).json({ message: "Error updating profile.", error: error.message });
     }
   }
 }

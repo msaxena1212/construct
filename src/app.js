@@ -12,7 +12,11 @@ const app = express();
 const db = require("./models");
 
 // table wise sycn
-// db.company.sync({alter:true});
+// db.sequelize.sync({ alter: true }).then(() => {
+//   console.log("Database synced successfully");
+// }).catch((err) => {
+//   console.error("Error syncing database", err);
+// });
 // db.user.sync({ alter: true });
 // db.role_permission.sync({alter:true});
 // db.project.sync({ alter: true });
@@ -25,8 +29,13 @@ const db = require("./models");
 // db.task_activity.sync({ alter: true });
 // db.task_attachment.sync({ alter: true });
 // db.user.sync({ alter: true });
-// db.labor.sync({ alter: true });
+// db.activity.sync({ alter: true });
+// db.material_master.sync({ alter: true });
 // db.material.sync({ alter: true });
+// db.material_history.sync({ alter: true });
+// db.equipment_master.sync({ alter: true });
+// db.equipment.sync({ alter: true });
+// db.equipment_history.sync({ alter: true });
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));

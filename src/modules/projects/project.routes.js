@@ -5,8 +5,11 @@ module.exports = (router) => {
   // Create Project (with milestones, team members, and file uploads)
   // 'blueprints' is the field name for multiple file uploads
   router.post(
-    "/projects", 
-    upload.array("blueprints", 10), 
+    "/projects",
+    upload.fields([
+      { name: 'thumbnail', maxCount: 1 },
+      { name: 'blueprints', maxCount: 10 }
+    ]),
     projectCtrl.createProject
   );
 
@@ -22,7 +25,7 @@ module.exports = (router) => {
   // --- Milestone Routes ---
   router.post("/projects/:projectId/milestones", projectCtrl.createMilestone);
   router.put("/projects/:projectId/milestones/:milestoneId", projectCtrl.updateMilestone);
-  
+
   // Upload project documents/media
   router.post(
     "/projects/:id/documents",
@@ -33,7 +36,10 @@ module.exports = (router) => {
   // Update existing project
   router.put(
     "/projects/:id",
-    upload.array("blueprints", 10),
+    upload.fields([
+      { name: 'thumbnail', maxCount: 1 },
+      { name: 'blueprints', maxCount: 10 }
+    ]),
     projectCtrl.updateProject
   );
 
@@ -57,8 +63,8 @@ module.exports = (router) => {
 
   // Attachments
   router.post(
-    "/tasks/:taskId/attachments", 
-    upload.array("attachments", 10), 
+    "/tasks/:taskId/attachments",
+    upload.array("attachments", 10),
     taskCtrl.uploadAttachment
   );
 
