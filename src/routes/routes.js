@@ -14,6 +14,8 @@ class Routes {
     app.use("/api/v1", router);
     require("../modules/material/routes/material_master.routes")(router);
     require("../modules/material/routes/material.routes")(router);
+    require("../modules/stock-requests/routes/stockRequestRoutes")(router);
+
     app.use("/api/v1", router); // Use router with /api/v1 prefix
 
     const authRouter = express.Router();
@@ -29,6 +31,7 @@ class Routes {
       "/api/v1/activities",
       require("../modules/vendors/vendors_activity_routes")
     );
+    
   }
 }
 

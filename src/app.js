@@ -32,7 +32,7 @@ const db = require("./models");
 // db.activity.sync({ alter: true });
 // db.material_master.sync({ alter: true });
 // db.material.sync({ alter: true });
-// db.material_history.sync({ alter: true });
+ //db.StockRequest.sync({ alter: true });
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));

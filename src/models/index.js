@@ -138,7 +138,7 @@ db.material_history.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor"
 
 db.project.hasMany(db.material_history, { foreignKey: "project_id", as: "material_history" });
 db.material_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
-
+db.StockRequest = require("../modules/stock-requests/model/stockRequestModel.js")(sequelize, Sequelize);
 // PROJECT MANAGEMENT END
 
 
