@@ -1,16 +1,13 @@
-// modules/vendors/vendors_controller.js
 const { Op } = require('sequelize');
 const db = require('../../models');
 
-const VendorModel   = db.vendors;
+const VendorModel = db.vendors;
 const ActivityModel = db.vendors_activity;
 
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
 
-/* =========================
-   GET ALL VENDORS
-========================= */
+
 const getAllVendors = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -26,8 +23,8 @@ const getAllVendors = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      count:   vendors.length,
-      data:    vendors,
+      count: vendors.length,
+      data: vendors,
     });
   } catch (err) {
     console.error('[getAllVendors]', err);
@@ -35,9 +32,7 @@ const getAllVendors = async (req, res) => {
   }
 };
 
-/* =========================
-   GET STATS
-========================= */
+
 const getStats = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -52,8 +47,8 @@ const getStats = async (req, res) => {
     const formatCurrency = (num) => {
       if (!num) return '₹0';
       if (num >= 10_000_000) return `₹${(num / 10_000_000).toFixed(1)}Cr`;
-      if (num >= 100_000)    return `₹${(num / 100_000).toFixed(1)}L`;
-      if (num >= 1_000)      return `₹${(num / 1_000).toFixed(1)}k`;
+      if (num >= 100_000) return `₹${(num / 100_000).toFixed(1)}L`;
+      if (num >= 1_000) return `₹${(num / 1_000).toFixed(1)}k`;
       return `₹${num}`;
     };
 
@@ -74,9 +69,7 @@ const getStats = async (req, res) => {
   }
 };
 
-/* =========================
-   GET VENDOR BY ID
-========================= */
+
 const getVendorById = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -96,9 +89,7 @@ const getVendorById = async (req, res) => {
   }
 };
 
-/* =========================
-   CREATE VENDOR
-========================= */
+
 const createVendor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -118,7 +109,6 @@ const createVendor = async (req, res) => {
       budgetAllocation, services,
     } = req.body;
 
-    // Required-field check
     const requiredFields = {
       vendorLegalName, spocName, spocPhone,
       officialEmail, officialPhone,
@@ -164,34 +154,34 @@ const createVendor = async (req, res) => {
 
     const newVendor = await VendorModel.create({
       company_id,
-      name:             vendorLegalName,
-      spoc_name:        spocName,
-      spoc_phone:       spocPhone,
-      official_email:   officialEmail,
-      official_phone:   officialPhone,
-      gst_no:           gstNo.toUpperCase(),
-      pan_card_no:      panCardNo.toUpperCase(),
+      name: vendorLegalName,
+      spoc_name: spocName,
+      spoc_phone: spocPhone,
+      official_email: officialEmail,
+      official_phone: officialPhone,
+      gst_no: gstNo.toUpperCase(),
+      pan_card_no: panCardNo.toUpperCase(),
       physical_address: physicalAddress,
       pincode,
       budget_allocation: budgetNum,
-      services:          servicesArray,
-      contract_file:     contractFile,
-      status:            'active',
-      compliance_score:  95,
+      services: servicesArray,
+      contract_file: contractFile,
+      status: 'active',
+      compliance_score: 95,
     });
 
     await ActivityModel.create({
       company_id,
-      icon:        'assign',
-      title:       'New Vendor Onboarded',
+      icon: 'assign',
+      title: 'New Vendor Onboarded',
       description: `${vendorLegalName} has been successfully onboarded.`,
-      time_label:  'JUST NOW',
+      time_label: 'JUST NOW',
     });
 
     return res.status(201).json({
       success: true,
       message: 'Vendor onboarded successfully',
-      data:    newVendor,
+      data: newVendor,
     });
   } catch (err) {
     console.error('[createVendor]', err);
@@ -207,9 +197,7 @@ const createVendor = async (req, res) => {
   }
 };
 
-/* =========================
-   UPDATE VENDOR
-========================= */
+
 const updateVendor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -234,7 +222,7 @@ const updateVendor = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Vendor updated successfully',
-      data:    vendor,
+      data: vendor,
     });
   } catch (err) {
     console.error('[updateVendor]', err);
@@ -242,9 +230,7 @@ const updateVendor = async (req, res) => {
   }
 };
 
-/* =========================
-   DELETE VENDOR
-========================= */
+
 const deleteVendor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -266,13 +252,11 @@ const deleteVendor = async (req, res) => {
   }
 };
 
-/* =========================
-   GET ACTIVITIES
-========================= */
+
 const getActivities = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
-    const limit      = Math.min(parseInt(req.query.limit) || 20, 100);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 
     const activities = await ActivityModel.findAll({
       where: { company_id },
@@ -283,21 +267,19 @@ const getActivities = async (req, res) => {
     const now = Date.now();
 
     const result = activities.map(activity => {
-      const data      = activity.toJSON();
-      const diffMs    = now - new Date(activity.createdAt).getTime();
-      const diffMins  = Math.floor(diffMs / 60_000);
-      const diffHrs   = Math.floor(diffMins / 60);
-      const diffDays  = Math.floor(diffHrs / 24);
+      const data = activity.toJSON();
+      const diffMs = now - new Date(activity.createdAt).getTime();
+      const diffMins = Math.floor(diffMs / 60_000);
+      const diffHrs = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHrs / 24);
 
       let time;
-      if (diffMins < 2)        time = 'JUST NOW';
-      else if (diffMins < 60)  time = `${diffMins} MINS AGO`;
-      else if (diffHrs < 24)   time = `${diffHrs} HOUR${diffHrs > 1 ? 'S' : ''} AGO`;
+      if (diffMins < 2) time = 'JUST NOW';
+      else if (diffMins < 60) time = `${diffMins} MINS AGO`;
+      else if (diffHrs < 24) time = `${diffHrs} HOUR${diffHrs > 1 ? 'S' : ''} AGO`;
       else if (diffDays === 1) time = 'YESTERDAY';
-      else if (diffDays < 7)   time = `${diffDays} DAYS AGO`;
+      else if (diffDays < 7) time = `${diffDays} DAYS AGO`;
       else {
-        // FIX: was returning stored time_label ("JUST NOW") for old records.
-        //      Now formats a real date for anything older than a week.
         time = new Date(activity.createdAt)
           .toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
           .toUpperCase();
@@ -308,8 +290,8 @@ const getActivities = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      count:   result.length,
-      data:    result,
+      count: result.length,
+      data: result,
     });
   } catch (err) {
     console.error('[getActivities]', err);
@@ -317,9 +299,7 @@ const getActivities = async (req, res) => {
   }
 };
 
-/* =========================
-   CREATE ACTIVITY
-========================= */
+
 const createActivity = async (req, res) => {
   try {
     const company_id = getCompanyId(req);

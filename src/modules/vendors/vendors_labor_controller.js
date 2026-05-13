@@ -1,46 +1,42 @@
-// modules/labor/controllers/labor_controller.js
 const db = require('../../models');
 
-// FIX: was db.vendor (singular) — model is registered as db.vendors
-const LaborModel  = db.labor;
+const LaborModel = db.vendors_labor;
 const VendorModel = db.vendors;
 
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
 
-// ─── Role / Skill display helpers ──────────────────────────────────────────
 const ROLE_LABEL = {
-  foreman:        'Foreman',
-  specialist:     'Specialist',
-  supervisor:     'Supervisor',
+  foreman: 'Foreman',
+  specialist: 'Specialist',
+  supervisor: 'Supervisor',
   safety_officer: 'Safety Officer',
-  worker:         'Worker',
-  operator:       'Operator',
+  worker: 'Worker',
+  operator: 'Operator',
 };
 
 const SKILL_LABEL = {
-  masonry:          'Masonry',
-  electrical:       'Electrical',
+  masonry: 'Masonry',
+  electrical: 'Electrical',
   structural_steel: 'Structural Steel',
-  plumbing:         'Plumbing',
-  hvac:             'HVAC',
-  carpentry:        'Carpentry',
-  painting:         'Painting',
-  other:            'Other',
+  plumbing: 'Plumbing',
+  hvac: 'HVAC',
+  carpentry: 'Carpentry',
+  painting: 'Painting',
+  other: 'Other',
 };
 
 const STATUS_COLOR = {
-  active:   'bg-blue-100 text-blue-700',
-  on_site:  'bg-green-100 text-green-700',
+  active: 'bg-blue-100 text-blue-700',
+  on_site: 'bg-green-100 text-green-700',
   off_duty: 'bg-amber-100 text-amber-700',
   inactive: 'bg-slate-100 text-slate-500',
 };
 
-// ─── GET all labor for a vendor ────────────────────────────────────────────
 const getLaborByVendor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
-    const vendor_id  = req.params.vendorId;
+    const vendor_id = req.params.vendorId;
 
     const vendor = await VendorModel.findOne({
       where: { id: vendor_id, company_id },
@@ -55,9 +51,9 @@ const getLaborByVendor = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
-    const total   = workers.length;
-    const onSite  = workers.filter(w => w.status === 'on_site').length;
-    const active  = workers.filter(w => ['active', 'on_site'].includes(w.status)).length;
+    const total = workers.length;
+    const onSite = workers.filter(w => w.status === 'on_site').length;
+    const active = workers.filter(w => ['active', 'on_site'].includes(w.status)).length;
 
     const skillMap = {};
     workers.forEach(w => {
@@ -74,27 +70,27 @@ const getLaborByVendor = async (req, res) => {
       : 0;
 
     const data = workers.map(w => ({
-      id:           w.id,
-      name:         w.name,
-      role:         ROLE_LABEL[w.role] || w.role,
-      roleRaw:      w.role,
-      skill:        SKILL_LABEL[w.skill] || w.skill,
-      skillRaw:     w.skill,
-      status:       w.status,
-      statusLabel:  w.status.replace('_', ' ').toUpperCase(),
-      statusColor:  STATUS_COLOR[w.status] || '',
-      phone:        w.phone,
-      daily_rate:   w.daily_rate,
+      id: w.id,
+      name: w.name,
+      role: ROLE_LABEL[w.role] || w.role,
+      roleRaw: w.role,
+      skill: SKILL_LABEL[w.skill] || w.skill,
+      skillRaw: w.skill,
+      status: w.status,
+      statusLabel: w.status.replace('_', ' ').toUpperCase(),
+      statusColor: STATUS_COLOR[w.status] || '',
+      phone: w.phone,
+      daily_rate: w.daily_rate,
       joining_date: w.joining_date,
       current_task: w.current_task,
-      vendor_id:    w.vendor_id,
+      vendor_id: w.vendor_id,
     }));
 
     return res.status(200).json({
       success: true,
-      count:   total,
+      count: total,
       stats: {
-        totalPersonnel:  total,
+        totalPersonnel: total,
         onSite,
         activePersonnel: active,
         skillCompliance: `${complianceScore}%`,
@@ -108,22 +104,21 @@ const getLaborByVendor = async (req, res) => {
   }
 };
 
-// ─── GET all labor for company (across all vendors) ────────────────────────
 const getAllLabor = async (req, res) => {
   try {
-    const company_id            = getCompanyId(req);
+    const company_id = getCompanyId(req);
     const { vendor_id, status, skill } = req.query;
 
     const where = { company_id };
     if (vendor_id) where.vendor_id = vendor_id;
-    if (status)    where.status    = status;
-    if (skill)     where.skill     = skill;
+    if (status) where.status = status;
+    if (skill) where.skill = skill;
 
     const workers = await LaborModel.findAll({
       where,
       include: [{
         model: VendorModel,
-        as:    'vendors',          // matches association alias in models/index.js
+        as: 'vendors',
         attributes: ['id', 'name'],
       }],
       order: [['createdAt', 'DESC']],
@@ -131,8 +126,8 @@ const getAllLabor = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      count:   workers.length,
-      data:    workers,
+      count: workers.length,
+      data: workers,
     });
   } catch (err) {
     console.error('[getAllLabor]', err);
@@ -140,7 +135,7 @@ const getAllLabor = async (req, res) => {
   }
 };
 
-// ─── GET single labor ──────────────────────────────────────────────────────
+
 const getLaborById = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -163,7 +158,7 @@ const getLaborById = async (req, res) => {
   }
 };
 
-// ─── CREATE labor ──────────────────────────────────────────────────────────
+
 const createLabor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -198,9 +193,9 @@ const createLabor = async (req, res) => {
       name,
       role,
       skill,
-      status:       status       || 'active',
-      phone:        phone        || null,
-      daily_rate:   parseFloat(daily_rate) || 0,
+      status: status || 'active',
+      phone: phone || null,
+      daily_rate: parseFloat(daily_rate) || 0,
       joining_date: joining_date || null,
       current_task: current_task || null,
     });
@@ -208,7 +203,7 @@ const createLabor = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Labor worker added successfully',
-      data:    worker,
+      data: worker,
     });
   } catch (err) {
     console.error('[createLabor]', err);
@@ -216,7 +211,7 @@ const createLabor = async (req, res) => {
   }
 };
 
-// ─── UPDATE labor ──────────────────────────────────────────────────────────
+
 const updateLabor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -232,7 +227,7 @@ const updateLabor = async (req, res) => {
       });
     }
 
-    // Prevent overwriting protected fields
+
     delete req.body.company_id;
     delete req.body.vendor_id;
 
@@ -241,7 +236,7 @@ const updateLabor = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Labor record updated',
-      data:    worker,
+      data: worker,
     });
   } catch (err) {
     console.error('[updateLabor]', err);
@@ -249,7 +244,7 @@ const updateLabor = async (req, res) => {
   }
 };
 
-// ─── DELETE labor ──────────────────────────────────────────────────────────
+
 const deleteLabor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);

@@ -1,5 +1,3 @@
-// modules/vendors/models/vendors_model.js
-// ⚠️  id changed from UUID → INTEGER AUTO_INCREMENT as requested
 module.exports = (sequelize, Sequelize) => {
 
   const Vendor = sequelize.define("VENDORS", {

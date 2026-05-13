@@ -12,69 +12,69 @@ class equipment_masterController {
     /**
      * Create equipment_master
      */
-async createequipment_Master(req, res) {
-    try {
-        const {
-            name,
-            sku,
-            category,
-            stockAvailable,
-            status,
-        } = req.body;
+    async createequipment_Master(req, res) {
+        try {
+            const {
+                name,
+                sku,
+                category,
+                stockAvailable,
+                status,
+            } = req.body;
 
-        const company_id = req.user.company_id;
+            const company_id = req.user.company_id;
 
-        //  Validation
-        if (!sku || !company_id) {
-            return res.status(400).json({ message: "sku and company_id are required." });
-        }
-
-        if (!name) {
-            return res.status(400).json({ message: "name is required." });
-        }
-
-        if (!category) {
-            return res.status(400).json({ message: "category is required." });
-        }
-
-        //  Duplicate SKU Check
-        const existingequipment = await db.equipment_master.findOne({
-            where: { 
-                sku: sku,
-                company_id: company_id,
-                isDeleted: false
+            //  Validation
+            if (!sku || !company_id) {
+                return res.status(400).json({ message: "sku and company_id are required." });
             }
-        });
 
-        if (existingequipment) {
-            return res.status(409).json({
-                message: "equipment with this SKU already exists."
+            if (!name) {
+                return res.status(400).json({ message: "name is required." });
+            }
+
+            if (!category) {
+                return res.status(400).json({ message: "category is required." });
+            }
+
+            //  Duplicate SKU Check
+            const existingequipment = await db.equipment_master.findOne({
+                where: {
+                    sku: sku,
+                    company_id: company_id,
+                    isDeleted: false
+                }
+            });
+
+            if (existingequipment) {
+                return res.status(409).json({
+                    message: "equipment with this SKU already exists."
+                });
+            }
+
+            //  Create New equipment
+            const equipment_Master = await db.equipment_master.create({
+                name,
+                sku,
+                category,
+                stockAvailable,
+                status,
+                company_id
+            });
+
+            res.status(201).json({
+                message: "equipment_Master created successfully.",
+                data: equipment_Master
+            });
+
+        } catch (error) {
+            console.error("[CREATE_equipment_master_ERROR]", error);
+            res.status(500).json({
+                message: "Error creating equipment_master.",
+                error: error.message
             });
         }
-
-        //  Create New equipment
-        const equipment_Master = await db.equipment_master.create({
-            name,
-            sku,
-            category,
-            stockAvailable,
-            status,
-            company_id
-        });
-
-        res.status(201).json({
-            message: "equipment_Master created successfully.",
-            data: equipment_Master
-        });
-
-    } catch (error) {
-        console.error("[CREATE_equipment_master_ERROR]", error);
-        res.status(500).json({
-            message: "Error creating equipment_master.",
-            error: error.message
-        });
     }
-}
 
     /**
      * Get All equipment_masters
