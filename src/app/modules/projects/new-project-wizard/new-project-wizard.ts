@@ -4,6 +4,8 @@ import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IProject, ITeam, IUser } from '../../../shared/interfaces/project.interface';
+import { Location } from '@angular/common';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-new-project-wizard',
@@ -19,23 +21,28 @@ export class NewProjectWizard implements OnInit {
   loading = false;
   showAssignDropdown = false;
   newMilestoneName = '';
+  thumbnailFile: File | null = null;
+  thumbnailPreview: string | null = null;
 
   editMode = false;
   projectId: string | null = null;
   existingDocuments: any[] = [];
+  serverUrl = environment.serverUrl;
 
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
     private toastr: ToastrService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private location: Location
   ) {
     this.projectForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       type: ['Commercial Renovation', Validators.required],
       completionDate: ['', Validators.required],
       address: ['', Validators.required],
+      thumbnail: [null],
       team: this.fb.array([]),
       budgetTotal: [null, [Validators.required, Validators.min(1000)]],
       milestones: this.fb.array([]),
@@ -75,8 +82,19 @@ export class NewProjectWizard implements OnInit {
           name: p.name,
           type: p.type || 'Commercial Renovation',
           completionDate: p.completion_date?.split('T')[0],
+          address: p.address,
           budgetTotal: p.budget_total
         });
+
+        if (p.thumbnail) {
+          if (p.thumbnail.startsWith('http')) {
+            this.thumbnailPreview = p.thumbnail;
+          } else {
+            const baseUrl = this.serverUrl.endsWith('/') ? this.serverUrl.slice(0, -1) : this.serverUrl;
+            const thumbPath = p.thumbnail.startsWith('/') ? p.thumbnail : `/${p.thumbnail}`;
+            this.thumbnailPreview = `${baseUrl}${thumbPath}`;
+          }
+        }
 
         // Patch Team
         this.team.clear();
@@ -149,7 +167,7 @@ export class NewProjectWizard implements OnInit {
   isStepValid(step: number): boolean {
     switch (step) {
       case 1:
-        return this.f['name'].valid && this.f['type'].valid && this.f['completionDate'].valid;
+        return this.f['name'].valid && this.f['type'].valid && this.f['completionDate'].valid && this.f['address'].valid;
       case 2:
         return this.team.length > 0;
       case 3:
@@ -168,9 +186,13 @@ export class NewProjectWizard implements OnInit {
       this.team.push(this.fb.group({
         user_id: [member.id],
         name: [member.firstname + ' ' + member.lastname],
+        firstname: [member.firstname],
+        lastname: [member.lastname],
         role: [member.role?.name || 'Technical Staff'],
-        avatar: [member.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop']
+        avatar: [member.avatar || null]
       }));
+    } else {
+      this.toastr.warning('Member already added');
     }
     this.showAssignDropdown = false;
   }
@@ -201,6 +223,19 @@ export class NewProjectWizard implements OnInit {
 
   removeMilestone(index: number) {
     this.milestones.removeAt(index);
+  }
+
+  // --- Thumbnail ---
+  onThumbnailSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.thumbnailFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.thumbnailPreview = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   // --- Step 4: Documents ---
@@ -245,6 +280,11 @@ export class NewProjectWizard implements OnInit {
     };
 
     formData.append('data', JSON.stringify(payload));
+
+    if (this.thumbnailFile) {
+      formData.append('thumbnail', this.thumbnailFile);
+    }
+
     this.selectedFiles.forEach((file) => {
       formData.append('blueprints', file);
     });
@@ -264,5 +304,9 @@ export class NewProjectWizard implements OnInit {
         this.toastr.error(err.error?.message || 'Error saving project');
       }
     });
+  }
+
+  cancel() {
+    this.location.back();
   }
 }

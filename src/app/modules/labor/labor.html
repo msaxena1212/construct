@@ -1,0 +1,287 @@
+<div class="max-w-full mx-auto p-4 md:p-8 animate-in fade-in duration-700">
+
+    <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-12">
+        <div>
+            <p class="text-indigo-600 font-black tracking-[0.3em] uppercase text-[10px] mb-2">Workforce Intelligence</p>
+            <h1
+                class="text-2xl md:text-4xl font-black text-slate-900 dark:text-slate-50 tracking-tighter leading-none mb-4 uppercase">
+                Labor Efficiency.
+            </h1>
+            <p class="text-slate-500 dark:text-slate-400 max-w-xl text-lg font-medium leading-relaxed">
+                Real-time velocity tracking, contractor audits, and skill-gap analysis across all active infrastructure
+                nodes.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full lg:w-auto">
+            <div class="glass-card p-6 rounded-[2rem] border border-white/40 dark:border-slate-800/50 shadow-xl">
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Active Personnel</p>
+                <p class="text-3xl font-black text-slate-900 dark:text-slate-50">{{ stats?.totalPersonnel || 0 }}</p>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem] border border-white/40 dark:border-slate-800/50 shadow-xl">
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Skill Compliance</p>
+                <p class="text-3xl font-black text-emerald-600">{{ stats?.skillCompliance || 0 }}%</p>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem] border border-white/40 dark:border-slate-800/50 shadow-xl">
+                <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Active Crews</p>
+                <p class="text-3xl font-black text-slate-900 dark:text-slate-50">{{ stats?.activeCrews || 0 }}</p>
+            </div>
+            <div
+                class="glass-card p-6 rounded-[2rem] border border-white/40 dark:border-slate-800/50 shadow-xl border-l-4 border-l-amber-500">
+                <p class="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-1">Overtime Alerts</p>
+                <p class="text-3xl font-black text-slate-900 dark:text-slate-50">{{ stats?.overtimeAlerts || 0 }}</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 mb-12">
+
+        <div class="xl:col-span-8 space-y-8">
+            <div
+                class="glass-card rounded-[2.5rem] border border-white/40 dark:border-slate-800/50 shadow-2xl overflow-hidden">
+                <div
+                    class="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white/30 dark:bg-slate-900/30">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Contractor
+                            Performance Vault</h2>
+                        <p class="text-sm text-slate-500 font-medium italic mt-0.5">Auditing efficacy and adherence
+                            across primary subcontractors.</p>
+                    </div>
+                    <button
+                        class="px-6 py-3 bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 font-black rounded-xl text-xs hover:scale-105 transition-all">
+                        Full Audit Report
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/50 dark:bg-slate-900/50 text-slate-400">
+                                <th class="px-8 py-5 text-[10px] uppercase font-black tracking-widest">Subcontractor
+                                </th>
+                                <th class="px-6 py-5 text-[10px] uppercase font-black tracking-widest text-center">
+                                    Efficiency</th>
+                                <th class="px-6 py-5 text-[10px] uppercase font-black tracking-widest text-center">
+                                    Safety SPI</th>
+                                <th class="px-6 py-5 text-[10px] uppercase font-black tracking-widest text-center">
+                                    Retention</th>
+                                <th class="px-6 py-5 text-[10px] uppercase font-black tracking-widest text-center">
+                                    Schedule</th>
+                                <th class="px-8 py-5 text-[10px] uppercase font-black tracking-widest text-right">Trend
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                            @for (c of contractors; track c.id) {
+                            <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-all group">
+                                <td class="px-8 py-5">
+                                    <div class="flex items-center gap-4">
+                                        <img [src]="c.logo"
+                                            class="w-10 h-10 rounded-xl bg-slate-100 p-1 object-contain shadow-sm">
+                                        <div>
+                                            <p class="text-sm font-black text-slate-900 dark:text-slate-50">{{ c.name }}
+                                            </p>
+                                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{{
+                                                c.personnel }} Personnel • {{ c.tasks }} Tasks</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <span [class]="getEfficiencyColor(c.efficiency)"
+                                        class="px-3 py-1 rounded-lg text-[10px] font-black border">
+                                        {{ c.efficiency }}%
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <p class="text-sm font-black text-slate-700 dark:text-slate-300">{{ c.safetyScore }}
+                                    </p>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <p class="text-sm font-black text-slate-700 dark:text-slate-300">{{ c.retentionRate
+                                        }}%</p>
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <div
+                                            class="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div class="h-full bg-indigo-500" [style.width.%]="c.adherenceToSchedule">
+                                            </div>
+                                        </div>
+                                        <span class="text-[9px] font-black text-slate-400">{{ c.adherenceToSchedule
+                                            }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-8 py-5 text-right">
+                                    <span class="material-symbols-outlined"
+                                        [ngClass]="c.trend === 'up' ? 'text-emerald-500' : (c.trend === 'down' ? 'text-rose-500' : 'text-slate-300')">
+                                        {{ c.trend === 'up' ? 'trending_up' : (c.trend === 'down' ? 'trending_down' :
+                                        'horizontal_rule') }}
+                                    </span>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div
+                class="glass-card rounded-[2.5rem] p-8 border border-white/40 dark:border-slate-800/50 shadow-2xl relative overflow-hidden">
+                <div class="flex justify-between items-start mb-10">
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Workforce
+                            Productivity Heatmap</h3>
+                        <p class="text-sm text-slate-500 font-medium">Task completion density per day interval across
+                            all zones.</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="flex gap-1">
+                            @for (i of [1,2,3,4,5]; track i) {
+                            <div class="w-3 h-3 rounded-[2px]" [class]="'bg-indigo-' + (i * 100 + 400)"></div>
+                            }
+                        </div>
+                        <span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Intensity</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-4">
+                    @for (row of heatmap; track $index) {
+                    @for (val of row; track $index) {
+                    <div
+                        [class]="'aspect-[2/1] rounded-2xl transition-all hover:scale-105 cursor-help shadow-sm ' + (val >= 4 ? 'bg-indigo-700' : (val === 3 ? 'bg-indigo-500' : (val === 2 ? 'bg-indigo-300' : (val === 1 ? 'bg-indigo-100' : 'bg-slate-50 dark:bg-slate-800/50'))))">
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="xl:col-span-4 space-y-8">
+
+            <div class="glass-card rounded-[2.5rem] p-8 border border-white/40 dark:border-slate-800/50 shadow-2xl">
+                <h3 class="text-xl font-black text-slate-900 dark:text-slate-50 tracking-tight mb-8">Skills Composition
+                </h3>
+                <div class="space-y-6">
+                    @for (skill of stats?.skillsDistribution; track skill.name) {
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">{{ skill.name
+                                }}</span>
+                            <span class="text-xs font-black text-slate-900 dark:text-slate-50">{{ skill.count }}
+                                Personnel</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-1000"
+                                [style.width.%]="(skill.count / (stats?.totalPersonnel || 1)) * 100 * 3"
+                                [style.background-color]="skill.color"></div>
+                        </div>
+                    </div>
+                    }
+                </div>
+                <div class="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <div
+                        class="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/30">
+                        <span class="material-symbols-outlined text-indigo-600">psychiatry</span>
+                        <p class="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 leading-snug">System
+                            indicates a <span class="font-black underline">Structural Lead deficiency</span> for the
+                            South Wing expansion phase starting next week.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="glass-card rounded-[2.5rem] p-8 border border-white/40 dark:border-slate-800/50 shadow-2xl bg-slate-900 text-white">
+                <h3 class="text-xl font-black tracking-tight mb-8">Financial ROI (EV vs AC)</h3>
+                <div class="space-y-8">
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Earned
+                                Value</span>
+                            <span class="text-lg font-black text-emerald-400">${{ stats?.financials?.earnedValue |
+                                number }}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-400" style="width: 84%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Actual
+                                Cost</span>
+                            <span class="text-lg font-black text-rose-400">${{ stats?.financials?.actualCost | number
+                                }}</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div class="h-full bg-rose-400" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-white/5 rounded-3xl border border-white/10 text-center">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Cost
+                            Performance Index (CPI)</p>
+                        <p class="text-4xl font-black text-rose-500 tracking-tighter">{{ stats?.financials?.cpi }}</p>
+                        <div class="mt-4 flex items-center justify-center gap-2 text-[10px] font-bold text-rose-400">
+                            <span class="material-symbols-outlined text-sm">warning</span>
+                            Projected Budget Overrun in Phase 05
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="mt-20">
+        <div class="flex items-center gap-6 mb-12">
+            <h2 class="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Active Pulse Activity</h2>
+            <div class="h-px flex-1 bg-slate-100 dark:bg-slate-800"></div>
+            <div class="flex gap-2">
+                <span
+                    class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">Live</span>
+                <div class="w-2 h-2 rounded-full bg-indigo-500 animate-ping self-center"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4">
+            @for (worker of filteredShiftActivity; track worker.name) {
+            <div
+                class="glass-card p-6 rounded-3xl border border-white/40 dark:border-slate-800/50 shadow-xl flex flex-col md:flex-row items-center gap-8 group hover:border-indigo-200 transition-all">
+                <div class="flex items-center gap-4 min-w-[240px]">
+                    <img [src]="worker.avatar"
+                        class="w-14 h-14 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                    <div>
+                        <p class="text font-black text-slate-900 dark:text-slate-50">{{ worker.name }}</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest">{{ worker.role }}</p>
+                    </div>
+                </div>
+
+                <div class="flex-1 w-full relative h-10 px-4">
+                    <div
+                        class="absolute inset-0 top-1/2 -translate-y-1/2 h-2 bg-slate-50 dark:bg-slate-800/50 rounded-full">
+                    </div>
+                    @for (act of worker.activities; track act.label) {
+                    <div [class]="'absolute top-1/2 -translate-y-1/2 h-8 rounded-xl border-2 flex items-center px-4 transition-all hover:scale-105 cursor-pointer ' + (act.type === 'primary' ? 'bg-indigo-600 border-indigo-200 text-white shadow-lg' : (act.type === 'secondary' ? 'bg-amber-100 border-amber-200 text-amber-700' : 'bg-slate-900 border-slate-700 text-white'))"
+                        [style.left]="act.left" [style.width]="act.width">
+                        <span class="text-[9px] font-black uppercase tracking-widest truncate">{{ act.label }}</span>
+                    </div>
+                    }
+                </div>
+
+                <div class="min-w-[120px] text-right">
+                    <div [class]="worker.statusClass"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
+                        <div class="w-2 h-2 rounded-full bg-current animate-pulse"></div>
+                        {{ worker.status }}
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </section>
+</div>
+
+<button
+    class="fixed bottom-10 right-10 w-16 h-16 bg-slate-900 dark:bg-slate-50 text-white dark:text-slate-900 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+    <span class="material-symbols-outlined text-3xl">add_chart</span>
+    <span
+        class="absolute right-full mr-6 py-3 px-5 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-xl">Manual
+        Entry</span>
+</button>

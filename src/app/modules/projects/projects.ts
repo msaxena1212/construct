@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ProjectService } from './services/project-service';
 import { IProject, IUser, MilestoneStatus } from '../../shared/interfaces/project.interface';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-projects',
@@ -15,6 +16,7 @@ export class Projects implements OnInit {
 
   availableTeamMembers: string[] = ['All Members'];
   selectedMember = 'All Members';
+  serverUrl = environment.serverUrl;
 
   constructor(private projectService: ProjectService) { }
 
@@ -66,5 +68,14 @@ export class Projects implements OnInit {
       default:
         return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
     }
+  }
+
+  getThumbnailUrl(thumbnail: string | null | undefined): string {
+    if (!thumbnail) return 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=800&auto=format&fit=crop';
+    if (thumbnail.startsWith('http')) return thumbnail;
+    
+    const baseUrl = this.serverUrl.endsWith('/') ? this.serverUrl.slice(0, -1) : this.serverUrl;
+    const thumbPath = thumbnail.startsWith('/') ? thumbnail : `/${thumbnail}`;
+    return `${baseUrl}${thumbPath}`;
   }
 }

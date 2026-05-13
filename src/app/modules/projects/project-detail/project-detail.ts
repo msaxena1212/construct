@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { IProject, IUser, IAuditEntry, IMilestone, MilestoneStatus } from '../../../shared/interfaces/project.interface';
 import { MatDialog } from '@angular/material/dialog';
 import { MilestoneFormDialog } from '../dialogs/milestone-form-dialog/milestone-form-dialog';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-project-detail',
@@ -33,6 +34,7 @@ export class ProjectDetail implements OnInit {
   auditFilter = 'All';
   auditFilterOptions = ['All', 'Project', 'Task', 'Milestone', 'Document', 'Safety', 'Budget', 'Team'];
   auditTrail: IAuditEntry[] = [];
+  serverUrl = environment.serverUrl;
 
   constructor(
     private route: ActivatedRoute,
@@ -173,7 +175,8 @@ export class ProjectDetail implements OnInit {
       disableClose: false,
       height: 'auto',
       data: {
-        project: this.project
+        project: this.project,
+        title: 'Add Milestone'
       }
     });
 
@@ -189,7 +192,8 @@ export class ProjectDetail implements OnInit {
       height: 'auto',
       data: {
         project: this.project,
-        milestone: ms
+        milestone: ms,
+        title: 'Edit Milestone'
       }
     });
 
@@ -209,6 +213,7 @@ export class ProjectDetail implements OnInit {
         project: this.project,
         milestone: sm,
         parent_id: msId,
+        title: 'Edit Sub Milestone'
       }
     });
 
@@ -219,10 +224,6 @@ export class ProjectDetail implements OnInit {
     });
   }
 
-  openLinkSubProjectModal(ms: IMilestone) {
-
-  }
-
   openAddSubMilestoneModal(msId: number) {
     const dialogRef = this.dialog.open(MilestoneFormDialog, {
       width: '500px',
@@ -231,6 +232,7 @@ export class ProjectDetail implements OnInit {
       data: {
         project: this.project,
         parent_id: msId,
+        title: 'Add Sub Milestone'
       }
     });
 
