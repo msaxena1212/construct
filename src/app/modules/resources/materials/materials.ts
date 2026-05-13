@@ -181,9 +181,10 @@ updatePagination() {
   }
 
   getvendor(vendorId: any) {
-    console.log(vendorId.target.value, 'sdzfdsfds');
-    const vendor = this.vendors.find(v => v.id === vendorId.target.value);
+    console.log(vendorId.target.value,this.vendors, 'sdzfdsfds');
+    const vendor = this.vendors.find((v:any) => v.id == vendorId.target.value);
     this.newMaterial.vendor_name = vendor?.name || '';
+    console.log(vendor, 'vendor');
     this.newMaterial.vendor_id = vendorId.target.value || '';
   }
 
