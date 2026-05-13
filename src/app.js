@@ -36,6 +36,7 @@ const db = require("./models");
 // db.equipment_master.sync({ alter: true });
 // db.equipment.sync({ alter: true });
 // db.equipment_history.sync({ alter: true });
+// db.vendors_labor.sync({ alter: true });
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));

@@ -45,9 +45,9 @@ db.task_activity = require("../modules/projects/models/task-activity.model.js")(
 db.project_task_assignee = require("../modules/projects/models/task-assignee.model.js")(sequelize, Sequelize);
 db.project_sub_task = require("../modules/projects/models/sub-task.model.js")(sequelize, Sequelize);
 db.project_task_dependency = require("../modules/projects/models/task-dependency.model.js")(sequelize, Sequelize);
-db.vendor = require("../modules/vendors/models/vendors_model.js")(sequelize, Sequelize);
-db.activity = require("../modules/vendors/models/vendors_activity_model.js")(sequelize, Sequelize);
-
+db.vendors = require("../modules/vendors/models/vendors_model.js")(sequelize, Sequelize);
+db.vendors_activity = require("../modules/vendors/models/vendors_activity_model.js")(sequelize, Sequelize);
+db.vendors_labor = require("../modules/vendors/models/vendors_labor_model.js")(sequelize, Sequelize);
 
 //Material
 db.material_master = require("../modules/material/models/material_master.model.js")(sequelize, Sequelize);
@@ -115,10 +115,10 @@ db.project_task.hasMany(db.project_task_dependency, { foreignKey: "task_id", as:
 db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "task_id" });
 db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "predecessor_id", as: "predecessor" });
 
-db.company.hasMany(db.vendor, { foreignKey: "company_id", as: "vendor" });
-db.vendor.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
-db.company.hasMany(db.activity, { foreignKey: "company_id", as: "activity" });
-db.activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+db.company.hasMany(db.vendors, { foreignKey: "company_id", as: "vendors" });
+db.vendors.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+db.company.hasMany(db.vendors_activity, { foreignKey: "company_id", as: "vendors_activity" });
+db.vendors_activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
 db.company.hasMany(db.material_master, { foreignKey: "company_id", as: "material_master" });
 db.material_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -129,8 +129,8 @@ db.material.belongsTo(db.material_master, { foreignKey: "material_master_id", as
 db.company.hasMany(db.material, { foreignKey: "company_id", as: "material" });
 db.material.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
-db.vendor.hasMany(db.material, { foreignKey: "vendor_id", as: "material" });
-db.material.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+db.vendors.hasMany(db.material, { foreignKey: "vendor_id", as: "material" });
+db.material.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
 
 db.project.hasMany(db.material, { foreignKey: "project_id", as: "material" });
 db.material.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
@@ -144,8 +144,8 @@ db.material_history.belongsTo(db.material, { foreignKey: "material_id", as: "mat
 db.company.hasMany(db.material_history, { foreignKey: "company_id", as: "material_history" });
 db.material_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
-db.vendor.hasMany(db.material_history, { foreignKey: "vendor_id", as: "material_history" });
-db.material_history.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+db.vendors.hasMany(db.material_history, { foreignKey: "vendor_id", as: "material_history" });
+db.material_history.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
 
 db.project.hasMany(db.material_history, { foreignKey: "project_id", as: "material_history" });
 db.material_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
@@ -160,8 +160,8 @@ db.equipment.belongsTo(db.equipment_master, { foreignKey: "equipment_master_id",
 db.company.hasMany(db.equipment, { foreignKey: "company_id", as: "equipment" });
 db.equipment.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
-db.vendor.hasMany(db.equipment, { foreignKey: "vendor_id", as: "equipment" });
-db.equipment.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+db.vendors.hasMany(db.equipment, { foreignKey: "vendor_id", as: "equipment" });
+db.equipment.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
 
 db.project.hasMany(db.equipment, { foreignKey: "project_id", as: "equipment" });
 db.equipment.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
@@ -175,11 +175,32 @@ db.equipment_history.belongsTo(db.equipment, { foreignKey: "equipment_id", as: "
 db.company.hasMany(db.equipment_history, { foreignKey: "company_id", as: "equipment_history" });
 db.equipment_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
-db.vendor.hasMany(db.equipment_history, { foreignKey: "vendor_id", as: "equipment_history" });
-db.equipment_history.belongsTo(db.vendor, { foreignKey: "vendor_id", as: "vendor" });
+db.vendors.hasMany(db.equipment_history, { foreignKey: "vendor_id", as: "equipment_history" });
+db.equipment_history.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
 
 db.project.hasMany(db.equipment_history, { foreignKey: "project_id", as: "equipment_history" });
 db.equipment_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+// For Vendors_labor]
+db.company.hasMany(db.vendors_labor, {
+  foreignKey: 'company_id',
+  as: 'vendors_labor'
+});
+
+db.vendors_labor.belongsTo(db.company, {
+  foreignKey: 'company_id',
+  as: 'company'
+});
+
+db.vendors.hasMany(db.vendors_labor, {
+  foreignKey: 'vendor_id',
+  as: 'vendors_labor'
+});
+
+db.vendors_labor.belongsTo(db.vendors, {
+  foreignKey: 'vendor_id',
+  as: 'vendor'
+});
 
 // PROJECT MANAGEMENT END
 // ── LABOR associations ──────────────────────────────────────
@@ -187,8 +208,8 @@ db.equipment_history.belongsTo(db.project, { foreignKey: "project_id", as: "proj
 db.company.hasMany(db.labor, { foreignKey: 'company_id', as: 'laborWorkers' });
 db.labor.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
 
-db.vendor.hasMany(db.labor, { foreignKey: 'vendor_id', as: 'laborWorkers' });
-db.labor.belongsTo(db.vendor, { foreignKey: 'vendor_id', as: 'vendor' });
+db.vendors.hasMany(db.labor, { foreignKey: 'vendor_id', as: 'laborWorkers' });
+db.labor.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendors' });
 
 
 
