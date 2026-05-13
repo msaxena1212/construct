@@ -1,6 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
 
-    const Vendor = sequelize.define("VENDOR", {
+    const Vendor = sequelize.define("VENDORS", {
         id: {
             type: Sequelize.UUID,
             defaultValue: Sequelize.UUIDV4,
