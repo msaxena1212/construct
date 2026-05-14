@@ -5,9 +5,10 @@ import { ResourcesRoutingModule } from './resources-routing-module';
 import { Materials } from './materials/materials';
 import { Contracts } from './contracts/contracts';
 import { FormsModule } from '@angular/forms';
+import { EquipmentInventory } from './equipment-inventory/equipment-inventory';
 
 @NgModule({
-  declarations: [Materials, Contracts],
-  imports: [CommonModule, ResourcesRoutingModule,FormsModule],
+  declarations: [Materials, Contracts, EquipmentInventory],
+  imports: [CommonModule, ResourcesRoutingModule, FormsModule],
 })
 export class ResourcesModule {}
