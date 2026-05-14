@@ -201,6 +201,16 @@ db.vendors_labor.belongsTo(db.vendors, {
   foreignKey: 'vendor_id',
   as: 'vendor'
 });
+// Role ↔ Vendors Labor
+db.role.hasMany(db.vendors_labor, {
+  foreignKey: "role_id",
+  as: "labor_workers"
+});
+
+db.vendors_labor.belongsTo(db.role, {
+  foreignKey: "role_id",
+  as: "role"
+});
 
 // PROJECT MANAGEMENT END
 // ── LABOR associations ──────────────────────────────────────

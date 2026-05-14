@@ -16,23 +16,14 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: false,
     },
+    role_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+    },
 
     name: {
       type: Sequelize.STRING(255),
       allowNull: false,
-    },
-
-    role: {
-      type: Sequelize.ENUM(
-        "foreman",
-        "specialist",
-        "supervisor",
-        "safety_officer",
-        "worker",
-        "operator"
-      ),
-      allowNull: false,
-      defaultValue: "worker",
     },
 
     skill: {
