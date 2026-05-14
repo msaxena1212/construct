@@ -53,15 +53,40 @@ export class Materials {
   MaterialMaster: any;
   projects: any[] = [];
 
+  newVendor: any = {
+    name: '',
+    email: '',
+    phone: '',
+    budget: '',
+    services: '',
+    spoc: {
+      name: '',
+      phone: ''
+    },
+    kyc: {
+      gst: '',
+      pan: ''
+    },
+    address: {
+      street: '',
+      pincode: ''
+    }
+  };
+
+  errorMsg = '';
+  contractFile: any = null;
+  isSaving = false;
+  showAddVendorModal = false;
+
   ngOnInit() {
     this.materialService.loadMaterials();
 
     this.materialService.materials$.subscribe(m => {
       this.materials = m;
-       this.page = 1; // 🔥 reset page (important)
-       this.updatePagination(); // ✅ yahi sahi jagah hai
+      this.page = 1; // 🔥 reset page (important)
+      this.updatePagination(); // ✅ yahi sahi jagah hai
     });
-//  this.materialService.materials$.subscribe(m => this.materials = m);
+    //  this.materialService.materials$.subscribe(m => this.materials = m);
     this.MaterialMasterService.loadMaterials();
     this.loadProjects();
 
@@ -69,9 +94,7 @@ export class Materials {
       this.MaterialMaster = m;
     });
 
-    this.vendorService.vendors$.subscribe(v => {
-      this.vendors = v;
-    });
+    this.getVendors();
   }
 
   loadProjects() {
@@ -87,15 +110,21 @@ export class Materials {
   }
 
 
-updatePagination() {
+  changeTab(tab: string) {
+    this.selectedTab = tab;
+    this.page = 1; // optional reset page
+    this.updatePagination();
+  }
 
-  const start = (this.page - 1) * this.pageSize;
-  const end = start + this.pageSize;
+  updatePagination() {
 
-  this.paginatedMaterials =
-    this.filteredMaterials.slice(start, end);
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
 
-}
+    this.paginatedMaterials =
+      this.filteredMaterials.slice(start, end);
+
+  }
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -129,21 +158,29 @@ updatePagination() {
   }
 
   get filteredMaterials() {
-    let filtered = this.materials;
-    
-    if (this.selectedTab === 'Low Stock') {
-      filtered = filtered.filter(m => m.status === 'ACTIVE' || m.stockIn < 20);
-    } else if (this.selectedTab !== 'All Materials') {
-      filtered = filtered.filter(m => m.category.toLowerCase() === this.selectedTab.toLowerCase());
-    }
 
-    if (this.selectedMember !== 'All Members') {
-      // In a real app, materials would have an owner or assignee. 
-      // For this demo, we'll just simulate by filtering none or all.
+    let filtered = [...this.materials];
+
+    if (this.selectedTab === 'Low Stock') {
+
+      filtered = filtered.filter(
+        m => m.stockIn < 20
+      );
+
+    } else if (this.selectedTab !== 'All Materials') {
+
+      filtered = filtered.filter(
+        m =>
+          (m.category || '')
+            .trim()
+            .toLowerCase() ===
+          this.selectedTab.trim().toLowerCase()
+      );
     }
 
     return filtered;
   }
+
   getDefaultMaterial(): Material {
     return {
       name: '',
@@ -180,13 +217,13 @@ updatePagination() {
     this.showAddModal = true;
   }
 
-  getvendor(vendorId: any) {
-    console.log(vendorId.target.value,this.vendors, 'sdzfdsfds');
-    const vendor = this.vendors.find((v:any) => v.id == vendorId.target.value);
-    this.newMaterial.vendor_name = vendor?.name || '';
-    console.log(vendor, 'vendor');
-    this.newMaterial.vendor_id = vendorId.target.value || '';
-  }
+  // getvendor(vendorId: any) {
+  //   console.log(vendorId.target.value, this.vendors, 'sdzfdsfds');
+  //   const vendor = this.vendors.find((v: any) => v.id == vendorId.target.value);
+  //   this.newMaterial.vendor_name = vendor?.name || '';
+  //   console.log(vendor, 'vendor');
+  //   this.newMaterial.vendor_id = vendorId.target.value || '';
+  // }
 
 
 
@@ -332,4 +369,164 @@ updatePagination() {
       }
     });
   }
+
+    getVendors() {
+    this.vendorService.vendors$.subscribe(v => {
+
+      this.vendors = v;
+
+    });
+  }
+
+  addVendor(): void {
+    if (this.isSaving) return;
+    this.errorMsg = '';
+
+    const fd = new FormData();
+    fd.append('vendorLegalName', this.newVendor.name);
+    fd.append('spocName', this.newVendor.spoc.name);
+    fd.append('spocPhone', this.newVendor.spoc.phone);
+    fd.append('officialEmail', this.newVendor.email);
+    fd.append('officialPhone', this.newVendor.phone);
+    fd.append('gstNo', this.newVendor.kyc.gst);
+    fd.append('panCardNo', this.newVendor.kyc.pan);
+    fd.append('physicalAddress', this.newVendor.address.street);
+    fd.append('pincode', this.newVendor.address.pincode);
+    fd.append('budgetAllocation', this.newVendor.budget);
+    fd.append('services', this.newVendor.services);
+    if (this.contractFile) {
+      fd.append('contractFile', this.contractFile);
+    }
+
+    this.isSaving = true;
+    this.vendorService.createVendor(fd).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.showAddVendorModal = false;
+        this.getVendors();
+
+      },
+      error: (err) => {
+        this.isSaving = false;
+        this.errorMsg = err?.error?.message ?? 'Vendor onboard failed. Please try again.';
+      },
+    });
+  }
+
+    onContractFileSelected(event: any) {
+
+    this.contractFile = event.target.files[0];
+
+  }
+
+  onlyNumbers(event: KeyboardEvent) {
+
+    const charCode = event.which
+      ? event.which
+      : event.keyCode;
+
+    if (charCode < 48 || charCode > 57) {
+
+      event.preventDefault();
+
+    }
+
+  }
+
+  onlyAlphanumeric(event: KeyboardEvent) {
+
+    const regex = /^[a-zA-Z0-9]$/;
+
+    const key = event.key;
+
+    if (!regex.test(key)) {
+
+      event.preventDefault();
+
+    }
+
+  }
+
+  stripNonNumericOnPaste(
+    event: ClipboardEvent,
+    field: string,
+    len: number
+  ) {
+
+    event.preventDefault();
+
+    const pastedData =
+      event.clipboardData
+        ?.getData('text')
+        .replace(/\D/g, '')
+        .slice(0, len) || '';
+
+    if (field === 'phone') {
+      this.newVendor.phone = pastedData;
+    }
+
+    if (field === 'spocPhone') {
+      this.newVendor.spoc.phone = pastedData;
+    }
+
+    if (field === 'pincode') {
+      this.newVendor.address.pincode = pastedData;
+    }
+
+  }
+
+  stripNonAlphanumericOnPaste(
+    event: ClipboardEvent,
+    field: string,
+    len: number
+  ) {
+
+    event.preventDefault();
+
+    const pastedData =
+      event.clipboardData
+        ?.getData('text')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .slice(0, len)
+        .toUpperCase() || '';
+
+    if (field === 'gst') {
+      this.newVendor.kyc.gst = pastedData;
+    }
+
+    if (field === 'pan') {
+      this.newVendor.kyc.pan = pastedData;
+    }
+
+  }
+
+  getvendor(event: any) {
+
+    const value = event.target.value;
+
+    // ✅ Add new vendor modal open
+    if (value == 'ADD_NEW') {
+
+      this.showAddVendorModal = true;
+      console.log('Add new vendor selected', this.showAddVendorModal, value);
+
+
+
+      // optional reset
+      this.newMaterial.vendor_id = '';
+
+      return;
+    }
+
+    // ✅ Existing vendor select
+    const vendor = this.vendors.find(
+      (v: any) => v.id == value
+    );
+
+    this.newMaterial.vendor_name = vendor?.name || '';
+    this.newMaterial.vendor_id = value || '';
+
+    console.log(vendor, 'selected vendor');
+  }
+
 }
