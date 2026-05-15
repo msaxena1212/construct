@@ -113,6 +113,7 @@ ngOnInit() {
       name: '',
       sku: '',
       category: 'Concrete',
+      cost: 0,
       status: 'ACTIVE',
       stockAvailable:0
       };
@@ -208,25 +209,25 @@ ngOnInit() {
         });
     }
   }
-  calculateStatus(percent: number): 'Optimal' | 'Adequate' | 'Critical' {
-    if (percent < 20) return 'Critical';
-    if (percent < 60) return 'Adequate';
-    return 'Optimal';
-  }
+  // calculateStatus(percent: number): 'Optimal' | 'Adequate' | 'Critical' {
+  //   if (percent < 20) return 'Critical';
+  //   if (percent < 60) return 'Adequate';
+  //   return 'Optimal';
+  // }
 
-  exportReport() {
-    console.log('Exporting materials report...');
-    alert('Materials report exported successfully (Simulated)');
-  }
+  // exportReport() {
+  //   console.log('Exporting materials report...');
+  //   alert('Materials report exported successfully (Simulated)');
+  // }
 
-  deliveries = [
-    { time: '09:00', period: 'AM', item: 'Lumber Pine Planks (400 Units)', location: 'Site A - Skyline Towers', status: 'In Transit', statusColor: 'bg-blue-50 text-blue-600', assignee: 'Marcus Thorne' },
-    { time: '14:30', period: 'PM', item: 'HVAC Ducting Components', location: 'Site C - Riverside Mall', status: 'Confirmed', statusColor: 'bg-surface-container text-outline', assignee: 'Sarah Chen' }
-  ];
+  // deliveries = [
+  //   { time: '09:00', period: 'AM', item: 'Lumber Pine Planks (400 Units)', location: 'Site A - Skyline Towers', status: 'In Transit', statusColor: 'bg-blue-50 text-blue-600', assignee: 'Marcus Thorne' },
+  //   { time: '14:30', period: 'PM', item: 'HVAC Ducting Components', location: 'Site C - Riverside Mall', status: 'Confirmed', statusColor: 'bg-surface-container text-outline', assignee: 'Sarah Chen' }
+  // ];
 
-  get filteredDeliveries() {
-    if (this.selectedMember === 'All Members') return this.deliveries;
-    return this.deliveries.filter(d => d.assignee === this.selectedMember);
-  }
+  // get filteredDeliveries() {
+  //   if (this.selectedMember === 'All Members') return this.deliveries;
+  //   return this.deliveries.filter(d => d.assignee === this.selectedMember);
+  // }
 }
 

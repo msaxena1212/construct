@@ -29,6 +29,7 @@
                     <ul class="submenu" [ngClass]="navIndexvalue == i ? 'open' : ''">
                         <li *ngFor="let subNav of nav.subMenu; let j = index">
                             <a [routerLink]="subNav.path" routerLinkActive="activeRoute" [title]="subNav.subMenuName">
+                                 <mat-icon class="nav-icon-material">{{ subNav.icon || 'folder' }}</mat-icon>
                                 <span class="nav-text" style="padding-left: 20px;">{{ subNav.subMenuName || subNav.name
                                     }}</span>
                             </a>

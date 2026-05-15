@@ -7,6 +7,7 @@ export interface Material {
   name: string;
   sku: string;
   category: string;
+  cost: number;
   status: string;
   stockAvailable: number;
 }

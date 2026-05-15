@@ -183,10 +183,10 @@
     justify-content: center;
 }
 
-// .sidebar-nav ul li .nav-link:hover .nav-icon-material,
-// .sidebar-nav ul li .nav-link.activeRoute .nav-icon-material {
-//     color: #fff;
-// }
+.sidebar-nav ul li  .nav-icon-material,
+.sidebar-nav ul li .nav-link.activeRoute .nav-icon-material {
+    color: #fff;
+}
 
 .sidebar-nav ul li .nav-link .nav-text {
     white-space: nowrap;
@@ -231,9 +231,30 @@
     background: rgba(255, 255, 255, 0.08);
 }
 
+
+
 .sidebar-nav ul li .submenu a.activeRoute {
     background: #3a66b0;
     color: #fff;
+}
+
+/* ICONS DEFAULT BLACK */
+.sidebar-nav ul li .nav-link .nav-icon,
+.sidebar-nav ul li .nav-link .nav-icon-material {
+    color: #000;
+}
+
+/* ACTIVE ICON WHITE */
+.sidebar-nav ul li .nav-link.activeRoute .nav-icon,
+.sidebar-nav ul li .nav-link.activeRoute .nav-icon-material,
+.sidebar-nav ul li .submenu a.activeRoute .nav-icon-material {
+    color: #fff;
+
+}
+
+/* Submenu icon default black */
+.sidebar-nav ul li .submenu a .nav-icon-material {
+    color: #000;
 }
 
 /* ================= MAIN AREA ================= */
