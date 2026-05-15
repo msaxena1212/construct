@@ -55,7 +55,7 @@ db.material_master = require("../modules/material/models/material_master.model.j
 db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
 
 //Labor
-db.labor = require("../modules/labor/models/labor_models.js")(sequelize, Sequelize);
+// db.labor = require("../modules/labor/models/labor_models.js")(sequelize, Sequelize);
 db.material_history = require("../modules/material/models/material_history.model.js")(sequelize, Sequelize);
 
 //equipment
@@ -201,15 +201,25 @@ db.vendors_labor.belongsTo(db.vendors, {
     foreignKey: 'vendor_id',
     as: 'vendor'
 });
+// Role ↔ Vendors Labor
+db.role.hasMany(db.vendors_labor, {
+  foreignKey: "role_id",
+  as: "labor_workers"
+});
+
+db.vendors_labor.belongsTo(db.role, {
+  foreignKey: "role_id",
+  as: "role"
+});
 
 // PROJECT MANAGEMENT END
 // ── LABOR associations ──────────────────────────────────────
 // Labor → Company
-db.company.hasMany(db.labor, { foreignKey: 'company_id', as: 'laborWorkers' });
-db.labor.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+// db.company.hasMany(db.labor, { foreignKey: 'company_id', as: 'laborWorkers' });
+// db.labor.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
 
-db.vendors.hasMany(db.labor, { foreignKey: 'vendor_id', as: 'laborWorkers' });
-db.labor.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendors' });
+// db.vendors.hasMany(db.labor, { foreignKey: 'vendor_id', as: 'laborWorkers' });
+// db.labor.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendors' });
 
 
 

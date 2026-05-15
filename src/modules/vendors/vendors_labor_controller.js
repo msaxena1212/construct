@@ -1,46 +1,44 @@
-// modules/labor/controllers/labor_controller.js
 const db = require('../../models');
 
-// FIX: was db.vendor (singular) — model is registered as db.vendors
-const LaborModel  = db.labor;
+const LaborModel = db.vendors_labor;
 const VendorModel = db.vendors;
+const RoleModel = db.role;
 
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
 
-// ─── Role / Skill display helpers ──────────────────────────────────────────
-const ROLE_LABEL = {
-  foreman:        'Foreman',
-  specialist:     'Specialist',
-  supervisor:     'Supervisor',
-  safety_officer: 'Safety Officer',
-  worker:         'Worker',
-  operator:       'Operator',
-};
-
 const SKILL_LABEL = {
-  masonry:          'Masonry',
-  electrical:       'Electrical',
+  masonry: 'Masonry',
+  electrical: 'Electrical',
   structural_steel: 'Structural Steel',
-  plumbing:         'Plumbing',
-  hvac:             'HVAC',
-  carpentry:        'Carpentry',
-  painting:         'Painting',
-  other:            'Other',
+  plumbing: 'Plumbing',
+  hvac: 'HVAC',
+  carpentry: 'Carpentry',
+  painting: 'Painting',
+  other: 'Other',
 };
 
 const STATUS_COLOR = {
-  active:   'bg-blue-100 text-blue-700',
-  on_site:  'bg-green-100 text-green-700',
+  active: 'bg-blue-100 text-blue-700',
+  on_site: 'bg-green-100 text-green-700',
   off_duty: 'bg-amber-100 text-amber-700',
   inactive: 'bg-slate-100 text-slate-500',
 };
 
-// ─── GET all labor for a vendor ────────────────────────────────────────────
+
+const laborInclude = [
+  {
+    model: RoleModel,
+    as: 'role',
+    attributes: ['id', 'name'],
+  },
+];
+
+
 const getLaborByVendor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
-    const vendor_id  = req.params.vendorId;
+    const vendor_id = req.params.vendorId;
 
     const vendor = await VendorModel.findOne({
       where: { id: vendor_id, company_id },
@@ -52,12 +50,13 @@ const getLaborByVendor = async (req, res) => {
 
     const workers = await LaborModel.findAll({
       where: { vendor_id, company_id },
+      include: laborInclude,
       order: [['createdAt', 'DESC']],
     });
 
-    const total   = workers.length;
-    const onSite  = workers.filter(w => w.status === 'on_site').length;
-    const active  = workers.filter(w => ['active', 'on_site'].includes(w.status)).length;
+    const total = workers.length;
+    const onSite = workers.filter(w => w.status === 'on_site').length;
+    const active = workers.filter(w => ['active', 'on_site'].includes(w.status)).length;
 
     const skillMap = {};
     workers.forEach(w => {
@@ -69,32 +68,32 @@ const getLaborByVendor = async (req, res) => {
       count,
     }));
 
-    const complianceScore = total > 0
-      ? Math.round((active / total) * 100)
-      : 0;
+    const complianceScore = total > 0 ? Math.round((active / total) * 100) : 0;
 
     const data = workers.map(w => ({
-      id:           w.id,
-      name:         w.name,
-      role:         ROLE_LABEL[w.role] || w.role,
-      roleRaw:      w.role,
-      skill:        SKILL_LABEL[w.skill] || w.skill,
-      skillRaw:     w.skill,
-      status:       w.status,
-      statusLabel:  w.status.replace('_', ' ').toUpperCase(),
-      statusColor:  STATUS_COLOR[w.status] || '',
-      phone:        w.phone,
-      daily_rate:   w.daily_rate,
+      id: w.id,
+      name: w.name,
+      role_id: w.role_id,
+      role: w.role?.name || null,
+      roleRaw: w.role?.name || null,
+      skill: SKILL_LABEL[w.skill] || w.skill,
+      skillRaw: w.skill,
+      status: w.status,
+      statusLabel: w.status.replace('_', ' ').toUpperCase(),
+      statusColor: STATUS_COLOR[w.status] || '',
+      phone: w.phone,
+      daily_rate: w.daily_rate,
       joining_date: w.joining_date,
       current_task: w.current_task,
-      vendor_id:    w.vendor_id,
+      vendor_id: w.vendor_id,
+      company_id: w.company_id,
     }));
 
     return res.status(200).json({
       success: true,
-      count:   total,
+      count: total,
       stats: {
-        totalPersonnel:  total,
+        totalPersonnel: total,
         onSite,
         activePersonnel: active,
         skillCompliance: `${complianceScore}%`,
@@ -108,52 +107,49 @@ const getLaborByVendor = async (req, res) => {
   }
 };
 
-// ─── GET all labor for company (across all vendors) ────────────────────────
+
 const getAllLabor = async (req, res) => {
   try {
-    const company_id            = getCompanyId(req);
-    const { vendor_id, status, skill } = req.query;
+    const company_id = getCompanyId(req);
+    const { vendor_id, status, skill, role_id } = req.query;
 
     const where = { company_id };
     if (vendor_id) where.vendor_id = vendor_id;
-    if (status)    where.status    = status;
-    if (skill)     where.skill     = skill;
+    if (status) where.status = status;
+    if (skill) where.skill = skill;
+    if (role_id) where.role_id = role_id;
 
     const workers = await LaborModel.findAll({
       where,
-      include: [{
-        model: VendorModel,
-        as:    'vendors',          // matches association alias in models/index.js
-        attributes: ['id', 'name'],
-      }],
+      include: [
+        { model: VendorModel, as: 'vendor', attributes: ['id', 'name'] },
+        { model: RoleModel, as: 'role', attributes: ['id', 'name'] },
+      ],
       order: [['createdAt', 'DESC']],
     });
 
-    return res.status(200).json({
-      success: true,
-      count:   workers.length,
-      data:    workers,
-    });
+    return res.status(200).json({ success: true, count: workers.length, data: workers });
   } catch (err) {
     console.error('[getAllLabor]', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// ─── GET single labor ──────────────────────────────────────────────────────
+
 const getLaborById = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
 
     const worker = await LaborModel.findOne({
       where: { id: req.params.id, company_id },
+      include: [
+        { model: VendorModel, as: 'vendor', attributes: ['id', 'name'] },
+        { model: RoleModel, as: 'role', attributes: ['id', 'name'] },
+      ],
     });
 
     if (!worker) {
-      return res.status(404).json({
-        success: false,
-        message: 'Labor record not found',
-      });
+      return res.status(404).json({ success: false, message: 'Labor record not found' });
     }
 
     return res.status(200).json({ success: true, data: worker });
@@ -163,7 +159,7 @@ const getLaborById = async (req, res) => {
   }
 };
 
-// ─── CREATE labor ──────────────────────────────────────────────────────────
+
 const createLabor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -173,42 +169,68 @@ const createLabor = async (req, res) => {
     }
 
     const {
-      vendor_id, name, role, skill,
+      vendor_id, role_id, name, skill,
       status, phone, daily_rate, joining_date, current_task,
     } = req.body;
 
-    if (!vendor_id || !name || !role || !skill) {
+    if (!vendor_id || !role_id || !name || !skill) {
       return res.status(400).json({
         success: false,
-        message: 'vendor_id, name, role, and skill are required',
+        message: 'vendor_id, role_id, name and skill are required',
       });
     }
 
-    const vendor = await VendorModel.findOne({
-      where: { id: vendor_id, company_id },
-    });
-
+    const vendor = await VendorModel.findOne({ where: { id: vendor_id, company_id } });
     if (!vendor) {
       return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+
+    const role = await RoleModel.findOne({ where: { id: role_id } });
+    if (!role) {
+      return res.status(404).json({ success: false, message: 'Role not found' });
     }
 
     const worker = await LaborModel.create({
       vendor_id,
       company_id,
+      role_id,
       name,
-      role,
       skill,
-      status:       status       || 'active',
-      phone:        phone        || null,
-      daily_rate:   parseFloat(daily_rate) || 0,
+      status: status || 'active',
+      phone: phone || null,
+      daily_rate: parseFloat(daily_rate) || 0,
       joining_date: joining_date || null,
       current_task: current_task || null,
     });
 
+    const created = await LaborModel.findOne({
+      where: { id: worker.id },
+      include: laborInclude,
+    });
+
+    const data = {
+      id: created.id,
+      name: created.name,
+      role_id: created.role_id,
+      role: created.role?.name || null,
+      roleRaw: created.role?.name || null,
+      skill: SKILL_LABEL[created.skill] || created.skill,
+      skillRaw: created.skill,
+      status: created.status,
+      statusLabel: created.status.replace('_', ' ').toUpperCase(),
+      statusColor: STATUS_COLOR[created.status] || '',
+      phone: created.phone,
+      daily_rate: created.daily_rate,
+      joining_date: created.joining_date,
+      current_task: created.current_task,
+      vendor_id: created.vendor_id,
+      company_id: created.company_id,
+    };
+
     return res.status(201).json({
       success: true,
       message: 'Labor worker added successfully',
-      data:    worker,
+      data,
     });
   } catch (err) {
     console.error('[createLabor]', err);
@@ -216,7 +238,7 @@ const createLabor = async (req, res) => {
   }
 };
 
-// ─── UPDATE labor ──────────────────────────────────────────────────────────
+
 const updateLabor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -226,30 +248,54 @@ const updateLabor = async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(404).json({
-        success: false,
-        message: 'Labor record not found',
-      });
+      return res.status(404).json({ success: false, message: 'Labor record not found' });
     }
 
-    // Prevent overwriting protected fields
+    delete req.body.id;
     delete req.body.company_id;
     delete req.body.vendor_id;
 
+    if (req.body.role_id) {
+      const role = await RoleModel.findOne({ where: { id: req.body.role_id } });
+      if (!role) {
+        return res.status(404).json({ success: false, message: 'Role not found' });
+      }
+    }
+
     await worker.update(req.body);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Labor record updated',
-      data:    worker,
+    const updated = await LaborModel.findOne({
+      where: { id: worker.id },
+      include: laborInclude,
     });
+
+    const data = {
+      id: updated.id,
+      name: updated.name,
+      role_id: updated.role_id,
+      role: updated.role?.name || null,
+      roleRaw: updated.role?.name || null,
+      skill: SKILL_LABEL[updated.skill] || updated.skill,
+      skillRaw: updated.skill,
+      status: updated.status,
+      statusLabel: updated.status.replace('_', ' ').toUpperCase(),
+      statusColor: STATUS_COLOR[updated.status] || '',
+      phone: updated.phone,
+      daily_rate: updated.daily_rate,
+      joining_date: updated.joining_date,
+      current_task: updated.current_task,
+      vendor_id: updated.vendor_id,
+      company_id: updated.company_id,
+    };
+
+    return res.status(200).json({ success: true, message: 'Labor record updated', data });
   } catch (err) {
     console.error('[updateLabor]', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// ─── DELETE labor ──────────────────────────────────────────────────────────
+
 const deleteLabor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
@@ -259,10 +305,7 @@ const deleteLabor = async (req, res) => {
     });
 
     if (!worker) {
-      return res.status(404).json({
-        success: false,
-        message: 'Labor record not found',
-      });
+      return res.status(404).json({ success: false, message: 'Labor record not found' });
     }
 
     await worker.destroy();

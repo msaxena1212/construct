@@ -7,7 +7,7 @@ class Routes {
   initializeRoutes(app) {
     const router = express.Router();
     app.use("/uploads", express.static(path.join(__dirname, "..", "static", "uploads")));
-
+    app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
     require("../modules/users/user.routes")(router);
     require("../modules/rbac/rbac.routes")(router);
     require("../modules/projects/project.routes")(router);
@@ -36,7 +36,7 @@ class Routes {
       "/api/v1/labor",
       require("../modules/labor/routes/labor_routes")
     );
-    
+
     app.use(
       "/api/v1/vendors_labor",
       require("../modules/vendors/vendors_labor_routes")
