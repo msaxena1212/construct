@@ -7,6 +7,8 @@ class equipmentController {
     this.getequipmentById = this.getequipmentById.bind(this);
     this.updateequipment = this.updateequipment.bind(this);
     this.deleteequipment = this.deleteequipment.bind(this);
+    this.getequipmentByprojectId = this.getequipmentByprojectId.bind(this);
+    this.getAllequipments_history = this.getAllequipments_history.bind(this);
   }
 
   /**
@@ -100,24 +102,24 @@ class equipmentController {
           }
         );
 
-         
-      // ================= CREATE HISTORY =================
-      await db.equipment_history.create({
-        name,
-        sku,
-        category,
-        stockIn,
-        cost,
-        vendor_name,
-        project_name,
-        equipment_id: equipment.id,
-        equipment_master_id,
-        company_id,
-        project_id,
-        vendor_id,
-        status: "UPDATED",
 
-      });
+        // ================= CREATE HISTORY =================
+        await db.equipment_history.create({
+          name,
+          sku,
+          category,
+          stockIn,
+          cost,
+          vendor_name,
+          project_name,
+          equipment_id: equipment.id,
+          equipment_master_id,
+          company_id,
+          project_id,
+          vendor_id,
+          status: "UPDATED",
+
+        });
 
         res.status(201).json({
           message: "equipment Updated successfully.",
@@ -165,24 +167,24 @@ class equipmentController {
           }
         );
 
-      // ================= CREATE HISTORY =================
+        // ================= CREATE HISTORY =================
 
-      await db.equipment_history.create({
-        name,
-        sku,
-        category,
-        stockIn,
-        cost,
-        vendor_name,
-        project_name,
-        equipment_id: equipment.id,
-        equipment_master_id,
-        company_id,
-        project_id,
-        vendor_id,
-        status: "CREATED",
+        await db.equipment_history.create({
+          name,
+          sku,
+          category,
+          stockIn,
+          cost,
+          vendor_name,
+          project_name,
+          equipment_id: equipment.id,
+          equipment_master_id,
+          company_id,
+          project_id,
+          vendor_id,
+          status: "CREATED",
 
-      });
+        });
 
         res.status(201).json({
           message: "equipment created successfully.",
@@ -335,7 +337,7 @@ class equipmentController {
       //   }
       // );
 
-            // ================= CREATE HISTORY =================
+      // ================= CREATE HISTORY =================
       await db.equipment_history.create({
         name,
         sku,
@@ -414,7 +416,7 @@ class equipmentController {
 
 
       const equipment = await db.equipment.findOne({
-        where: { project_id:id, isDeleted: false, company_id }
+        where: { project_id: id, isDeleted: false, company_id }
       });
 
       if (!equipment) {
@@ -431,6 +433,38 @@ class equipmentController {
       });
     }
   }
+
+
+  /**
+ * Get All equipments history
+ */
+  async getAllequipments_history(req, res) {
+    try {
+
+      const company_id = req.user.company_id;
+      if (!company_id) {
+        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+      }
+
+      const equipments = await db.equipment_history.findAll({
+        where: { isDeleted: false, company_id },
+        order: [['createdAt', 'DESC']]
+      });
+
+
+      if (equipments.length > 0) {
+        return res
+          .status(200)
+          .send({ code: 200, message: "Success", data: equipments });
+      } else {
+        return res.status(404).send({ code: 404, message: "No data found" });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .send({ code: 500, message: error.message || "Server Error" });
+    }
+  };
 
 
 

@@ -183,23 +183,23 @@ db.equipment_history.belongsTo(db.project, { foreignKey: "project_id", as: "proj
 
 // For Vendors_labor]
 db.company.hasMany(db.vendors_labor, {
-  foreignKey: 'company_id',
-  as: 'vendors_labor'
+    foreignKey: 'company_id',
+    as: 'vendors_labor'
 });
 
 db.vendors_labor.belongsTo(db.company, {
-  foreignKey: 'company_id',
-  as: 'company'
+    foreignKey: 'company_id',
+    as: 'company'
 });
 
 db.vendors.hasMany(db.vendors_labor, {
-  foreignKey: 'vendor_id',
-  as: 'vendors_labor'
+    foreignKey: 'vendor_id',
+    as: 'vendors_labor'
 });
 
 db.vendors_labor.belongsTo(db.vendors, {
-  foreignKey: 'vendor_id',
-  as: 'vendor'
+    foreignKey: 'vendor_id',
+    as: 'vendor'
 });
 // Role ↔ Vendors Labor
 db.role.hasMany(db.vendors_labor, {
