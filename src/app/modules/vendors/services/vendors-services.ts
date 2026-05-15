@@ -69,6 +69,7 @@ export interface Invoice {
 }
 
 export interface Vendor {
+  company_id: any;
   id: string;
   name: string;
   type: string;
@@ -123,44 +124,44 @@ export class VendorsServices {
     this.loadAll();
   }
 
-private mapVendor(b: BackendVendor): Vendor {
-  const s = STATUS_MAP[b.status] ?? STATUS_MAP['pending'];
-  const formatBudget = (n: number): string => {
-    if (!n) return '₹0';
-    if (n >= 1_00_00_000) return `₹${(n / 1_00_00_000).toFixed(1)}Cr`;
-    if (n >= 1_00_000)    return `₹${(n / 1_00_000).toFixed(1)}L`;
-    if (n >= 1_000)       return `₹${(n / 1_000).toFixed(1)}k`;
-    return `₹${n}`;
-  };
+  private mapVendor(b: BackendVendor): Vendor {
+    const s = STATUS_MAP[b.status] ?? STATUS_MAP['pending'];
+    const formatBudget = (n: number): string => {
+      if (!n) return '₹0';
+      if (n >= 1_00_00_000) return `₹${(n / 1_00_00_000).toFixed(1)}Cr`;
+      if (n >= 1_00_000) return `₹${(n / 1_00_000).toFixed(1)}L`;
+      if (n >= 1_000) return `₹${(n / 1_000).toFixed(1)}k`;
+      return `₹${n}`;
+    };
 
-  return {
-    id: b.id,
-    name: b.name,
-    type: 'Subcontractor',
-    email: b.official_email,
-    phone: b.official_phone,
-    spoc: { name: b.spoc_name, role: 'SPOC', phone: b.spoc_phone, email: b.official_email },
-    kyc: { gst: b.gst_no, pan: b.pan_card_no },
-    address: { street: b.physical_address, city: '', pincode: b.pincode },
-    projects: [],
-    balance: '₹0.00',
-    budget: formatBudget(b.budget_allocation),
-    status: s.label,
-    statusColor: s.color,
-    icon: 'business',
-    assignee: 'All Members',
-    services: Array.isArray(b.services) ? b.services : [],
-    compliance_score: b.compliance_score,
-    // ✅ FIX: prepend backend base URL so the browser hits your Express server,
-    //         not the Angular dev server
-    contract_file: b.contract_file
-      ? `${environment.serverUrl}${b.contract_file}`
-      : null,
-    tasks: [],
-    audits: [],
-    invoices: [],
-  };
-}
+    return {
+      company_id: b.company_id,
+      id: b.id,
+      name: b.name,
+      type: 'Subcontractor',
+      email: b.official_email,
+      phone: b.official_phone,
+      spoc: { name: b.spoc_name, role: 'SPOC', phone: b.spoc_phone, email: b.official_email },
+      kyc: { gst: b.gst_no, pan: b.pan_card_no },
+      address: { street: b.physical_address, city: '', pincode: b.pincode },
+      projects: [],
+      balance: '₹0.00',
+      budget: formatBudget(b.budget_allocation),
+      status: s.label,
+      statusColor: s.color,
+      icon: 'business',
+      assignee: 'All Members',
+      services: Array.isArray(b.services) ? b.services : [],
+      compliance_score: b.compliance_score,
+
+      contract_file: b.contract_file
+        ? `${environment.serverUrl}${b.contract_file}`
+        : null,
+      tasks: [],
+      audits: [],
+      invoices: [],
+    };
+  }
 
   private mapActivity(a: any): Activity {
     const { material, color } = ICON_MAP[a.icon] ?? { material: 'info', color: 'text-outline' };
