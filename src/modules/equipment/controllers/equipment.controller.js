@@ -7,7 +7,7 @@ class equipmentController {
     this.getequipmentById = this.getequipmentById.bind(this);
     this.updateequipment = this.updateequipment.bind(this);
     this.deleteequipment = this.deleteequipment.bind(this);
-    this.getequipmentByprojectId = this.getequipmentByprojectId .bind(this);
+    this.getequipmentByprojectId = this.getequipmentByprojectId.bind(this);
     this.getAllequipments_history = this.getAllequipments_history.bind(this);
   }
 
@@ -435,9 +435,9 @@ class equipmentController {
   }
 
 
-    /**
-   * Get All equipments history
-   */
+  /**
+ * Get All equipments history
+ */
   async getAllequipments_history(req, res) {
     try {
 
