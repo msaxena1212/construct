@@ -112,6 +112,7 @@ export class ProjectService {
   );
   
   
+  
 }
 requestAdditionalStock(payload: {
   material_id: number;
@@ -129,5 +130,14 @@ updateAdditionalStockRequest(id: number, payload: any) {
     payload
   );
 }
+
+// side manger
+  getAllStockRequests(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/stock-request`);
+  }
+
+  getStockRequestById(projectId: string | number): Observable<ApiResponse<IProjectTask[]>> {
+    return this.http.get<ApiResponse<IProjectTask[]>>(`${this.apiUrl}/stock-request/${projectId}`);
+  }
 }
 
