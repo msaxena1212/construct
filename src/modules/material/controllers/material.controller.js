@@ -99,6 +99,26 @@ class MaterialController {
             }
           }
         );
+
+         
+      // ================= CREATE HISTORY =================
+      await db.material_history.create({
+        name,
+        sku,
+        category,
+        stockIn,
+        cost,
+        vendor_name,
+        project_name,
+        material_id: material.id,
+        material_master_id,
+        company_id,
+        project_id,
+        vendor_id,
+        status: "UPDATED",
+
+      });
+
         res.status(201).json({
           message: "Material Updated successfully.",
           data: material
@@ -144,6 +164,26 @@ class MaterialController {
             }
           }
         );
+
+      // ================= CREATE HISTORY =================
+
+      await db.material_history.create({
+        name,
+        sku,
+        category,
+        stockIn,
+        cost,
+        vendor_name,
+        project_name,
+        material_id: material.id,
+        material_master_id,
+        company_id,
+        project_id,
+        vendor_id,
+        status: "CREATED",
+
+      });
+
         res.status(201).json({
           message: "Material created successfully.",
           data: material
@@ -162,162 +202,6 @@ class MaterialController {
 
   }
 
-
-  // /**
-  //  * Create Material
-  //  */
-  // async createMaterial(req, res) {
-  //   try {
-  //     const {
-  //       name,
-  //       sku,
-  //       category,
-  //       stockIn,
-  //       vendor_name,
-  //       project_name,
-  //       project_id,
-  //       cost,
-  //       status,
-  //       vendor_id,
-  //       material_master_id
-  //     } = req.body;
-
-  //     const company_id = req.user.company_id;
-
-  //     // if (!material_master_id) {
-  //     //   return res.status(400).json({ message: "Material are required." });
-  //     // }
-
-  //     if (!vendor_name) {
-  //       return res.status(400).json({ message: "vendor_name are required." });
-  //     }
-
-  //     if (!stockIn) {
-  //       return res.status(400).json({ message: "stockIn are required." });
-  //     }
-
-  //     if (!cost) {
-  //       return res.status(400).json({ message: "Cost are required." });
-  //     }
-
-
-  //     const material = await db.material.findOne({
-  //       where: { isDeleted: false, company_id, project_id, material_master_id }
-  //     });
-
-  //     if (material) {
-  //       const {
-  //         name,
-  //         sku,
-  //         category,
-  //         stockIn,
-  //         vendor_name,
-  //         project_name,
-  //         project_id,
-  //         cost,
-  //         status,
-  //         vendor_id,
-  //         material_master_id,
-  //       } = req.body;
-
-  //       await material.update({
-  //         name,
-  //         sku,
-  //         category,
-  //         stockIn: Number(material.stockIn) + Number(stockIn),
-  //         vendor_name,
-  //         project_name,
-  //         project_id,
-  //         cost,
-  //         status,
-  //         vendor_id,
-  //         material_master_id
-  //       });
-
-  //       const existingMaterial = await db.material_master.findOne({
-  //         where: {
-  //           id: material_master_id
-  //         }
-  //       });
-
-  //       const updatedStock =
-  //         Number(existingMaterial.stockAvailable) + Number(stockIn);
-
-  //       await db.material_master.update(
-  //         {
-  //           stockAvailable: updatedStock
-  //         },
-  //         {
-  //           where: {
-  //             id: material_master_id
-  //           }
-  //         }
-  //       );
-  //       res.status(201).json({
-  //         message: "Material Updated successfully.",
-  //         data: material
-  //       });
-
-
-
-  //     }
-
-  //     else {
-
-  //       const material = await db.material.create({
-  //         name,
-  //         sku,
-  //         category,
-  //         stockIn,
-  //         vendor_name,
-  //         project_name,
-  //         project_id,
-  //         cost,
-  //         status,
-  //         vendor_id,
-  //         material_master_id,
-  //         company_id
-  //       });
-
-  //       const existingMaterial = await db.material_master.findOne({
-  //         where: {
-  //           id: material_master_id
-  //         }
-  //       });
-
-  //       const updatedStock =
-  //         Number(existingMaterial.stockAvailable) + Number(stockIn);
-
-  //       await db.material_master.update(
-  //         {
-  //           stockAvailable: updatedStock
-  //         },
-  //         {
-  //           where: {
-  //             id: material_master_id
-  //           }
-  //         }
-  //       );
-  //       res.status(201).json({
-  //         message: "Material created successfully.",
-  //         data: material
-  //       });
-
-  //     }
-
-  //   } catch (error) {
-  //     console.error("[CREATE_MATERIAL_ERROR]", error);
-  //     res.status(500).json({
-  //       message: "Error creating material.",
-  //       error: error.message
-  //     });
-  //   }
-
-
-  // }
-
-
-  
 
   /**
    * Get All Materials
@@ -450,6 +334,24 @@ class MaterialController {
       //     }
       //   }
       // );
+
+            // ================= CREATE HISTORY =================
+      await db.material_history.create({
+        name,
+        sku,
+        category,
+        stockIn,
+        cost,
+        vendor_name,
+        project_name,
+        material_id: material.id,
+        material_master_id,
+        company_id,
+        project_id,
+        vendor_id,
+        status: "UPDATED",
+
+      });
 
 
       res.status(200).json({

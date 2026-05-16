@@ -1,10 +1,14 @@
 module.exports = (sequelize, Sequelize) => {
 
-    const Activity = sequelize.define("ACTIVITY", {
+    const Vendors_Activity = sequelize.define("VENDORS_ACTIVITY", {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true,
+        },
+        company_id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
         },
         icon: {
             type: Sequelize.ENUM("invoice", "cert", "assign"),
@@ -27,6 +31,5 @@ module.exports = (sequelize, Sequelize) => {
         freezeTableName: true,
     });
 
-
-    return Activity;
-}
+    return Vendors_Activity;
+};

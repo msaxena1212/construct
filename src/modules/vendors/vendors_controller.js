@@ -1,12 +1,12 @@
-const { v4: uuidv4 } = require('uuid');
 const { Op } = require('sequelize');
 const db = require('../../models');
 
-const VendorModel = db.vendor;
-const ActivityModel = db.activity;
+const VendorModel = db.vendors;
+const ActivityModel = db.vendors_activity;
 
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
+
 
 const getAllVendors = async (req, res) => {
   try {
@@ -28,32 +28,26 @@ const getAllVendors = async (req, res) => {
     });
   } catch (err) {
     console.error('[getAllVendors]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 const getStats = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
 
-    const totalActive = await VendorModel.count({
-      where: { company_id, status: 'active' },
-    });
-
-    const totalVendors = await VendorModel.count({ where: { company_id } });
-
-    const compliantCount = await VendorModel.count({
-      where: { company_id, compliance_score: { [Op.gte]: 90 } },
-    });
-
-    const totalBudget = await VendorModel.sum('budget_allocation', {
-      where: { company_id, status: 'active' },
-    });
+    const [totalActive, totalVendors, compliantCount, totalBudget] = await Promise.all([
+      VendorModel.count({ where: { company_id, status: 'active' } }),
+      VendorModel.count({ where: { company_id } }),
+      VendorModel.count({ where: { company_id, compliance_score: { [Op.gte]: 90 } } }),
+      VendorModel.sum('budget_allocation', { where: { company_id, status: 'active' } }),
+    ]);
 
     const formatCurrency = (num) => {
       if (!num) return '₹0';
-      if (num >= 1_00_00_000) return `₹${(num / 1_00_00_000).toFixed(1)}Cr`;
-      if (num >= 1_00_000) return `₹${(num / 1_00_000).toFixed(1)}L`;
+      if (num >= 10_000_000) return `₹${(num / 10_000_000).toFixed(1)}Cr`;
+      if (num >= 100_000) return `₹${(num / 100_000).toFixed(1)}L`;
       if (num >= 1_000) return `₹${(num / 1_000).toFixed(1)}k`;
       return `₹${num}`;
     };
@@ -71,9 +65,10 @@ const getStats = async (req, res) => {
     });
   } catch (err) {
     console.error('[getStats]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 const getVendorById = async (req, res) => {
   try {
@@ -90,9 +85,10 @@ const getVendorById = async (req, res) => {
     return res.status(200).json({ success: true, data: vendor });
   } catch (err) {
     console.error('[getVendorById]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 const createVendor = async (req, res) => {
   try {
@@ -101,7 +97,7 @@ const createVendor = async (req, res) => {
     if (!company_id) {
       return res.status(401).json({
         success: false,
-        message: 'Unauthorized: company_id not found in token',
+        message: 'Unauthorized: company_id not found',
       });
     }
 
@@ -113,54 +109,50 @@ const createVendor = async (req, res) => {
       budgetAllocation, services,
     } = req.body;
 
-    const required = {
+    const requiredFields = {
       vendorLegalName, spocName, spocPhone,
       officialEmail, officialPhone,
       gstNo, panCardNo,
       physicalAddress, pincode,
       budgetAllocation, services,
     };
-    const missing = Object.keys(required).filter((k) => !required[k]);
-    if (missing.length) {
+
+    const missingFields = Object.keys(requiredFields).filter(k => !requiredFields[k]);
+    if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: `Required fields missing: ${missing.join(', ')}`,
+        message: `Required fields missing: ${missingFields.join(', ')}`,
       });
     }
 
+    // Email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(officialEmail)) {
       return res.status(400).json({ success: false, message: 'Invalid email address' });
     }
 
-    if (!/^[0-9A-Z]{15}$/.test(gstNo.toUpperCase())) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid GST format (e.g. 22AAAAA0000A1Z5)',
-      });
+    // GST
+    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstNo.toUpperCase())) {
+      return res.status(400).json({ success: false, message: 'Invalid GST format' });
     }
 
+    // PAN
     if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCardNo.toUpperCase())) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid PAN format (e.g. ABCDE1234F)',
-      });
+      return res.status(400).json({ success: false, message: 'Invalid PAN format' });
     }
 
-    const servicesArray = services
-      .split(',').map((s) => s.trim()).filter(Boolean);
+    const servicesArray =
+      typeof services === 'string'
+        ? services.split(',').map(s => s.trim()).filter(Boolean)
+        : services;
 
-    const budgetNum = parseFloat(budgetAllocation.replace(/[^0-9.]/g, '')) || 0;
+    const budgetNum =
+      parseFloat(String(budgetAllocation).replace(/[^0-9.]/g, '')) || 0;
 
     const contractFile = req.file
       ? `/uploads/contracts/${req.file.filename}`
       : null;
-    if (req.file) {
-      const fs = require('fs');
-      const fullPath = require('path').join(req.file.destination, req.file.filename);
-    }
 
     const newVendor = await VendorModel.create({
-      id: uuidv4(),
       company_id,
       name: vendorLegalName,
       spoc_name: spocName,
@@ -192,16 +184,19 @@ const createVendor = async (req, res) => {
       data: newVendor,
     });
   } catch (err) {
+    console.error('[createVendor]', err);
+
     if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(409).json({
         success: false,
         message: 'GST number, PAN card or email already registered',
       });
     }
-    console.error('[createVendor]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 const updateVendor = async (req, res) => {
   try {
@@ -210,13 +205,14 @@ const updateVendor = async (req, res) => {
     const vendor = await VendorModel.findOne({
       where: { id: req.params.id, company_id },
     });
+
     if (!vendor) {
       return res.status(404).json({ success: false, message: 'Vendor not found' });
     }
 
     if (req.body.services && typeof req.body.services === 'string') {
       req.body.services = req.body.services
-        .split(',').map((s) => s.trim()).filter(Boolean);
+        .split(',').map(s => s.trim()).filter(Boolean);
     }
 
     delete req.body.company_id;
@@ -230,9 +226,10 @@ const updateVendor = async (req, res) => {
     });
   } catch (err) {
     console.error('[updateVendor]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 const deleteVendor = async (req, res) => {
   try {
@@ -241,6 +238,7 @@ const deleteVendor = async (req, res) => {
     const vendor = await VendorModel.findOne({
       where: { id: req.params.id, company_id },
     });
+
     if (!vendor) {
       return res.status(404).json({ success: false, message: 'Vendor not found' });
     }
@@ -250,9 +248,10 @@ const deleteVendor = async (req, res) => {
     return res.status(200).json({ success: true, message: 'Vendor deleted successfully' });
   } catch (err) {
     console.error('[deleteVendor]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 const getActivities = async (req, res) => {
   try {
@@ -266,27 +265,37 @@ const getActivities = async (req, res) => {
     });
 
     const now = Date.now();
-    const result = activities.map((a) => {
-      const data = a.toJSON();
-      const diffMs = now - new Date(a.createdAt).getTime();
+
+    const result = activities.map(activity => {
+      const data = activity.toJSON();
+      const diffMs = now - new Date(activity.createdAt).getTime();
       const diffMins = Math.floor(diffMs / 60_000);
       const diffHrs = Math.floor(diffMins / 60);
       const diffDays = Math.floor(diffHrs / 24);
 
-      let time = data.time_label;
+      let time;
       if (diffMins < 2) time = 'JUST NOW';
       else if (diffMins < 60) time = `${diffMins} MINS AGO`;
       else if (diffHrs < 24) time = `${diffHrs} HOUR${diffHrs > 1 ? 'S' : ''} AGO`;
       else if (diffDays === 1) time = 'YESTERDAY';
       else if (diffDays < 7) time = `${diffDays} DAYS AGO`;
+      else {
+        time = new Date(activity.createdAt)
+          .toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+          .toUpperCase();
+      }
 
       return { ...data, time };
     });
 
-    return res.status(200).json({ success: true, count: result.length, data: result });
+    return res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+    });
   } catch (err) {
     console.error('[getActivities]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -314,7 +323,7 @@ const createActivity = async (req, res) => {
     return res.status(201).json({ success: true, data: activity });
   } catch (err) {
     console.error('[createActivity]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
