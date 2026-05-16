@@ -74,7 +74,7 @@
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
         @for (tab of tabs; track tab) {
-        <button (click)="selectedTab = tab"
+        <button (click)="changeTab(tab)"
             [class]="selectedTab === tab ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-dim'"
             class="px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap cursor-pointer transition-colors">
             {{ tab }}
@@ -448,7 +448,7 @@
                     Name</label>
                 <!-- <input [(ngModel)]="newMaterial.name" type="text" placeholder="e.g. Portland Cement Grade-C"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30"> -->
-                <select [(ngModel)]="newMaterial.material_master_id" (change)="getSelectedMat($event)"
+                <select [(ngModel)]="newMaterial.equipment_master_id" (change)="getSelectedMat($event)"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
 
                     <option value="" disabled>Select Equipment</option>
@@ -502,10 +502,16 @@
                 <select [(ngModel)]="newMaterial.vendor_id" (change)="getvendor($event)"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
                     <option value="" disabled selected>Select Vendor</option>
+
                     @for (v of vendors; track v.id) {
-                    <option [value]="v.id">{{ v.name }}</option>
+                    <option [value]="v.id">
+                        {{ v.name }}
+                    </option>
                     }
-                    <option value="ADD_NEW" class="text-primary font-bold">+ Add New Vendor</option>
+
+                    <option value="ADD_NEW" class="text-primary font-bold">
+                        + Add New Vendor
+                    </option>
                 </select>
             </div>
         </div>
@@ -660,5 +666,14 @@
             class="w-full mt-6 py-2 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest">Apply
             Filters</button>
     </div>
+
+  
 </div>
 }
+<app-vendor-add-modal [showAddModal]="showAddVendorModal" [newVendor]="newVendor" [errorMsg]="errorMsg"
+      [contractFile]="contractFile" [isSaving]="isSaving" (close)="showAddVendorModal = false" (save)="addVendor()"
+      (contractSelect)="onContractFileSelected($event)" (onlyNumberEvent)="onlyNumbers($event)"
+      (onlyAlphaNumericEvent)="onlyAlphanumeric($event)"
+      (pasteNumericEvent)="stripNonNumericOnPaste($event.event, $event.field, $event.len)"
+      (pasteAlphaNumericEvent)="stripNonAlphanumericOnPaste($event.event, $event.field, $event.len)">
+  </app-vendor-add-modal>

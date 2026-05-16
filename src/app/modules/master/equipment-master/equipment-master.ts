@@ -1,9 +1,9 @@
 import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MaterialMasterService, Material } from '../../../shared/services/master/material-master';
+import { Equipment, Material } from '../../../shared/services/master/equipment';
 import { VendorsServices } from '../../vendors/services/vendors-services';
-import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -16,7 +16,7 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
-  private materialService = inject(MaterialMasterService);
+  private materialService = inject(Equipment);
 
   team = [
     { name: 'All Members' },
