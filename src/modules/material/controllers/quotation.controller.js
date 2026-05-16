@@ -1,0 +1,660 @@
+const db = require("../../../models");
+
+class QuotationController {
+    constructor() {
+        this.create_quotation = this.create_quotation.bind(this);
+        this.getall_quotation = this.getall_quotation.bind(this);
+        this.getbyid_quotation = this.getbyid_quotation.bind(this);
+        this.update_quotation = this.update_quotation.bind(this);
+        this.delete_quotation = this.delete_quotation.bind(this);
+        this.get_quotation_by_material_master_id =
+            this.get_quotation_by_material_master_id.bind(this);
+        this.get_quotation_by_equipment_master_id =
+            this.get_quotation_by_equipment_master_id.bind(this);
+    }
+
+    /**
+     * Create Quotation
+     */
+    async create_quotation(req, res) {
+        try {
+            const {
+                name,
+                sku,
+                category,
+                quantity,
+                unit_cost,
+                total_cost,
+                vendor_name,
+                status,
+                material_master_id,
+                equipment_master_id,
+                vendor_id
+            } = req.body;
+
+            const company_id = req.user.company_id;
+
+            // Validation
+            if (!name) {
+                return res.status(400).json({
+                    message: "name is required."
+                });
+            }
+
+            if (!sku) {
+                return res.status(400).json({
+                    message: "sku is required."
+                });
+            }
+
+            // Duplicate Check
+            const existingQuotation = await db.quotation.findOne({
+                where: {
+                    sku,
+                    company_id,
+                    isDeleted: false
+                }
+            });
+
+            if (existingQuotation) {
+                return res.status(409).json({
+                    message: "Quotation with this SKU already exists."
+                });
+            }
+
+            // Create
+            const quotation = await db.quotation.create({
+                name,
+                sku,
+                category,
+                quantity,
+                unit_cost,
+                total_cost,
+                vendor_name,
+                status,
+                material_master_id,
+                equipment_master_id,
+                vendor_id,
+                company_id
+            });
+
+
+            const existingMaterial = await db.material_master.findOne({
+                where: {
+                    id: material_master_id
+                }
+            });
+
+            const updatedStock =
+                Number(existingMaterial.stockAvailable) + Number(quantity);
+
+            await db.material_master.update(
+                {
+                    stockAvailable: updatedStock
+                },
+                {
+                    where: {
+                        id: material_master_id
+                    }
+                }
+            );
+
+            return res.status(201).json({
+                message: "Quotation created successfully.",
+                data: quotation
+            });
+
+        } catch (error) {
+            console.error("[CREATE_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error creating quotation.",
+                error: error.message
+            });
+        }
+    }
+
+
+    /**
+     * Create Multiple Quotation
+     */
+    async create_multiple_quotation(req, res) {
+        try {
+
+            const quotations = req.body;
+
+            const company_id = req.user.company_id;
+
+            // Validation
+            if (!Array.isArray(quotations) || quotations.length === 0) {
+                return res.status(400).json({
+                    message: "Quotation array is required."
+                });
+            }
+
+            const createdQuotations = [];
+            const duplicateSkus = [];
+
+
+            // Last quotation find
+            const lastQuotation = await db.quotation.findOne({
+                order: [["id", "DESC"]]
+            });
+
+            let nextQuotationNumber = lastQuotation
+                ? lastQuotation.id + 1
+                : 1;
+
+            for (const item of quotations) {
+
+                const {
+                    name,
+                    sku,
+                    category,
+                    quantity,
+                    unit_cost,
+                    total_cost,
+                    vendor_name,
+                    status,
+                    material_master_id,
+                    equipment_master_id,
+                    vendor_id,
+                    quotation_status
+                } = item;
+
+                // Required Validation
+                if (!name || !sku) {
+                    return res.status(400).json({
+                        message: "name and sku are required."
+                    });
+                }
+
+                // Duplicate Check
+                const existingQuotation = await db.quotation.findOne({
+                    where: {
+                        sku,
+                        company_id,
+                        isDeleted: false
+                    }
+                });
+
+                if (existingQuotation) {
+                    duplicateSkus.push(sku);
+                    continue;
+                }
+
+                // Generate quotation number
+                const quotation_number = `QT-${nextQuotationNumber++}`;
+
+                // Create Quotation
+                const quotation = await db.quotation.create({
+                    name,
+                    sku,
+                    category,
+                    quantity,
+                    unit_cost,
+                    total_cost,
+                    vendor_name,
+                    status,
+                    material_master_id,
+                    equipment_master_id,
+                    vendor_id,
+                    company_id,
+                    quotation_status,
+                    quotation_number
+                });
+
+                createdQuotations.push(quotation);
+            }
+
+            return res.status(201).json({
+                message: "Multiple quotations processed successfully.",
+                total_created: createdQuotations.length,
+                duplicate_skus: duplicateSkus,
+                data: createdQuotations
+            });
+
+        } catch (error) {
+
+            console.error("[CREATE_MULTIPLE_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error creating multiple quotations.",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Get All Quotations
+     */
+    async getall_quotation(req, res) {
+        try {
+
+            const company_id = req.user.company_id;
+
+            const quotations = await db.quotation.findAll({
+                where: {
+                    isDeleted: false,
+                    company_id
+                },
+                order: [["createdAt", "DESC"]]
+            });
+
+            if (quotations.length > 0) {
+                return res.status(200).json({
+                    code: 200,
+                    message: "Success",
+                    data: quotations
+                });
+            } else {
+                return res.status(404).json({
+                    code: 404,
+                    message: "No data found"
+                });
+            }
+
+        } catch (error) {
+            console.error("[GETALL_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching quotations.",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Get Quotation By ID
+     */
+    async getbyid_quotation(req, res) {
+        try {
+
+            const { id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotation = await db.quotation.findOne({
+                where: {
+                    id,
+                    company_id,
+                    isDeleted: false
+                }
+            });
+
+            if (!quotation) {
+                return res.status(404).json({
+                    message: "Quotation not found."
+                });
+            }
+
+            return res.status(200).json({
+                data: quotation
+            });
+
+        } catch (error) {
+            console.error("[GET_QUOTATION_BY_ID_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching quotation.",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Update Quotation
+     */
+    async update_quotation(req, res) {
+        try {
+
+            const { id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotation = await db.quotation.findOne({
+                where: {
+                    id,
+                    company_id,
+                    isDeleted: false
+                }
+            });
+
+            if (!quotation) {
+                return res.status(404).json({
+                    message: "Quotation not found."
+                });
+            }
+
+            const {
+                name,
+                sku,
+                category,
+                quantity,
+                unit_cost,
+                total_cost,
+                vendor_name,
+                status,
+                material_master_id,
+                equipment_master_id,
+                vendor_id,
+                quotation_status
+            } = req.body;
+
+            await quotation.update({
+                name,
+                sku,
+                category,
+                quantity,
+                unit_cost,
+                total_cost,
+                vendor_name,
+                status,
+                material_master_id,
+                equipment_master_id,
+                vendor_id,
+                quotation_status
+            });
+
+            return res.status(200).json({
+                message: "Quotation updated successfully.",
+                data: quotation
+            });
+
+        } catch (error) {
+            console.error("[UPDATE_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error updating quotation.",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Delete Quotation (Soft Delete)
+     */
+    async delete_quotation(req, res) {
+        try {
+
+            const { id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotation = await db.quotation.findOne({
+                where: {
+                    id,
+                    company_id,
+                    isDeleted: false
+                }
+            });
+
+            if (!quotation) {
+                return res.status(404).json({
+                    message: "Quotation not found."
+                });
+            }
+
+            await quotation.update({
+                isDeleted: true
+            });
+
+            return res.status(200).json({
+                message: "Quotation deleted successfully."
+            });
+
+        } catch (error) {
+            console.error("[DELETE_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error deleting quotation.",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Get Quotation By Material Master ID
+     */
+    async get_quotation_by_material_master_id(req, res) {
+        try {
+
+            const { material_master_id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotations = await db.quotation.findAll({
+                where: {
+                    material_master_id,
+                    company_id,
+                    isDeleted: false
+                },
+                order: [["createdAt", "DESC"]]
+            });
+
+            if (quotations.length === 0) {
+                return res.status(404).json({
+                    message: "No quotation found."
+                });
+            }
+
+            return res.status(200).json({
+                data: quotations
+            });
+
+        } catch (error) {
+            console.error("[GET_QUOTATION_BY_MATERIAL_ID_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching quotation.",
+                error: error.message
+            });
+        }
+    }
+
+    /**
+     * Get Quotation By Equipment Master ID
+     */
+    async get_quotation_by_equipment_master_id(req, res) {
+        try {
+
+            const { equipment_master_id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotations = await db.quotation.findAll({
+                where: {
+                    equipment_master_id,
+                    company_id,
+                    isDeleted: false
+                },
+                order: [["createdAt", "DESC"]]
+            });
+
+            if (quotations.length === 0) {
+                return res.status(404).json({
+                    message: "No quotation found."
+                });
+            }
+
+            return res.status(200).json({
+                data: quotations
+            });
+
+        } catch (error) {
+            console.error("[GET_QUOTATION_BY_EQUIPMENT_ID_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching quotation.",
+                error: error.message
+            });
+        }
+    }
+
+    // ===============================
+    // GET ALL MATERIAL QUOTATIONS
+    // ===============================
+    async getall_material_quotation(req, res) {
+        try {
+
+            const company_id = req.user.company_id;
+
+            const quotations = await db.quotation.findAll({
+                where: {
+                    status: "MATERIAL",
+                    isDeleted: false,
+                    company_id
+                },
+                order: [["createdAt", "DESC"]]
+            });
+
+            if (quotations.length === 0) {
+                return res.status(404).json({
+                    message: "No material quotations found."
+                });
+            }
+
+            return res.status(200).json({
+                message: "Material quotations fetched successfully.",
+                data: quotations
+            });
+
+        } catch (error) {
+
+            console.error("[GETALL_MATERIAL_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching material quotations.",
+                error: error.message
+            });
+        }
+    }
+
+
+    // ===============================
+    // GET MATERIAL QUOTATION BY ID
+    // ===============================
+    async get_material_quotation_by_id(req, res) {
+        try {
+
+            const { id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotation = await db.quotation.findOne({
+                where: {
+                    id,
+                    status: "MATERIAL",
+                    isDeleted: false,
+                    company_id
+                }
+            });
+
+            if (!quotation) {
+                return res.status(404).json({
+                    message: "Material quotation not found."
+                });
+            }
+
+            return res.status(200).json({
+                message: "Material quotation fetched successfully.",
+                data: quotation
+            });
+
+        } catch (error) {
+
+            console.error("[GET_MATERIAL_QUOTATION_BY_ID_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching material quotation.",
+                error: error.message
+            });
+        }
+    }
+
+
+    // ===============================
+    // GET ALL EQUIPMENT QUOTATIONS
+    // ===============================
+    async getall_equipment_quotation(req, res) {
+        try {
+
+            const company_id = req.user.company_id;
+
+            const quotations = await db.quotation.findAll({
+                where: {
+                    status: "EQUIPMENT",
+                    isDeleted: false,
+                    company_id
+                },
+                order: [["createdAt", "DESC"]]
+            });
+
+            if (quotations.length === 0) {
+                return res.status(404).json({
+                    message: "No equipment quotations found."
+                });
+            }
+
+            return res.status(200).json({
+                message: "Equipment quotations fetched successfully.",
+                data: quotations
+            });
+
+        } catch (error) {
+
+            console.error("[GETALL_EQUIPMENT_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching equipment quotations.",
+                error: error.message
+            });
+        }
+    }
+
+
+    // ===============================
+    // GET EQUIPMENT QUOTATION BY ID
+    // ===============================
+    async get_equipment_quotation_by_id(req, res) {
+        try {
+
+            const { id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotation = await db.quotation.findOne({
+                where: {
+                    id,
+                    status: "EQUIPMENT",
+                    isDeleted: false,
+                    company_id
+                }
+            });
+
+            if (!quotation) {
+                return res.status(404).json({
+                    message: "Equipment quotation not found."
+                });
+            }
+
+            return res.status(200).json({
+                message: "Equipment quotation fetched successfully.",
+                data: quotation
+            });
+
+        } catch (error) {
+
+            console.error("[GET_EQUIPMENT_QUOTATION_BY_ID_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching equipment quotation.",
+                error: error.message
+            });
+        }
+    }
+
+
+}
+
+module.exports = new QuotationController();

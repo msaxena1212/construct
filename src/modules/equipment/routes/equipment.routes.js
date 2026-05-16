@@ -20,4 +20,8 @@ module.exports = (router) => {
   // Get equipment by project ID
   router.get("/getequipmentByprojectId/:id", equipmentCtrl.getequipmentByprojectId);
 
+
+  // Get equipment_history all
+  router.get("/getAllequipments_history", equipmentCtrl.getAllequipments_history);
+
 };

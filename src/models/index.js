@@ -57,6 +57,8 @@ db.skill = require("../modules/skill/model/skill_model.js")(sequelize, Sequelize
 //Material
 db.material_master = require("../modules/material/models/material_master.model.js")(sequelize, Sequelize);
 
+db.quotation = require("../modules/material/models/quotation.model.js")(sequelize, Sequelize);
+
 db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
 
 //Labor
@@ -128,6 +130,26 @@ db.vendors_activity.belongsTo(db.company, { foreignKey: "company_id", as: "compa
 db.company.hasMany(db.material_master, { foreignKey: "company_id", as: "material_master" });
 db.material_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
+
+db.material_master.hasMany(db.quotation, { foreignKey: "material_master_id", as: "quotation" });
+db.quotation.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
+
+db.equipment_master.hasMany(db.quotation, { foreignKey: "equipment_master_id", as: "quotation" });
+db.quotation.belongsTo(db.equipment_master, { foreignKey: "equipment_master_id", as: "equipment_master" });
+
+db.company.hasMany(db.quotation, { foreignKey: "company_id", as: "quotation" });
+db.quotation.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.vendors.hasMany(db.quotation, { foreignKey: "vendor_id", as: "quotation" });
+db.quotation.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
+
+
+
+
+
+db.quotation.hasMany(db.material, { foreignKey: "quotation_id", as: "material" });
+db.material.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
+
 db.material_master.hasMany(db.material, { foreignKey: "material_master_id", as: "material" });
 db.material.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
 
@@ -155,12 +177,17 @@ db.material_history.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor
 db.project.hasMany(db.material_history, { foreignKey: "project_id", as: "material_history" });
 db.material_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
 
+db.quotation.hasMany(db.material_history, { foreignKey: "quotation_id", as: "material_history" });
+db.material_history.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
 
 db.company.hasMany(db.equipment_master, { foreignKey: "company_id", as: "equipment_master" });
 db.equipment_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
 db.equipment_master.hasMany(db.equipment, { foreignKey: "equipment_master_id", as: "equipment" });
 db.equipment.belongsTo(db.equipment_master, { foreignKey: "equipment_master_id", as: "equipment_master" });
+
+db.quotation.hasMany(db.equipment, { foreignKey: "quotation_id", as: "equipment" });
+db.equipment.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
 
 db.company.hasMany(db.equipment, { foreignKey: "company_id", as: "equipment" });
 db.equipment.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -186,25 +213,28 @@ db.equipment_history.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendo
 db.project.hasMany(db.equipment_history, { foreignKey: "project_id", as: "equipment_history" });
 db.equipment_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
 
+db.quotation.hasMany(db.equipment_history, { foreignKey: "quotation_id", as: "equipment_history" });
+db.equipment_history.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
+
 // For Vendors_labor]
 db.company.hasMany(db.vendors_labor, {
-  foreignKey: 'company_id',
-  as: 'vendors_labor'
+    foreignKey: 'company_id',
+    as: 'vendors_labor'
 });
 
 db.vendors_labor.belongsTo(db.company, {
-  foreignKey: 'company_id',
-  as: 'company'
+    foreignKey: 'company_id',
+    as: 'company'
 });
 
 db.vendors.hasMany(db.vendors_labor, {
-  foreignKey: 'vendor_id',
-  as: 'vendors_labor'
+    foreignKey: 'vendor_id',
+    as: 'vendors_labor'
 });
 
 db.vendors_labor.belongsTo(db.vendors, {
-  foreignKey: 'vendor_id',
-  as: 'vendor'
+    foreignKey: 'vendor_id',
+    as: 'vendor'
 });
 
 // Vendor ↔ Invoice
