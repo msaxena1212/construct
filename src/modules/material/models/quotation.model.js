@@ -60,11 +60,7 @@ module.exports = (sequelize, Sequelize) => {
 
       quotation_status: {
         type: Sequelize.ENUM(
-          'Draft',
-          'Sent',
-          'Negotiating',
-          'Approved',
-          'Rejected'
+          'Draft','Sent','Negotiating','Approved','Rejected'
         ),
         defaultValue: 'Draft'
       },
