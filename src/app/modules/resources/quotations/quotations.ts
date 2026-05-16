@@ -24,27 +24,33 @@ export class Quotations {
   negotiationFeedback = '';
 
   get draftQuotesCount() {
-    return this.quotes.filter(q => q.status === 'Draft').length;
+    return this.quotes?.filter(q => q?.status === 'Draft').length;
   }
 
   get approvedQuotesCount() {
-    return this.quotes.filter(q => q.status === 'Approved').length;
+    return this.quotes?.filter(q => q?.status === 'Approved').length;
   }
 
-  get totalValue() {
-    return this.quotes.reduce((acc, q) => acc + q.totalAmount, 0);
+get totalValue(): number {
+  if (!this.quotes || !this.quotes.length) {
+    return 0;
   }
+
+  return this.quotes.reduce((acc, q) => {
+    return acc + Number(q.total_cost ?? 0);
+  }, 0);
+}
 
   ngOnInit() {
     this.quotationService.quotes$.subscribe((q:any) => this.quotes = q.data);
   }
 
-  get filteredQuotes() {
+  get filteredQuotes(): any {
     if (!this.searchQuery) return this.quotes;
     const q = this.searchQuery.toLowerCase();
-    return this.quotes.filter(quote => 
-      quote.quoteNumber.toLowerCase().includes(q) || 
-      quote.salesPerson.toLowerCase().includes(q)
+    return this.quotes.filter((quote:any) => 
+      quote.quotation_number.toLowerCase().includes(q) || 
+      quote.vendor_name.toLowerCase().includes(q)
     );
   }
 
@@ -59,10 +65,20 @@ export class Quotations {
     }
   }
 
-  toggleDropdown(quoteId: string, event: Event) {
-    event.stopPropagation();
-    this.activeDropdownId = this.activeDropdownId === quoteId ? null : quoteId;
-  }
+  // toggleDropdown(quoteId: string, event: Event) {
+  //   event.stopPropagation();
+  //   this.activeDropdownId = this.activeDropdownId === quoteId ? null : quoteId;
+  // }
+
+  // activeDropdownId: string | null = null;
+
+toggleDropdown(id: string,qtn: string) {
+  this.activeDropdownId =
+    this.activeDropdownId == qtn ? null : id;
+
+    console.log(this.activeDropdownId,qtn,'this.activeDropdownId');
+    
+}
 
   closeDropdown() {
     this.activeDropdownId = null;
@@ -97,12 +113,12 @@ export class Quotations {
     if (this.selectedQuote) {
       this.quotationService.updateQuoteStatus(this.selectedQuote.id, status, this.negotiationFeedback);
       this.closeNegotiateModal();
-      alert(`Quote ${this.selectedQuote.quoteNumber} status updated to ${status}.`);
+      alert(`Quote ${this.selectedQuote.quotation_number} status updated to ${status}.`);
     }
   }
 
   handleDelete(quote: Quote) {
-    if (confirm(`Are you sure you want to delete quotation ${quote.quoteNumber}?`)) {
+    if (confirm(`Are you sure you want to delete quotation ${quote.quotation_number}?`)) {
       this.quotationService.deleteQuote(quote.id);
       this.closeDropdown();
     }
@@ -110,9 +126,11 @@ export class Quotations {
 
   downloadPdf(quote: Quote) {
     this.closeDropdown();
-    alert(`Generating PDF for ${quote.quoteNumber}...`);
+    alert(`Generating PDF for ${quote.quotation_number}...`);
     setTimeout(() => {
-      alert(`Format completed. ${quote.quoteNumber}.pdf has been prepared for download.`);
+      alert(`Format completed. ${quote.quotation_number}.pdf has been prepared for download.`);
     }, 1500);
   }
+
+  
 }

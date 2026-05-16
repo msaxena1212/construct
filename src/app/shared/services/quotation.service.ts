@@ -15,11 +15,12 @@ export interface QuoteItem {
 
 export interface Quote {
   id: string;
-  quoteNumber: string;
+  quotation_number: string;
   createdAt: string;
-  salesPerson: string;
+  vendor_name: string;
   items: QuoteItem[];
-  totalAmount: number;
+  total_cost: number;
+  quantity: number;
   status: 'Draft' | 'Sent' | 'Negotiating' | 'Approved' | 'Rejected';
   vendorFeedback?: string;
   lastUpdated?: string;

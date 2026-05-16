@@ -107,19 +107,24 @@ prepareQuoteItems() {
     }
   }
 
-  submitQuote() {
-    const newQuote: Quote = {
-      id: Date.now().toString(),
-      quoteNumber: 'QT-' + Math.floor(Math.random() * 90000 + 10000),
-      createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      salesPerson: 'Marcus Thorne',
-      items: this.quoteItems,
-      totalAmount: this.totalAmount,
-      status: 'Draft'
-    };
+submitQuote() {
+  const newQuote: Quote = {
+    id: Date.now().toString(),
+    quotation_number: 'QT-' + Math.floor(Math.random() * 90000 + 10000),
+    createdAt: new Date().toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric'
+    }),
+    vendor_name: 'Marcus Thorne',
+    items: this.quoteItems,
+    total_cost: this.totalAmount,
+    quantity: this.quoteItems.length, // add this
+    status: 'Draft'
+  };
 
-    this.quotationService.addQuote(newQuote).subscribe(() => {
-      this.router.navigate(['/quotations']);
-    });
-  }
+  this.quotationService.addQuote(newQuote).subscribe(() => {
+    this.router.navigate(['/quotations']);
+  });
+}
 }
