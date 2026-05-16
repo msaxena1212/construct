@@ -1,23 +1,43 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../vendors/upload');
-const controller = require('../vendors/vendors_controller');
 
-router.get('/stats', controller.getStats);
+const vendorCtrl = require('../vendors/vendors_controller');
+const invoiceCtrl = require('../vendors/vendors_invoice_controller');
+const auditCtrl = require('../vendors/vendors_audit_controller');
+const taskCtrl = require('../vendors/vendors_task_controller');
 
-router.get('/', controller.getAllVendors);
-router.get('/:id', controller.getVendorById);
+
+router.get('/stats', vendorCtrl.getStats);
+
+
+router.get('/:vendorId/invoices', invoiceCtrl.getInvoicesByVendor);
+router.post('/:vendorId/invoices', invoiceCtrl.createInvoice);
+router.put('/invoices/:id/status', invoiceCtrl.updateInvoiceStatus);
+router.delete('/invoices/:id', invoiceCtrl.deleteInvoice);
+
+
+router.get('/:vendorId/audits', auditCtrl.getAuditsByVendor);
+router.post('/:vendorId/audits', auditCtrl.createAudit);
+
+
+router.get('/:vendorId/tasks', taskCtrl.getTasksByVendor);
+router.post('/:vendorId/tasks', taskCtrl.createTask);
+router.put('/tasks/:id', taskCtrl.updateTask);
+router.delete('/tasks/:id', taskCtrl.deleteTask);
+
+
+router.get('/', vendorCtrl.getAllVendors);
+router.get('/:id', vendorCtrl.getVendorById);
 
 router.post('/', (req, res, next) => {
   upload.single('contractFile')(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({ success: false, message: err.message });
-    }
+    if (err) return res.status(400).json({ success: false, message: err.message });
     next();
   });
-}, controller.createVendor);
+}, vendorCtrl.createVendor);
 
-router.put('/:id', controller.updateVendor);
-router.delete('/:id', controller.deleteVendor);
+router.put('/:id', vendorCtrl.updateVendor);
+router.delete('/:id', vendorCtrl.deleteVendor);
 
 module.exports = router;
