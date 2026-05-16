@@ -125,22 +125,8 @@ db.vendors_activity.belongsTo(db.company, { foreignKey: "company_id", as: "compa
 db.company.hasMany(db.material_master, { foreignKey: "company_id", as: "material_master" });
 db.material_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
-
-db.material_master.hasMany(db.quotation, { foreignKey: "material_master_id", as: "quotation" });
-db.quotation.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
-
-db.equipment_master.hasMany(db.quotation, { foreignKey: "equipment_master_id", as: "quotation" });
-db.quotation.belongsTo(db.equipment_master, { foreignKey: "equipment_master_id", as: "equipment_master" });
-
 db.company.hasMany(db.quotation, { foreignKey: "company_id", as: "quotation" });
 db.quotation.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
-
-db.vendors.hasMany(db.quotation, { foreignKey: "vendor_id", as: "quotation" });
-db.quotation.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
-
-
-
-
 
 db.quotation.hasMany(db.material, { foreignKey: "quotation_id", as: "material" });
 db.material.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
