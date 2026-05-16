@@ -19,6 +19,7 @@ class equipment_masterController {
                 sku,
                 category,
                 stockAvailable,
+                cost,
                 status,
             } = req.body;
 
@@ -58,6 +59,7 @@ class equipment_masterController {
                 sku,
                 category,
                 stockAvailable,
+                cost,
                 status,
                 company_id
             });
@@ -164,6 +166,7 @@ class equipment_masterController {
                 sku,
                 category,
                 stockAvailable,
+                cost,
                 status,
             } = req.body;
 
@@ -172,6 +175,7 @@ class equipment_masterController {
                 sku,
                 category,
                 stockAvailable,
+                cost,
                 status
             });
 
