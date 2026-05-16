@@ -13,6 +13,7 @@ class Routes {
     require("../modules/projects/project.routes")(router);
     app.use("/api/v1", router);
     require("../modules/material/routes/material_master.routes")(router);
+    require("../modules/material/routes/quotation.routes")(router);
     require("../modules/material/routes/material.routes")(router);
     require("../modules/stock-requests/routes/stockRequestRoutes")(router);
 
