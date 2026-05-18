@@ -25,7 +25,7 @@ module.exports = (sequelize, Sequelize) => {
 
       items: {
         type: Sequelize.JSON, // Array of items store karne ke liye
-        defaultValue: [],
+
       },
 
       total_amount: {
@@ -66,6 +66,11 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.BOOLEAN,
         defaultValue: true,
       },
+
+      quotation_type: {
+        type: Sequelize.STRING,
+      },
+
     },
     {
       freezeTableName: true,
