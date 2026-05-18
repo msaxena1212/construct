@@ -8,38 +8,52 @@ module.exports = (sequelize, Sequelize) => {
         primaryKey: true,
       },
 
-      name: {
+      quotation_number: {
         type: Sequelize.STRING,
+        unique: true,
         allowNull: false,
       },
 
-      sku: {
-        type: Sequelize.STRING,
+      date: {
+        type: Sequelize.DATE,
         allowNull: false,
       },
 
-      category: {
+      sales_person: {
         type: Sequelize.STRING,
       },
 
-      quantity: {
-        type: Sequelize.INTEGER,
+      items: {
+        type: Sequelize.JSON, // Array of items store karne ke liye
+
+      },
+
+      total_amount: {
+        type: Sequelize.FLOAT,
         defaultValue: 0,
       },
 
-      unit_cost: {
-        type: Sequelize.STRING,
-      },
-
-      total_cost: {
-        type: Sequelize.STRING,
-      },
-
-      vendor_name: {
-        type: Sequelize.STRING,
-      },
-
       status: {
+        type: Sequelize.ENUM(
+          "Draft",
+          "Sent",
+          "Negotiating",
+          "Approved",
+          "Rejected"
+        ),
+        defaultValue: "Draft",
+      },
+
+      vendor_feedback: {
+        type: Sequelize.TEXT,
+      },
+
+      last_updated: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+      },
+
+      quotation_status: {
         type: Sequelize.STRING,
       },
 
@@ -53,16 +67,8 @@ module.exports = (sequelize, Sequelize) => {
         defaultValue: true,
       },
 
-      quotation_number: {
+      quotation_type: {
         type: Sequelize.STRING,
-        unique: true,
-      },
-
-      quotation_status: {
-        type: Sequelize.ENUM(
-          'Draft','Sent','Negotiating','Approved','Rejected'
-        ),
-        defaultValue: 'Draft'
       },
 
     },
@@ -74,3 +80,26 @@ module.exports = (sequelize, Sequelize) => {
 
   return QUOTATION;
 };
+
+
+// export interface QuoteItem {
+//   materialSku: string;
+//   materialName: string;
+//   quantity: number;
+//   unitPrice: number;
+//   totalPrice: number;
+//   vendorId: string | number;
+//   vendorName: string;
+// }
+
+// export interface Quote {
+//   id: string;
+//   quoteNumber: string;
+//   date: string;
+//   salesPerson: string;
+//   items: QuoteItem[];
+//   totalAmount: number;
+//   status: 'Draft' | 'Sent' | 'Negotiating' | 'Approved' | 'Rejected';
+//   vendorFeedback?: string;
+//   lastUpdated?: string;
+// }
