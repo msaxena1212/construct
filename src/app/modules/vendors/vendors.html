@@ -9,7 +9,6 @@
         Coordinate with {{ stats.totalActive }} active contractors and material suppliers.
       </p>
     </div>
-
     <div
       class="flex items-center gap-3 bg-surface-container-low px-4 py-3 rounded-xl border border-outline-variant/10 shadow-sm">
       <span class="material-symbols-outlined text-outline text-sm">filter_alt</span>
@@ -18,7 +17,6 @@
         <option *ngFor="let m of team" [value]="m.name">{{ m.name }}</option>
       </select>
     </div>
-
     <button (click)="openAddModal()"
       class="cursor-pointer bg-gradient-to-r from-primary to-primary-container text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-xl shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-95">
       <span class="material-symbols-outlined">person_add</span>
@@ -49,8 +47,8 @@
     <div (click)="openVendorDetail(v)"
       class="cursor-pointer bg-surface-container-lowest p-6 rounded-2xl group hover:shadow-2xl hover:border-primary/20 border border-transparent transition-all duration-300 relative overflow-hidden">
       <div class="absolute top-0 right-0 p-4">
-        <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full" [ngClass]="v.statusColor">{{
-          v.status }}</span>
+        <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full" [ngClass]="v.statusColor">
+          {{ v.status }}</span>
       </div>
       <div class="flex items-start gap-4 mb-6">
         <div class="w-14 h-14 bg-surface-container-high rounded-xl flex items-center justify-center">
@@ -106,10 +104,9 @@
 
   <div class="bg-surface-container-low rounded-3xl p-8 mt-4">
     <div class="flex items-center justify-between mb-8">
-      <h3 class="text-xl font-black text-on-surface">Compliance & Billing Activity</h3>
-      <button class="cursor-pointer text-primary text-sm font-bold flex items-center gap-1 hover:underline">
-        View All History
-      </button>
+      <h3 class="text-xl font-black text-on-surface">Compliance &amp; Billing Activity</h3>
+      <button class="cursor-pointer text-primary text-sm font-bold flex items-center gap-1 hover:underline">View All
+        History</button>
     </div>
     <div class="space-y-6">
       @for (act of activities; track act.id) {
@@ -141,7 +138,7 @@
       </button>
       <div>
         <h2 class="text-3xl font-black tracking-tight text-on-surface">{{ selectedVendor.name }}</h2>
-        <p class="text-sm text-outline font-medium">Partner Overview & Execution Hub</p>
+        <p class="text-sm text-outline font-medium">Partner Overview &amp; Execution Hub</p>
       </div>
       <div class="ml-auto flex gap-3 flex-wrap">
         <button
@@ -176,12 +173,13 @@
       <div
         class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32 border-l-4 border-secondary">
         <span class="text-xs font-bold text-outline uppercase tracking-widest">Active Tasks</span>
-        <p class="text-2xl font-black">{{ selectedVendor.tasks.length }} Tasks</p>
+        <p class="text-2xl font-black">{{ vendorTasks.length }} Tasks</p>
       </div>
       <div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32">
         <span class="text-xs font-bold text-outline uppercase tracking-widest">Status</span>
         <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider w-fit"
-          [ngClass]="selectedVendor.statusColor">{{ selectedVendor.status }}</span>
+          [ngClass]="selectedVendor.statusColor">
+          {{ selectedVendor.status }}</span>
       </div>
       <div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32">
         <div class="flex items-center justify-between">
@@ -202,10 +200,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <div class="lg:col-span-8 space-y-6">
 
+        <!-- Service Tasks -->
         <div class="bg-surface-container-lowest p-8 rounded-3xl shadow-sm border border-outline-variant/10">
-          <h3 class="text-xl font-black mb-6">Service Tasks & Performance</h3>
+          <h3 class="text-xl font-black mb-6">Service Tasks &amp; Performance</h3>
           <div class="space-y-4">
-            @for (task of selectedVendor.tasks; track task.title) {
+            @for (task of (vendorTasks || []); track task.id) {
             <div
               class="flex items-center gap-6 p-4 bg-surface-container-low rounded-2xl border border-transparent hover:border-primary/20 transition-all group">
               <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
@@ -215,10 +214,22 @@
                 <p class="font-bold text-on-surface">{{ task.title }}</p>
                 <p class="text-xs text-outline">{{ task.date }}</p>
               </div>
-              <span
-                class="px-3 py-1 bg-surface-container-lowest rounded-lg text-[10px] font-black uppercase tracking-widest">
+              <select [value]="task.statusRaw" (change)="updateTaskStatus(task, $any($event.target).value)"
+                class="text-[10px] font-black bg-surface-container-low border-none rounded-lg px-2 py-1 outline-none cursor-pointer appearance-none"
+                (click)="$event.stopPropagation()">
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="on_hold">On Hold</option>
+              </select>
+              <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                [ngClass]="getTaskStatusColor(task.status)">
                 {{ task.status }}
               </span>
+              <button (click)="deleteTask(task.id)"
+                class="p-1.5 text-slate-300 hover:text-error transition-colors rounded-lg hover:bg-red-50 cursor-pointer">
+                <span class="material-symbols-outlined text-base">delete</span>
+              </button>
             </div>
             } @empty {
             <p class="text-center py-12 text-outline font-bold italic">No active tasks detected.</p>
@@ -226,6 +237,7 @@
           </div>
         </div>
 
+        <!-- Vendor Invoicing -->
         <div class="bg-surface-container-lowest p-8 rounded-3xl shadow-sm border border-outline-variant/10">
           <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-black">Vendor Invoicing</h3>
@@ -241,30 +253,42 @@
                 <th class="py-4">Invoice #</th>
                 <th class="py-4">Amount</th>
                 <th class="py-4">Date</th>
-                <th class="py-4 text-right">Status</th>
+                <th class="py-4">Status</th>
+                <th class="py-4">Invoice</th>
               </tr>
             </thead>
             <tbody>
-              @for (inv of selectedVendor.invoices; track inv.number) {
+              @for (inv of invoices; track inv.id) {
               <tr class="border-b border-surface-container/50 hover:bg-surface-container-low/30 transition-colors">
-                <td class="py-4 font-bold">{{ inv.number }}</td>
-                <td class="py-4 font-black">₹{{ inv.amount.toLocaleString('en-IN') }}</td>
-                <td class="py-4 text-sm text-outline">{{ inv.date }}</td>
-                <td class="py-4 text-right">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
-                    [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-secondary-container/20 text-secondary'">
+                <td class="py-4 font-bold">{{ inv.invoice_number }}</td>
+                <td class="py-4 font-black">₹{{ (+inv.grand_total).toLocaleString('en-IN') }}</td>
+                <td class="py-4 text-sm text-outline">{{ inv.invoice_date }}</td>
+                <td class="py-4">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter" [ngClass]="inv.status === 'Paid'
+                      ? 'bg-green-100 text-green-700'
+                      : inv.status === 'Rejected'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-amber-100 text-amber-700'">
                     {{ inv.status }}
                   </span>
+                </td>
+                <td class="py-4">
+                  <button (click)="viewInvoice(inv)"
+                    class="flex items-center gap-1.5 text-xs font-bold text-primary opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    View / Print
+                  </button>
                 </td>
               </tr>
               } @empty {
               <tr>
-                <td colspan="4" class="text-center py-8 text-outline font-bold italic">No invoice records found.</td>
+                <td colspan="5" class="text-center py-8 text-outline font-bold italic">No invoice records found.</td>
               </tr>
               }
             </tbody>
           </table>
         </div>
+
       </div>
 
       <div class="lg:col-span-4 space-y-6">
@@ -294,7 +318,6 @@
               }
             </div>
           </div>
-
           @if (selectedVendor.contract_file) {
           <a [href]="selectedVendor.contract_file" target="_blank" rel="noopener noreferrer"
             class="mt-2 flex items-center gap-2 text-xs font-bold opacity-80 hover:opacity-100 transition-opacity">
@@ -315,6 +338,42 @@
             </div>
           </div>
         </div>
+
+        <!-- Audit History from API -->
+        @if (vendorAudits.length > 0) {
+        <div class="bg-surface-container-low p-6 rounded-3xl space-y-4">
+          <h3 class="text-base font-black">Recent Audits</h3>
+          @for (audit of vendorAudits.slice(0, 3); track audit.id) {
+          <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 space-y-2 border border-outline-variant/10">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-outline font-bold uppercase tracking-widest">{{ audit.audit_date }}</span>
+              <span class="font-black text-sm" [class.text-green-600]="audit.composite_score >= 80"
+                [class.text-amber-500]="audit.composite_score < 80 && audit.composite_score >= 50"
+                [class.text-error]="audit.composite_score < 50">
+                {{ audit.composite_score }}%
+              </span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[10px]">
+              <div class="text-center">
+                <p class="text-outline font-bold uppercase tracking-widest">Quality</p>
+                <p class="font-black text-on-surface">{{ audit.quality }}/10</p>
+              </div>
+              <div class="text-center">
+                <p class="text-outline font-bold uppercase tracking-widest">Timeline</p>
+                <p class="font-black text-on-surface">{{ audit.timeliness }}/10</p>
+              </div>
+              <div class="text-center">
+                <p class="text-outline font-bold uppercase tracking-widest">Safety</p>
+                <p class="font-black text-on-surface">{{ audit.safety }}/10</p>
+              </div>
+            </div>
+            @if (audit.observations) {
+            <p class="text-[10px] text-outline italic">{{ audit.observations }}</p>
+            }
+          </div>
+          }
+        </div>
+        }
       </div>
     </div>
   </div>
@@ -323,6 +382,7 @@
 </section>
 
 
+<!-- ══════════════════════════════════════ LABOR MODAL ══════════════════════════════════════ -->
 @if (showLaborModal && selectedVendor) {
 <div
   class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300"
@@ -343,7 +403,7 @@
           </span>
           <h3 class="text-3xl font-black tracking-tight mt-2">Labor Efficiency</h3>
           <p class="text-sm text-slate-400 font-medium mt-0.5">
-            {{ selectedVendor.name }} — Personnel overview & skill composition
+            {{ selectedVendor.name }} — Personnel overview &amp; skill composition
           </p>
         </div>
         <button (click)="closeLaborModal()" class="p-2.5 hover:bg-white/10 rounded-xl transition-all cursor-pointer">
@@ -351,7 +411,7 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 relative z-10">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6 relative z-10">
         <div class="bg-white/5 border border-white/10 rounded-2xl px-5 py-4">
           <p class="text-[10px] font-black uppercase tracking-widest text-white/50">Active Personnel</p>
           <p class="text-3xl font-black mt-1">
@@ -364,6 +424,14 @@
           <p class="text-3xl font-black mt-1 text-green-400">
             @if (laborLoading) { <span class="text-white/30">—</span> }
             @else { {{ laborStats.onSite }} }
+          </p>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl px-5 py-4">
+          <p class="text-[10px] font-black uppercase tracking-widest text-white/50">Remaining</p>
+          <p class="text-3xl font-black mt-1 text-amber-400">
+            @if (laborLoading) { <span class="text-white/30">—</span> }
+            @else { {{ laborStats.remaining }} }
           </p>
         </div>
         <div class="bg-white/5 border border-white/10 rounded-2xl px-5 py-4">
@@ -414,17 +482,6 @@
               @for (worker of laborWorkers; track worker.id) {
               <div
                 class="bg-white dark:bg-slate-900 rounded-2xl p-4 flex items-center gap-4 border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow">
-
-                <div
-                  class="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white text-sm font-black flex-shrink-0">
-                  {{ getRoleInitials(worker.name) }}
-                </div>
-
-                <div class="flex-1 min-w-0">
-                  <p class="font-bold text-on-surface text-sm">{{ worker.name }}</p>
-                  <p class="text-[10px] text-outline uppercase tracking-widest font-bold">{{ worker.role }}</p>
-                </div>
-
                 <div class="hidden md:flex flex-1 min-w-0 flex-col gap-1.5">
                   @if (worker.current_task) {
                   <div class="bg-primary/10 rounded-lg px-3 py-2 text-[10px] font-bold text-primary truncate">
@@ -436,7 +493,6 @@
                     {{ worker.skill }}
                   </span>
                 </div>
-
                 <div class="flex items-center gap-3 flex-shrink-0">
                   <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
                     [ngClass]="worker.statusColor">
@@ -466,8 +522,9 @@
               class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-surface-container-low transition-colors cursor-pointer">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <span class="material-symbols-outlined text-primary text-base">{{ showAddLaborForm ? 'expand_less' :
-                    'person_add' }}</span>
+                  <span class="material-symbols-outlined text-primary text-base">
+                    {{ showAddLaborForm ? 'expand_less' : 'person_add' }}
+                  </span>
                 </div>
                 <span class="text-sm font-black text-on-surface">
                   {{ showAddLaborForm ? 'Cancel' : 'Add New Worker' }}
@@ -478,7 +535,6 @@
 
             @if (showAddLaborForm) {
             <div class="px-6 pb-6 space-y-4 border-t border-outline-variant/10">
-
               @if (laborError) {
               <div
                 class="mt-4 flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 px-4 py-3 rounded-xl">
@@ -486,31 +542,12 @@
                 <p class="text-sm font-bold text-error">{{ laborError }}</p>
               </div>
               }
-
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div class="md:col-span-2">
-                  <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Full Name
-                    *</label>
-                  <input [(ngModel)]="newLabor.name" type="text" placeholder="e.g. Rajesh Kumar"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest">
-                </div>
-
                 <div>
-                  <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Role
-                    *</label>
+                  <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">
+                    Skill / Trade *
+                  </label>
 
-                  <select [(ngModel)]="newLabor.role_id"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest cursor-pointer">
-                    <option value="" disabled>Select role</option>
-                    @for (r of roleOptions; track r.value) {
-                    <option [value]="r.value">{{ r.label }}</option>
-                    }
-                  </select>
-                </div>
-
-                <div>
-                  <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Skill /
-                    Trade *</label>
                   <select [(ngModel)]="newLabor.skill"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest cursor-pointer">
                     <option value="" disabled>Select skill</option>
@@ -519,35 +556,12 @@
                     }
                   </select>
                 </div>
-
-                <div>
-                  <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Phone
-                    Number</label>
-                  <div class="relative">
-                    <input [(ngModel)]="newLabor.phone" type="tel" inputmode="numeric" placeholder="10-digit number"
-                      maxlength="10" (keypress)="onlyNumbers($event)"
-                      class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest pr-14">
-                    <span
-                      class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-outline/60 pointer-events-none">
-                      {{ newLabor.phone?.length ?? 0 }}/10
-                    </span>
-                  </div>
-                </div>
-
                 <div>
                   <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Daily Rate
                     (₹)</label>
                   <input [(ngModel)]="newLabor.daily_rate" type="number" min="0" placeholder="e.g. 800"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest">
                 </div>
-
-                <div>
-                  <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Joining
-                    Date</label>
-                  <input [(ngModel)]="newLabor.joining_date" type="date"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest">
-                </div>
-
                 <div>
                   <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Initial
                     Status</label>
@@ -558,7 +572,6 @@
                     }
                   </select>
                 </div>
-
                 <div class="md:col-span-2">
                   <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Current Task
                     / Assignment</label>
@@ -567,13 +580,12 @@
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest">
                 </div>
               </div>
-
               <button (click)="submitLabor()" [disabled]="isSavingLabor"
                 class="w-full py-4 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
                 @if (isSavingLabor) {
                 <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Saving…
                 } @else {
-                <span class="material-symbols-outlined text-sm">add_circle</span> Confirm & Add Worker
+                <span class="material-symbols-outlined text-sm">add_circle</span> Confirm &amp; Add Worker
                 }
               </button>
             </div>
@@ -582,10 +594,8 @@
         </div>
 
         <div class="lg:col-span-4 space-y-6">
-
           <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6">
             <h4 class="font-black text-on-surface mb-5">Skills Composition</h4>
-
             @if (laborStats.skillComposition.length === 0) {
             <p class="text-center py-8 text-outline text-sm font-bold italic">No skill data yet.</p>
             } @else {
@@ -598,8 +608,7 @@
                 </div>
                 <div class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div class="h-full rounded-full transition-all duration-500" [ngClass]="getSkillBarColor(s.skill)"
-                    [style.width.%]="getSkillBarWidth(s.count)">
-                  </div>
+                    [style.width.%]="getSkillBarWidth(s.count)"></div>
                 </div>
               </div>
               }
@@ -622,24 +631,21 @@
                 </span>
               </div>
             </div>
-
             <div class="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2">
-              <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-3">Role Breakdown</p>
-              @for (opt of roleOptions; track opt.value) {
+              <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-3">Skill Breakdown</p>
+              @for (opt of skillOptions; track opt.value) {
               @let count = laborWorkers | countByRole:opt.value;
               @if (count > 0) {
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-on-surface-variant">{{ opt.label }}</span>
-                <span class="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                  {{ count }}
-                </span>
+                <span class="text-[10px] font-black bg-primary/10 text-primary px-2 py-0.5 rounded-full">{{ count
+                  }}</span>
               </div>
               }
               }
             </div>
           </div>
           }
-
         </div>
       </div>
     </div>
@@ -655,6 +661,7 @@
 }
 
 
+<!-- ══════════════════════════════════════ ADD VENDOR MODAL ══════════════════════════════════════ -->
 @if (showAddModal) {
 <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"
   (click)="showAddModal = false">
@@ -700,8 +707,8 @@
         </div>
       </div>
       <div>
-        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Official Email & Phone
-          *</label>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1.5 block">Official Email &amp;
+          Phone *</label>
         <input [(ngModel)]="newVendor.email" type="email" placeholder="official@vendor.com"
           class="w-full px-4 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none mb-2">
         <div class="relative">
@@ -799,7 +806,7 @@
         class="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-black uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
         @if (isSaving) {
         <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Saving...
-        } @else { Approve & Onboard }
+        } @else { Approve &amp; Onboard }
       </button>
     </div>
   </div>
@@ -807,14 +814,14 @@
 }
 
 
+<!-- ══════════════════════════════════════ INVOICE MODAL ══════════════════════════════════════ -->
 @if (showInvoiceModal) {
 <div
   class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto animate-in fade-in duration-300"
   (click)="showInvoiceModal = false">
   <div
-    class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl p-8 my-auto animate-in zoom-in-95 duration-300"
+    class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl p-8 my-auto animate-in zoom-in-95 duration-300"
     (click)="$event.stopPropagation()">
-
     <div class="flex justify-between items-center mb-8">
       <div>
         <h3 class="text-2xl font-black tracking-tight">New Invoice Submission</h3>
@@ -848,34 +855,65 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-12 gap-2 mb-2 px-1">
-        <span class="col-span-5 text-[10px] font-black uppercase tracking-widest text-outline">Description</span>
-        <span class="col-span-2 text-[10px] font-black uppercase tracking-widest text-outline text-center">Qty</span>
-        <span class="col-span-3 text-[10px] font-black uppercase tracking-widest text-outline">Rate (₹)</span>
-        <span class="col-span-1 text-[10px] font-black uppercase tracking-widest text-outline text-right">Total</span>
+      <div class="grid grid-cols-14 gap-2 mb-2 px-1 items-center">
+        <span class="col-span-2 text-[10px] font-black uppercase tracking-widest text-outline">Type</span>
+        <span class="col-span-4 text-[10px] font-black uppercase tracking-widest text-outline">Description</span>
+        <span class="col-span-1 text-[10px] font-black uppercase tracking-widest text-outline text-center">Qty</span>
+        <span class="col-span-2 text-[10px] font-black uppercase tracking-widest text-outline text-center">
+          @if(hasLaborItems()) { Hours }
+        </span>
+        <span class="col-span-2 text-[10px] font-black uppercase tracking-widest text-outline">Rate</span>
+        <span class="col-span-2 text-[10px] font-black uppercase tracking-widest text-outline text-right">Total</span>
         <span class="col-span-1"></span>
       </div>
 
-      <div class="space-y-3">
-        @for (item of invoiceForm.items; track $index) {
-        <div class="grid grid-cols-12 gap-2 items-center">
-          <input [(ngModel)]="item.description" type="text" placeholder="Description"
-            class="col-span-5 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20">
-          <input [(ngModel)]="item.quantity" type="number" min="1" placeholder="Qty"
-            (ngModelChange)="calculateInvoiceTotals()"
-            class="col-span-2 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none text-center">
-          <input [(ngModel)]="item.unitPrice" type="number" min="0" placeholder="Rate"
-            (ngModelChange)="calculateInvoiceTotals()"
-            class="col-span-3 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none">
-          <div class="col-span-1 text-sm font-black text-on-surface text-right">
-            ₹{{ (item.total || 0) | number }}
+      <div class="overflow-x-auto pb-2">
+        <div class="space-y-3">
+          @for (item of invoiceForm.items; track $index) {
+          <div class="grid grid-cols-14 gap-2 items-center">
+            <div class="col-span-2 relative">
+              <select [(ngModel)]="item.type" (ngModelChange)="onTypeChange(item)"
+                class="w-full appearance-none px-3 py-2.5 pr-8 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest text-sm font-medium text-on-surface outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
+                <option value="" disabled>Select Type</option>
+                <option value="material">Material</option>
+                <option value="equipment">Equipment</option>
+                <option value="others">Others</option>
+                <option value="labor">Labor</option>
+              </select>
+              <span
+                class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline text-base pointer-events-none">expand_more</span>
+            </div>
+            <input [(ngModel)]="item.description" type="text" placeholder="Description"
+              class="col-span-4 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20">
+            <input [(ngModel)]="item.quantity" type="number" min="1" placeholder="Qty"
+              (ngModelChange)="calculateInvoiceTotals()"
+              class="col-span-1 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-medium outline-none text-center">
+            <div class="col-span-2">
+              @if(item.type === 'labor') {
+              <input [(ngModel)]="item.hours" type="number" min="1" placeholder="Hours"
+                (ngModelChange)="calculateInvoiceTotals()"
+                class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-medium outline-none text-center">
+              }
+            </div>
+            <div class="col-span-2 relative">
+              @if(item.type === 'labor') {
+              <span
+                class="absolute -top-2 left-3 bg-white dark:bg-slate-900 px-1 text-[9px] font-black uppercase tracking-wider text-primary z-10">Rate/hr</span>
+              }
+              <input [(ngModel)]="item.unitPrice" type="number" min="0" placeholder="0"
+                (ngModelChange)="calculateInvoiceTotals()"
+                class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20">
+            </div>
+            <div class="col-span-2 text-sm font-black text-on-surface text-right">
+              ₹{{ (item.total || 0) | number }}
+            </div>
+            <button (click)="removeInvoiceItem($index)"
+              class="col-span-1 p-1.5 text-slate-300 hover:text-error transition-colors rounded-lg hover:bg-red-50 cursor-pointer flex justify-center">
+              <span class="material-symbols-outlined text-base">delete</span>
+            </button>
           </div>
-          <button (click)="removeInvoiceItem($index)"
-            class="col-span-1 p-1.5 text-slate-300 hover:text-error transition-colors rounded-lg hover:bg-red-50 cursor-pointer flex justify-center">
-            <span class="material-symbols-outlined text-base">delete</span>
-          </button>
+          }
         </div>
-        }
       </div>
     </div>
 
@@ -908,9 +946,11 @@
         class="flex-1 py-3.5 rounded-2xl border border-outline-variant/20 text-sm font-black uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition-colors">
         Cancel
       </button>
-      <button (click)="submitInvoice()"
-        class="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-black uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
-        Submit Invoice
+      <button (click)="submitInvoice()" [disabled]="isSavingInvoice"
+        class="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-black uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+        @if (isSavingInvoice) {
+        <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Saving…
+        } @else { Submit Invoice }
       </button>
     </div>
   </div>
@@ -918,17 +958,21 @@
 }
 
 
+<!-- ══════════════════════════════════════ AUDIT MODAL ══════════════════════════════════════ -->
 @if (showAuditModal) {
 <div
   class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300"
   (click)="showAuditModal = false">
   <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg p-8 animate-in zoom-in-95 duration-300"
     (click)="$event.stopPropagation()">
-
     <div class="flex justify-between items-center mb-8">
       <div>
         <h3 class="text-2xl font-black tracking-tight">Compliance Audit</h3>
         <p class="text-sm text-outline font-medium mt-1">{{ selectedVendor?.name }}</p>
+        @if (vendorAudits.length > 0) {
+        <p class="text-[10px] text-outline/60 font-bold mt-1">Pre-filled from latest audit · {{
+          vendorAudits[0].audit_date }}</p>
+        }
       </div>
       <button (click)="showAuditModal = false"
         class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
@@ -993,11 +1037,9 @@
           <p class="text-[10px] font-black uppercase tracking-widest text-outline">Composite Score</p>
           <p class="text-xs text-outline/60 mt-0.5">Average of all three parameters</p>
         </div>
-        <p class="text-3xl font-black"
-          [class.text-green-600]="((auditForm.quality + auditForm.timeliness + auditForm.safety) / 15 * 100) >= 80"
-          [class.text-amber-500]="((auditForm.quality + auditForm.timeliness + auditForm.safety) / 15 * 100) < 80 && ((auditForm.quality + auditForm.timeliness + auditForm.safety) / 15 * 100) >= 50"
-          [class.text-error]="((auditForm.quality + auditForm.timeliness + auditForm.safety) / 15 * 100) < 50">
-          {{ ((auditForm.quality + auditForm.timeliness + auditForm.safety) / 15 * 100) | number:'1.0-0' }}%
+        <p class="text-3xl font-black" [class.text-green-600]="auditScore >= 80"
+          [class.text-amber-500]="auditScore < 80 && auditScore >= 50" [class.text-error]="auditScore < 50">
+          {{ auditScore }}%
         </p>
       </div>
 
@@ -1016,10 +1058,13 @@
         class="flex-1 py-3.5 rounded-2xl border border-outline-variant/20 text-sm font-black uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition-colors">
         Cancel
       </button>
-      <button (click)="submitAudit()"
-        class="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-black uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2">
-        <span class="material-symbols-outlined text-sm">fact_check</span>
-        Submit Audit
+      <button (click)="submitAudit()" [disabled]="isSavingAudit"
+        class="flex-1 py-3.5 rounded-2xl bg-primary text-white text-sm font-black uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+        @if (isSavingAudit) {
+        <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Saving…
+        } @else {
+        <span class="material-symbols-outlined text-sm">fact_check</span> Submit Audit
+        }
       </button>
     </div>
   </div>
@@ -1027,13 +1072,13 @@
 }
 
 
+<!-- ══════════════════════════════════════ BILLING MODAL ══════════════════════════════════════ -->
 @if (showBillingModal) {
 <div
   class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300"
   (click)="showBillingModal = false">
   <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg p-8 animate-in zoom-in-95 duration-300"
     (click)="$event.stopPropagation()">
-
     <div class="flex justify-between items-center mb-8">
       <div>
         <h3 class="text-2xl font-black tracking-tight">Billing Summary</h3>
@@ -1048,7 +1093,7 @@
     <div class="grid grid-cols-2 gap-4 mb-6">
       <div class="bg-surface-container-low p-5 rounded-2xl text-center">
         <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-1">Total Invoices</p>
-        <p class="text-3xl font-black text-on-surface">{{ selectedVendor?.invoices?.length ?? 0 }}</p>
+        <p class="text-3xl font-black text-on-surface">{{ invoices.length }}</p>
       </div>
       <div class="bg-primary/5 border border-primary/10 p-5 rounded-2xl text-center">
         <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-1">Budget Allocated</p>
@@ -1056,33 +1101,43 @@
       </div>
     </div>
 
+    @if (invoices.length > 0) {
+    <div class="mb-4 flex items-center justify-between px-2">
+      <span class="text-xs font-bold text-outline uppercase tracking-wider">Total Billed</span>
+      <span class="font-black text-primary">₹{{ totalBilled | number }}</span>
+    </div>
+    }
+
     <div class="space-y-3 max-h-60 overflow-y-auto pr-1">
-      @for (inv of selectedVendor?.invoices ?? []; track inv.number) {
+      @for (inv of invoices; track inv.id) {
       <div
         class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-colors">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center"
-            [ngClass]="inv.status === 'Paid' ? 'bg-green-100' : 'bg-amber-100'">
+            [ngClass]="inv.status === 'Paid' ? 'bg-green-100' : inv.status === 'Rejected' ? 'bg-red-100' : 'bg-amber-100'">
             <span class="material-symbols-outlined text-sm"
-              [ngClass]="inv.status === 'Paid' ? 'text-green-600' : 'text-amber-600'">
-              {{ inv.status === 'Paid' ? 'check_circle' : 'pending' }}
+              [ngClass]="inv.status === 'Paid' ? 'text-green-600' : inv.status === 'Rejected' ? 'text-red-600' : 'text-amber-600'">
+              {{ inv.status === 'Paid' ? 'check_circle' : inv.status === 'Rejected' ? 'cancel' : 'pending' }}
             </span>
           </div>
           <div>
-            <p class="font-bold text-sm text-on-surface">{{ inv.number }}</p>
-            <p class="text-[10px] text-outline font-bold uppercase tracking-widest">{{ inv.date }}</p>
+            <p class="font-bold text-sm text-on-surface">{{ inv.invoice_number }}</p>
+            <p class="text-[10px] text-outline font-bold uppercase tracking-widest">{{ inv.invoice_date }}</p>
           </div>
         </div>
-        <div class="text-right">
-          <p class="font-black text-on-surface">₹{{ inv.amount.toLocaleString('en-IN') }}</p>
+        <div class="text-right flex flex-col items-end gap-1">
+          <p class="font-black text-on-surface">₹{{ (+inv.grand_total).toLocaleString('en-IN') }}</p>
           <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase"
-            [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
+            [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : inv.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'">
             {{ inv.status }}
           </span>
+          <button (click)="viewInvoice(inv)"
+            class="text-[10px] font-black text-primary flex items-center gap-0.5 hover:underline cursor-pointer mt-0.5">
+            <span class="material-symbols-outlined text-xs">open_in_new</span> View
+          </button>
         </div>
       </div>
-      }
-      @empty {
+      } @empty {
       <div class="py-12 flex flex-col items-center gap-3 text-outline">
         <span class="material-symbols-outlined text-4xl">receipt_long</span>
         <p class="font-bold text-sm">No billing records found.</p>
