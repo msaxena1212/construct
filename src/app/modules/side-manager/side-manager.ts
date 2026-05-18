@@ -36,29 +36,47 @@ export class SideManager implements OnInit {
     });
   }
 
-  // Get Single Request Details
-  // getRequestById(id: number) {
-  //   this.projectService.getStockRequestById(id).subscribe({
-  //     next: (res: any) => {
-  //       this.selectedRequest = res.data;
-  //     },
-  //     error: (err) => {
-  //       console.log(err);
-  //     },
-  //   });
-  // }
-
   // Approve Request
-  approveRequest(id: number) {
-    console.log('Approved:', id);
+approveRequest(id: number) {
 
-    // call approve api here
-  }
+  this.projectService.approveStockRequest(id).subscribe({
+    next: (res: any) => {
+
+      console.log('Approved Successfully');
+
+      // UI Update
+      const request = this.stockRequests.find(r => r.id === id);
+
+      if (request) {
+        request.status = 'approved';
+      }
+
+    },
+    error: (err) => {
+      console.log(err);
+    }
+  });
+}
 
   // Reject Request
-  rejectRequest(id: number) {
-    console.log('Rejected:', id);
+rejectRequest(id: number) {
 
-    // call reject api here
-  }
+  this.projectService.rejectStockRequest(id).subscribe({
+    next: (res: any) => {
+
+      console.log('Rejected Successfully');
+
+      // UI Update
+      const request = this.stockRequests.find(r => r.id === id);
+
+      if (request) {
+        request.status = 'rejected';
+      }
+
+    },
+    error: (err) => {
+      console.log(err);
+    }
+  });
+}
 }

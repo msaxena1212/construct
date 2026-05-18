@@ -33,7 +33,12 @@
           <strong>Project ID:</strong>
           {{ request.project_id }}
         </p>
-
+          <p>
+            <strong>Status:</strong>
+            <span [ngClass]="request.status">
+              {{ request.status }}
+            </span>
+          </p>
         <p>
           <strong>Created:</strong>
           {{ request.createdAt | date:'medium' }}
@@ -50,8 +55,8 @@
         >
           View
         </button> -->
-
         <button
+          *ngIf="request.status === 'pending'"
           mat-raised-button
           color="accent"
           (click)="approveRequest(request.id)"
@@ -60,6 +65,7 @@
         </button>
 
         <button
+          *ngIf="request.status === 'pending'"
           mat-raised-button
           color="warn"
           (click)="rejectRequest(request.id)"
@@ -89,7 +95,6 @@
     <p><strong>Material ID:</strong> {{ selectedRequest.material_id }}</p>
 
     <p><strong>Project ID:</strong> {{ selectedRequest.project_id }}</p>
-
   </div>
 
 </div>
