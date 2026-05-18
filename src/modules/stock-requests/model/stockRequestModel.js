@@ -32,10 +32,21 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+      status: {
+        type: Sequelize.ENUM('pending', 'approved', 'rejected'),
+        allowNull: false,
+        defaultValue: 'pending',
+      },
+
+      isDeleted: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       freezeTableName: true,
-      timeStamps: true,
+      timestamps: true
     }
   );
 

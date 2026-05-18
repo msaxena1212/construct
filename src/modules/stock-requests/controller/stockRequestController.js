@@ -119,4 +119,61 @@ module.exports = {
       });
     }
   },
+
+  async approveStockRequest(req, res) {
+    try {
+      const { id } = req.params;
+      const stockRequest =
+        await db.StockRequest.findByPk(id);
+      if (!stockRequest) {
+        return res.status(404).json({
+          message: "Stock request not found.",
+        });
+      }
+      await stockRequest.update({
+        status: "approved",
+        approved_qty:
+          stockRequest.requested_qty,
+      });
+
+      return res.status(200).json({
+        message: "Stock request approved successfully.",
+        data: stockRequest,
+      });
+
+    } catch (error) {
+
+      return res.status(500).json({
+        message: "Error approving stock request.",
+        error,
+      });
+
+    }
+
+  },
+
+  async rejectStockRequest(req, res) {
+    try {
+      const { id } = req.params;
+      const stockRequest =
+        await db.StockRequest.findByPk(id);
+      if (!stockRequest) {
+        return res.status(404).json({
+          message: "Stock request not found.",
+        });
+      }
+      await stockRequest.update({
+        status: "rejected",
+      });
+      return res.status(200).json({
+        message: "Stock request rejected successfully.",
+        data: stockRequest,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Error rejecting stock request.",
+        error,
+      });
+    }
+  }
 };
