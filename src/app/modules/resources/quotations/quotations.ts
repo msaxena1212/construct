@@ -37,20 +37,22 @@ get totalValue(): number {
   }
 
   return this.quotes.reduce((acc, q) => {
-    return acc + Number(q.total_cost ?? 0);
+    return acc + Number(q.total_amount ?? 0);
   }, 0);
 }
 
   ngOnInit() {
     this.quotationService.quotes$.subscribe((q:any) => this.quotes = q.data);
+    console.log(this.quotes,'this.quotes');
+    
   }
 
-  get filteredQuotes(): any {
+  get filteredQuotes() {
     if (!this.searchQuery) return this.quotes;
     const q = this.searchQuery.toLowerCase();
     return this.quotes.filter((quote:any) => 
       quote.quotation_number.toLowerCase().includes(q) || 
-      quote.vendor_name.toLowerCase().includes(q)
+      quote.sales_person.toLowerCase().includes(q)
     );
   }
 
@@ -70,16 +72,18 @@ get totalValue(): number {
   //   this.activeDropdownId = this.activeDropdownId === quoteId ? null : quoteId;
   // }
 
-  // activeDropdownId: string | null = null;
+  // activeDropdownId: string | null = null;d
 
-toggleDropdown(id: string,qtn: string) {
-  this.activeDropdownId =
-    this.activeDropdownId == qtn ? null : id;
 
-    console.log(this.activeDropdownId,qtn,'this.activeDropdownId');
-    
+toggleDropdown(id: string, event: Event): void {
+  event.stopPropagation();
+
+  if (this.activeDropdownId === id) {
+    this.activeDropdownId = null;
+  } else {
+    this.activeDropdownId = id;
+  }
 }
-
   closeDropdown() {
     this.activeDropdownId = null;
   }
