@@ -16,29 +16,19 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: false,
     },
-    role_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
-
-    name: {
-      type: Sequelize.STRING(255),
-      allowNull: false,
-    },
 
     skill: {
-      type: Sequelize.ENUM(
-        "masonry",
-        "electrical",
-        "structural_steel",
-        "plumbing",
-        "hvac",
-        "carpentry",
-        "painting",
-        "other"
-      ),
+      type: Sequelize.TEXT,
       allowNull: false,
-      defaultValue: "other",
+      allowNull: false,
+    },
+    current_task: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+    },
+      daily_rate: {
+      type: Sequelize.DECIMAL(10, 2),
+      defaultValue: 0,
     },
 
     status: {
@@ -50,26 +40,6 @@ module.exports = (sequelize, Sequelize) => {
       ),
       allowNull: false,
       defaultValue: "active",
-    },
-
-    phone: {
-      type: Sequelize.STRING(20),
-      allowNull: true,
-    },
-
-    daily_rate: {
-      type: Sequelize.DECIMAL(10, 2),
-      defaultValue: 0,
-    },
-
-    joining_date: {
-      type: Sequelize.DATEONLY,
-      allowNull: true,
-    },
-
-    current_task: {
-      type: Sequelize.STRING(255),
-      allowNull: true,
     },
 
   }, {

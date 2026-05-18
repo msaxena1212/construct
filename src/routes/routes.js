@@ -42,6 +42,10 @@ class Routes {
       "/api/v1/vendors_labor",
       require("../modules/vendors/vendors_labor_routes")
     );
+        app.use(
+      "/api/v1/skill",
+      require("../modules/skill/routes/skill_routes")
+    );
   }
 }
 
