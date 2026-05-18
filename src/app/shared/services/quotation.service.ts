@@ -5,21 +5,23 @@ import { environment } from '../../../environments/environment';
 
 export interface QuoteItem {
   materialSku: string;
-  materialName: string;
+  name: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
   vendorId: string | number;
-  vendorName: string;
+  vendor_name: string;
 }
 
 export interface Quote {
   id: string;
-  quoteNumber: string;
-  createdAt: string;
-  salesPerson: string;
+  quotation_number: string;
+  date: string;
+  sales_person: string;
+  quotation_type: string;
   items: QuoteItem[];
-  totalAmount: number;
+  total_amount: number;
+  quantity: number;
   status: 'Draft' | 'Sent' | 'Negotiating' | 'Approved' | 'Rejected';
   vendorFeedback?: string;
   lastUpdated?: string;
@@ -30,7 +32,8 @@ export interface Quote {
 })
 export class QuotationService {
    private baseUrl = `${environment.serverUrl}/api/v1`;
-  private getall_material_quotation = `${this.baseUrl}/getall_material_quotation`;
+  private getall_material_quotation = `${this.baseUrl}/getall_quotation`;
+  private create_quotation = `${this.baseUrl}/create_quotation`;
   private quotesSubject = new BehaviorSubject<Quote[]>([]);
   quotes$ = this.quotesSubject.asObservable();
 
@@ -48,8 +51,8 @@ export class QuotationService {
     return this.quotesSubject.value;
   }
 
-  addQuote(quote: Quote): Observable<Quote> {
-    return this.http.post<Quote>(this.getall_material_quotation, quote).pipe(
+  addQuote(quote: any): Observable<any> {
+    return this.http.post<Quote>(this.create_quotation, quote).pipe(
       tap(() => this.loadQuotes())
     );
   }
