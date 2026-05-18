@@ -6,7 +6,7 @@ import { LaborWorker } from '../services/vendors-labor-services';
   standalone: false,
 })
 export class CountByRolePipe implements PipeTransform {
-  transform(workers: LaborWorker[], roleRaw: any): number {
-    return workers.filter(w => w.roleRaw === roleRaw).length;
+  transform(workers: LaborWorker[], skillRaw: any): number {
+    return workers.filter(w => w.skillRaw === skillRaw).length;
   }
 }

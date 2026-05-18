@@ -1,0 +1,236 @@
+<section class="p-8">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+
+    <div>
+      <h2 class="text-3xl font-black tracking-tight text-slate-800">
+        Skill Master
+      </h2>
+
+      <p class="text-sm text-slate-500 mt-1 font-medium">
+        Manage and monitor all skill
+      </p>
+    </div>
+
+    <button
+      (click)="openAddModal()"
+      class="px-5 py-2.5 bg-primary text-white rounded-xl font-bold shadow hover:scale-[1.02] transition-all">
+
+      Add Skill
+
+    </button>
+
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-2xl shadow overflow-hidden border border-slate-200">
+
+    <table class="w-full">
+
+      <thead class="bg-slate-100">
+
+        <tr>
+
+          <th class="px-6 py-4 text-left text-xs font-black uppercase tracking-wider">
+            Skill
+          </th>
+
+          <th class="px-6 py-4 text-center text-xs font-black uppercase tracking-wider">
+            Status
+          </th>
+
+          <th class="px-6 py-4 text-center text-xs font-black uppercase tracking-wider">
+            Action
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        @for (item of paginatedSkills; track item.id) {
+
+        <tr class="border-t hover:bg-slate-50 transition-all">
+
+          <!-- Skill -->
+          <td class="px-6 py-4 font-semibold">
+
+            {{ item.skill_name }}
+
+          </td>
+
+          <!-- Status -->
+          <td class="px-6 py-4 text-center">
+
+            <span
+              class="px-3 py-1 rounded-full text-xs font-bold"
+              [ngClass]="
+                item.status === 'ACTIVE'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-red-100 text-red-700'
+              ">
+
+              {{ item.status }}
+
+            </span>
+
+          </td>
+
+          <!-- Actions -->
+          <td class="px-6 py-4">
+
+            <div class="flex items-center justify-center gap-3">
+
+              <!-- Edit -->
+              <button
+                (click)="openEditModal(item)"
+                class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center">
+
+                <span class="material-symbols-outlined text-[18px]">
+                  edit
+                </span>
+
+              </button>
+
+              <!-- Delete -->
+              <button
+                (click)="deleteSkill(item.id)"
+                class="w-9 h-9 rounded-xl bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
+
+                <span class="material-symbols-outlined text-[18px]">
+                  delete
+                </span>
+
+              </button>
+
+            </div>
+
+          </td>
+
+        </tr>
+
+        }
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-end gap-2 mt-4">
+
+    <button
+      (click)="prevPage()"
+      class="px-4 py-2 border rounded-lg">
+
+      Prev
+
+    </button>
+
+    <button
+      (click)="nextPage()"
+      class="px-4 py-2 border rounded-lg">
+
+      Next
+
+    </button>
+
+  </div>
+
+</section>
+
+<!-- Add/Edit Modal -->
+@if (showAddModal) {
+
+<div
+  class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+
+  <div
+    class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+
+    <div class="flex items-center justify-between mb-6">
+
+      <h3 class="text-xl font-black">
+
+        {{ isEditMode ? 'Edit Skill' : 'Add Skill' }}
+
+      </h3>
+
+      <button
+        (click)="closeModal()"
+        class="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+
+        <span class="material-symbols-outlined">
+          close
+        </span>
+
+      </button>
+
+    </div>
+
+    <!-- Skill -->
+    <div class="mb-4">
+
+      <label class="text-sm font-bold block mb-2">
+        Skill
+      </label>
+
+      <input
+        type="text"
+        [(ngModel)]="newSkill.skill_name"
+        class="w-full border rounded-xl px-4 py-3 outline-none">
+
+    </div>
+
+    <!-- Status -->
+    <div class="mb-6">
+
+      <label class="text-sm font-bold block mb-2">
+        Status
+      </label>
+
+      <select
+        [(ngModel)]="newSkill.status"
+        class="w-full border rounded-xl px-4 py-3 outline-none">
+
+        <option value="ACTIVE">
+          ACTIVE
+        </option>
+
+        <option value="INACTIVE">
+          INACTIVE
+        </option>
+
+      </select>
+
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-3">
+
+      <button
+        (click)="closeModal()"
+        class="flex-1 border rounded-xl py-3 font-semibold">
+
+        Cancel
+
+      </button>
+
+      <button
+        (click)="isEditMode ? updateSkill() : addSkill()"
+        class="flex-1 bg-primary text-white rounded-xl py-3 font-semibold">
+
+        {{ isEditMode ? 'Update' : 'Save' }}
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+}

@@ -11,8 +11,10 @@ import {
   LaborWorker,
   LaborStats,
 } from './services/vendors-labor-services';
-import { RoleService } from '../users/role-management/services/role.service';
-
+import { VendorInvoiceService, VendorInvoice } from '../vendors/services/vendors-invoice-services';
+import { VendorAuditService, VendorAudit } from '../vendors/services/vendors-audit-services';
+import { VendorTaskService, VendorTask } from '../vendors/services/vendors-task-services';
+import { SkillMasterServices } from '../master/skill-master/skill-master-services';
 @Component({
   selector: 'app-vendors',
   standalone: false,
@@ -20,13 +22,15 @@ import { RoleService } from '../users/role-management/services/role.service';
   styleUrl: './vendors.scss',
 })
 export class Vendors implements OnInit {
+  skillOptions: any[] = [];
   private vendorService = inject(VendorsServices);
   private laborService = inject(VendorsLaborServices);
-  private roleService = inject(RoleService);
+  private invoiceService = inject(VendorInvoiceService);
+  private auditService = inject(VendorAuditService);
+  private taskService = inject(VendorTaskService);
+  private skillMasterService = inject(SkillMasterServices);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-
-  roleOptions: { value: number; label: string }[] = [];
 
   team = [{ name: 'All Members' }, { name: 'Marcus Thorne' }, { name: 'Sarah Chen' }];
   selectedMember = 'All Members';
@@ -41,6 +45,8 @@ export class Vendors implements OnInit {
   isSaving = false;
   isDeleting = false;
   isSavingLabor = false;
+  isSavingAudit = false;
+  isSavingInvoice = false;
   errorMsg = '';
   laborError = '';
 
@@ -50,29 +56,26 @@ export class Vendors implements OnInit {
   stats: VendorStats = { totalActive: 0, pendingPayments: '₹0', compliantPartners: '0%' };
   activities: Activity[] = [];
 
+  // Labour
   laborWorkers: LaborWorker[] = [];
   laborStats: LaborStats = {
-    totalPersonnel: 0, onSite: 0, activePersonnel: 0,
-    skillCompliance: '0%', skillComposition: [],
+    totalPersonnel: 0, onSite: 0, remaining: 0,
+    activePersonnel: 0, skillCompliance: '0%', skillComposition: [],
   };
   laborLoading = false;
 
+  invoices: VendorInvoice[] = [];
+
+  vendorTasks: VendorTask[] = [];
+
+  vendorAudits: VendorAudit[] = [];
+
+  // Forms
   newLabor: any = this.defaultLabor();
   newVendor: any = this.defaultVendor();
   contractFile: File | null = null;
   invoiceForm: any = this.defaultInvoice();
   auditForm: any = { quality: 5, timeliness: 5, safety: 5, observations: '' };
-
-  readonly skillOptions = [
-    { value: 'masonry', label: 'Masonry' },
-    { value: 'electrical', label: 'Electrical' },
-    { value: 'structural_steel', label: 'Structural Steel' },
-    { value: 'plumbing', label: 'Plumbing' },
-    { value: 'hvac', label: 'HVAC' },
-    { value: 'carpentry', label: 'Carpentry' },
-    { value: 'painting', label: 'Painting' },
-    { value: 'other', label: 'Other' },
-  ];
 
   readonly statusOptions = [
     { value: 'active', label: 'Active' },
@@ -96,37 +99,51 @@ export class Vendors implements OnInit {
     this.laborService.stats$.subscribe(s => (this.laborStats = s));
     this.laborService.loading$.subscribe(l => (this.laborLoading = l));
 
+    this.invoiceService.invoices$.subscribe(inv => { this.invoices = inv; });
+
+    this.taskService.tasks$.subscribe(tasks => { this.vendorTasks = tasks; });
+
+    this.auditService.audits$.subscribe(audits => { this.vendorAudits = audits; });
+
     this.route.paramMap.subscribe(params => {
       this.viewingVendorId = params.get('id');
       this.syncSelectedVendor();
     });
 
-    this.getRoles();
+    this.getSkill();
   }
 
-  getRoles(): void {
-    this.roleService.getRoles().subscribe((res: any) => {
-      this.roleOptions = (res.data || []).map((role: any) => ({
-        value: role.id,
-        label: role.role || role.name || role.role_name,
-      }));
+  getSkill(): void {
+    this.skillMasterService.loadSkills().subscribe({
+      next: (res) => {
+        if (res.success && Array.isArray(res.data)) {
+          this.skillOptions = res.data.map((s: any) => ({
+            value: s.skill_name?.toLowerCase().replace(/\s+/g, '_') ?? s.id,
+            label: s.skill_name ?? s.name,
+          }));
+        }
+      },
     });
   }
 
   private syncSelectedVendor(): void {
-    if (!this.viewingVendorId) {
-      this.selectedVendor = undefined;
-      return;
-    }
+    if (!this.viewingVendorId) { this.selectedVendor = undefined; return; }
     const local = this.vendorService.getVendorById(this.viewingVendorId);
     if (local) {
       this.selectedVendor = local;
+      this.loadVendorSubData(this.viewingVendorId);
     } else {
       this.vendorService.getVendorByIdFromApi(this.viewingVendorId).subscribe({
-        next: v => (this.selectedVendor = v),
+        next: v => { this.selectedVendor = v; this.loadVendorSubData(this.viewingVendorId!); },
         error: () => this.router.navigate(['/master/resources/vendors']),
       });
     }
+  }
+
+  private loadVendorSubData(vendorId: string): void {
+    this.invoiceService.loadInvoices(vendorId);
+    this.taskService.loadTasks(vendorId);
+    this.auditService.loadAudits(vendorId);
   }
 
   get filteredVendors(): Vendor[] {
@@ -140,8 +157,12 @@ export class Vendors implements OnInit {
 
   closeDetail(): void {
     this.laborService.clearWorkers();
+    this.invoiceService.clearInvoices();
+    this.taskService.clearTasks();
+    this.auditService.clearAudits();
     this.router.navigate(['/master/resources/vendors']);
   }
+
 
   openAddModal(): void {
     this.newVendor = this.defaultVendor();
@@ -175,10 +196,7 @@ export class Vendors implements OnInit {
 
     this.isSaving = true;
     this.vendorService.createVendor(fd).subscribe({
-      next: () => {
-        this.isSaving = false;
-        this.showAddModal = false;
-      },
+      next: () => { this.isSaving = false; this.showAddModal = false; },
       error: err => {
         this.isSaving = false;
         this.errorMsg = err?.error?.message ?? 'Vendor onboard failed. Please try again.';
@@ -192,20 +210,27 @@ export class Vendors implements OnInit {
     this.isDeleting = true;
     this.vendorService.deleteVendor(id).subscribe({
       next: () => { this.isDeleting = false; },
-      error: err => {
-        this.isDeleting = false;
-        alert('Delete failed: ' + (err?.error?.message ?? 'Server error'));
-      },
+      error: err => { this.isDeleting = false; alert('Delete failed: ' + (err?.error?.message ?? 'Server error')); },
     });
   }
+
 
   openSubmission(): void {
     this.invoiceForm = this.defaultInvoice();
     this.showInvoiceModal = true;
   }
 
+  onTypeChange(item: any): void {
+    if (item.type !== 'labor') item.hours = 0;
+    this.calculateInvoiceTotals();
+  }
+
+  hasLaborItems(): boolean {
+    return this.invoiceForm.items.some((item: any) => item.type === 'labor');
+  }
+
   addInvoiceItem(): void {
-    this.invoiceForm.items.push({ description: '', quantity: 1, unitPrice: 0, total: 0 });
+    this.invoiceForm.items.push({ type: '', description: '', quantity: 1, hours: 0, unitPrice: 0, total: 0 });
   }
 
   removeInvoiceItem(index: number): void {
@@ -218,7 +243,10 @@ export class Vendors implements OnInit {
   calculateInvoiceTotals(): void {
     let subtotal = 0;
     this.invoiceForm.items.forEach((item: any) => {
-      item.total = item.quantity * item.unitPrice;
+      const qty = Number(item.quantity) || 0;
+      const rate = Number(item.unitPrice) || 0;
+      const hours = Number(item.hours) || 0;
+      item.total = item.type === 'labor' ? qty * hours * rate : qty * rate;
       subtotal += item.total;
     });
     this.invoiceForm.subtotal = subtotal;
@@ -227,45 +255,177 @@ export class Vendors implements OnInit {
   }
 
   submitInvoice(): void {
-    if (!this.selectedVendor) return;
-    const inv = {
-      number: this.invoiceForm.number,
-      amount: this.invoiceForm.grandTotal,
-      status: 'Pending',
-      date: this.invoiceForm.date,
-      items: [...this.invoiceForm.items],
-      taxAmount: this.invoiceForm.taxAmount,
-      taxRate: this.invoiceForm.taxRate,
+    if (this.isSavingInvoice || !this.selectedVendor) return;
+    this.isSavingInvoice = true;
+
+    const payload = {
+      invoice_number: this.invoiceForm.number,
+      invoice_date: new Date().toISOString().split('T')[0],
+      items: this.invoiceForm.items,
       subtotal: this.invoiceForm.subtotal,
+      tax_rate: this.invoiceForm.taxRate,
+      tax_amount: this.invoiceForm.taxAmount,
+      grand_total: this.invoiceForm.grandTotal,
     };
-    this.selectedVendor.invoices = [inv, ...(this.selectedVendor.invoices ?? [])];
-    this.showInvoiceModal = false;
-    alert(`Invoice ${inv.number} submitted for ₹${inv.amount.toLocaleString('en-IN')}.`);
+
+    this.invoiceService.createInvoice(this.selectedVendor.id, payload).subscribe({
+      next: () => {
+        this.isSavingInvoice = false;
+        this.showInvoiceModal = false;
+        this.vendorService.loadStats();
+      },
+      error: err => {
+        this.isSavingInvoice = false;
+        alert('Invoice submission failed: ' + (err?.error?.message ?? 'Server error'));
+      },
+    });
+  }
+
+
+  viewInvoice(inv: VendorInvoice): void {
+    const vendor = this.selectedVendor;
+    let invoiceItems: any[] = [];
+
+    try {
+
+      if (Array.isArray(inv.items)) {
+        invoiceItems = inv.items;
+      } else if (typeof inv.items === 'string') {
+        invoiceItems = JSON.parse(inv.items);
+      }
+
+    } catch (e) {
+
+      console.error('Invalid invoice items', e);
+      invoiceItems = [];
+
+    }
+    const itemRows = invoiceItems.map((item: any) =>
+      `<tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${item.type || '-'}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${item.description || '-'}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${item.quantity || 0}</td>
+        ${item.type === 'labor' ? `<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${item.hours || 0}h</td>` : '<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">—</td>'}
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">₹${Number(item.unitPrice || 0).toLocaleString('en-IN')}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700;">₹${Number(item.total || 0).toLocaleString('en-IN')}</td>
+      </tr>`
+    ).join('');
+
+    const html = `<!DOCTYPE html><html><head><title>Invoice ${inv.invoice_number}</title>
+    <style>body{font-family:sans-serif;padding:40px;color:#1e293b;}
+    h1{font-size:24px;font-weight:900;}
+    table{width:100%;border-collapse:collapse;margin-top:16px;}
+    th{background:#f1f5f9;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;}
+    .total-row{font-weight:900;font-size:16px;}
+    @media print{button{display:none!important;}}
+    </style></head><body>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div><h1>Tax Invoice</h1><p style="color:#64748b;margin:0;">${vendor?.name ?? ''}</p></div>
+      <div style="text-align:right;">
+        <p style="font-weight:900;font-size:18px;margin:0;">${inv.invoice_number}</p>
+        <p style="color:#64748b;margin:4px 0 0;">${inv.invoice_date}</p>
+        <span style="display:inline-block;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700;
+          background:${inv.status === 'Paid' ? '#dcfce7' : inv.status === 'Rejected' ? '#fee2e2' : '#fef3c7'};
+          color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Rejected' ? '#dc2626' : '#b45309'};margin-top:6px;">
+          ${inv.status}
+        </span>
+      </div>
+    </div>
+    ${vendor ? `<div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;">
+      <p style="margin:0;font-weight:700;">Bill To: ${vendor.name}</p>
+      <p style="margin:4px 0 0;color:#64748b;">${vendor.address?.street || ''} ${vendor.address?.pincode || ''}</p>
+      <p style="margin:4px 0 0;color:#64748b;">GST: ${vendor.kyc?.gst || ''} | PAN: ${vendor.kyc?.pan || ''}</p>
+    </div>` : ''}
+    <table><thead><tr>
+      <th>Type</th><th>Description</th><th style="text-align:center;">Qty</th>
+      <th style="text-align:center;">Hours</th>
+      <th style="text-align:right;">Rate</th><th style="text-align:right;">Total</th>
+    </tr></thead><tbody>${itemRows}</tbody></table>
+    <div style="margin-top:24px;max-width:320px;margin-left:auto;">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        <span style="color:#64748b;">Subtotal</span>
+        <span style="font-weight:700;">₹${Number(inv.subtotal).toLocaleString('en-IN')}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        <span style="color:#64748b;">GST (${inv.tax_rate}%)</span>
+        <span style="font-weight:700;">₹${Number(inv.tax_amount).toLocaleString('en-IN')}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:12px 0;" class="total-row">
+        <span>Grand Total</span>
+        <span style="color:#4f46e5;font-size:18px;">₹${Number(inv.grand_total).toLocaleString('en-IN')}</span>
+      </div>
+    </div>
+    <div style="margin-top:32px;text-align:center;">
+      <button onclick="window.print()"
+        style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;
+               font-weight:700;font-size:14px;cursor:pointer;">
+        Print / Save as PDF
+      </button>
+    </div>
+    </body></html>`;
+
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(html); win.document.close(); }
+  }
+
+
+  openBilling(): void {
+    if (this.selectedVendor && this.invoices.length === 0) {
+      this.invoiceService.loadInvoices(this.selectedVendor.id);
+    }
+    this.showBillingModal = true;
+  }
+
+  get totalBilled(): number {
+    return this.invoices.reduce((acc, inv) => acc + Number(inv.grand_total), 0);
   }
 
   openAudit(): void {
-    this.auditForm = { quality: 5, timeliness: 5, safety: 5, observations: '' };
+    const latest = this.vendorAudits[0];
+    if (latest) {
+      this.auditForm = {
+        quality: Number(latest.quality),
+        timeliness: Number(latest.timeliness),
+        safety: Number(latest.safety),
+        observations: latest.observations ?? '',
+      };
+    } else {
+      this.auditForm = { quality: 5, timeliness: 5, safety: 5, observations: '' };
+    }
     this.showAuditModal = true;
   }
+
   get auditScore(): number {
     return Math.round(
-      (
-        this.auditForm.quality +
-        this.auditForm.timeliness +
-        this.auditForm.safety
-      ) / 30 * 100
+      ((this.auditForm.quality + this.auditForm.timeliness + this.auditForm.safety) / 30) * 100
     );
-  }
-  submitAudit(): void {
-    if (!this.selectedVendor) return;
-    const score = Math.round(
-      ((this.auditForm.quality + this.auditForm.timeliness + this.auditForm.safety) / 30) * 100,
-    );
-    alert(`Audit recorded for ${this.selectedVendor.name}. Score: ${score}%`);
-    this.showAuditModal = false;
   }
 
-  openBilling(): void { this.showBillingModal = true; }
+  submitAudit(): void {
+    if (this.isSavingAudit || !this.selectedVendor) return;
+    this.isSavingAudit = true;
+
+    this.auditService.createAudit(this.selectedVendor.id, {
+      quality: this.auditForm.quality,
+      timeliness: this.auditForm.timeliness,
+      safety: this.auditForm.safety,
+      observations: this.auditForm.observations,
+    }).subscribe({
+      next: (res) => {
+        this.isSavingAudit = false;
+        this.showAuditModal = false;
+        if (this.selectedVendor && res.data?.composite_score != null) {
+          this.selectedVendor.compliance_score = Math.round(res.data.composite_score);
+        }
+        this.vendorService.loadVendors();
+      },
+      error: err => {
+        this.isSavingAudit = false;
+        alert('Audit submission failed: ' + (err?.error?.message ?? 'Server error'));
+      },
+    });
+  }
+
 
   openLaborModal(): void {
     if (!this.selectedVendor) return;
@@ -291,21 +451,17 @@ export class Vendors implements OnInit {
     if (this.isSavingLabor || !this.selectedVendor) return;
     this.laborError = '';
 
-    if (!this.newLabor.name.trim() || !this.newLabor.role_id || !this.newLabor.skill) {
-      this.laborError = 'Name, Role and Skill are required.';
+    if (!this.newLabor.skill) {
+      this.laborError = 'Skill is required.';
       return;
     }
 
     const payload = {
       company_id: this.selectedVendor.company_id,
       vendor_id: this.selectedVendor.id,
-      name: this.newLabor.name.trim(),
-      role_id: Number(this.newLabor.role_id),
       skill: this.newLabor.skill,
       status: this.newLabor.status || 'active',
-      phone: this.newLabor.phone || null,
       daily_rate: parseFloat(this.newLabor.daily_rate) || 0,
-      joining_date: this.newLabor.joining_date || null,
       current_task: this.newLabor.current_task || null,
     };
 
@@ -335,6 +491,17 @@ export class Vendors implements OnInit {
   }
 
 
+  updateTaskStatus(task: VendorTask, statusRaw: string): void {
+    this.taskService.updateTask(task.id, { status: statusRaw }).subscribe();
+  }
+
+  deleteTask(taskId: number): void {
+    if (!confirm('Remove this task?')) return;
+    this.taskService.deleteTask(taskId).subscribe({
+      error: err => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
+    });
+  }
+
   getSkillBarWidth(count: number): number {
     const max = Math.max(...this.laborStats.skillComposition.map(s => s.count), 1);
     return Math.round((count / max) * 100);
@@ -342,25 +509,26 @@ export class Vendors implements OnInit {
 
   getSkillBarColor(skill: string): string {
     const colors: Record<string, string> = {
-      Masonry: 'bg-blue-500',
-      Electrical: 'bg-yellow-500',
+      'Masonry': 'bg-blue-500',
+      'Electrical': 'bg-yellow-500',
       'Structural Steel': 'bg-red-500',
-      Plumbing: 'bg-green-500',
-      HVAC: 'bg-purple-500',
-      Carpentry: 'bg-orange-400',
-      Painting: 'bg-pink-400',
-      Other: 'bg-slate-400',
+      'Plumbing': 'bg-green-500',
+      'HVAC': 'bg-purple-500',
+      'Carpentry': 'bg-orange-400',
+      'Painting': 'bg-pink-400',
+      'Other': 'bg-slate-400',
     };
     return colors[skill] ?? 'bg-slate-400';
   }
 
-  getRoleInitials(name: string): string {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  getTaskStatusColor(status: string): string {
+    const map: Record<string, string> = {
+      'Completed': 'bg-green-100 text-green-700',
+      'In Progress': 'bg-blue-100 text-blue-700',
+      'Pending': 'bg-amber-100 text-amber-700',
+      'On Hold': 'bg-slate-100 text-slate-500',
+    };
+    return map[status] ?? 'bg-slate-100 text-slate-500';
   }
 
   onlyNumbers(event: KeyboardEvent): boolean {
@@ -409,7 +577,7 @@ export class Vendors implements OnInit {
     return {
       number: 'INV-' + Math.floor(Math.random() * 9000 + 1000),
       date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      items: [{ description: '', quantity: 1, unitPrice: 0, total: 0 }],
+      items: [{ type: '', description: '', quantity: 1, hours: 0, unitPrice: 0, total: 0 }],
       taxRate: 18,
       taxAmount: 0,
       subtotal: 0,
@@ -418,10 +586,6 @@ export class Vendors implements OnInit {
   }
 
   private defaultLabor() {
-    return {
-      name: '', role_id: '', skill: '',
-      status: 'active', phone: '',
-      daily_rate: '', joining_date: '', current_task: '',
-    };
+    return { skill: '', status: 'active', daily_rate: '', current_task: '' };
   }
 }
