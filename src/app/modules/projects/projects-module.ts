@@ -18,6 +18,7 @@ import { SubtaskProgressPipe } from '../../shared/pipes/subtask-progress.pipe';
 import { MilestoneFormDialog } from './dialogs/milestone-form-dialog/milestone-form-dialog';
 import { MaterialModule } from '../../shared/material/material-module';
 import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
+import { SideManagerModule } from '../side-manager/side-manager-module';
 
 @NgModule({
   declarations: [
@@ -38,7 +39,8 @@ import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
     ReactiveFormsModule,
     DragDropModule,
     MaterialModule,
-    TaskManagement
+    TaskManagement,
+    SideManagerModule
   ],
 })
-export class ProjectsModule { }
+export class ProjectsModule {}
