@@ -45,10 +45,15 @@ db.task_activity = require("../modules/projects/models/task-activity.model.js")(
 db.project_task_assignee = require("../modules/projects/models/task-assignee.model.js")(sequelize, Sequelize);
 db.project_sub_task = require("../modules/projects/models/sub-task.model.js")(sequelize, Sequelize);
 db.project_task_dependency = require("../modules/projects/models/task-dependency.model.js")(sequelize, Sequelize);
+
+// Vendors Models
 db.vendors = require("../modules/vendors/models/vendors_model.js")(sequelize, Sequelize);
 db.vendors_activity = require("../modules/vendors/models/vendors_activity_model.js")(sequelize, Sequelize);
 db.vendors_labor = require("../modules/vendors/models/vendors_labor_model.js")(sequelize, Sequelize);
-
+db.vendors_invoice = require("../modules/vendors/models/vendors_invoice_model.js")(sequelize, Sequelize);
+db.vendors_audit = require("../modules/vendors/models/vendors_audit_model.js")(sequelize, Sequelize);
+db.vendors_task = require("../modules/vendors/models/vendors_task_model.js")(sequelize, Sequelize);
+db.skill = require("../modules/skill/model/skill_model.js")(sequelize, Sequelize);
 //Material
 db.material_master = require("../modules/material/models/material_master.model.js")(sequelize, Sequelize);
 
@@ -232,16 +237,30 @@ db.vendors_labor.belongsTo(db.vendors, {
     foreignKey: 'vendor_id',
     as: 'vendor'
 });
-// Role ↔ Vendors Labor
-db.role.hasMany(db.vendors_labor, {
-  foreignKey: "role_id",
-  as: "labor_workers"
-});
 
-db.vendors_labor.belongsTo(db.role, {
-  foreignKey: "role_id",
-  as: "role"
-});
+// Vendor ↔ Invoice
+db.vendors.hasMany(db.vendors_invoice, { foreignKey: 'vendor_id', as: 'invoices' });
+db.vendors_invoice.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' });
+
+db.company.hasMany(db.vendors_invoice, { foreignKey: 'company_id', as: 'vendors_invoices' });
+db.vendors_invoice.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// Vendor ↔ Audit
+db.vendors.hasMany(db.vendors_audit, { foreignKey: 'vendor_id', as: 'audits' });
+db.vendors_audit.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' });
+
+db.company.hasMany(db.vendors_audit, { foreignKey: 'company_id', as: 'vendors_audits' });
+db.vendors_audit.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// Vendor ↔ Task
+db.vendors.hasMany(db.vendors_task, { foreignKey: 'vendor_id', as: 'service_tasks' });
+db.vendors_task.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' });
+
+db.company.hasMany(db.vendors_task, { foreignKey: 'company_id', as: 'vendors_tasks' });
+db.vendors_task.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+// Skill ↔ Master
+db.company.hasMany(db.skill, { foreignKey: 'company_id', as: 'skill' });
+db.skill.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
 
 // PROJECT MANAGEMENT END
 // ── LABOR associations ──────────────────────────────────────
