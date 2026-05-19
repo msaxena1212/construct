@@ -83,6 +83,8 @@ export interface IProjectTaskDependency {
 export type TaskStatus = 'To Do' | 'In Progress' | 'Review' | 'Completed';
 
 export interface IProjectTask {
+date: any;
+statusRaw: any;
   id: number;
   project_id: string | number;
   milestone_id?: string | number | null;

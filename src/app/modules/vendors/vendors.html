@@ -173,7 +173,7 @@
       <div
         class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32 border-l-4 border-secondary">
         <span class="text-xs font-bold text-outline uppercase tracking-widest">Active Tasks</span>
-        <p class="text-2xl font-black">{{ vendorTasks.length }} Tasks</p>
+        <p class="text-2xl font-black">{{ allTasks.length }} Tasks</p>
       </div>
       <div class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32">
         <span class="text-xs font-bold text-outline uppercase tracking-widest">Status</span>
@@ -204,7 +204,7 @@
         <div class="bg-surface-container-lowest p-8 rounded-3xl shadow-sm border border-outline-variant/10">
           <h3 class="text-xl font-black mb-6">Service Tasks &amp; Performance</h3>
           <div class="space-y-4">
-            @for (task of (vendorTasks || []); track task.id) {
+            @for (task of (allTasks || []); track task.id) {
             <div
               class="flex items-center gap-6 p-4 bg-surface-container-low rounded-2xl border border-transparent hover:border-primary/20 transition-all group">
               <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
