@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { QuotationService, Quote } from '../../../shared/services/quotation.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-quotations',
@@ -11,7 +12,8 @@ import { QuotationService, Quote } from '../../../shared/services/quotation.serv
   styleUrl: './quotations.scss',
 })
 export class Quotations {
- private quotationService = inject(QuotationService);
+  private quotationService = inject(QuotationService);
+  private toast = inject(ToastrService);
 
   quotes: Quote[] = [];
   searchQuery = '';
@@ -22,6 +24,8 @@ export class Quotations {
   showNegotiateModal = false;
   selectedQuote: Quote | null = null;
   negotiationFeedback = '';
+  showDeleteModal: boolean = false;
+  quoteToDelete: Quote | null = null;
 
   get draftQuotesCount() {
     return this.quotes?.filter(q => q?.status === 'Draft').length;
@@ -31,27 +35,27 @@ export class Quotations {
     return this.quotes?.filter(q => q?.status === 'Approved').length;
   }
 
-get totalValue(): number {
-  if (!this.quotes || !this.quotes.length) {
-    return 0;
-  }
+  get totalValue(): number {
+    if (!this.quotes || !this.quotes.length) {
+      return 0;
+    }
 
-  return this.quotes.reduce((acc, q) => {
-    return acc + Number(q.total_amount ?? 0);
-  }, 0);
-}
+    return this.quotes.reduce((acc, q) => {
+      return acc + Number(q.total_amount ?? 0);
+    }, 0);
+  }
 
   ngOnInit() {
-    this.quotationService.quotes$.subscribe((q:any) => this.quotes = q.data);
-    console.log(this.quotes,'this.quotes');
-    
+    this.quotationService.quotes$.subscribe((q: any) => this.quotes = q.data);
+    console.log(this.quotes, 'this.quotes');
+
   }
 
-  get filteredQuotes() {
+  get filteredQuotes(): any {
     if (!this.searchQuery) return this.quotes;
     const q = this.searchQuery.toLowerCase();
-    return this.quotes.filter((quote:any) => 
-      quote.quotation_number.toLowerCase().includes(q) || 
+    return this.quotes.filter((quote: any) =>
+      quote.quotation_number.toLowerCase().includes(q) ||
       quote.sales_person.toLowerCase().includes(q)
     );
   }
@@ -75,15 +79,15 @@ get totalValue(): number {
   // activeDropdownId: string | null = null;d
 
 
-toggleDropdown(id: string, event: Event): void {
-  event.stopPropagation();
+  toggleDropdown(id: string, event: Event): void {
+    event.stopPropagation();
 
-  if (this.activeDropdownId === id) {
-    this.activeDropdownId = null;
-  } else {
-    this.activeDropdownId = id;
+    if (this.activeDropdownId === id) {
+      this.activeDropdownId = null;
+    } else {
+      this.activeDropdownId = id;
+    }
   }
-}
   closeDropdown() {
     this.activeDropdownId = null;
   }
@@ -109,23 +113,83 @@ toggleDropdown(id: string, event: Event): void {
   }
 
   closeNegotiateModal() {
+    this.quotationService.loadQuotes();
     this.showNegotiateModal = false;
     this.selectedQuote = null;
   }
 
-  updateQuoteStatus(status: Quote['status']) {
-    if (this.selectedQuote) {
-      this.quotationService.updateQuoteStatus(this.selectedQuote.id, status, this.negotiationFeedback);
-      this.closeNegotiateModal();
-      alert(`Quote ${this.selectedQuote.quotation_number} status updated to ${status}.`);
-    }
+  selectQuoteStatus(status: Quote['status']) {
+    this.selectedQuote!.status = status;
   }
 
-  handleDelete(quote: Quote) {
-    if (confirm(`Are you sure you want to delete quotation ${quote.quotation_number}?`)) {
-      this.quotationService.deleteQuote(quote.id);
-      this.closeDropdown();
-    }
+updateQuoteStatus() {
+
+  if (
+    this.selectedQuote &&
+    this.selectedQuote.status == 'Draft' 
+  ) {
+    this.toast.error('Please select a  status.');
+    return;
+  }
+  if (this.selectedQuote) {
+
+    this.quotationService
+      .updateQuoteStatus(
+        this.selectedQuote.id,
+        this.selectedQuote.status,
+        this.negotiationFeedback
+      )
+      .subscribe({
+        next: (res: any) => {
+
+          this.toast.success('Quote status updated successfully');
+
+          this.closeNegotiateModal();
+        },
+
+        error: (err: any) => {
+
+          this.toast.error(err?.error?.message || 'Failed to update quote status');
+
+          console.error(err);
+        }
+      });
+
+  }
+}
+
+confirmDelete(quote: Quote) {
+
+  this.quotationService
+    .deleteQuote(quote.id)
+    .subscribe({
+
+      next: () => {
+
+        this.toast.success('Quote deleted successfully');
+
+        this.quotationService.loadQuotes();
+
+        this.closeDropdown();
+
+        this.showDeleteModal = false;
+      },
+
+      error: (err:any) => {
+
+        this.toast.error(err?.error?.message || 'Failed to delete quote');
+
+        console.error(err);
+      }
+
+    });
+
+}
+
+  openDeleteModal(quote: Quote, event: Event) {
+    event.stopPropagation();
+    this.quoteToDelete = quote;
+    this.showDeleteModal = true;
   }
 
   downloadPdf(quote: Quote) {
@@ -136,5 +200,5 @@ toggleDropdown(id: string, event: Event): void {
     }, 1500);
   }
 
-  
+
 }

@@ -31,9 +31,11 @@ export interface Quote {
   providedIn: 'root'
 })
 export class QuotationService {
-   private baseUrl = `${environment.serverUrl}/api/v1`;
+  private baseUrl = `${environment.serverUrl}/api/v1`;
   private getall_material_quotation = `${this.baseUrl}/getall_quotation`;
   private create_quotation = `${this.baseUrl}/create_quotation`;
+  private delete_quotation = `${this.baseUrl}/delete_quotation`;
+  private update_approval_quotation_status = `${this.baseUrl}/update_approval_quotation_status`;
   private quotesSubject = new BehaviorSubject<Quote[]>([]);
   quotes$ = this.quotesSubject.asObservable();
 
@@ -61,20 +63,29 @@ export class QuotationService {
     return this.quotesSubject.value.find(q => q.id === id);
   }
 
-  updateQuoteStatus(id: string, status: Quote['status'], feedback?: string) {
-    const updateData = { 
-      status, 
-      vendorFeedback: feedback,
-      lastUpdated: new Date().toLocaleDateString()
-    };
-    this.http.patch<Quote>(`${this.getall_material_quotation}/${id}`, updateData).subscribe(() => {
-      this.loadQuotes();
-    });
-  }
+updateQuoteStatus(
+  id: string,
+  status: Quote['status'],
+  feedback?: string
+) {
 
-  deleteQuote(id: string) {
-    this.http.delete(`${this.getall_material_quotation}/${id}`).subscribe(() => {
-      this.loadQuotes();
-    });
-  }
+  const updateData = {
+    status,
+    vendor_feedback: feedback,
+    last_updated: new Date().toLocaleDateString()
+  };
+
+  return this.http.post<Quote>(
+    `${this.update_approval_quotation_status}/${id}`,
+    updateData
+  );
+}
+
+ deleteQuote(id: string) {
+
+  return this.http.delete(
+    `${this.delete_quotation}/${id}`
+  );
+
+}
 }
