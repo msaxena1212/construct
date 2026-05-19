@@ -1,0 +1,100 @@
+<div class="container">
+
+  <h2 class="title">Stock Requests</h2>
+
+  <div *ngIf="loading" class="loading">
+    Loading...
+  </div>
+
+  <div class="request-grid">
+
+    <mat-card class="request-card" *ngFor="let request of stockRequests">
+
+      <mat-card-content>
+
+        <h3>{{ request.task_title }}</h3>
+
+        <p>
+          <strong>Material ID:</strong>
+          {{ request.material_id }}
+        </p>
+
+        <p>
+          <strong>Requested Qty:</strong>
+          {{ request.requested_qty }}
+        </p>
+
+        <p>
+          <strong>Available Qty:</strong>
+          {{ request.available_qty }}
+        </p>
+
+        <p>
+          <strong>Project ID:</strong>
+          {{ request.project_id }}
+        </p>
+          <p>
+            <strong>Status:</strong>
+            <span [ngClass]="request.status">
+              {{ request.status }}
+            </span>
+          </p>
+        <p>
+          <strong>Created:</strong>
+          {{ request.createdAt | date:'medium' }}
+        </p>
+
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+
+        <!-- <button
+          mat-raised-button
+          color="primary"
+          (click)="getRequestById(request.id)"
+        >
+          View
+        </button> -->
+        <button
+          *ngIf="request.status === 'pending'"
+          mat-raised-button
+          color="accent"
+          (click)="approveRequest(request.id)"
+        >
+          Approve
+        </button>
+
+        <button
+          *ngIf="request.status === 'pending'"
+          mat-raised-button
+          color="warn"
+          (click)="rejectRequest(request.id)"
+        >
+          Reject
+        </button>
+
+      </mat-card-actions>
+
+    </mat-card>
+
+  </div>
+
+  <!-- Selected Request Details -->
+  <div class="details-card" *ngIf="selectedRequest">
+
+    <h2>Request Details</h2>
+
+    <p><strong>ID:</strong> {{ selectedRequest.id }}</p>
+
+    <p><strong>Task:</strong> {{ selectedRequest.task_title }}</p>
+
+    <p><strong>Requested Qty:</strong> {{ selectedRequest.requested_qty }}</p>
+
+    <p><strong>Available Qty:</strong> {{ selectedRequest.available_qty }}</p>
+
+    <p><strong>Material ID:</strong> {{ selectedRequest.material_id }}</p>
+
+    <p><strong>Project ID:</strong> {{ selectedRequest.project_id }}</p>
+  </div>
+
+</div>

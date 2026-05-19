@@ -41,6 +41,11 @@ const routes: Routes = [
         loadChildren: () => import('./timeline/timeline-module').then((m) => m.TimelineModule),
       },
       {
+        path: 'side-manager',
+        loadChildren: () => import('./side-manager/side-manager-module').then((m) => m.SideManagerModule),
+        
+      },
+      {
         path: 'resources',
         loadChildren: () => import('./resources/resources-module').then(m => m.ResourcesModule)
       },
