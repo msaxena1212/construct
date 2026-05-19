@@ -294,7 +294,7 @@ export class NewQuotations implements OnInit {
   filterResources() {
 
     const query = this.searchQuery.toLowerCase();
-
+    this.selectedMaterials.clear();
     if (this.selectedType === 'MATERIAL') {
 
       this.loadResourcesByType()
@@ -359,6 +359,9 @@ export class NewQuotations implements OnInit {
 
 
   toggleMaterial(sku: string) {
+
+    console.log(sku,'sku fdfgdfgffhfg');
+    
 
     if (this.selectedMaterials.has(sku)) {
 
