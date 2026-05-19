@@ -31,6 +31,10 @@ class QuotationController {
 
             const company_id = req.user.company_id;
 
+            if (!company_id) {
+                return res.status(401).json({ message: "Unauthorized. Company context missing." });
+            }
+
             // Validation
             if (!date) {
                 return res.status(400).json({
@@ -80,35 +84,35 @@ class QuotationController {
                 total_amount += Number(item.totalPrice);
 
                 // Material Stock Update
-                if (item.material_master_id) {
+                // if (item.material_master_id) {
 
-                    const existingMaterial = await db.material_master.findOne({
-                        where: {
-                            id: item.material_master_id
-                        }
-                    });
+                //     const existingMaterial = await db.material_master.findOne({
+                //         where: {
+                //             id: item.material_master_id
+                //         }
+                //     });
 
-                    if (existingMaterial) {
+                //     if (existingMaterial) {
 
-                        const updatedStock =
-                            Number(existingMaterial.stockAvailable) +
-                            Number(item.quantity);
+                //         const updatedStock =
+                //             Number(existingMaterial.stockAvailable) +
+                //             Number(item.quantity);
 
 
-                        console.log(updatedStock, "stock");
+                //         console.log(updatedStock, "stock");
 
-                        await db.material_master.update(
-                            {
-                                stockAvailable: updatedStock
-                            },
-                            {
-                                where: {
-                                    id: item.material_master_id
-                                }
-                            }
-                        );
-                    }
-                }
+                //         await db.material_master.update(
+                //             {
+                //                 stockAvailable: updatedStock
+                //             },
+                //             {
+                //                 where: {
+                //                     id: item.material_master_id
+                //                 }
+                //             }
+                //         );
+                //     }
+                // }
             }
 
             // Create Quotation
@@ -148,6 +152,208 @@ class QuotationController {
 
             return res.status(500).json({
                 message: "Error creating quotation.",
+                error: error.message
+            });
+        }
+    }
+
+    async update_approval_quotation_status(req, res) {
+        try {
+
+            const { id } = req.params;
+
+            const { status } = req.body;
+
+            const company_id = req.user.company_id;
+
+            if (!company_id) {
+                return res.status(401).json({ message: "Unauthorized. Company context missing." });
+            }
+
+            if (!status) {
+                return res.status(400).json({
+                    message: "status is required."
+                });
+            }
+
+
+
+            // Find quotation
+            const quotation = await db.quotation.findOne({
+                where: {
+                    id: id,
+                    isDeleted: false
+                }
+            });
+
+            if (!quotation) {
+                return res.status(404).json({
+                    message: "Quotation not found."
+                });
+            }
+
+            // Prevent after approved  to reject validattion update
+            if (
+                quotation.status === "Approved" &&
+                status === "Rejected"
+            ) {
+                return res.status(400).json({
+                    message: "Quotation already approved."
+                });
+            }
+
+
+            // Prevent duplicate stock update
+            if (
+                quotation.status === "Approved" &&
+                status === "Approved"
+            ) {
+                return res.status(400).json({
+                    message: "Quotation already approved."
+                });
+            }
+
+
+             // Prevent duplicate rejected stock update
+            if (
+                quotation.status === "Rejected" &&
+                status === "Rejected"
+            ) {
+                return res.status(400).json({
+                    message: "Quotation already Rejected."
+                });
+            }
+
+            
+
+
+            // Update stock only when Approved
+            if (status === "Approved") {
+
+                let items = quotation.items || quotation.dataValues.items || [];
+
+                if (typeof items === "string") {
+                    items = JSON.parse(items);
+                }
+
+                console.log(items);
+
+                for (const item of items) {
+
+                    if (item.material_master_id) {
+
+                        const existingMaterial =
+                            await db.material_master.findOne({
+                                where: {
+                                    id: item.material_master_id
+                                }
+                            });
+
+                        if (existingMaterial) {
+
+                            const updatedStock =
+                                Number(existingMaterial.stockAvailable) +
+                                Number(item.quantity);
+
+                            await db.material_master.update(
+                                {
+                                    stockAvailable: updatedStock
+                                },
+                                {
+                                    where: {
+                                        id: item.material_master_id
+                                    }
+                                }
+                            );
+
+
+                            const material = await db.material.create({
+                                name: item.name,
+                                sku: item.sku,
+                                category: item.category,
+                                stockIn: item.quantity,
+                                vendor_name: item.vendor_name,
+                                //   project_name:item.,
+                                //   project_id:item.,
+                                cost: item.unitPrice,
+                                status: "CREATED",
+                                vendor_id: item.vendor_id,
+                                material_master_id: item.material_master_id,
+                                company_id: item.company_id,
+                                quotation_id: id
+                            });
+
+
+                        }
+                    }
+
+                    if (item.equipment_master_id) {
+
+                        const existingEquipment =
+                            await db.equipment_master.findOne({
+                                where: {
+                                    id: item.equipment_master_id
+                                }
+                            });
+
+                        if (existingEquipment) {
+
+                            const updatedStock =
+                                Number(existingEquipment.stockAvailable) +
+                                Number(item.quantity);
+
+                            await db.equipment_master.update(
+                                {
+                                    stockAvailable: updatedStock
+                                },
+                                {
+                                    where: {
+                                        id: item.equipment_master_id
+                                    }
+                                }
+                            );
+
+
+                            const equipment = await db.equipment.create({
+                                name: item.name,
+                                sku: item.sku,
+                                category: item.category,
+                                stockIn: item.quantity,
+                                vendor_name: item.vendor_name,
+                                //   project_name:item.,
+                                //   project_id:item.,
+                                cost: item.unitPrice,
+                                status: "CREATED",
+                                vendor_id: item.vendor_id,
+                                equipment_master_id: item.equipment_master_id,
+                                company_id: item.company_id,
+                                quotation_id: id
+                            });
+
+
+                        }
+                    }
+
+
+                }
+            }
+
+            // Update quotation status
+            await quotation.update({
+                status
+            });
+
+            return res.status(200).json({
+                message: `Quotation ${status} successfully.`,
+                data: quotation
+            });
+
+        } catch (error) {
+
+            console.error("[UPDATE_QUOTATION_STATUS_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error updating quotation status.",
                 error: error.message
             });
         }

@@ -7,6 +7,10 @@ module.exports = (router) => {
     // =========================================
     router.post("/create_quotation", quotationCtrl.create_quotation);
 
+    router.post("/update_approval_quotation_status/:id", quotationCtrl.update_approval_quotation_status);
+
+
+
     // Create Multiple Quotations
     router.post("/create_multiple_quotation", quotationCtrl.create_multiple_quotation);
 
