@@ -100,24 +100,24 @@ class MaterialController {
           }
         );
 
-         
-      // ================= CREATE HISTORY =================
-      await db.material_history.create({
-        name,
-        sku,
-        category,
-        stockIn,
-        cost,
-        vendor_name,
-        project_name,
-        material_id: material.id,
-        material_master_id,
-        company_id,
-        project_id,
-        vendor_id,
-        status: "UPDATED",
 
-      });
+        // ================= CREATE HISTORY =================
+        await db.material_history.create({
+          name,
+          sku,
+          category,
+          stockIn,
+          cost,
+          vendor_name,
+          project_name,
+          material_id: material.id,
+          material_master_id,
+          company_id,
+          project_id,
+          vendor_id,
+          status: "UPDATED",
+
+        });
 
         res.status(201).json({
           message: "Material Updated successfully.",
@@ -165,24 +165,24 @@ class MaterialController {
           }
         );
 
-      // ================= CREATE HISTORY =================
+        // ================= CREATE HISTORY =================
 
-      await db.material_history.create({
-        name,
-        sku,
-        category,
-        stockIn,
-        cost,
-        vendor_name,
-        project_name,
-        material_id: material.id,
-        material_master_id,
-        company_id,
-        project_id,
-        vendor_id,
-        status: "CREATED",
+        await db.material_history.create({
+          name,
+          sku,
+          category,
+          stockIn,
+          cost,
+          vendor_name,
+          project_name,
+          material_id: material.id,
+          material_master_id,
+          company_id,
+          project_id,
+          vendor_id,
+          status: "CREATED",
 
-      });
+        });
 
         res.status(201).json({
           message: "Material created successfully.",
@@ -335,7 +335,7 @@ class MaterialController {
       //   }
       // );
 
-            // ================= CREATE HISTORY =================
+      // ================= CREATE HISTORY =================
       await db.material_history.create({
         name,
         sku,
@@ -414,7 +414,7 @@ class MaterialController {
 
 
       const material = await db.material.findOne({
-        where: { project_id:id, isDeleted: false, company_id }
+        where: { project_id: id, isDeleted: false, company_id }
       });
 
       if (!material) {
