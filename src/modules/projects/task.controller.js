@@ -56,7 +56,7 @@ class ProjectTaskController {
     let t;
     try {
       const { projectId } = req.params;
-      const { title, description, priority, status, due_date, assignees, parent_id, milestone_id } = req.body;
+      const { title, description, priority, status, due_date, assignees, parent_id, milestone_id, vendorId } = req.body;
       const user_id = req.user.id;
 
       t = await db.sequelize.transaction();
@@ -69,6 +69,7 @@ class ProjectTaskController {
         priority,
         status,
         due_date,
+        vendorId,
         created_by: user_id,
       }, { transaction: t });
 
@@ -143,7 +144,7 @@ class ProjectTaskController {
     let t;
     try {
       const { taskId } = req.params;
-      const { title, description, priority, status, progress, due_date, assignees, milestone_id } = req.body;
+      const { title, description, priority, status, progress, due_date, assignees, milestone_id, vendorId } = req.body;
       const user_id = req.user.id;
 
       const task = await db.project_task.findByPk(taskId);
@@ -162,6 +163,7 @@ class ProjectTaskController {
       if (progress !== undefined) updateData.progress = progress;
       if (due_date !== undefined) updateData.due_date = due_date;
       if (milestone_id !== undefined) updateData.milestone_id = milestone_id;
+      if (vendorId !== undefined) updateData.vendorId = vendorId;
 
       await task.update(updateData, { transaction: t });
 

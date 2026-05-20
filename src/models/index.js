@@ -129,22 +129,8 @@ db.vendors_activity.belongsTo(db.company, { foreignKey: "company_id", as: "compa
 db.company.hasMany(db.material_master, { foreignKey: "company_id", as: "material_master" });
 db.material_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
-
-db.material_master.hasMany(db.quotation, { foreignKey: "material_master_id", as: "quotation" });
-db.quotation.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
-
-db.equipment_master.hasMany(db.quotation, { foreignKey: "equipment_master_id", as: "quotation" });
-db.quotation.belongsTo(db.equipment_master, { foreignKey: "equipment_master_id", as: "equipment_master" });
-
 db.company.hasMany(db.quotation, { foreignKey: "company_id", as: "quotation" });
 db.quotation.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
-
-db.vendors.hasMany(db.quotation, { foreignKey: "vendor_id", as: "quotation" });
-db.quotation.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
-
-
-
-
 
 db.quotation.hasMany(db.material, { foreignKey: "quotation_id", as: "material" });
 db.material.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
@@ -175,6 +161,7 @@ db.material_history.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor
 
 db.project.hasMany(db.material_history, { foreignKey: "project_id", as: "material_history" });
 db.material_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.StockRequest = require("../modules/stock-requests/model/stockRequestModel.js")(sequelize, Sequelize);
 
 db.quotation.hasMany(db.material_history, { foreignKey: "quotation_id", as: "material_history" });
 db.material_history.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
