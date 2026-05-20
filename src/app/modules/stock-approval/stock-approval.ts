@@ -2,12 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { ProjectService } from '../projects/services/project-service';
 
 @Component({
-  selector: 'app-site-manager',
+  selector: 'app-stock-approval',
   standalone: false,
-  templateUrl: './site-manager.html',
-  styleUrl: './site-manager.scss',
+  templateUrl: './stock-approval.html',
+  styleUrl: './stock-approval.scss',
 })
-export class SiteManager implements OnInit {
+export class StockApproval implements OnInit {
   stockRequests: any[] = [];
   selectedRequest: any = null;
 

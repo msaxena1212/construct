@@ -41,8 +41,8 @@ const routes: Routes = [
         loadChildren: () => import('./timeline/timeline-module').then((m) => m.TimelineModule),
       },
       {
-        path: 'site-manager',
-        loadChildren: () => import('./site-manager/site-manager-module').then((m) => m.SiteManagerModule),
+        path: 'stock-approval',
+        loadChildren: () => import('./stock-approval/stock-approval-module').then((m) => m.StockApprovalModule),
         
       },
       {

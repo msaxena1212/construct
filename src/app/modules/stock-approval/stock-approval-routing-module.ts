@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { SiteManager } from './site-manager';
+import { StockApproval } from './stock-approval';
 
-const routes: Routes = [{ path: '', component: SiteManager }];
+const routes: Routes = [{ path: '', component: StockApproval }];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
-export class SiteManagerRoutingModule {}
+export class StockApprovalRoutingModule {}

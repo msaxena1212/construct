@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SiteManager } from './site-manager';
+import { StockApproval } from './stock-approval';
 
-describe('SiteManager', () => {
-  let component: SiteManager;
-  let fixture: ComponentFixture<SiteManager>;
+describe('StockApproval', () => {
+  let component: StockApproval;
+  let fixture: ComponentFixture<StockApproval>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SiteManager],
+      declarations: [StockApproval],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SiteManager);
+    fixture = TestBed.createComponent(StockApproval);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
