@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SideManager } from './side-manager';
+import { SiteManager } from './site-manager';
 
-describe('SideManager', () => {
-  let component: SideManager;
-  let fixture: ComponentFixture<SideManager>;
+describe('SiteManager', () => {
+  let component: SiteManager;
+  let fixture: ComponentFixture<SiteManager>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SideManager],
+      declarations: [SiteManager],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SideManager);
+    fixture = TestBed.createComponent(SiteManager);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

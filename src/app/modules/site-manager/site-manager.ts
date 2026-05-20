@@ -2,12 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { ProjectService } from '../projects/services/project-service';
 
 @Component({
-  selector: 'app-side-manager',
+  selector: 'app-site-manager',
   standalone: false,
-  templateUrl: './side-manager.html',
-  styleUrl: './side-manager.scss',
+  templateUrl: './site-manager.html',
+  styleUrl: './site-manager.scss',
 })
-export class SideManager implements OnInit {
+export class SiteManager implements OnInit {
   stockRequests: any[] = [];
   selectedRequest: any = null;
 
