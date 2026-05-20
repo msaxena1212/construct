@@ -1,6 +1,5 @@
-<section class="p-8">
+<section class="p-6 md:p-8 bg-slate-50 min-h-screen">
 
-  <!-- Header -->
   <div class="flex items-center justify-between mb-6">
 
     <div>
@@ -9,13 +8,16 @@
       </h2>
 
       <p class="text-sm text-slate-500 mt-1 font-medium">
-        Manage and monitor all skill
+        Manage and monitor all skill stock
       </p>
     </div>
 
-    <button
-      (click)="openAddModal()"
-      class="px-5 py-2.5 bg-primary text-white rounded-xl font-bold shadow hover:scale-[1.02] transition-all">
+    <button (click)="openAddModal()"
+      class="px-5 py-2.5 bg-primary text-white rounded-xl font-bold shadow hover:scale-[1.02] transition-all flex items-center gap-2">
+
+      <span class="material-symbols-outlined text-[20px]">
+        add
+      </span>
 
       Add Skill
 
@@ -23,145 +25,228 @@
 
   </div>
 
-  <!-- Table -->
-  <div class="bg-white rounded-2xl shadow overflow-hidden border border-slate-200">
+  <div class="bg-white rounded-[28px] border border-slate-200 overflow-hidden shadow-sm">
 
-    <table class="w-full">
+    <div class="overflow-x-auto">
 
-      <thead class="bg-slate-100">
+      <table class="w-full">
 
-        <tr>
+        <thead class="bg-slate-50 border-b border-slate-200">
 
-          <th class="px-6 py-4 text-left text-xs font-black uppercase tracking-wider">
-            Skill
-          </th>
+          <tr>
 
-          <th class="px-6 py-4 text-center text-xs font-black uppercase tracking-wider">
-            Status
-          </th>
+            <th class="px-6 py-5 text-left text-xs font-black uppercase tracking-[1.5px] text-slate-500">
+              Skill
+            </th>
 
-          <th class="px-6 py-4 text-center text-xs font-black uppercase tracking-wider">
-            Action
-          </th>
+            <th class="px-6 py-5 text-center text-xs font-black uppercase tracking-[1.5px] text-slate-500">
+              Status
+            </th>
 
-        </tr>
+            <th class="px-6 py-5 text-center text-xs font-black uppercase tracking-[1.5px] text-slate-500">
+              Action
+            </th>
 
-      </thead>
+          </tr>
 
-      <tbody>
+        </thead>
 
-        @for (item of paginatedSkills; track item.id) {
+        <tbody>
 
-        <tr class="border-t hover:bg-slate-50 transition-all">
+          @for (item of paginatedSkills; track item.id) {
 
-          <!-- Skill -->
-          <td class="px-6 py-4 font-semibold">
+          <tr class="border-b border-slate-200 last:border-none hover:bg-slate-50/70 transition-all">
 
-            {{ item.skill_name }}
+            <td class="px-6 py-5">
 
-          </td>
+              <div class="flex items-center gap-4">
 
-          <!-- Status -->
-          <td class="px-6 py-4 text-center">
+                <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
 
-            <span
-              class="px-3 py-1 rounded-full text-xs font-bold"
-              [ngClass]="
-                item.status === 'ACTIVE'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
-              ">
+                  <span class="material-symbols-outlined text-primary text-[28px]">
+                    engineering
+                  </span>
 
-              {{ item.status }}
+                </div>
 
-            </span>
+                <div>
 
-          </td>
+                  <h4 class="font-black text-[17px] text-slate-800 leading-tight">
+                    {{ item.skill_name }}
+                  </h4>
 
-          <!-- Actions -->
-          <td class="px-6 py-4">
+                  <p class="text-sm text-slate-400 font-medium mt-1">
+                    Skill ID : #{{ item.id }}
+                  </p>
 
-            <div class="flex items-center justify-center gap-3">
+                </div>
 
-              <!-- Edit -->
-              <button
-                (click)="openEditModal(item)"
-                class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center">
+              </div>
 
-                <span class="material-symbols-outlined text-[18px]">
-                  edit
+            </td>
+
+            <td class="px-6 py-5 text-center">
+
+              <span
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide"
+                [ngClass]="
+                  item.status === 'ACTIVE'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                ">
+
+                <span class="w-2 h-2 rounded-full bg-current"></span>
+
+                {{ item.status }}
+
+              </span>
+
+            </td>
+
+            <td class="px-6 py-5">
+
+              <div class="flex items-center justify-center gap-3">
+
+                <button (click)="openEditModal(item)"
+                  class="w-11 h-11 rounded-2xl bg-slate-100 text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center shadow-sm">
+
+                  <span class="material-symbols-outlined text-[20px]">
+                    edit
+                  </span>
+
+                </button>
+
+                <button (click)="deleteSkill(item.id)"
+                  class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center shadow-sm">
+
+                  <span class="material-symbols-outlined text-[20px]">
+                    delete
+                  </span>
+
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+          } @empty {
+
+          <tr>
+
+            <td colspan="3" class="py-20 text-center">
+
+              <div class="flex flex-col items-center gap-3 text-slate-400">
+
+                <span class="material-symbols-outlined text-6xl">
+                  construction
                 </span>
 
-              </button>
+                <p class="font-bold text-lg">
+                  No Skills Found
+                </p>
 
-              <!-- Delete -->
-              <button
-                (click)="deleteSkill(item.id)"
-                class="w-9 h-9 rounded-xl bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center">
+              </div>
 
-                <span class="material-symbols-outlined text-[18px]">
-                  delete
-                </span>
+            </td>
 
-              </button>
+          </tr>
 
-            </div>
+          }
 
-          </td>
+        </tbody>
 
-        </tr>
+      </table>
 
-        }
+    </div>
 
-      </tbody>
+    <div class="flex items-center justify-between px-6 py-5 bg-white border-t border-slate-200">
 
-    </table>
+      <p class="text-sm font-black uppercase tracking-wide text-slate-500">
 
-  </div>
+        Showing
+        {{ (page - 1) * pageSize + 1 }}
 
-  <!-- Pagination -->
-  <div class="flex justify-end gap-2 mt-4">
+        to
 
-    <button
-      (click)="prevPage()"
-      class="px-4 py-2 border rounded-lg">
+        {{
+        ((page - 1) * pageSize + paginatedSkills.length)
+        }}
 
-      Prev
+        of
 
-    </button>
+        {{ skills.length }}
 
-    <button
-      (click)="nextPage()"
-      class="px-4 py-2 border rounded-lg">
+        Skills
 
-      Next
+      </p>
 
-    </button>
+      <div class="flex items-center gap-3">
+
+        <button (click)="prevPage()" [disabled]="page === 1"
+          class="w-11 h-11 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+
+          <span class="material-symbols-outlined text-[20px]">
+            chevron_left
+          </span>
+
+        </button>
+
+        <div class="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center font-black shadow-lg">
+
+          {{ page }}
+
+        </div>
+
+        <button (click)="nextPage()" [disabled]="page >= totalPages()"
+          class="w-11 h-11 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+
+          <span class="material-symbols-outlined text-[20px]">
+            chevron_right
+          </span>
+
+        </button>
+
+      </div>
+
+    </div>
 
   </div>
 
 </section>
 
-<!-- Add/Edit Modal -->
 @if (showAddModal) {
 
 <div
-  class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+  class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
 
-  <div
-    class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+  <div class="bg-white rounded-[28px] p-7 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300">
 
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-7">
 
-      <h3 class="text-xl font-black">
+      <div>
 
-        {{ isEditMode ? 'Edit Skill' : 'Add Skill' }}
+        <h3 class="text-2xl font-black text-slate-800">
 
-      </h3>
+          {{ isEditMode ? 'Edit Skill' : 'Add Skill' }}
 
-      <button
-        (click)="closeModal()"
-        class="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+        </h3>
+
+        <p class="text-sm text-slate-400 font-medium mt-1">
+
+          {{
+          isEditMode
+          ? 'Update existing skill details'
+          : 'Create a new skill record'
+          }}
+
+        </p>
+
+      </div>
+
+      <button (click)="closeModal()"
+        class="w-10 h-10 rounded-xl hover:bg-slate-100 flex items-center justify-center transition-all">
 
         <span class="material-symbols-outlined">
           close
@@ -171,59 +256,30 @@
 
     </div>
 
-    <!-- Skill -->
-    <div class="mb-4">
+    <div class="mb-5">
 
-      <label class="text-sm font-bold block mb-2">
-        Skill
+      <label class="text-sm font-black block mb-2 text-slate-700">
+        Skill Name
       </label>
 
-      <input
-        type="text"
-        [(ngModel)]="newSkill.skill_name"
-        class="w-full border rounded-xl px-4 py-3 outline-none">
+      <input type="text" [(ngModel)]="newSkill.skill_name" placeholder="Enter skill name"
+        class="w-full border border-slate-200 rounded-2xl px-4 py-3.5 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
 
     </div>
 
-    <!-- Status -->
-    <div class="mb-6">
-
-      <label class="text-sm font-bold block mb-2">
-        Status
-      </label>
-
-      <select
-        [(ngModel)]="newSkill.status"
-        class="w-full border rounded-xl px-4 py-3 outline-none">
-
-        <option value="ACTIVE">
-          ACTIVE
-        </option>
-
-        <option value="INACTIVE">
-          INACTIVE
-        </option>
-
-      </select>
-
-    </div>
-
-    <!-- Buttons -->
     <div class="flex gap-3">
 
-      <button
-        (click)="closeModal()"
-        class="flex-1 border rounded-xl py-3 font-semibold">
+      <button (click)="closeModal()"
+        class="flex-1 border border-slate-200 rounded-2xl py-3 font-bold hover:bg-slate-50 transition-all">
 
         Cancel
 
       </button>
 
-      <button
-        (click)="isEditMode ? updateSkill() : addSkill()"
-        class="flex-1 bg-primary text-white rounded-xl py-3 font-semibold">
+      <button (click)="isEditMode ? updateSkill() : addSkill()"
+        class="flex-1 bg-primary text-white rounded-2xl py-3 font-bold shadow-lg hover:scale-[1.02] transition-all">
 
-        {{ isEditMode ? 'Update' : 'Save' }}
+        {{ isEditMode ? 'Update Skill' : 'Save Skill' }}
 
       </button>
 

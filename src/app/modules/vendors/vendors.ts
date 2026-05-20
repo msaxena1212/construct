@@ -40,6 +40,7 @@ export class Vendors implements OnInit {
 
   showAddModal = false;
   showInvoiceModal = false;
+  showVendorDetailModal = false;
   showAuditModal = false;
   showBillingModal = false;
   showLaborModal = false;
@@ -89,14 +90,30 @@ export class Vendors implements OnInit {
     acc + (Number(w.daily_rate) || 0);
 
   ngOnInit(): void {
-     this.projectService.getProjectTasks(this.projectId).subscribe((res: any) => {
-      this.allTasks = res.data;
-      console.log(this.allTasks, 'NNNNNNNNNNNNNNNNNNNN')
+    this.route.paramMap.subscribe(params => {
+      this.projectId = params.get('projectId') || '';
+      this.viewingVendorId = params.get('id');
+      if (this.projectId) {
+        this.projectService.getProjectTasks(this.projectId).subscribe({
+          next: (res: any) => {
+            this.allTasks = res.data || [];
+            console.log(this.allTasks);
+          },
+          error: (err) => {
+            console.error('Task load failed', err);
+          }
+        });
+      }
+      this.syncSelectedVendor();
     });
+
+    this.getSkill();
+
     this.vendorService.vendors$.subscribe(v => {
       this.vendors = v;
       this.syncSelectedVendor();
     });
+
     this.vendorService.stats$.subscribe(s => (this.stats = s));
     this.vendorService.activities$.subscribe(a => (this.activities = a));
 
@@ -104,18 +121,14 @@ export class Vendors implements OnInit {
     this.laborService.stats$.subscribe(s => (this.laborStats = s));
     this.laborService.loading$.subscribe(l => (this.laborLoading = l));
 
-    this.invoiceService.invoices$.subscribe(inv => { this.invoices = inv; });
-
-    this.auditService.audits$.subscribe(audits => { this.vendorAudits = audits; });
-
-    this.route.paramMap.subscribe(params => {
-      this.viewingVendorId = params.get('id');
-      this.syncSelectedVendor();
+    this.invoiceService.invoices$.subscribe(inv => {
+      this.invoices = inv;
     });
-    this.getSkill();
-    // this.getProjectTasks();
-  }
 
+    this.auditService.audits$.subscribe(audits => {
+      this.vendorAudits = audits;
+    });
+  }
   getSkill(): void {
     this.skillMasterService.loadSkills().subscribe({
       next: (res) => {
@@ -128,21 +141,7 @@ export class Vendors implements OnInit {
       },
     });
   }
-// getProjectTasks() {
-//   console.log('getProjectTasks called');
-//   console.log('Calling API with:', this.projectId);
 
-//   this.projectService.getProjectTasks(this.projectId).subscribe({
-//     next: (res: any) => {
-//       console.log('API Response:', res);
-//       this.allTasks = res.data || [];
-//     },
-//     error: (err) => {
-//       console.error('Task load failed', err);
-//     }
-//   });
-
-// }
   private syncSelectedVendor(): void {
     if (!this.viewingVendorId) { this.selectedVendor = undefined; return; }
     const local = this.vendorService.getVendorById(this.viewingVendorId);
@@ -415,7 +414,9 @@ export class Vendors implements OnInit {
       ((this.auditForm.quality + this.auditForm.timeliness + this.auditForm.safety) / 30) * 100
     );
   }
-
+  openVendorDetailData(): void {
+    this.showVendorDetailModal = true;
+  }
   submitAudit(): void {
     if (this.isSavingAudit || !this.selectedVendor) return;
     this.isSavingAudit = true;
@@ -500,7 +501,18 @@ export class Vendors implements OnInit {
       error: err => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
+  updateVendorStatus(status: string): void {
+    if (!this.selectedVendor) return;
+    const statusKey = status.toLowerCase() as 'active' | 'pending' | 'inactive';
 
+    this.vendorService.updateVendor(this.selectedVendor.id, { status: statusKey }).subscribe({
+      next: (res) => {
+        const updated = this.vendorService.getVendorById(this.selectedVendor!.id);
+        if (updated) this.selectedVendor = updated;
+      },
+      error: err => alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
+    });
+  }
   updateLaborStatus(worker: LaborWorker, status: string): void {
     this.laborService.updateWorker(worker.id, { status }).subscribe();
   }
