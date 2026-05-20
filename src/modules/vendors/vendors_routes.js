@@ -5,7 +5,6 @@ const upload = require('../vendors/upload');
 const vendorCtrl = require('../vendors/vendors_controller');
 const invoiceCtrl = require('../vendors/vendors_invoice_controller');
 const auditCtrl = require('../vendors/vendors_audit_controller');
-const taskCtrl = require('../vendors/vendors_task_controller');
 
 
 router.get('/stats', vendorCtrl.getStats);
@@ -21,17 +20,11 @@ router.get('/:vendorId/audits', auditCtrl.getAuditsByVendor);
 router.post('/:vendorId/audits', auditCtrl.createAudit);
 
 
-router.get('/:vendorId/tasks', taskCtrl.getTasksByVendor);
-router.post('/:vendorId/tasks', taskCtrl.createTask);
-router.put('/tasks/:id', taskCtrl.updateTask);
-router.delete('/tasks/:id', taskCtrl.deleteTask);
-
-
 router.get('/', vendorCtrl.getAllVendors);
 router.get('/:id', vendorCtrl.getVendorById);
 
 router.post('/', (req, res, next) => {
-  upload.single('contractFile')(req, res, (err) => {
+  upload.array('contractFiles', 10)(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message });
     next();
   });
