@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   VendorsServices,
@@ -13,8 +13,9 @@ import {
 } from './services/vendors-labor-services';
 import { VendorInvoiceService, VendorInvoice } from '../vendors/services/vendors-invoice-services';
 import { VendorAuditService, VendorAudit } from '../vendors/services/vendors-audit-services';
-import { VendorTaskService, VendorTask } from '../vendors/services/vendors-task-services';
 import { SkillMasterServices } from '../master/skill-master/skill-master-services';
+import { ProjectService } from '../projects/services/project-service';
+import { IProjectTask, IUser } from '../../shared/interfaces/project.interface';
 @Component({
   selector: 'app-vendors',
   standalone: false,
@@ -22,13 +23,15 @@ import { SkillMasterServices } from '../master/skill-master/skill-master-service
   styleUrl: './vendors.scss',
 })
 export class Vendors implements OnInit {
+  @Input() projectId: string | number = '';
+  allTasks: IProjectTask[] = [];
   skillOptions: any[] = [];
   private vendorService = inject(VendorsServices);
   private laborService = inject(VendorsLaborServices);
   private invoiceService = inject(VendorInvoiceService);
   private auditService = inject(VendorAuditService);
-  private taskService = inject(VendorTaskService);
   private skillMasterService = inject(SkillMasterServices);
+  private projectService = inject(ProjectService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -66,8 +69,6 @@ export class Vendors implements OnInit {
 
   invoices: VendorInvoice[] = [];
 
-  vendorTasks: VendorTask[] = [];
-
   vendorAudits: VendorAudit[] = [];
 
   // Forms
@@ -88,6 +89,10 @@ export class Vendors implements OnInit {
     acc + (Number(w.daily_rate) || 0);
 
   ngOnInit(): void {
+     this.projectService.getProjectTasks(this.projectId).subscribe((res: any) => {
+      this.allTasks = res.data;
+      console.log(this.allTasks, 'NNNNNNNNNNNNNNNNNNNN')
+    });
     this.vendorService.vendors$.subscribe(v => {
       this.vendors = v;
       this.syncSelectedVendor();
@@ -101,16 +106,14 @@ export class Vendors implements OnInit {
 
     this.invoiceService.invoices$.subscribe(inv => { this.invoices = inv; });
 
-    this.taskService.tasks$.subscribe(tasks => { this.vendorTasks = tasks; });
-
     this.auditService.audits$.subscribe(audits => { this.vendorAudits = audits; });
 
     this.route.paramMap.subscribe(params => {
       this.viewingVendorId = params.get('id');
       this.syncSelectedVendor();
     });
-
     this.getSkill();
+    // this.getProjectTasks();
   }
 
   getSkill(): void {
@@ -125,7 +128,21 @@ export class Vendors implements OnInit {
       },
     });
   }
+// getProjectTasks() {
+//   console.log('getProjectTasks called');
+//   console.log('Calling API with:', this.projectId);
 
+//   this.projectService.getProjectTasks(this.projectId).subscribe({
+//     next: (res: any) => {
+//       console.log('API Response:', res);
+//       this.allTasks = res.data || [];
+//     },
+//     error: (err) => {
+//       console.error('Task load failed', err);
+//     }
+//   });
+
+// }
   private syncSelectedVendor(): void {
     if (!this.viewingVendorId) { this.selectedVendor = undefined; return; }
     const local = this.vendorService.getVendorById(this.viewingVendorId);
@@ -142,7 +159,6 @@ export class Vendors implements OnInit {
 
   private loadVendorSubData(vendorId: string): void {
     this.invoiceService.loadInvoices(vendorId);
-    this.taskService.loadTasks(vendorId);
     this.auditService.loadAudits(vendorId);
   }
 
@@ -158,7 +174,6 @@ export class Vendors implements OnInit {
   closeDetail(): void {
     this.laborService.clearWorkers();
     this.invoiceService.clearInvoices();
-    this.taskService.clearTasks();
     this.auditService.clearAudits();
     this.router.navigate(['/master/resources/vendors']);
   }
@@ -491,13 +506,13 @@ export class Vendors implements OnInit {
   }
 
 
-  updateTaskStatus(task: VendorTask, statusRaw: string): void {
-    this.taskService.updateTask(task.id, { status: statusRaw }).subscribe();
+  updateTaskStatus(task: any, statusRaw: string): void {
+    this.projectService.updateTask(task.id, { status: statusRaw }).subscribe();
   }
 
   deleteTask(taskId: number): void {
     if (!confirm('Remove this task?')) return;
-    this.taskService.deleteTask(taskId).subscribe({
+    this.projectService.deleteTask(taskId).subscribe({
       error: err => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
