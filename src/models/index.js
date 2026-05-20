@@ -52,7 +52,6 @@ db.vendors_activity = require("../modules/vendors/models/vendors_activity_model.
 db.vendors_labor = require("../modules/vendors/models/vendors_labor_model.js")(sequelize, Sequelize);
 db.vendors_invoice = require("../modules/vendors/models/vendors_invoice_model.js")(sequelize, Sequelize);
 db.vendors_audit = require("../modules/vendors/models/vendors_audit_model.js")(sequelize, Sequelize);
-db.vendors_task = require("../modules/vendors/models/vendors_task_model.js")(sequelize, Sequelize);
 db.skill = require("../modules/skill/model/skill_model.js")(sequelize, Sequelize);
 //Material
 db.material_master = require("../modules/material/models/material_master.model.js")(sequelize, Sequelize);
@@ -238,12 +237,6 @@ db.vendors_audit.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' }
 db.company.hasMany(db.vendors_audit, { foreignKey: 'company_id', as: 'vendors_audits' });
 db.vendors_audit.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
 
-// Vendor ↔ Task
-db.vendors.hasMany(db.vendors_task, { foreignKey: 'vendor_id', as: 'service_tasks' });
-db.vendors_task.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' });
-
-db.company.hasMany(db.vendors_task, { foreignKey: 'company_id', as: 'vendors_tasks' });
-db.vendors_task.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
 // Skill ↔ Master
 db.company.hasMany(db.skill, { foreignKey: 'company_id', as: 'skill' });
 db.skill.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });

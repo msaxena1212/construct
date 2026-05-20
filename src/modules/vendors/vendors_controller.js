@@ -109,15 +109,15 @@ const createVendor = async (req, res) => {
       budgetAllocation, services,
     } = req.body;
 
-    const requiredFields = {
+
+    const alwaysRequired = {
       vendorLegalName, spocName, spocPhone,
       officialEmail, officialPhone,
-      gstNo, panCardNo,
       physicalAddress, pincode,
       budgetAllocation, services,
     };
 
-    const missingFields = Object.keys(requiredFields).filter(k => !requiredFields[k]);
+    const missingFields = Object.keys(alwaysRequired).filter(k => !alwaysRequired[k]);
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
@@ -125,19 +125,30 @@ const createVendor = async (req, res) => {
       });
     }
 
-    // Email
+    const hasGst = !!(gstNo && gstNo.trim());
+    const hasPan = !!(panCardNo && panCardNo.trim());
+
+    if (!hasGst && !hasPan) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one of GST No. or PAN Card No. is required.',
+      });
+    }
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(officialEmail)) {
       return res.status(400).json({ success: false, message: 'Invalid email address' });
     }
 
-    // GST
-    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstNo.toUpperCase())) {
-      return res.status(400).json({ success: false, message: 'Invalid GST format' });
+    if (hasGst) {
+      if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstNo.toUpperCase())) {
+        return res.status(400).json({ success: false, message: 'Invalid GST format. Expected: 22AAAAA0000A1Z5' });
+      }
     }
 
-    // PAN
-    if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCardNo.toUpperCase())) {
-      return res.status(400).json({ success: false, message: 'Invalid PAN format' });
+    if (hasPan) {
+      if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCardNo.toUpperCase())) {
+        return res.status(400).json({ success: false, message: 'Invalid PAN format. Expected: ABCDE1234F' });
+      }
     }
 
     const servicesArray =
@@ -148,9 +159,12 @@ const createVendor = async (req, res) => {
     const budgetNum =
       parseFloat(String(budgetAllocation).replace(/[^0-9.]/g, '')) || 0;
 
-    const contractFile = req.file
-      ? `/uploads/contracts/${req.file.filename}`
-      : null;
+    let contractFiles = null;
+    if (req.files && req.files.length > 0) {
+      contractFiles = req.files.map(f => `/uploads/contracts/${f.filename}`);
+    } else if (req.file) {
+      contractFiles = [`/uploads/contracts/${req.file.filename}`];
+    }
 
     const newVendor = await VendorModel.create({
       company_id,
@@ -159,13 +173,13 @@ const createVendor = async (req, res) => {
       spoc_phone: spocPhone,
       official_email: officialEmail,
       official_phone: officialPhone,
-      gst_no: gstNo.toUpperCase(),
-      pan_card_no: panCardNo.toUpperCase(),
+      gst_no: hasGst ? gstNo.toUpperCase() : null,
+      pan_card_no: hasPan ? panCardNo.toUpperCase() : null,
       physical_address: physicalAddress,
       pincode,
       budget_allocation: budgetNum,
       services: servicesArray,
-      contract_file: contractFile,
+      contract_file: contractFiles ? JSON.stringify(contractFiles) : null,
       status: 'active',
       compliance_score: 95,
     });

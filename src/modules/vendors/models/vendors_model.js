@@ -30,13 +30,13 @@ module.exports = (sequelize, Sequelize) => {
     },
     gst_no: {
       type: Sequelize.STRING(20),
-      allowNull: false,
-      unique: true,
+      allowNull: true,
+      unique: 'gst_unique',
     },
     pan_card_no: {
       type: Sequelize.STRING(15),
-      allowNull: false,
-      unique: true,
+      allowNull: true,
+      unique: 'pan_unique',
     },
     physical_address: {
       type: Sequelize.TEXT,
@@ -56,8 +56,9 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       defaultValue: [],
     },
+
     contract_file: {
-      type: Sequelize.STRING(512),
+      type: Sequelize.TEXT,
       allowNull: true,
     },
     status: {
@@ -69,6 +70,10 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TINYINT.UNSIGNED,
       allowNull: false,
       defaultValue: 95,
+    },
+    company_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
     },
   }, {
     freezeTableName: true,
