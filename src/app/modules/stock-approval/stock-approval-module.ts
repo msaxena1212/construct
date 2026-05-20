@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { SideManagerRoutingModule} from './side-manager-routing-module';
-import { SideManager } from './side-manager';
+import { StockApprovalRoutingModule} from './stock-approval-routing-module';
+import { StockApproval } from './stock-approval';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
@@ -10,11 +10,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 
 @NgModule({
-  declarations: [SideManager],
-   exports: [SideManager],
+  declarations: [StockApproval],
+   exports: [StockApproval],
   imports: [
     CommonModule, 
-    SideManagerRoutingModule, 
+   StockApprovalRoutingModule, 
     MatSelectModule,
     MatFormFieldModule,
     FormsModule,
@@ -22,4 +22,4 @@ import { MatButtonModule } from '@angular/material/button';
     MatButtonModule
   ],
 })
-export class SideManagerModule{ }
+export class StockApprovalModule{ }
