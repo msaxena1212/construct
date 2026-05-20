@@ -120,60 +120,58 @@
   </div> -->
 
     <!-- Table -->
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto overflow-y-visible px-2 pb-4 relative z-0">
 
-      <table class="w-full text-left border-collapse">
+      <table class="w-full min-w-[1200px] border-separate border-spacing-y-3 relative z-0">
 
         <!-- Table Head -->
         <thead>
+          <tr>
 
-          <tr class="bg-gradient-to-r from-slate-100 to-slate-50 border-b border-slate-200">
-
-            <th class="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+            <th class="px-8 py-4 text-left text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
               Quote Details
             </th>
 
-            <th class="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+            <th class="px-8 py-4 text-left text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
               Sales Person
             </th>
 
-            <th class="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+            <th class="px-8 py-4 text-left text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
               Type
             </th>
 
-            <th class="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+            <th class="px-8 py-4 text-left text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
               Items
             </th>
 
-            <th class="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
+            <th class="px-8 py-4 text-left text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
               Amount
             </th>
 
-            <th class="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] text-center">
+            <th class="px-8 py-4 text-center text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
               Status
             </th>
 
-            <th class="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">
+            <th class="px-8 py-4 text-right text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">
               Actions
             </th>
 
           </tr>
-
         </thead>
 
         <!-- Table Body -->
         <tbody>
 
           <tr *ngFor="let quote of filteredQuotes"
-            class="group border-b border-slate-100/80 last:border-none hover:bg-gradient-to-r hover:from-primary/5 hover:to-violet-50 transition-all duration-300">
+            class="group relative z-0 hover:z-[9999] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
 
             <!-- Quote -->
-            <td class="px-8 py-6">
+            <td class="px-8 py-6 rounded-l-3xl border-y border-l border-slate-200 dark:border-slate-800">
 
               <div class="flex items-center gap-4">
 
                 <div
-                  class="w-14 h-14 rounded-3xl bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
+                  class="w-14 h-14 rounded-3xl bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500 flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
 
                   <span class="material-symbols-outlined text-[26px]">
                     description
@@ -181,11 +179,14 @@
 
                 </div>
 
-                <div>
+                <div class="space-y-1">
 
-                  <div class="text-sm font-black text-slate-900 mb-1">
+                  <p
+                    class="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary transition-colors">
+
                     {{quote.quotation_number}}
-                  </div>
+
+                  </p>
 
                   <div
                     class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -205,12 +206,12 @@
             </td>
 
             <!-- Sales Person -->
-            <td class="px-8 py-6">
+            <td class="px-8 py-6 border-y border-slate-200 dark:border-slate-800">
 
               <div class="flex items-center gap-3">
 
                 <div
-                  class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm font-black text-white shadow-md">
+                  class="w-11 h-11 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm font-black text-white shadow-md">
 
                   {{quote.sales_person.charAt(0)}}
 
@@ -218,7 +219,7 @@
 
                 <div>
 
-                  <p class="text-sm font-bold text-slate-800">
+                  <p class="text-sm font-bold text-slate-800 dark:text-slate-100">
                     {{quote.sales_person}}
                   </p>
 
@@ -233,10 +234,10 @@
             </td>
 
             <!-- Type -->
-            <td class="px-8 py-6">
+            <td class="px-8 py-6 border-y border-slate-200 dark:border-slate-800">
 
               <span
-                class="px-4 py-2 rounded-full bg-violet-100 text-violet-700 text-[11px] font-black uppercase tracking-wider">
+                class="inline-flex items-center px-4 py-2 rounded-full bg-violet-100 text-violet-700 text-[11px] font-black uppercase tracking-wider border border-violet-200">
 
                 {{quote.quotation_type}}
 
@@ -245,9 +246,10 @@
             </td>
 
             <!-- Items -->
-            <td class="px-8 py-6">
+            <td class="px-8 py-6 border-y border-slate-200 dark:border-slate-800">
 
-              <div class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100 text-slate-700">
+              <div
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
 
                 <span class="material-symbols-outlined text-[18px]">
                   inventory_2
@@ -262,15 +264,15 @@
             </td>
 
             <!-- Amount -->
-            <td class="px-8 py-6">
+            <td class="px-8 py-6 border-y border-slate-200 dark:border-slate-800">
 
               <div>
 
-                <p class="text-lg font-black text-slate-900">
+                <p class="text-lg font-black text-slate-900 dark:text-white">
                   ₹{{quote.total_amount.toLocaleString()}}
                 </p>
 
-                <p class="text-[11px] text-emerald-500 font-bold">
+                <p class="text-[11px] text-emerald-500 font-bold uppercase tracking-wide">
                   Total Value
                 </p>
 
@@ -279,12 +281,12 @@
             </td>
 
             <!-- Status -->
-            <td class="px-8 py-6">
+            <td class="px-8 py-6 border-y border-slate-200 dark:border-slate-800">
 
               <div class="flex justify-center">
 
                 <span
-                  [class]="'px-5 py-2 rounded-full text-[11px] font-black tracking-[0.15em] uppercase shadow-sm ' + getStatusClass(quote.status)">
+                  [class]="'px-5 py-2 rounded-full text-[11px] font-black tracking-[0.15em] uppercase shadow-sm border ' + getStatusClass(quote.status)">
 
                   {{quote.status}}
 
@@ -295,10 +297,12 @@
             </td>
 
             <!-- Actions -->
-            <td class="px-8 py-6 text-right relative overflow-visible">
+            <td
+              class="px-8 py-6 text-right relative rounded-r-3xl border-y border-r border-slate-200 dark:border-slate-800 overflow-visible z-[99999]">
 
-              <button type="button" (click)="toggleDropdown(quote.id, $event)"
-                class="w-11 h-11 rounded-2xl bg-white hover:bg-primary hover:text-white shadow-md border border-slate-200 text-slate-500 transition-all duration-300 flex items-center justify-center ml-auto hover:scale-105">
+              <!-- More Button -->
+              <button *ngIf="activeDropdownId !== quote.id" type="button" (click)="toggleDropdown(quote.id, $event)"
+                class="relative z-[100000] w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 hover:bg-primary hover:text-white shadow-md border border-slate-200 dark:border-slate-700 text-slate-500 transition-all duration-300 flex items-center justify-center ml-auto hover:scale-110">
 
                 <span class="material-symbols-outlined">
                   more_vert
@@ -308,86 +312,56 @@
 
               <!-- Dropdown -->
               <div *ngIf="activeDropdownId === quote.id"
-                class="absolute right-8 top-14 w-52 bg-white rounded-3xl shadow-[0_15px_50px_rgba(0,0,0,0.15)] border border-slate-100 z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                class="absolute right-0 top-14 w-56 bg-white dark:bg-slate-900 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-slate-800 z-[100001] overflow-hidden">
 
-                <div class="p-3 space-y-1">
+                <div class="p-3 space-y-2">
 
+                  <!-- View -->
                   <button (click)="openViewModal(quote)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-700 hover:bg-primary/10 rounded-2xl transition-all">
+                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-primary/10 rounded-2xl transition-all">
 
                     <span class="material-symbols-outlined text-[18px]">
                       visibility
                     </span>
 
                     View Details
+
                   </button>
 
+                  <!-- Approval -->
                   <button [disabled]="quote.status == 'Approved'" (click)="openNegotiateModal(quote)"
                     class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-2xl transition-all"
                     [ngClass]="{
-    'text-gray-400 bg-gray-100 cursor-not-allowed opacity-60': quote.status == 'Approved',
-    'text-amber-600 hover:bg-amber-50 cursor-pointer': quote.status != 'Approved'
-  }">
+                  'text-gray-400 bg-gray-100 cursor-not-allowed opacity-60':
+                  quote.status == 'Approved',
+
+                  'text-amber-600 hover:bg-amber-50 cursor-pointer':
+                  quote.status != 'Approved'
+                }">
 
                     <span class="material-symbols-outlined text-[18px]">
                       handshake
                     </span>
 
                     Approval Action
+
                   </button>
 
-                  <!-- <button (click)="downloadPdf(quote)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-emerald-600 hover:bg-emerald-50 rounded-2xl transition-all">
+                  <div class="h-px bg-slate-100 dark:bg-slate-800 my-2"></div>
 
-                    <span class="material-symbols-outlined text-[18px]">
-                      download
-                    </span>
-
-                    Download PDF
-                  </button> -->
-
-                  <div class="h-px bg-slate-100 my-2"></div>
-
+                  <!-- Delete -->
                   <button (click)="openDeleteModal(quote, $event)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 rounded-2xl transition-all">
+                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl transition-all">
 
                     <span class="material-symbols-outlined text-[18px]">
                       delete
                     </span>
 
                     Delete Quote
+
                   </button>
 
                 </div>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-          <!-- Empty -->
-          <tr *ngIf="filteredQuotes?.length === 0">
-
-            <td colspan="7" class="px-8 py-20 text-center">
-
-              <div class="flex flex-col items-center">
-
-                <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-
-                  <span class="material-symbols-outlined text-4xl text-slate-400">
-                    inbox
-                  </span>
-
-                </div>
-
-                <p class="text-lg font-black text-slate-600">
-                  No Quotations Found
-                </p>
-
-                <p class="text-sm text-slate-400 mt-1">
-                  Try changing filters or search query
-                </p>
 
               </div>
 

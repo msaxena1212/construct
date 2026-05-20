@@ -16,7 +16,7 @@ export interface Material {
   equipment_master_id: number;
   vendor_name: string;
   vendor_id: string;
-  status: 'ACTIVE';
+  status: 'ASSIGNED'| 'NOT ASSIGNED';
 }
 
 @Injectable({

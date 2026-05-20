@@ -27,57 +27,81 @@
 
   <div class="bg-white rounded-[28px] border border-slate-200 overflow-hidden shadow-sm">
 
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto px-4 py-4">
 
-      <table class="w-full">
+      <table class="w-full min-w-[1000px] border-separate border-spacing-y-4">
 
-        <thead class="bg-slate-50 border-b border-slate-200">
+        <!-- Head -->
+        <thead>
 
           <tr>
 
-            <th class="px-6 py-5 text-left text-xs font-black uppercase tracking-[1.5px] text-slate-500">
+            <th class="px-6 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
               Skill
             </th>
 
-            <th class="px-6 py-5 text-center text-xs font-black uppercase tracking-[1.5px] text-slate-500">
+            <th class="px-6 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
               Status
             </th>
 
-            <th class="px-6 py-5 text-center text-xs font-black uppercase tracking-[1.5px] text-slate-500">
-              Action
+            <th class="px-6 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+              Actions
             </th>
 
           </tr>
 
         </thead>
 
+        <!-- Body -->
         <tbody>
 
           @for (item of paginatedSkills; track item.id) {
 
-          <tr class="border-b border-slate-200 last:border-none hover:bg-slate-50/70 transition-all">
+          <tr class="group transition-all duration-300 hover:-translate-y-1 hover:scale-[1.004]">
 
-            <td class="px-6 py-5">
+            <!-- Skill -->
+            <td
+              class="px-6 py-5 rounded-l-[28px] bg-white dark:bg-slate-900 border border-r-0 border-slate-200 dark:border-slate-800 shadow-sm">
 
               <div class="flex items-center gap-4">
 
-                <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+                <!-- Icon -->
+                <div
+                  class="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
 
-                  <span class="material-symbols-outlined text-primary text-[28px]">
+                  <div
+                    class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 blur-xl transition-opacity">
+                  </div>
+
+                  <span
+                    class="material-symbols-outlined text-primary text-[26px] relative z-10 group-hover:scale-110 transition-transform">
                     engineering
                   </span>
 
                 </div>
 
-                <div>
+                <!-- Info -->
+                <div class="space-y-1">
 
-                  <h4 class="font-black text-[17px] text-slate-800 leading-tight">
+                  <p
+                    class="font-black text-[15px] text-slate-800 dark:text-white group-hover:text-primary transition-colors">
+
                     {{ item.skill_name }}
-                  </h4>
 
-                  <p class="text-sm text-slate-400 font-medium mt-1">
-                    Skill ID : #{{ item.id }}
                   </p>
+
+                  <div class="flex items-center gap-2">
+
+                    <span
+                      class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      Skill ID
+                    </span>
+
+                    <span class="text-xs text-slate-400 font-semibold">
+                      #{{ item.id }}
+                    </span>
+
+                  </div>
 
                 </div>
 
@@ -85,41 +109,51 @@
 
             </td>
 
-            <td class="px-6 py-5 text-center">
+            <!-- Status -->
+            <td class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
 
-              <span
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide"
-                [ngClass]="
-                  item.status === 'ACTIVE'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
-                ">
+              <div class="flex items-center justify-center">
 
-                <span class="w-2 h-2 rounded-full bg-current"></span>
+                <span
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-wide"
+                  [ngClass]="item.status === 'ACTIVE'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'">
 
-                {{ item.status }}
+                  <span class="w-2.5 h-2.5 rounded-full" [ngClass]="item.status === 'ACTIVE'
+                                ? 'bg-emerald-500'
+                                : 'bg-red-500'">
+                  </span>
 
-              </span>
+                  {{ item.status }}
+
+                </span>
+
+              </div>
 
             </td>
 
-            <td class="px-6 py-5">
+            <!-- Actions -->
+            <td
+              class="px-6 py-5 rounded-r-[28px] bg-white dark:bg-slate-900 border border-l-0 border-slate-200 dark:border-slate-800 shadow-sm">
 
               <div class="flex items-center justify-center gap-3">
 
+                <!-- Edit -->
                 <button (click)="openEditModal(item)"
-                  class="w-11 h-11 rounded-2xl bg-slate-100 text-primary hover:bg-primary hover:text-white transition-all flex items-center justify-center shadow-sm">
+                  class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
-                  <span class="material-symbols-outlined text-[20px]">
+                  <span class="material-symbols-outlined text-[18px]">
                     edit
                   </span>
 
                 </button>
 
+                <!-- Delete -->
                 <button (click)="deleteSkill(item.id)"
-                  class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center shadow-sm">
+                  class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
-                  <span class="material-symbols-outlined text-[20px]">
+                  <span class="material-symbols-outlined text-[18px]">
                     delete
                   </span>
 
@@ -135,17 +169,30 @@
 
           <tr>
 
-            <td colspan="3" class="py-20 text-center">
+            <td colspan="3" class="py-24 text-center">
 
-              <div class="flex flex-col items-center gap-3 text-slate-400">
+              <div class="flex flex-col items-center gap-4">
 
-                <span class="material-symbols-outlined text-6xl">
-                  construction
-                </span>
+                <div
+                  class="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-inner">
 
-                <p class="font-bold text-lg">
-                  No Skills Found
-                </p>
+                  <span class="material-symbols-outlined text-5xl text-slate-400">
+                    construction
+                  </span>
+
+                </div>
+
+                <div>
+
+                  <p class="text-xl font-black text-slate-700 dark:text-slate-200">
+                    No Skills Found
+                  </p>
+
+                  <p class="text-sm text-slate-400 mt-1">
+                    Add new skills to get started
+                  </p>
+
+                </div>
 
               </div>
 
