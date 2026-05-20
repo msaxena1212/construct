@@ -479,6 +479,11 @@ export class EquipmentInventory {
 
   }
 
+  getInventoryValue(): number {
+  return this.materials.reduce((sum, item) => {
+    return sum + (+item.cost * +item.stockIn);
+  }, 0);
+}
 
   getVendor() {
     this.vendorService.vendors$.subscribe(v => {
@@ -632,7 +637,7 @@ export class EquipmentInventory {
       stockIn: 0,
       vendor_name: '',
       vendor_id: '',
-      status: 'ACTIVE',
+      status: 'ASSIGNED',
 
     };
 
@@ -902,9 +907,9 @@ export class EquipmentInventory {
   // STATUS
   // =========================
 
-  calculateStatus(percent: number): 'ACTIVE' {
+  calculateStatus(percent: number): 'ASSIGNED' {
 
-    return 'ACTIVE';
+    return 'ASSIGNED';
 
   }
 

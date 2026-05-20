@@ -77,6 +77,7 @@ export class Materials {
   contractFile: any = null;
   isSaving = false;
   showAddVendorModal = false;
+  Number: any;
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -193,10 +194,17 @@ export class Materials {
       stockIn: 0,
       vendor_name: '',
       vendor_id: '',
-      status: 'ACTIVE',
+      status: 'ASSIGNED',
 
     };
   }
+
+  getInventoryValue(): number {
+  return this.materials.reduce((sum, item) => {
+    return sum + (+item.cost * +item.stockIn);
+  }, 0);
+}
+
   formatCost() {
 
     const value = Number(this.newMaterial.cost || 0);
@@ -272,9 +280,7 @@ export class Materials {
         (this.materialToEdit.stockCurrent / this.materialToEdit.stockTotal) * 100
       );
 
-      this.materialToEdit.status = this.calculateStatus(
-        this.materialToEdit.stockPercent
-      );
+      this.materialToEdit.status = 'ASSIGNED';
 
       this.materialService
         .updateMaterial(this.materialToEdit.id, this.materialToEdit) // ✅ id use karo
@@ -322,8 +328,13 @@ export class Materials {
         });
     }
   }
-  calculateStatus(percent: number): 'ACTIVE' {
-    return 'ACTIVE';
+  calculateStatus(percent: number): 'ASSIGNED' | 'NOT ASSIGNED' {
+
+    if (percent > 0) {
+      return 'ASSIGNED';
+    }
+
+    return 'NOT ASSIGNED';
   }
 
   exportReport() {
@@ -370,7 +381,7 @@ export class Materials {
     });
   }
 
-    getVendors() {
+  getVendors() {
     this.vendorService.vendors$.subscribe(v => {
 
       this.vendors = v;
@@ -413,7 +424,7 @@ export class Materials {
     });
   }
 
-    onContractFileSelected(event: any) {
+  onContractFileSelected(event: any) {
 
     this.contractFile = event.target.files[0];
 

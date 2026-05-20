@@ -87,7 +87,7 @@ export interface Vendor {
   assignee: string;
   services: string[];
   compliance_score: number;
-  contract_file?: string | null;
+  contract_files: string[];
   tasks: { title: string; status: string; date: string }[];
   audits: { date: string; score: number; notes: string }[];
   invoices: Invoice[];
@@ -124,8 +124,23 @@ export class VendorsServices {
     this.loadAll();
   }
 
+
+  private parseContractFiles(raw: string | null): string[] {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(p => `${environment.serverUrl}${p}`);
+      }
+      return [`${environment.serverUrl}${parsed}`];
+    } catch {
+      return [`${environment.serverUrl}${raw}`];
+    }
+  }
+
   private mapVendor(b: BackendVendor): Vendor {
     const s = STATUS_MAP[b.status] ?? STATUS_MAP['pending'];
+
     const formatBudget = (n: number): string => {
       if (!n) return '₹0';
       if (n >= 1_00_00_000) return `₹${(n / 1_00_00_000).toFixed(1)}Cr`;
@@ -153,10 +168,7 @@ export class VendorsServices {
       assignee: 'All Members',
       services: Array.isArray(b.services) ? b.services : [],
       compliance_score: b.compliance_score,
-
-      contract_file: b.contract_file
-        ? `${environment.serverUrl}${b.contract_file}`
-        : null,
+      contract_files: this.parseContractFiles(b.contract_file),
       tasks: [],
       audits: [],
       invoices: [],

@@ -14,24 +14,19 @@ export class SkillMaster implements OnInit {
 
   private toast = inject(ToastrService);
 
-  // Data
   skills: any[] = [];
 
   paginatedSkills: any[] = [];
-
-  // Pagination
   page = 1;
 
   pageSize = 10;
 
-  // Modal
   showAddModal = false;
 
   isEditMode = false;
 
   selectedSkillId: number | null = null;
 
-  // Form
   newSkill = {
     company_id: 1,
     skill_name: '',
@@ -43,9 +38,6 @@ export class SkillMaster implements OnInit {
     this.getSkills();
   }
 
-  // =========================
-  // GET SKILLS
-  // =========================
   getSkills() {
 
     this.skillService.loadSkills().subscribe({
@@ -69,9 +61,6 @@ export class SkillMaster implements OnInit {
     });
   }
 
-  // =========================
-  // PAGINATION
-  // =========================
   updatePagination() {
 
     const start = (this.page - 1) * this.pageSize;
@@ -109,9 +98,6 @@ export class SkillMaster implements OnInit {
     );
   }
 
-  // =========================
-  // MODAL
-  // =========================
   openAddModal() {
 
     this.isEditMode = false;
@@ -132,9 +118,7 @@ export class SkillMaster implements OnInit {
     this.showAddModal = false;
   }
 
-  // =========================
-  // ADD SKILL
-  // =========================
+
   addSkill() {
 
     this.skillService
@@ -164,9 +148,6 @@ export class SkillMaster implements OnInit {
       });
   }
 
-  // =========================
-  // EDIT
-  // =========================
   openEditModal(skill: any) {
 
     this.isEditMode = true;
@@ -182,9 +163,6 @@ export class SkillMaster implements OnInit {
     this.showAddModal = true;
   }
 
-  // =========================
-  // UPDATE
-  // =========================
   updateSkill() {
 
     if (!this.selectedSkillId) return;
@@ -219,9 +197,6 @@ export class SkillMaster implements OnInit {
       });
   }
 
-  // =========================
-  // DELETE
-  // =========================
   deleteSkill(id: number) {
 
     const confirmDelete =
