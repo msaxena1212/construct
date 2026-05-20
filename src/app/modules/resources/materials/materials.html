@@ -27,11 +27,11 @@
                 <span class="material-symbols-outlined text-lg">download</span>
                 Export Report
             </button>
-            <button (click)="openAddModal()"
+            <!-- <button (click)="openAddModal()"
                 class="hidden md:flex items-center gap-2 px-6 py-2.5 bg-surface-container-lowest text-on-surface font-bold rounded-xl shadow-sm border border-outline-variant/20 hover:border-primary/30 transition-all cursor-pointer">
                 <span class="material-symbols-outlined" style="font-size: 20px;">add_box</span>
                 New Material
-            </button>
+            </button> -->
         </div>
     </div>
 
@@ -122,7 +122,7 @@
                         </th>
 
                         <th
-                            class="px-6 py-4 text-right text-[11px] font-black uppercase tracking-widest text-slate-500">
+                            class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-widest text-slate-500">
                             Status
                         </th>
 
@@ -229,8 +229,12 @@
 
                             <div class="flex items-center gap-2">
 
-                                <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                                <div
+                                    class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm font-black text-white shadow-md">
 
+                                    {{item.vendor_name.charAt(0)}}
+
+                                </div>
                                 <div>
 
                                     <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -246,11 +250,11 @@
                         <!-- Status -->
                         <td class="px-6 py-5">
 
-                            <div class="flex items-center justify-end gap-3">
+                            <div class="flex items-left justify-start gap-6">
 
                                 <!-- Badge -->
                                 <span
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-200 bg-green-50 text-green-700 text-[11px] font-black uppercase tracking-wide">
+                                    class="inline-flex items-left gap-2 px-3 py-1.5 rounded-full border border-green-200 bg-green-50 text-green-700 text-[11px] font-black uppercase tracking-wide">
 
                                     <span class="w-2 h-2 rounded-full bg-green-500"></span>
 
@@ -259,8 +263,7 @@
                                 </span>
 
                                 <!-- Actions -->
-                                <div
-                                    class="flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200">
+                                <div class="flex items-left gap-3 transition-all duration-200">
 
                                     <!-- Edit -->
                                     <button (click)="openEditModal($event, item)"
@@ -283,6 +286,7 @@
                                     </button>
 
                                 </div>
+
 
                             </div>
 
@@ -539,7 +543,7 @@
             <div class="md:col-span-2">
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Material
                     Name</label>
-                <input [(ngModel)]="materialToEdit.name" type="text"
+                <input [(ngModel)]="materialToEdit.name" type="text" readonly
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
             <div>
@@ -549,7 +553,7 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [(ngModel)]="materialToEdit.category"
+                <select [(ngModel)]="materialToEdit.category" disabled
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
                     <option value="Concrete">Concrete</option>
                     <option value="Steel">Steel</option>
@@ -559,15 +563,7 @@
                     <option value="Chemicals">Chemicals</option>
                 </select>
             </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Project</label>
-                <select [(ngModel)]="materialToEdit.project_id" (change)="getProject($event)"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    @for (p of projects; track p.id) {
-                    <option [value]="p.id">{{ p.name }}</option>
-                    }
-                </select>
-            </div>
+         
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
                     Stock In</label>
@@ -578,10 +574,10 @@
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
                     Cost</label>
-                <input [(ngModel)]="materialToEdit.cost" type="number" (blur)="formatCostEdit()"
+                <input [(ngModel)]="materialToEdit.cost" type="number" (blur)="formatCostEdit()" readonly
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
-            <div>
+            <!-- <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
                 <select [(ngModel)]="materialToEdit.vendor_id" (change)="getvendor($event)"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
@@ -589,8 +585,18 @@
                     <option [value]="v.id">{{ v.name }}</option>
                     }
                 </select>
-            </div>
+            </div> -->
         </div>
+
+           <div>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Project</label>
+                <select [(ngModel)]="materialToEdit.project_id" (change)="getProject($event)"
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+                    @for (p of projects; track p.id) {
+                    <option [value]="p.id">{{ p.name }}</option>
+                    }
+                </select>
+            </div>
 
         <div class="flex gap-3 mt-8">
             <button (click)="showEditModal = false"
@@ -664,9 +670,9 @@
 }
 
 <app-vendor-add-modal [showAddModal]="showAddVendorModal" [newVendor]="newVendor" [errorMsg]="errorMsg"
-      [contractFile]="contractFile" [isSaving]="isSaving" (close)="showAddVendorModal = false" (save)="addVendor()"
-      (contractSelect)="onContractFileSelected($event)" (onlyNumberEvent)="onlyNumbers($event)"
-      (onlyAlphaNumericEvent)="onlyAlphanumeric($event)"
-      (pasteNumericEvent)="stripNonNumericOnPaste($event.event, $event.field, $event.len)"
-      (pasteAlphaNumericEvent)="stripNonAlphanumericOnPaste($event.event, $event.field, $event.len)">
-  </app-vendor-add-modal>
+    [contractFile]="contractFile" [isSaving]="isSaving" (close)="showAddVendorModal = false" (save)="addVendor()"
+    (contractSelect)="onContractFileSelected($event)" (onlyNumberEvent)="onlyNumbers($event)"
+    (onlyAlphaNumericEvent)="onlyAlphanumeric($event)"
+    (pasteNumericEvent)="stripNonNumericOnPaste($event.event, $event.field, $event.len)"
+    (pasteAlphaNumericEvent)="stripNonAlphanumericOnPaste($event.event, $event.field, $event.len)">
+</app-vendor-add-modal>
