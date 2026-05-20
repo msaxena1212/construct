@@ -35,6 +35,18 @@ export class Vendors implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+  currentStep = 1;
+  stepError = '';
+  fileError = '';
+  contractFiles: File[] = [];
+
+  readonly vendorSteps = [
+    { num: 1, label: 'Basic Info' },
+    { num: 2, label: 'KYC & Address' },
+    { num: 3, label: 'Budget' },
+    { num: 4, label: 'Documents' },
+  ];
+
   team = [{ name: 'All Members' }, { name: 'Marcus Thorne' }, { name: 'Sarah Chen' }];
   selectedMember = 'All Members';
 
@@ -176,23 +188,174 @@ export class Vendors implements OnInit {
     this.auditService.clearAudits();
     this.router.navigate(['/master/resources/vendors']);
   }
-
-
+  getFileName(filePath: string): string {
+    return filePath.split('/').pop() ?? filePath;
+  }
   openAddModal(): void {
     this.newVendor = this.defaultVendor();
-    this.contractFile = null;
+    this.contractFiles = [];
+    this.contractFile = null;   // keep old ref in sync
     this.errorMsg = '';
+    this.stepError = '';
+    this.fileError = '';
+    this.currentStep = 1;
     this.showAddModal = true;
   }
 
-  onContractFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.contractFile = input.files?.[0] ?? null;
+  // ── Add nextStep() / prevStep() ────────────────────────────────
+
+  nextStep(): void {
+    this.stepError = '';
+
+    if (this.currentStep === 1) {
+      if (!this.newVendor.name?.trim()) {
+        this.stepError = 'Vendor Legal Name is required.';
+        return;
+      }
+      if (!this.newVendor.spoc.name?.trim()) {
+        this.stepError = 'SPOC Name is required.';
+        return;
+      }
+      if (!this.newVendor.spoc.phone?.trim() || this.newVendor.spoc.phone.length < 10) {
+        this.stepError = 'SPOC Phone must be 10 digits.';
+        return;
+      }
+      if (!this.newVendor.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.newVendor.email)) {
+        this.stepError = 'Enter a valid official email address.';
+        return;
+      }
+      if (!this.newVendor.phone?.trim() || this.newVendor.phone.length < 10) {
+        this.stepError = 'Official phone must be 10 digits.';
+        return;
+      }
+    }
+
+    if (this.currentStep === 2) {
+      const gst = this.newVendor.kyc.gst?.trim();
+      const pan = this.newVendor.kyc.pan?.trim();
+
+      if (!gst && !pan) {
+        this.stepError = 'At least one of GST No. or PAN Card No. is required.';
+        return;
+      }
+      if (gst && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gst)) {
+        this.stepError = 'Invalid GST format. Expected: 22AAAAA0000A1Z5';
+        return;
+      }
+      if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(pan)) {
+        this.stepError = 'Invalid PAN format. Expected: ABCDE1234F';
+        return;
+      }
+      if (!this.newVendor.address.street?.trim()) {
+        this.stepError = 'Physical address is required.';
+        return;
+      }
+      if (!this.newVendor.address.pincode?.trim() || this.newVendor.address.pincode.length < 6) {
+        this.stepError = 'Enter a valid 6-digit pincode.';
+        return;
+      }
+    }
+
+    if (this.currentStep === 3) {
+      if (!this.newVendor.budget?.toString().trim()) {
+        this.stepError = 'Budget allocation is required.';
+        return;
+      }
+      if (!this.newVendor.services?.trim()) {
+        this.stepError = 'At least one service is required.';
+        return;
+      }
+    }
+
+    if (this.currentStep < 4) {
+      this.currentStep++;
+    }
   }
+
+  prevStep(): void {
+    this.stepError = '';
+    if (this.currentStep > 1) this.currentStep--;
+  }
+
+
+  // ── Replace onContractFileSelected  →  onContractFilesSelected() ──
+
+  onContractFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) return;
+
+    this.fileError = '';
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+    const ALLOWED = ['application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg', 'image/png'];
+
+    const incoming = Array.from(input.files);
+    const combined = [...this.contractFiles, ...incoming];
+
+    if (combined.length > 10) {
+      this.fileError = 'Maximum 10 files allowed.';
+      return;
+    }
+
+    for (const f of incoming) {
+      if (!ALLOWED.includes(f.type)) {
+        this.fileError = `"${f.name}" has an unsupported format. Allowed: PDF, Word, JPG, PNG.`;
+        return;
+      }
+      if (f.size > MAX_SIZE) {
+        this.fileError = `"${f.name}" exceeds the 10 MB limit (${this.getFileSize(f.size)}).`;
+        return;
+      }
+    }
+
+    this.contractFiles = combined;
+    // reset input so same file can be re-added after removal
+    input.value = '';
+  }
+
+  removeContractFile(index: number): void {
+    this.contractFiles = this.contractFiles.filter((_, i) => i !== index);
+    this.fileError = '';
+  }
+
+
+  // ── Helper methods ─────────────────────────────────────────────
+
+  getFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  getFileIcon(name: string): string {
+    const ext = name.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'picture_as_pdf';
+    if (ext === 'doc' || ext === 'docx') return 'description';
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'image';
+    return 'attach_file';
+  }
+
+  getFileIconBg(name: string): string {
+    const ext = name.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'bg-red-100 dark:bg-red-900/30';
+    if (ext === 'doc' || ext === 'docx') return 'bg-blue-100 dark:bg-blue-900/30';
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'bg-green-100 dark:bg-green-900/30';
+    return 'bg-surface-container';
+  }
+
+  getFileIconColor(name: string): string {
+    const ext = name.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'text-red-600';
+    if (ext === 'doc' || ext === 'docx') return 'text-blue-600';
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'text-green-600';
+    return 'text-outline';
+  }
+
 
   addVendor(): void {
     if (this.isSaving) return;
-    this.errorMsg = '';
+    this.stepError = '';
 
     const fd = new FormData();
     fd.append('vendorLegalName', this.newVendor.name);
@@ -200,20 +363,27 @@ export class Vendors implements OnInit {
     fd.append('spocPhone', this.newVendor.spoc.phone);
     fd.append('officialEmail', this.newVendor.email);
     fd.append('officialPhone', this.newVendor.phone);
-    fd.append('gstNo', this.newVendor.kyc.gst);
-    fd.append('panCardNo', this.newVendor.kyc.pan);
+    fd.append('gstNo', this.newVendor.kyc.gst ?? '');
+    fd.append('panCardNo', this.newVendor.kyc.pan ?? '');
     fd.append('physicalAddress', this.newVendor.address.street);
     fd.append('pincode', this.newVendor.address.pincode);
     fd.append('budgetAllocation', this.newVendor.budget);
     fd.append('services', this.newVendor.services);
-    if (this.contractFile) fd.append('contractFile', this.contractFile);
+
+    // append each file under the field name "contractFiles"
+    this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
     this.isSaving = true;
     this.vendorService.createVendor(fd).subscribe({
-      next: () => { this.isSaving = false; this.showAddModal = false; },
+      next: () => {
+        this.isSaving = false;
+        this.showAddModal = false;
+        this.currentStep = 1;
+        this.contractFiles = [];
+      },
       error: err => {
         this.isSaving = false;
-        this.errorMsg = err?.error?.message ?? 'Vendor onboard failed. Please try again.';
+        this.stepError = err?.error?.message ?? 'Vendor onboard failed. Please try again.';
       },
     });
   }
@@ -244,7 +414,17 @@ export class Vendors implements OnInit {
   }
 
   addInvoiceItem(): void {
-    this.invoiceForm.items.push({ type: '', description: '', quantity: 1, hours: 0, unitPrice: 0, total: 0 });
+    this.invoiceForm.items.push({
+      type: '',
+      description: '',
+      quantity: 1,
+      hours: 0,
+      unitPrice: 0,
+      gst: 18,
+      gstAmount: 0,
+      baseAmount: 0,
+      total: 0
+    });
   }
 
   removeInvoiceItem(index: number): void {
@@ -256,16 +436,51 @@ export class Vendors implements OnInit {
 
   calculateInvoiceTotals(): void {
     let subtotal = 0;
+    let totalGST = 0;
+
+    const gstMap: any = {};
+
     this.invoiceForm.items.forEach((item: any) => {
+
       const qty = Number(item.quantity) || 0;
       const rate = Number(item.unitPrice) || 0;
       const hours = Number(item.hours) || 0;
-      item.total = item.type === 'labor' ? qty * hours * rate : qty * rate;
-      subtotal += item.total;
+      const gst = Number(item.gst) || 0;
+
+      // Base Amount
+      item.baseAmount =
+        item.type === 'labor'
+          ? qty * hours * rate
+          : qty * rate;
+
+      // GST Amount
+      item.gstAmount = (item.baseAmount * gst) / 100;
+
+      // Final Total
+      item.total = item.baseAmount + item.gstAmount;
+
+      subtotal += item.baseAmount;
+      totalGST += item.gstAmount;
+
+      // GST Breakdown
+      if (!gstMap[gst]) {
+        gstMap[gst] = 0;
+      }
+
+      gstMap[gst] += item.gstAmount;
+
     });
+
     this.invoiceForm.subtotal = subtotal;
-    this.invoiceForm.taxAmount = Math.round((subtotal * this.invoiceForm.taxRate) / 100);
-    this.invoiceForm.grandTotal = subtotal + this.invoiceForm.taxAmount;
+    this.invoiceForm.taxAmount = totalGST;
+    this.invoiceForm.grandTotal = subtotal + totalGST;
+
+    // GST Breakdown Array
+    this.invoiceForm.gstBreakdown = Object.keys(gstMap).map(rate => ({
+      rate: Number(rate),
+      amount: gstMap[rate]
+    }));
+
   }
 
   submitInvoice(): void {
@@ -361,7 +576,7 @@ export class Vendors implements OnInit {
         <span style="font-weight:700;">₹${Number(inv.subtotal).toLocaleString('en-IN')}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
-        <span style="color:#64748b;">GST (${inv.tax_rate}%)</span>
+        <span style="color:#64748b;">TAX (${inv.tax_rate}%)</span>
         <span style="font-weight:700;">₹${Number(inv.tax_amount).toLocaleString('en-IN')}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:12px 0;" class="total-row">
@@ -603,12 +818,31 @@ export class Vendors implements OnInit {
   private defaultInvoice() {
     return {
       number: 'INV-' + Math.floor(Math.random() * 9000 + 1000),
-      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      items: [{ type: '', description: '', quantity: 1, hours: 0, unitPrice: 0, total: 0 }],
-      taxRate: 18,
-      taxAmount: 0,
+
+      date: new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      }),
+
+      items: [
+        {
+          type: '',
+          description: '',
+          quantity: 1,
+          hours: 0,
+          unitPrice: 0,
+          gst: 18,
+          baseAmount: 0,
+          gstAmount: 0,
+          total: 0
+        }
+      ],
+
       subtotal: 0,
+      taxAmount: 0,
       grandTotal: 0,
+      gstBreakdown: []
     };
   }
 
