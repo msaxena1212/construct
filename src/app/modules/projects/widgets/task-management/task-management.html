@@ -1,44 +1,100 @@
-<div class="mb-10 mt-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="mb-10 mt-4 flex flex-col md:flex-row md:items-end justify-between gap-4 p-4">
     <div>
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary mb-2 block">Project</span>
-        <div class="flex items-center gap-3">
-            <h2 class="text-4xl font-black tracking-tight text-slate-900 leading-none">Task Management</h2>
+        <div class="flex items-center gap-1">
+            <h2 class="text-3xl font-black text-slate-800 dark:text-white">Task Management</h2>
         </div>
     </div>
     <div class="flex items-center gap-3 flex-wrap">
-        <div class="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm">
-            <span class="material-symbols-outlined text-slate-400 text-sm">flag</span>
+
+        <!-- Milestone -->
+        <div
+            class="relative flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl shadow-sm min-w-[240px]">
+
+            <span class="material-symbols-outlined text-slate-400 text-[18px]">
+                flag
+            </span>
+
             <select [ngModel]="selectedMilestoneId" (ngModelChange)="selectMilestone($event)"
-                class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4 w-40 text-ellipsis">
-                <option [ngValue]="null" disabled>Select Milestone</option>
+                class="w-full bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 outline-none cursor-pointer appearance-none pr-8">
+
+                <option [ngValue]="null" disabled>
+                    Select Milestone
+                </option>
+
                 @for(ms of milestones; track ms.id) {
-                <option [ngValue]="ms.id">{{ ms.name }}</option>
+
+                <option [ngValue]="ms.id">
+                    {{ ms.name }}
+                </option>
+
                 @for(sm of ms.subMilestones; track sm.id) {
-                <option [ngValue]="sm.id">&nbsp;&nbsp;&nbsp;↳ {{ sm.name }}</option>
+
+                <option [ngValue]="sm.id">
+                    ↳ {{ sm.name }}
+                </option>
+
                 }
+
                 }
+
             </select>
-            <span
-                class="material-symbols-outlined absolute right-3 text-slate-400 text-sm pointer-events-none">expand_more</span>
+
+            <span class="material-symbols-outlined absolute right-4 text-slate-400 text-[18px] pointer-events-none">
+
+                expand_more
+
+            </span>
+
         </div>
 
-        <div class="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm relative">
-            <span class="material-symbols-outlined text-slate-400 text-sm">filter_alt</span>
+        <!-- Member Filter -->
+        <div
+            class="relative flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl shadow-sm min-w-[220px]">
+
+            <span class="material-symbols-outlined text-slate-400 text-[18px]">
+                filter_alt
+            </span>
+
             <select [(ngModel)]="selectedMember"
-                class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 outline-none cursor-pointer appearance-none pr-4">
-                <option value="All Members">All Members</option>
+                class="w-full bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-200 outline-none cursor-pointer appearance-none pr-8">
+
+                <option value="All Members">
+                    All Members
+                </option>
+
                 @for(ms of team_members; track ms.id) {
-                <option [ngValue]="ms.id">{{ ms.firstname }} {{ ms.lastname }}</option>
+
+                <option [ngValue]="ms.id">
+                    {{ ms.firstname }} {{ ms.lastname }}
+                </option>
+
                 }
+
             </select>
-            <span
-                class="material-symbols-outlined absolute right-3 text-slate-400 text-sm pointer-events-none">expand_more</span>
+
+            <span class="material-symbols-outlined absolute right-4 text-slate-400 text-[18px] pointer-events-none">
+
+                expand_more
+
+            </span>
+
         </div>
+
+        <!-- Refresh -->
         <button (click)="fetchTasks()" [disabled]="loading"
-            class="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-200 cursor-pointer">
-            <span class="material-symbols-outlined text-lg" [class.animate-spin]="loading">sync</span>
+            class="flex items-center gap-2 px-5 py-[11px] bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-200 dark:border-slate-800 cursor-pointer disabled:opacity-60">
+
+            <span class="material-symbols-outlined text-lg" [class.animate-spin]="loading">
+
+                sync
+
+            </span>
+
             Refresh
+
         </button>
+
     </div>
 </div>
 @if (!selectedMilestoneId) {
