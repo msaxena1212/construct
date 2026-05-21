@@ -33,12 +33,13 @@ const db = require("./models");
 // db.material_master.sync({ alter: true });
 // db.quotation.sync({ alter: true });
 // db.material.sync({ alter: true });
-//  db.StockRequest.sync({ alter: true });
+// db.StockRequest.sync({ alter: true });
 // db.material_history.sync({ alter: true });
 // db.equipment_master.sync({ alter: true });
 // db.equipment.sync({ alter: true });
 // db.equipment_history.sync({ alter: true });
 // db.vendors_activity.sync({ alter: true });
+// db.category.sync({ alter: true });
 
 
 app.use(bodyParser.json({ limit: "50mb" }));

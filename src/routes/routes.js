@@ -19,6 +19,7 @@ class Routes {
 
     require("../modules/equipment/routes/equipment_master.routes")(router);
     require("../modules/equipment/routes/equipment.routes")(router);
+      require("../modules/category/routes/category_routes")(router);
     app.use("/api/v1", router); // Use router with /api/v1 prefix
 
     const authRouter = express.Router();
@@ -34,7 +35,7 @@ class Routes {
       "/api/v1/activities",
       require("../modules/vendors/vendors_activity_routes")
     );
-    
+
 
     app.use(
       "/api/v1/labor",
@@ -45,7 +46,7 @@ class Routes {
       "/api/v1/vendors_labor",
       require("../modules/vendors/vendors_labor_routes")
     );
-        app.use(
+    app.use(
       "/api/v1/skill",
       require("../modules/skill/routes/skill_routes")
     );
