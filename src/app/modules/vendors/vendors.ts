@@ -103,24 +103,48 @@ export class Vendors implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
+      console.log('PARAMS:', params.keys);
       this.projectId = params.get('projectId') || '';
       this.viewingVendorId = params.get('id');
+      console.log(this.projectId, 'PROJECT ID');
+      console.log(this.viewingVendorId, 'VENDOR ID');
       if (this.projectId) {
+
         this.projectService.getProjectTasks(this.projectId).subscribe({
           next: (res: any) => {
-            this.allTasks = res.data || [];
-            console.log(this.allTasks);
+
+            const tasks = res?.data || [];
+            if (this.viewingVendorId) {
+
+              this.allTasks = tasks.filter(
+                (task: any) =>
+                  String(task.vendor_id) === String(this.viewingVendorId) ||
+                  String(task.vendorId) === String(this.viewingVendorId)
+              );
+
+            } else {
+
+              this.allTasks = tasks;
+            }
+            console.log('Filtered Tasks:', this.allTasks);
+
           },
+
           error: (err) => {
             console.error('Task load failed', err);
           }
         });
+
+      } else {
+
+        console.warn('Project ID not found in route');
+
       }
+
       this.syncSelectedVendor();
+
     });
-
     this.getSkill();
-
     this.vendorService.vendors$.subscribe(v => {
       this.vendors = v;
       this.syncSelectedVendor();
@@ -140,6 +164,7 @@ export class Vendors implements OnInit {
     this.auditService.audits$.subscribe(audits => {
       this.vendorAudits = audits;
     });
+
   }
   getSkill(): void {
     this.skillMasterService.loadSkills().subscribe({
@@ -179,14 +204,21 @@ export class Vendors implements OnInit {
   }
 
   openVendorDetail(vendor: Vendor): void {
-    this.router.navigate(['/master/resources/vendors', vendor.id]);
+    this.router.navigate([
+      '/master/resources/vendors',
+      vendor.id
+    ]);
   }
 
   closeDetail(): void {
     this.laborService.clearWorkers();
     this.invoiceService.clearInvoices();
     this.auditService.clearAudits();
-    this.router.navigate(['/master/resources/vendors']);
+
+    this.router.navigate([
+      '/master/resources/vendors',
+      this.projectId
+    ]);
   }
   getFileName(filePath: string): string {
     return filePath.split('/').pop() ?? filePath;
@@ -201,8 +233,6 @@ export class Vendors implements OnInit {
     this.currentStep = 1;
     this.showAddModal = true;
   }
-
-  // ── Add nextStep() / prevStep() ────────────────────────────────
 
   nextStep(): void {
     this.stepError = '';
@@ -277,9 +307,6 @@ export class Vendors implements OnInit {
     if (this.currentStep > 1) this.currentStep--;
   }
 
-
-  // ── Replace onContractFileSelected  →  onContractFilesSelected() ──
-
   onContractFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
@@ -310,7 +337,6 @@ export class Vendors implements OnInit {
     }
 
     this.contractFiles = combined;
-    // reset input so same file can be re-added after removal
     input.value = '';
   }
 
@@ -319,8 +345,6 @@ export class Vendors implements OnInit {
     this.fileError = '';
   }
 
-
-  // ── Helper methods ─────────────────────────────────────────────
 
   getFileSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -447,22 +471,18 @@ export class Vendors implements OnInit {
       const hours = Number(item.hours) || 0;
       const gst = Number(item.gst) || 0;
 
-      // Base Amount
       item.baseAmount =
         item.type === 'labor'
           ? qty * hours * rate
           : qty * rate;
 
-      // GST Amount
       item.gstAmount = (item.baseAmount * gst) / 100;
 
-      // Final Total
       item.total = item.baseAmount + item.gstAmount;
 
       subtotal += item.baseAmount;
       totalGST += item.gstAmount;
 
-      // GST Breakdown
       if (!gstMap[gst]) {
         gstMap[gst] = 0;
       }
@@ -475,7 +495,6 @@ export class Vendors implements OnInit {
     this.invoiceForm.taxAmount = totalGST;
     this.invoiceForm.grandTotal = subtotal + totalGST;
 
-    // GST Breakdown Array
     this.invoiceForm.gstBreakdown = Object.keys(gstMap).map(rate => ({
       rate: Number(rate),
       amount: gstMap[rate]

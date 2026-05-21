@@ -605,7 +605,6 @@
   <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl my-auto flex flex-col"
     style="max-height: 90vh;" (click)="$event.stopPropagation()">
 
-    <!-- Header -->
     <div class="flex justify-between items-center px-6 pt-6 pb-4 border-b border-outline-variant/10 shrink-0">
       <div>
         <h3 class="text-xl font-black tracking-tight">Onboard New Partner</h3>
@@ -1153,100 +1152,145 @@
         </select>
 
       </div>
+      <div
+        class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl shadow-md space-y-3">
 
-      <div class="bg-primary/90 text-white p-5 rounded-3xl shadow-lg space-y-3">
+        <div class="flex items-center justify-between">
 
-        <h3 class="text-sm font-black">
-          Contact Details
-        </h3>
+          <h3 class="text-[13px] font-black tracking-wide text-slate-800 dark:text-white">
+            Contact Details
+          </h3>
 
-        <div>
+          <div class="flex items-center gap-1 bg-green-50 text-green-600 px-2 py-0.5 rounded-full">
 
-          <p class="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">
-            SPOC Info
-          </p>
-
-          <p class="text-sm font-bold">
-            {{ selectedVendor.spoc.name }}
-          </p>
-
-          <p class="text-[11px] opacity-75">
-            {{ selectedVendor.spoc.email }}
-          </p>
-
-          <p class="text-[11px] opacity-75">
-            {{ selectedVendor.spoc.phone }}
-          </p>
-
-        </div>
-
-        <div>
-
-          <p class="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">
-            KYC — GST
-          </p>
-
-          <div class="flex items-center gap-1.5">
-
-            <span class="material-symbols-outlined text-sm">
+            <span class="material-symbols-outlined text-[13px]">
               verified
             </span>
 
-            <p class="text-xs font-bold uppercase">
-              {{ selectedVendor.kyc.gst }}
-            </p>
+            <span class="text-[9px] font-bold uppercase">
+              Verified
+            </span>
 
           </div>
 
         </div>
 
-        <div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-          <p class="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">
-            KYC — PAN
-          </p>
+          <div class="bg-slate-50 dark:bg-slate-900/40 rounded-xl px-3 py-2 space-y-1">
 
-          <p class="text-xs font-bold uppercase">
-            {{ selectedVendor.kyc.pan }}
-          </p>
+            <p class="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
+              SPOC
+            </p>
 
-        </div>
+            <p class="text-[12px] font-bold text-slate-800 dark:text-white leading-tight">
+              {{ selectedVendor.spoc.name }}
+            </p>
 
-        <div>
+            <p class="text-[10px] text-slate-500 leading-tight">
+              {{ selectedVendor.spoc.email }}
+            </p>
 
-          <p class="text-[9px] font-black uppercase tracking-widest opacity-60 mb-2">
-            Services
-          </p>
+            <p class="text-[10px] text-slate-500 leading-tight">
+              {{ selectedVendor.spoc.phone }}
+            </p>
 
-          <div class="flex flex-wrap gap-1.5">
+          </div>
 
-            @for (svc of selectedVendor.services; track svc) {
+          <div class="bg-slate-50 dark:bg-slate-900/40 rounded-xl px-3 py-2 space-y-1">
 
-            <span class="bg-white/20 px-2 py-1 rounded-md text-[9px] font-bold">
-              {{ svc }}
-            </span>
+            <p class="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
+              GST
+            </p>
 
-            }
+            <div class="flex items-center gap-1">
+
+              <span class="material-symbols-outlined text-green-600 text-[14px]">
+                verified
+              </span>
+
+              <p class="text-[11px] font-bold uppercase text-slate-700 dark:text-slate-100 break-all">
+                {{ selectedVendor.kyc.gst }}
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="bg-slate-50 dark:bg-slate-900/40 rounded-xl px-3 py-2 space-y-1">
+
+            <p class="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
+              PAN
+            </p>
+
+            <p class="text-[11px] font-bold uppercase text-slate-700 dark:text-slate-100 break-all">
+              {{ selectedVendor.kyc.pan }}
+            </p>
+
+          </div>
+
+          <div class="bg-slate-50 dark:bg-slate-900/40 rounded-xl px-3 py-2 space-y-1">
+
+            <p class="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
+              Services
+            </p>
+
+            <div class="flex flex-wrap gap-1">
+
+              @for (svc of selectedVendor.services; track svc) {
+
+              <span class="text-[10px] font-semibold text-slate-700 dark:text-slate-200">
+                {{ svc }}
+              </span>
+
+              }
+
+            </div>
 
           </div>
 
         </div>
 
         @if (selectedVendor.contract_files.length > 0) {
-        <div>
-          <p class="text-[9px] font-black uppercase tracking-widest opacity-60 mb-2">
+
+        <div class="space-y-1">
+
+          <p class="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
             Documents ({{ selectedVendor.contract_files.length }})
           </p>
+
           <div class="flex flex-col gap-1.5">
+
             @for (file of selectedVendor.contract_files; track file) {
+
             <a [href]="file" target="_blank" rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 text-[11px] font-bold opacity-80 hover:opacity-100 transition-opacity">
-              <span class="material-symbols-outlined text-sm shrink-0">download</span>
-              <span class="truncate">{{ getFileName(file) }}</span>
+              class="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+
+              <div class="flex items-center gap-2 min-w-0">
+
+                <span class="material-symbols-outlined text-primary text-[16px] shrink-0">
+                  description
+                </span>
+
+                <span class="truncate text-[10px] font-medium text-slate-700 dark:text-slate-200">
+                  {{ getFileName(file) }}
+                </span>
+
+              </div>
+
+              <span class="material-symbols-outlined text-slate-400 text-[15px]">
+                download
+              </span>
+
             </a>
+
             }
+
           </div>
+
         </div>
+
         }
 
       </div>
@@ -1277,7 +1321,6 @@
   <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl p-5 animate-in zoom-in-95 duration-300"
     (click)="$event.stopPropagation()">
 
-    <!-- Header -->
     <div class="flex justify-between items-start mb-5">
       <div>
         <h3 class="text-lg font-black leading-none">

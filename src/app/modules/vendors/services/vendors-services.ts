@@ -16,7 +16,7 @@ interface BackendVendor {
   physical_address: string;
   pincode: string;
   budget_allocation: number;
-  services: string[];
+  services: string[] | string;
   contract_file: string | null;
   status: 'active' | 'pending' | 'inactive';
   compliance_score: number;
@@ -166,7 +166,34 @@ export class VendorsServices {
       statusColor: s.color,
       icon: 'business',
       assignee: 'All Members',
-      services: Array.isArray(b.services) ? b.services : [],
+      services: (() => {
+        try {
+          if (Array.isArray(b.services)) {
+            return b.services.flatMap((s: any) => {
+              if (typeof s === 'string' && s.startsWith('[')) {
+                return JSON.parse(s).map((x: string) =>
+                  x.replace(/['"]/g, '').trim()
+                );
+              }
+              return s.replace(/['"]/g, '').trim();
+            });
+          }
+          if (typeof b.services === 'string') {
+            if (b.services.startsWith('[')) {
+              return JSON.parse(b.services).map((x: string) =>
+                x.replace(/['"]/g, '').trim()
+              );
+            }
+            return b.services
+              .split(',')
+              .map((s: string) => s.replace(/['"]/g, '').trim())
+              .filter(Boolean);
+          }
+          return [];
+        } catch {
+          return [];
+        }
+      })(),
       compliance_score: b.compliance_score,
       contract_files: this.parseContractFiles(b.contract_file),
       tasks: [],
