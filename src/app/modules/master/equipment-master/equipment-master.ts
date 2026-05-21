@@ -112,6 +112,7 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
       name: '',
       sku: '',
       category: 'Concrete',
+      cost: 0,
       status: 'ACTIVE',
       stockAvailable: 0
     };

@@ -1,9 +1,9 @@
-<section class="p-6 md:p-8 bg-slate-50 min-h-screen">
+<section class="p-4 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
   <div class="flex items-center justify-between mb-6">
 
     <div>
-      <h2 class="text-3xl font-black tracking-tight text-slate-800">
+      <h2 class="text-3xl font-black text-slate-800 dark:text-white">
         Skill Master
       </h2>
 
@@ -57,7 +57,7 @@
 
           @for (item of paginatedSkills; track item.id) {
 
-          <tr class="group transition-all duration-300 hover:-translate-y-1 hover:scale-[1.004]">
+          <tr  class="group relative z-0 hover:z-[9] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
 
             <!-- Skill -->
             <td

@@ -1,7 +1,7 @@
-<section class="p-8 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<section class="p-4 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div class="space-y-1">
-            <h2 class="text-2xl md:text-3xl font-black tracking-tighter text-on-surface uppercase">Materials Inventory
+            <h2 class="text-3xl font-black text-slate-800 dark:text-white">Materials Inventory
             </h2>
             <p class="text-on-surface-variant/80 font-medium">Precision tracking across 4 active construction sites</p>
         </div>
@@ -250,8 +250,7 @@
 
                         @for (item of paginatedMaterials; track item.sku) {
 
-                        <tr [routerLink]="['/materials', item.sku]"
-                            class="group cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:scale-[1.004]">
+                        <tr [routerLink]="['/materials', item.sku]"  class="group relative z-0 hover:z-[9999] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
 
                             <!-- Material -->
                             <td

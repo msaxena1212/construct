@@ -1,9 +1,9 @@
 <!-- Content Area -->
-<section class="p-8 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<section class="p-4 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <!-- Page Header & Key Metrics -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div class="space-y-1">
-            <h2 class="text-2xl md:text-3xl font-black tracking-tighter text-on-surface uppercase">Materials Master
+            <h2 class="text-3xl font-black text-slate-800 dark:text-white">Materials Master
             </h2>
         </div>
         <div class="flex gap-3">
@@ -151,7 +151,7 @@
                     @for (item of filteredMaterials; track item.sku) {
 
                     <tr
-                        class="group cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:scale-[1.004]">
+                        class="group relative z-0 hover:z-[99] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
 
                         <!-- Material -->
                         <td
@@ -392,7 +392,7 @@
 <!-- Add Material Modal -->
 @if (showAddModal) {
 <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-    (click)="showAddModal = false">
+   >
     <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
         (click)="$event.stopPropagation()">
         <div class="flex justify-between items-center mb-6">
@@ -479,7 +479,7 @@
 <!-- Edit Material Modal -->
 @if (showEditModal && materialToEdit) {
 <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-    (click)="showEditModal = false">
+    >
     <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
         (click)="$event.stopPropagation()">
         <div class="flex justify-between items-center mb-6">
