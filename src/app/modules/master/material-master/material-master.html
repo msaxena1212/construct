@@ -163,7 +163,7 @@ class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounde
                 <!-- Body -->
                 <tbody>
 
-                    @for (item of filteredMaterials; track item.sku) {
+                    @for (item of paginatedMaterials; track item.sku) {
 
                     <tr
                         class="group relative z-0 hover:z-[99] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
@@ -354,7 +354,7 @@ class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounde
             <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
 
                 Showing {{ (page - 1) * pageSize + 1 }}
-                to {{ Math?.min(page * pageSize, materials.length) }}
+                to {{ endItem }}
                 of {{ materials.length }} materials
 
             </p>

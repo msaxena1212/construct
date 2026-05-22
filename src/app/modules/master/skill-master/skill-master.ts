@@ -19,7 +19,7 @@ export class SkillMaster implements OnInit {
   paginatedSkills: any[] = [];
   page = 1;
 
-  pageSize = 10;
+  pageSize = 5;
 
   showAddModal = false;
 
@@ -72,31 +72,34 @@ export class SkillMaster implements OnInit {
   }
 
   nextPage() {
-
     if (this.page < this.totalPages()) {
-
       this.page++;
-
       this.updatePagination();
     }
   }
 
   prevPage() {
-
     if (this.page > 1) {
-
       this.page--;
-
       this.updatePagination();
     }
   }
 
-  totalPages() {
-
-    return Math.ceil(
-      this.skills.length / this.pageSize
-    );
+  goToPage(p: number) {
+    this.page = p;
+    this.updatePagination();
   }
+
+  totalPages() {
+    return Math.ceil(this.skills.length / this.pageSize);
+  }
+
+  get endItem(): number {
+  return Math.min(
+    this.page * this.pageSize,
+    this.skills.length
+  );
+}
 
   openAddModal() {
 

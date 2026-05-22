@@ -3,7 +3,7 @@
   <div class="flex justify-between items-center mb-10">
     <div>
       <h1 class="text-3xl font-black text-slate-800 dark:text-white">Sales Quotations</h1>
-      <p class="text-slate-500">Manage and track material quotes from various vendors</p>
+      <p class="text-slate-500">Manage and track material & equipment quotes from various vendors</p>
     </div>
     <a routerLink="/master/resources/quotations/new"
       class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
@@ -83,14 +83,15 @@
     <div class="flex items-center gap-4">
       <div class="relative flex-1">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-        <input type="text" [(ngModel)]="searchQuery" placeholder="Search by quote number or salesperson..."
+        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+          placeholder="Search by quote number or salesperson..."
           class="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 transition-all">
       </div>
-      <button
+      <!-- <button
         class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl font-semibold text-slate-600 hover:bg-slate-50 transition-all">
         <span class="material-symbols-outlined">filter_list</span>
         <span>Filters</span>
-      </button>
+      </button> -->
     </div>
   </div>
 
@@ -120,9 +121,9 @@
   </div> -->
 
     <!-- Table -->
-    <div class="overflow-x-auto overflow-y-visible px-2 pb-4 relative z-0">
+    <div class="overflow-x-auto overflow-y-visible px-2 pb-24 relative">
 
-      <table class="w-full h-auto min-w-[1200px] border-separate border-spacing-y-3 relative z-0">
+      <table class="w-full h-auto min-w-[1200px] border-separate border-spacing-y-3 relative">
 
         <!-- Table Head -->
         <thead>
@@ -161,9 +162,10 @@
 
         <!-- Table Body -->
         <tbody>
+          @for (quote of paginatedQuotes; track quote.id) {
 
-          <tr *ngFor="let quote of filteredQuotes"
-            class="group relative z-0 hover:z-[9] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
+          <tr
+            class="group relative hover:z-[999] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
 
             <!-- Quote -->
             <td class="px-8 py-6 rounded-l-3xl border-y border-l border-slate-200 dark:border-slate-800">
@@ -298,68 +300,72 @@
 
             <!-- Actions -->
             <td
-              class="px-8 py-6 text-right relative rounded-r-3xl border-y border-r border-slate-200 dark:border-slate-800 overflow-visible z-[99999]">
+              class="px-8 py-6 text-right relative rounded-r-3xl border-y border-r border-slate-200 dark:border-slate-800 overflow-visible">
 
-              <!-- More Button -->
-              <button *ngIf="activeDropdownId !== quote.id" type="button" (click)="toggleDropdown(quote.id, $event)"
-                class="relative z-[100000] w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 hover:bg-primary hover:text-white shadow-md border border-slate-200 dark:border-slate-700 text-slate-500 transition-all duration-300 flex items-center justify-center ml-auto hover:scale-110">
+              <div class="relative inline-block">
 
-                <span class="material-symbols-outlined">
-                  more_vert
-                </span>
+                <!-- More Button -->
+                <button type="button" (click)="toggleDropdown(quote.id, $event)"
+                  class="relative z-20 w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 hover:bg-primary hover:text-white shadow-md border border-slate-200 dark:border-slate-700 text-slate-500 transition-all duration-300 flex items-center justify-center ml-auto hover:scale-110">
 
-              </button>
+                  <span class="material-symbols-outlined">
+                    more_vert
+                  </span>
 
-              <!-- Dropdown -->
-              <div *ngIf="activeDropdownId === quote.id"
-                class="absolute right-0 top-14 w-56 bg-white dark:bg-slate-900 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-slate-800 z-[100001] overflow-hidden">
+                </button>
 
-                <div class="p-3 space-y-2">
+                <!-- Dropdown -->
+                <div *ngIf="activeDropdownId === quote.id"
+                  class="absolute right-0 top-14 w-56 bg-white dark:bg-slate-900 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.25)] border border-slate-100 dark:border-slate-800 z-[99999999] overflow-hidden">
 
-                  <!-- View -->
-                  <button (click)="openViewModal(quote)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-primary/10 rounded-2xl transition-all">
+                  <div class="p-3 space-y-2">
 
-                    <span class="material-symbols-outlined text-[18px]">
-                      visibility
-                    </span>
+                    <!-- View -->
+                    <button (click)="openViewModal(quote)"
+                      class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-primary/10 rounded-2xl transition-all">
 
-                    View Details
+                      <span class="material-symbols-outlined text-[18px]">
+                        visibility
+                      </span>
 
-                  </button>
+                      View Details
 
-                  <!-- Approval -->
-                  <button [disabled]="quote.status == 'Approved'" (click)="openNegotiateModal(quote)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-2xl transition-all"
-                    [ngClass]="{
-                  'text-gray-400 bg-gray-100 cursor-not-allowed opacity-60':
-                  quote.status == 'Approved',
+                    </button>
 
-                  'text-amber-600 hover:bg-amber-50 cursor-pointer':
-                  quote.status != 'Approved'
-                }">
+                    <!-- Approval -->
+                    <button [disabled]="quote.status == 'Approved'" (click)="openNegotiateModal(quote)"
+                      class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-2xl transition-all"
+                      [ngClass]="{
+                    'text-gray-400 bg-gray-100 cursor-not-allowed opacity-60':
+                    quote.status == 'Approved',
 
-                    <span class="material-symbols-outlined text-[18px]">
-                      handshake
-                    </span>
+                    'text-amber-600 hover:bg-amber-50 cursor-pointer':
+                    quote.status != 'Approved'
+                  }">
 
-                    Approval Action
+                      <span class="material-symbols-outlined text-[18px]">
+                        handshake
+                      </span>
 
-                  </button>
+                      Approval Action
 
-                  <div class="h-px bg-slate-100 dark:bg-slate-800 my-2"></div>
+                    </button>
 
-                  <!-- Delete -->
-                  <button (click)="openDeleteModal(quote, $event)"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl transition-all">
+                    <div class="h-px bg-slate-100 dark:bg-slate-800 my-2"></div>
 
-                    <span class="material-symbols-outlined text-[18px]">
-                      delete
-                    </span>
+                    <!-- Delete -->
+                    <button (click)="openDeleteModal(quote, $event)"
+                      class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-2xl transition-all">
 
-                    Delete Quote
+                      <span class="material-symbols-outlined text-[18px]">
+                        block
+                      </span>
 
-                  </button>
+                      Delete Quote
+
+                    </button>
+
+                  </div>
 
                 </div>
 
@@ -369,12 +375,27 @@
 
           </tr>
 
+          }
         </tbody>
 
       </table>
-
+      <div
+        class="flex flex-col md:flex-row items-center justify-between gap-4 px-6 py-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+        <!-- Count -->
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500"> Showing {{ filteredQuotes.length ? ((page
+          - 1) * pageSize) + 1 : 0 }} - {{endItem}} of {{ filteredQuotes.length}} Quotes </p>
+        <!-- Pagination Buttons -->
+        <div class="flex items-center gap-2"> <!-- Prev --> <button (click)="prevPage()"
+            class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]"> chevron_left </span> </button> <!-- Numbers --> @for (p
+          of [].constructor(totalPages()); track $index) { <button (click)="goToPage($index + 1)"
+            class="w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer"
+            [ngClass]="page === ($index + 1) ? 'bg-primary text-white shadow-md' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary'">
+            {{ $index + 1 }} </button> } <!-- Next --> <button (click)="nextPage()"
+            class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]"> chevron_right </span> </button> </div>
+      </div>
     </div>
-
   </div>
 </div>
 
@@ -508,7 +529,7 @@
         class="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">Discard
         Changes</button>
       <button (click)="updateQuoteStatus()"
-        class="flex-[2] py-4 bg-amber-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-amber-200 hover:scale-[1.02] transition-transform">Synchronize
+        class="flex-[2] py-4 bg-amber-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-amber-200 hover:scale-[1.02] transition-transform">
         Update</button>
     </div>
   </div>

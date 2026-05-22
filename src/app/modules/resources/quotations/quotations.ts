@@ -26,6 +26,9 @@ export class Quotations {
   negotiationFeedback = '';
   showDeleteModal: boolean = false;
   quoteToDelete: Quote | null = null;
+  page = 1;
+  pageSize = 5;
+  paginatedQuotes: any[] = [];
 
   get draftQuotesCount() {
     return this.quotes?.filter(q => q?.status === 'Draft').length;
@@ -45,20 +48,101 @@ export class Quotations {
     }, 0);
   }
 
-  ngOnInit() {
-    this.quotationService.quotes$.subscribe((q: any) => this.quotes = q.data);
+ngOnInit() {
+
+  this.quotationService.quotes$.subscribe((q: any) => {
+
+    this.quotes = q.data || [];
+
     console.log(this.quotes, 'this.quotes');
 
+    this.page = 1;
+    this.updatePagination();
+
+  });
+
+}
+
+onSearchChange() {
+
+  this.page = 1;
+
+  this.updatePagination();
+}
+
+ get filteredQuotes(): any[] {
+
+  if (!this.searchQuery) {
+    return this.quotes;
   }
 
-  get filteredQuotes(): any {
-    if (!this.searchQuery) return this.quotes;
-    const q = this.searchQuery.toLowerCase();
-    return this.quotes.filter((quote: any) =>
-      quote.quotation_number.toLowerCase().includes(q) ||
-      quote.sales_person.toLowerCase().includes(q)
+  const q = this.searchQuery.toLowerCase();
+
+  return this.quotes.filter((quote: any) =>
+
+    quote.quotation_number?.toLowerCase().includes(q) ||
+
+    quote.sales_person?.toLowerCase().includes(q)
+
+  );
+}
+
+updatePagination() {
+
+    const start = (this.page - 1) * this.pageSize;
+
+    const end = start + this.pageSize;
+
+    this.paginatedQuotes =
+      this.filteredQuotes.slice(start, end);
+
+  }
+
+  nextPage() {
+
+    if (this.page < this.totalPages()) {
+
+      this.page++;
+
+      this.updatePagination();
+
+    }
+
+  }
+
+  get endItem(): number {
+    return Math.min(
+      this.page * this.pageSize,
+      this.filteredQuotes.length
     );
   }
+
+  prevPage() {
+
+    if (this.page > 1) {
+
+      this.page--;
+
+      this.updatePagination();
+
+    }
+
+  }
+
+  goToPage(p: number) {
+
+    this.page = p;
+
+    this.updatePagination();
+
+  }
+
+  totalPages() {
+
+    return Math.ceil(this.filteredQuotes.length / this.pageSize);
+
+  }
+
 
   getStatusClass(status: string) {
     switch (status) {
@@ -109,6 +193,8 @@ export class Quotations {
     this.selectedQuote = quote;
     this.negotiationFeedback = quote.vendorFeedback || '';
     this.showNegotiateModal = true;
+    this.activeDropdownId = null;
+
     this.closeDropdown();
   }
 
@@ -122,74 +208,75 @@ export class Quotations {
     this.selectedQuote!.status = status;
   }
 
-updateQuoteStatus() {
+  updateQuoteStatus() {
 
-  if (
-    this.selectedQuote &&
-    this.selectedQuote.status == 'Draft' 
-  ) {
-    this.toast.error('Please select a  status.');
-    return;
+    if (
+      this.selectedQuote &&
+      this.selectedQuote.status == 'Draft'
+    ) {
+      this.toast.error('Please select a  status.');
+      return;
+    }
+    if (this.selectedQuote) {
+
+      this.quotationService
+        .updateQuoteStatus(
+          this.selectedQuote.id,
+          this.selectedQuote.status,
+          this.negotiationFeedback
+        )
+        .subscribe({
+          next: (res: any) => {
+
+            this.toast.success('Quote status updated successfully');
+
+            this.closeNegotiateModal();
+          },
+
+          error: (err: any) => {
+
+            this.toast.error(err?.error?.message || 'Failed to update quote status');
+
+            console.error(err);
+          }
+        });
+
+    }
   }
-  if (this.selectedQuote) {
+
+  confirmDelete(quote: Quote) {
 
     this.quotationService
-      .updateQuoteStatus(
-        this.selectedQuote.id,
-        this.selectedQuote.status,
-        this.negotiationFeedback
-      )
+      .deleteQuote(quote.id)
       .subscribe({
-        next: (res: any) => {
 
-          this.toast.success('Quote status updated successfully');
+        next: () => {
 
-          this.closeNegotiateModal();
+          this.toast.success('Quote deleted successfully');
+
+          this.quotationService.loadQuotes();
+
+          this.closeDropdown();
+
+          this.showDeleteModal = false;
         },
 
         error: (err: any) => {
 
-          this.toast.error(err?.error?.message || 'Failed to update quote status');
+          this.toast.error(err?.error?.message || 'Failed to delete quote');
 
           console.error(err);
         }
+
       });
 
   }
-}
-
-confirmDelete(quote: Quote) {
-
-  this.quotationService
-    .deleteQuote(quote.id)
-    .subscribe({
-
-      next: () => {
-
-        this.toast.success('Quote deleted successfully');
-
-        this.quotationService.loadQuotes();
-
-        this.closeDropdown();
-
-        this.showDeleteModal = false;
-      },
-
-      error: (err:any) => {
-
-        this.toast.error(err?.error?.message || 'Failed to delete quote');
-
-        console.error(err);
-      }
-
-    });
-
-}
 
   openDeleteModal(quote: Quote, event: Event) {
     event.stopPropagation();
     this.quoteToDelete = quote;
     this.showDeleteModal = true;
+    this.closeDropdown();
   }
 
   downloadPdf(quote: Quote) {
@@ -201,4 +288,5 @@ confirmDelete(quote: Quote) {
   }
 
 
+  
 }

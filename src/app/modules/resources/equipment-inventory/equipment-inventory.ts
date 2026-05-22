@@ -447,6 +447,7 @@ export class EquipmentInventory {
   contractFile: any = null;
   isSaving = false;
   showAddVendorModal = false;
+  searchQuery: any;
   // =========================
   // INIT
   // =========================
@@ -478,6 +479,42 @@ export class EquipmentInventory {
     this.getVendor();
 
   }
+
+get filteredMaterials(): any[] {
+
+  let filtered = [...this.materials];
+
+  // 🔥 Tab Filter
+  if (this.selectedTab === 'Low Stock') {
+
+    filtered = filtered.filter(
+      m => m.stockIn < 20
+    );
+
+  } else if (this.selectedTab !== 'All Materials') {
+
+    filtered = filtered.filter(
+      m =>
+        (m.category || '')
+          .trim()
+          .toLowerCase() ===
+        this.selectedTab.trim().toLowerCase()
+    );
+  }
+
+  // 🔥 Search Filter
+  if (this.searchQuery) {
+
+    const q = this.searchQuery.toLowerCase();
+
+    filtered = filtered.filter((material: any) =>
+      material.name?.toLowerCase().includes(q) ||
+      material.sku?.toLowerCase().includes(q)
+    );
+  }
+
+  return filtered;
+}
 
   getInventoryValue(): number {
   return this.materials.reduce((sum, item) => {
@@ -559,6 +596,13 @@ export class EquipmentInventory {
 
   }
 
+    get endItem(): number {
+  return Math.min(
+    this.page * this.pageSize,
+    this.filteredMaterials.length
+  );
+}
+
   prevPage() {
 
     if (this.page > 1) {
@@ -585,39 +629,46 @@ export class EquipmentInventory {
 
   }
 
+    onSearchChange() {
+
+  this.page = 1;
+
+  this.updatePagination();
+}
+
   // =========================
   // FILTERED MATERIALS
   // =========================
 
-  get filteredMaterials() {
+  // get filteredMaterials() {
 
-    let filtered = [...this.materials];
+  //   let filtered = [...this.materials];
 
-    if (this.selectedTab === 'Low Stock') {
+  //   if (this.selectedTab === 'Low Stock') {
 
-      filtered = filtered.filter(
+  //     filtered = filtered.filter(
 
-        m => m.stockIn < 20
+  //       m => m.stockIn < 20
 
-      );
+  //     );
 
-    } else if (this.selectedTab !== 'All Materials') {
+  //   } else if (this.selectedTab !== 'All Materials') {
 
-      filtered = filtered.filter(
+  //     filtered = filtered.filter(
 
-        m =>
-          (m.category || '')
-            .trim()
-            .toLowerCase() ===
-          this.selectedTab.trim().toLowerCase()
+  //       m =>
+  //         (m.category || '')
+  //           .trim()
+  //           .toLowerCase() ===
+  //         this.selectedTab.trim().toLowerCase()
 
-      );
+  //     );
 
-    }
+  //   }
 
-    return filtered;
+  //   return filtered;
 
-  }
+  // }
 
   // =========================
   // DEFAULT MATERIAL

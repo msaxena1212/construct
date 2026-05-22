@@ -78,6 +78,7 @@ export class Materials {
   isSaving = false;
   showAddVendorModal = false;
   Number: any;
+  searchQuery: any;
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -110,6 +111,48 @@ export class Materials {
     });
   }
 
+  get endItem(): number {
+  return Math.min(
+    this.page * this.pageSize,
+    this.filteredMaterials.length
+  );
+}
+
+  get filteredMaterials(): any[] {
+
+    let filtered = [...this.materials];
+
+    // 🔥 Tab Filter
+    if (this.selectedTab === 'Low Stock') {
+
+      filtered = filtered.filter(
+        m => m.stockIn < 20
+      );
+
+    } else if (this.selectedTab !== 'All Materials') {
+
+      filtered = filtered.filter(
+        m =>
+          (m.category || '')
+            .trim()
+            .toLowerCase() ===
+          this.selectedTab.trim().toLowerCase()
+      );
+    }
+
+    // 🔥 Search Filter
+    if (this.searchQuery) {
+
+      const q = this.searchQuery.toLowerCase();
+
+      filtered = filtered.filter((material: any) =>
+        material.name?.toLowerCase().includes(q) ||
+        material.sku?.toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
+  }
 
   changeTab(tab: string) {
     this.selectedTab = tab;
@@ -117,15 +160,14 @@ export class Materials {
     this.updatePagination();
   }
 
-  updatePagination() {
+ updatePagination() {
 
-    const start = (this.page - 1) * this.pageSize;
-    const end = start + this.pageSize;
+  const start = (this.page - 1) * this.pageSize;
+  const end = start + this.pageSize;
 
-    this.paginatedMaterials =
-      this.filteredMaterials.slice(start, end);
-
-  }
+  this.paginatedMaterials =
+    this.filteredMaterials.slice(start, end);
+}
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -147,8 +189,15 @@ export class Materials {
   }
 
   totalPages() {
-    return Math.ceil(this.materials.length / this.pageSize);
+    return Math.ceil(this.filteredMaterials.length / this.pageSize);
   }
+
+  onSearchChange() {
+
+  this.page = 1;
+
+  this.updatePagination();
+}
 
 
   onSupplierChange() {
@@ -156,30 +205,6 @@ export class Materials {
       this.showAddModal = false;
       this.router.navigate(['/vendors']);
     }
-  }
-
-  get filteredMaterials() {
-
-    let filtered = [...this.materials];
-
-    if (this.selectedTab === 'Low Stock') {
-
-      filtered = filtered.filter(
-        m => m.stockIn < 20
-      );
-
-    } else if (this.selectedTab !== 'All Materials') {
-
-      filtered = filtered.filter(
-        m =>
-          (m.category || '')
-            .trim()
-            .toLowerCase() ===
-          this.selectedTab.trim().toLowerCase()
-      );
-    }
-
-    return filtered;
   }
 
   getDefaultMaterial(): Material {
@@ -200,10 +225,10 @@ export class Materials {
   }
 
   getInventoryValue(): number {
-  return this.materials.reduce((sum, item) => {
-    return sum + (+item.cost * +item.stockIn);
-  }, 0);
-}
+    return this.materials.reduce((sum, item) => {
+      return sum + (+item.cost * +item.stockIn);
+    }, 0);
+  }
 
   formatCost() {
 

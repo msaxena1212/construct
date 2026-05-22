@@ -89,7 +89,13 @@ ngOnInit() {
   totalPages() {
     return Math.ceil(this.materials.length / this.pageSize);
   }
-
+  
+get endItem(): number {
+  return Math.min(
+    this.page * this.pageSize,
+    this.filteredMaterials.length
+  );
+}
 
   get filteredMaterials() {
     let filtered = this.materials;

@@ -219,56 +219,57 @@
 
     </div>
 
-    <div class="flex items-center justify-between px-6 py-5 bg-white border-t border-slate-200">
+     <div
+            class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 flex flex-col md:flex-row items-center justify-between gap-4">
 
-      <p class="text-sm font-black uppercase tracking-wide text-slate-500">
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
 
-        Showing
-        {{ (page - 1) * pageSize + 1 }}
+                Showing {{ (page - 1) * pageSize + 1 }}
+                to {{ endItem }}
+                of {{ skills.length }} Skills
 
-        to
+            </p>
 
-        {{
-        ((page - 1) * pageSize + paginatedSkills.length)
-        }}
+            <div class="flex items-center gap-2">
 
-        of
+                <!-- Prev -->
+                <button (click)="prevPage()"
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
 
-        {{ skills.length }}
+                    <span class="material-symbols-outlined text-[18px]">
+                        chevron_left
+                    </span>
 
-        Skills
+                </button>
 
-      </p>
+                <!-- Pages -->
+                @for (p of [].constructor(totalPages()); track $index) {
 
-      <div class="flex items-center gap-3">
+                <button (click)="goToPage($index + 1)"
+                    [class]="page === ($index + 1)
+                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'"
+                    class="w-9 h-9 rounded-xl text-sm font-bold transition-all">
 
-        <button (click)="prevPage()" [disabled]="page === 1"
-          class="w-11 h-11 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                    {{ $index + 1 }}
 
-          <span class="material-symbols-outlined text-[20px]">
-            chevron_left
-          </span>
+                </button>
 
-        </button>
+                }
 
-        <div class="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center font-black shadow-lg">
+                <!-- Next -->
+                <button (click)="nextPage()"
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
 
-          {{ page }}
+                    <span class="material-symbols-outlined text-[18px]">
+                        chevron_right
+                    </span>
+
+                </button>
+
+            </div>
 
         </div>
-
-        <button (click)="nextPage()" [disabled]="page >= totalPages()"
-          class="w-11 h-11 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-
-          <span class="material-symbols-outlined text-[20px]">
-            chevron_right
-          </span>
-
-        </button>
-
-      </div>
-
-    </div>
 
   </div>
 
