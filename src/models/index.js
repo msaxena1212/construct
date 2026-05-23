@@ -128,6 +128,8 @@ db.company.hasMany(db.vendors, { foreignKey: "company_id", as: "vendors" });
 db.vendors.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 db.company.hasMany(db.vendors_activity, { foreignKey: "company_id", as: "vendors_activity" });
 db.vendors_activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+db.project.hasMany(db.vendors, { foreignKey: "project_id", as: "vendors" });
+db.vendors.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
 
 db.company.hasMany(db.material_master, { foreignKey: "company_id", as: "material_master" });
 db.material_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });

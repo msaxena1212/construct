@@ -22,13 +22,19 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       allowNull: false,
     },
-    current_task: {
-      type: Sequelize.STRING(255),
-      allowNull: true,
-    },
-      daily_rate: {
+    daily_rate: {
       type: Sequelize.DECIMAL(10, 2),
       defaultValue: 0,
+    },
+    labor_count: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    count: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
     },
 
     status: {
