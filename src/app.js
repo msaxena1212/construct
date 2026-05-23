@@ -33,6 +33,7 @@ const db = require("./models");
 // db.material_master.sync({ alter: true });
 // db.quotation.sync({ alter: true });
 // db.material.sync({ alter: true });
+// db.material_project_stock.sync({ alter: true });
 // db.StockRequest.sync({ alter: true });
 // db.material_history.sync({ alter: true });
 // db.equipment_master.sync({ alter: true });

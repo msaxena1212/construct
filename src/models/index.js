@@ -60,6 +60,8 @@ db.quotation = require("../modules/material/models/quotation.model.js")(sequeliz
 
 db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
 
+db.material_project_stock = require("../modules/material/models/material_project_stock.model.js")(sequelize, Sequelize);
+
 //Labor
 // db.labor = require("../modules/labor/models/labor_models.js")(sequelize, Sequelize);
 db.material_history = require("../modules/material/models/material_history.model.js")(sequelize, Sequelize);
@@ -147,6 +149,25 @@ db.material.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
 
 db.project.hasMany(db.material, { foreignKey: "project_id", as: "material" });
 db.material.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.material.hasMany(db.material_project_stock, { foreignKey: "material_id", as: "material_project_stock" });
+db.material_project_stock.belongsTo(db.material, { foreignKey: "material_id", as: "material" });
+
+db.quotation.hasMany(db.material_project_stock, { foreignKey: "quotation_id", as: "material_project_stock" });
+db.material_project_stock.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
+
+db.material_master.hasMany(db.material_project_stock, { foreignKey: "material_master_id", as: "material_project_stock" });
+db.material_project_stock.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
+
+db.company.hasMany(db.material_project_stock, { foreignKey: "company_id", as: "material_project_stock" });
+db.material_project_stock.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.vendors.hasMany(db.material_project_stock, { foreignKey: "vendor_id", as: "material_project_stock" });
+db.material_project_stock.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendors" });
+
+db.project.hasMany(db.material_project_stock, { foreignKey: "project_id", as: "material_project_stock" });
+db.material_project_stock.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
 
 db.material_master.hasMany(db.material_history, { foreignKey: "material_master_id", as: "material_history" });
 db.material_history.belongsTo(db.material_master, { foreignKey: "material_master_id", as: "material_master" });
