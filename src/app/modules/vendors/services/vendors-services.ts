@@ -16,7 +16,7 @@ interface BackendVendor {
   physical_address: string;
   pincode: string;
   budget_allocation: number;
-  services: string[] | string;
+  skill: string[] | string;
   contract_file: string | null;
   status: 'active' | 'pending' | 'inactive';
   compliance_score: number;
@@ -81,11 +81,12 @@ export interface Vendor {
   projects: string[];
   balance: string;
   budget: string;
+  budget_allocation: number;
   status: string;
   statusColor: string;
   icon: string;
   assignee: string;
-  services: string[];
+  skill: string[];
   compliance_score: number;
   contract_files: string[];
   tasks: { title: string; status: string; date: string }[];
@@ -96,7 +97,7 @@ export interface Vendor {
 const STATUS_MAP: Record<string, { color: string; label: string }> = {
   active: { color: 'bg-green-100 text-green-700', label: 'Active' },
   pending: { color: 'bg-amber-100 text-amber-700', label: 'Pending' },
-  inactive: { color: 'bg-slate-100 text-slate-500', label: 'Inactive' },
+  inactive: { color: 'bg-red-100 text-red-600', label: 'Inactive' },
 };
 
 const ICON_MAP: Record<string, { material: string; color: string }> = {
@@ -124,14 +125,11 @@ export class VendorsServices {
     this.loadAll();
   }
 
-
   private parseContractFiles(raw: string | null): string[] {
     if (!raw) return [];
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.map(p => `${environment.serverUrl}${p}`);
-      }
+      if (Array.isArray(parsed)) return parsed.map(p => `${environment.serverUrl}${p}`);
       return [`${environment.serverUrl}${parsed}`];
     } catch {
       return [`${environment.serverUrl}${raw}`];
@@ -149,6 +147,26 @@ export class VendorsServices {
       return `₹${n}`;
     };
 
+    const parseSkill = (): string[] => {
+      try {
+        if (Array.isArray(b.skill)) {
+          return b.skill.flatMap((s: any) => {
+            if (typeof s === 'string' && s.startsWith('[')) {
+              return JSON.parse(s).map((x: string) => x.replace(/['"]/g, '').trim());
+            }
+            return [s.replace(/['"]/g, '').trim()];
+          });
+        }
+        if (typeof b.skill === 'string') {
+          if (b.skill.startsWith('[')) {
+            return JSON.parse(b.skill).map((x: string) => x.replace(/['"]/g, '').trim());
+          }
+          return b.skill.split(',').map((s: string) => s.replace(/['"]/g, '').trim()).filter(Boolean);
+        }
+        return [];
+      } catch { return []; }
+    };
+
     return {
       company_id: b.company_id,
       id: b.id,
@@ -162,38 +180,12 @@ export class VendorsServices {
       projects: [],
       balance: '₹0.00',
       budget: formatBudget(b.budget_allocation),
+      budget_allocation: b.budget_allocation ?? 0,
       status: s.label,
       statusColor: s.color,
       icon: 'business',
       assignee: 'All Members',
-      services: (() => {
-        try {
-          if (Array.isArray(b.services)) {
-            return b.services.flatMap((s: any) => {
-              if (typeof s === 'string' && s.startsWith('[')) {
-                return JSON.parse(s).map((x: string) =>
-                  x.replace(/['"]/g, '').trim()
-                );
-              }
-              return s.replace(/['"]/g, '').trim();
-            });
-          }
-          if (typeof b.services === 'string') {
-            if (b.services.startsWith('[')) {
-              return JSON.parse(b.services).map((x: string) =>
-                x.replace(/['"]/g, '').trim()
-              );
-            }
-            return b.services
-              .split(',')
-              .map((s: string) => s.replace(/['"]/g, '').trim())
-              .filter(Boolean);
-          }
-          return [];
-        } catch {
-          return [];
-        }
-      })(),
+      skill: parseSkill(),
       compliance_score: b.compliance_score,
       contract_files: this.parseContractFiles(b.contract_file),
       tasks: [],
@@ -222,11 +214,7 @@ export class VendorsServices {
 
   loadVendors(): void {
     this.http.get<ApiListResponse<BackendVendor>>(this.vendorUrl).subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.vendorsSubject.next(res.data.map(v => this.mapVendor(v)));
-        }
-      },
+      next: (res) => { if (res.success) this.vendorsSubject.next(res.data.map(v => this.mapVendor(v))); },
       error: (err) => console.error('[loadVendors]', err),
     });
   }
@@ -240,9 +228,7 @@ export class VendorsServices {
 
   loadActivities(limit = 20): void {
     this.http.get<ApiListResponse<any>>(`${this.activityUrl}?limit=${limit}`).subscribe({
-      next: (res) => {
-        if (res.success) this.activitiesSubject.next(res.data.map(a => this.mapActivity(a)));
-      },
+      next: (res) => { if (res.success) this.activitiesSubject.next(res.data.map(a => this.mapActivity(a))); },
       error: (err) => console.error('[loadActivities]', err),
     });
   }
@@ -251,8 +237,7 @@ export class VendorsServices {
     return this.http.post<ApiSingleResponse<BackendVendor>>(this.vendorUrl, formData).pipe(
       tap((res) => {
         if (res.success) {
-          const current = this.vendorsSubject.value;
-          this.vendorsSubject.next([this.mapVendor(res.data), ...current]);
+          this.vendorsSubject.next([this.mapVendor(res.data), ...this.vendorsSubject.value]);
           this.loadStats();
           this.loadActivities();
         }
@@ -266,10 +251,7 @@ export class VendorsServices {
         if (res.success) {
           const list = this.vendorsSubject.value;
           const idx = list.findIndex(v => v.id === id);
-          if (idx !== -1) {
-            list[idx] = this.mapVendor(res.data);
-            this.vendorsSubject.next([...list]);
-          }
+          if (idx !== -1) { list[idx] = this.mapVendor(res.data); this.vendorsSubject.next([...list]); }
           this.loadStats();
         }
       }),
