@@ -57,7 +57,7 @@ const routes: Routes = [
       { path: 'resources/vendors', loadChildren: () => import('./vendors/vendors-module').then(m => m.VendorsModule) },
 
       { path: 'profile', loadChildren: () => import('./profile/profile-module').then(m => m.ProfileModule) },
-      { path: 'analytics/labor', loadChildren: () => import('./labor/labor-module').then(m => m.LaborModule) },
+      { path: 'analytics', loadChildren: () => import('./analytics/analytics-module').then(m => m.AnalyticsModule) },
     ],
   },
 ];

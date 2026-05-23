@@ -32,6 +32,8 @@ export class SkillMaster implements OnInit {
     skill_name: '',
     status: 'ACTIVE',
   };
+  selectedTab = 'All Materials';
+  searchQuery: any;
 
   ngOnInit(): void {
 
@@ -61,15 +63,14 @@ export class SkillMaster implements OnInit {
     });
   }
 
-  updatePagination() {
+ updatePagination() {
 
-    const start = (this.page - 1) * this.pageSize;
+  const start = (this.page - 1) * this.pageSize;
+  const end = start + this.pageSize;
 
-    const end = start + this.pageSize;
-
-    this.paginatedSkills =
-      this.skills.slice(start, end);
-  }
+  this.paginatedSkills =
+    this.filteredSkills.slice(start, end);
+}
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -99,6 +100,43 @@ export class SkillMaster implements OnInit {
     this.page * this.pageSize,
     this.skills.length
   );
+}
+
+    onSearchChange() {
+
+  this.page = 1;
+
+  this.updatePagination();
+}
+
+get filteredSkills(): any[] {
+
+  let filtered = [...this.skills];
+
+  // 🔥 Tab Filter
+   if (this.selectedTab !== 'All Materials') {
+
+    filtered = filtered.filter(
+      m =>
+        (m.category || '')
+          .trim()
+          .toLowerCase() ===
+        this.selectedTab.trim().toLowerCase()
+    );
+  }
+
+  // 🔥 Search Filter
+  if (this.searchQuery) {
+
+    const q = this.searchQuery.toLowerCase();
+
+    filtered = filtered.filter((material: any) =>
+      material.name?.toLowerCase().includes(q) ||
+      material.sku?.toLowerCase().includes(q)
+    );
+  }
+
+  return filtered;
 }
 
   openAddModal() {

@@ -1,4 +1,3 @@
-// src/app/labor/labor.ts
 
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Subject } from 'rxjs';
@@ -9,15 +8,14 @@ import {
   LaborStats,
   ShiftWorker,
   Vendor,
-} from './services/labor-services';
-
+} from '../services/labor-services';
 @Component({
-  selector    : 'app-labor',
-  standalone  : false,
-  templateUrl : './labor.html',
-  styleUrl    : './labor.scss',
+  selector: 'app-labour',
+  standalone: false,
+  templateUrl: './labour.html',
+  styleUrl: './labour.scss',
 })
-export class Labor implements OnInit, OnDestroy {
+export class Labour { 
   private svc      = inject(LaborServices);
   private destroy$ = new Subject<void>();
 
@@ -89,7 +87,7 @@ export class Labor implements OnInit, OnDestroy {
       .subscribe(e => (this.error = e));
 
     // API call karo — sab data aayega
-    this.svc.loadDashboard(this.companyId);
+    // this.svc.loadDashboard(this.companyId);
   }
 
   ngOnDestroy(): void {
