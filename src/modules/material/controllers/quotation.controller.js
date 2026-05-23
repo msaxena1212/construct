@@ -214,7 +214,7 @@ class QuotationController {
             }
 
 
-             // Prevent duplicate rejected stock update
+            // Prevent duplicate rejected stock update
             if (
                 quotation.status === "Rejected" &&
                 status === "Rejected"
@@ -224,7 +224,7 @@ class QuotationController {
                 });
             }
 
-            
+
 
 
             // Update stock only when Approved
@@ -238,8 +238,14 @@ class QuotationController {
 
                 console.log(items);
 
+
                 for (const item of items) {
 
+                    const quantity = Number(item.quantity) || 0;
+
+                    // =========================
+                    // MATERIAL
+                    // =========================
                     if (item.material_master_id) {
 
                         const existingMaterial =
@@ -252,9 +258,10 @@ class QuotationController {
                         if (existingMaterial) {
 
                             const updatedStock =
-                                Number(existingMaterial.stockAvailable) +
-                                Number(item.quantity);
+                                Number(existingMaterial.stockAvailable || 0) +
+                                quantity;
 
+                            // Update stock
                             await db.material_master.update(
                                 {
                                     stockAvailable: updatedStock
@@ -266,27 +273,26 @@ class QuotationController {
                                 }
                             );
 
-
-                            const material = await db.material.create({
+                            // Create material entry
+                            await db.material.create({
                                 name: item.name,
                                 sku: item.sku,
                                 category: item.category,
-                                stockIn: item.quantity,
+                                stockIn: quantity,
                                 vendor_name: item.vendor_name,
-                                //   project_name:item.,
-                                //   project_id:item.,
                                 cost: item.unitPrice,
-                                status: "CREATED",
+                                status: "NOT ASSIGNED",
                                 vendor_id: item.vendor_id,
                                 material_master_id: item.material_master_id,
-                                company_id: item.company_id,
+                                company_id,
                                 quotation_id: id
                             });
-
-
                         }
                     }
 
+                    // =========================
+                    // EQUIPMENT
+                    // =========================
                     if (item.equipment_master_id) {
 
                         const existingEquipment =
@@ -299,9 +305,10 @@ class QuotationController {
                         if (existingEquipment) {
 
                             const updatedStock =
-                                Number(existingEquipment.stockAvailable) +
-                                Number(item.quantity);
+                                Number(existingEquipment.stockAvailable || 0) +
+                                quantity;
 
+                            // Update stock
                             await db.equipment_master.update(
                                 {
                                     stockAvailable: updatedStock
@@ -313,28 +320,22 @@ class QuotationController {
                                 }
                             );
 
-
-                            const equipment = await db.equipment.create({
+                            // Create equipment entry
+                            await db.equipment.create({
                                 name: item.name,
                                 sku: item.sku,
                                 category: item.category,
-                                stockIn: item.quantity,
+                                stockIn: quantity,
                                 vendor_name: item.vendor_name,
-                                //   project_name:item.,
-                                //   project_id:item.,
                                 cost: item.unitPrice,
-                                status: "CREATED",
+                                status: "NOT ASSIGNED",
                                 vendor_id: item.vendor_id,
                                 equipment_master_id: item.equipment_master_id,
-                                company_id: item.company_id,
+                                company_id,
                                 quotation_id: id
                             });
-
-
                         }
                     }
-
-
                 }
             }
 

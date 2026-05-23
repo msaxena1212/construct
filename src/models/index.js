@@ -71,6 +71,7 @@ db.equipment = require("../modules/equipment/models/equipment.model.js")(sequeli
 
 db.equipment_history = require("../modules/equipment/models/equipment_history.model.js")(sequelize, Sequelize);
 
+db.category = require("../modules/category/model/category_model.js")(sequelize, Sequelize);
 
 
 // Associations
@@ -242,6 +243,10 @@ db.vendors_audit.belongsTo(db.company, { foreignKey: 'company_id', as: 'company'
 // Skill ↔ Master
 db.company.hasMany(db.skill, { foreignKey: 'company_id', as: 'skill' });
 db.skill.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+db.company.hasMany(db.category, { foreignKey: "company_id", as: "category" });
+db.category.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
 
 // PROJECT MANAGEMENT END
 // ── LABOR associations ──────────────────────────────────────
