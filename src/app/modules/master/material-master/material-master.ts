@@ -12,11 +12,12 @@ import { ToastrService } from 'ngx-toastr';
   templateUrl: './material-master.html',
   styleUrl: './material-master.scss',
 })
-export class MaterialMaster { private materialService = inject(MaterialMasterService);
+export class MaterialMaster {
+    private materialService = inject(MaterialMasterService);
   // private vendorService = inject(VendorService);
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
-    private toast = inject(ToastrService);
+  private toast = inject(ToastrService);
 
 
   team = [
@@ -44,29 +45,32 @@ export class MaterialMaster { private materialService = inject(MaterialMasterSer
   page = 1;
   pageSize = 5;
   paginatedMaterials: any[] = [];
-Math: any;
+  Math: any;
+  searchQuery: any;
 
-ngOnInit() {
-  this.materialService.loadMaterials();
+  ngOnInit() {
+    this.materialService.loadMaterials();
 
-  this.materialService.materials$.subscribe(m => {
-    this.materials = m;
-    this.page = 1; // 🔥 reset page (important)
-    this.updatePagination(); // ✅ yahi sahi jagah hai
-  });
+    this.materialService.materials$.subscribe(m => {
+      this.materials = m;
+      this.page = 1; // 🔥 reset page (important)
+      this.updatePagination(); // ✅ yahi sahi jagah hai
+    });
 
-  this.vendorService.vendors$.subscribe(v => {
-    this.vendors = v;
-  });
-}  
-
-
-  updatePagination() {
-    const start = (this.page - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    this.paginatedMaterials = this.materials.slice(start, end);
+    this.vendorService.vendors$.subscribe(v => {
+      this.vendors = v;
+    });
   }
 
+
+ updatePagination() {
+
+  const start = (this.page - 1) * this.pageSize;
+  const end = start + this.pageSize;
+
+  this.paginatedMaterials =
+    this.filteredMaterials.slice(start, end);
+}
   nextPage() {
     if (this.page < this.totalPages()) {
       this.page++;
@@ -90,23 +94,49 @@ ngOnInit() {
     return Math.ceil(this.materials.length / this.pageSize);
   }
 
-
-  get filteredMaterials() {
-    let filtered = this.materials;
-
-    // if (this.selectedTab === 'Low Stock') {
-    //   filtered = filtered.filter(m => m < 20);
-    // } else if (this.selectedTab !== 'All Materials') {
-    //   filtered = filtered.filter(m => m.category.toLowerCase() === this.selectedTab.toLowerCase());
-    // }
-
-    if (this.selectedMember !== 'All Members') {
-      // In a real app, materials would have an owner or assignee. 
-      // For this demo, we'll just simulate by filtering none or all.
-    }
-
-    return filtered;
+  get endItem(): number {
+    return Math.min(
+      this.page * this.pageSize,
+      this.filteredMaterials.length
+    );
   }
+
+  onSearchChange() {
+
+    this.page = 1;
+
+    this.updatePagination();
+  }
+
+get filteredMaterials(): any[] {
+
+  let filtered = [...this.materials];
+
+  // 🔥 Tab Filter
+   if (this.selectedTab !== 'All Materials') {
+
+    filtered = filtered.filter(
+      m =>
+        (m.category || '')
+          .trim()
+          .toLowerCase() ===
+        this.selectedTab.trim().toLowerCase()
+    );
+  }
+
+  // 🔥 Search Filter
+  if (this.searchQuery) {
+
+    const q = this.searchQuery.toLowerCase();
+
+    filtered = filtered.filter((material: any) =>
+      material.name?.toLowerCase().includes(q) ||
+      material.sku?.toLowerCase().includes(q)
+    );
+  }
+
+  return filtered;
+}
 
   getDefaultMaterial(): Material {
     return {
@@ -115,8 +145,8 @@ ngOnInit() {
       category: 'Concrete',
       cost: 0,
       status: 'ACTIVE',
-      stockAvailable:0
-      };
+      stockAvailable: 0
+    };
   }
 
   openAddModal() {

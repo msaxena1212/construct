@@ -7,10 +7,11 @@
         Skill/Services Master
       </h2>
 
-      <p class="text-sm text-slate-500 mt-1 font-medium">
-        Manage and monitor all skill/services
-      </p>
     </div>
+
+    <!-- Actions -->
+   
+
 
     <button (click)="openAddModal()"
       class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
@@ -32,8 +33,43 @@
 
   </div>
 
-  <div class="bg-white rounded-[28px] border border-slate-200 overflow-hidden shadow-sm">
 
+
+  <div class="bg-white rounded-[28px] border border-slate-200 overflow-hidden shadow-sm">
+    <div
+      class="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/50">
+
+      <div>
+        <h3 class="text-lg font-black tracking-tight text-slate-800 dark:text-white">
+          Skill  Master
+        </h3>
+
+        <p class="text-xs text-slate-500 font-medium mt-1">
+          Manage and monitor all skill stock
+        </p>
+      </div>
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
+
+        <!-- Search -->
+        <div
+          class="flex items-center gap-3 h-11 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm w-full lg:w-[320px]">
+
+          <span class="material-symbols-outlined text-slate-400 text-[20px]">
+            search
+          </span>
+
+          <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+            placeholder="Search skills..."
+            class="w-full bg-transparent outline-none text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400">
+
+        </div>
+
+      </div>
+
+
+
+    </div>
     <div class="overflow-x-auto px-4 py-4">
 
       <table class="w-full min-w-[1000px] border-separate border-spacing-y-4">
@@ -207,48 +243,49 @@
 
     </div>
 
-    <div class="flex items-center justify-between px-6 py-5 bg-white border-t border-slate-200">
+    <div
+      class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 flex flex-col md:flex-row items-center justify-between gap-4">
 
-      <p class="text-sm font-black uppercase tracking-wide text-slate-500">
+      <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
 
-        Showing
-        {{ (page - 1) * pageSize + 1 }}
-
-        to
-
-        {{
-        ((page - 1) * pageSize + paginatedSkills.length)
-        }}
-
-        of
-
-        {{ skills.length }}
-
-        Skills
+        Showing {{ (page - 1) * pageSize + 1 }}
+        to {{ endItem }}
+        of {{ skills.length }} Skills
 
       </p>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
 
-        <button (click)="prevPage()" [disabled]="page === 1"
-          class="w-11 h-11 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+        <!-- Prev -->
+        <button (click)="prevPage()"
+          class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
 
-          <span class="material-symbols-outlined text-[20px]">
+          <span class="material-symbols-outlined text-[18px]">
             chevron_left
           </span>
 
         </button>
 
-        <div class="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center font-black shadow-lg">
+        <!-- Pages -->
+        @for (p of [].constructor(totalPages()); track $index) {
 
-          {{ page }}
+        <button (click)="goToPage($index + 1)"
+          [class]="page === ($index + 1)
+                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'"
+          class="w-9 h-9 rounded-xl text-sm font-bold transition-all">
 
-        </div>
+          {{ $index + 1 }}
 
-        <button (click)="nextPage()" [disabled]="page >= totalPages()"
-          class="w-11 h-11 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+        </button>
 
-          <span class="material-symbols-outlined text-[20px]">
+        }
+
+        <!-- Next -->
+        <button (click)="nextPage()"
+          class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+
+          <span class="material-symbols-outlined text-[18px]">
             chevron_right
           </span>
 

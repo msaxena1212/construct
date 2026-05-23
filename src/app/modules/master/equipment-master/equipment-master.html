@@ -118,6 +118,24 @@
                     Manage and monitor all equipment stock
                 </p>
             </div>
+            <!-- Actions -->
+            <div class="flex items-center gap-3">
+
+                <!-- Search -->
+                <div
+                    class="flex items-center gap-3 h-11 px-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm w-full lg:w-[320px]">
+
+                    <span class="material-symbols-outlined text-slate-400 text-[20px]">
+                        search
+                    </span>
+
+                    <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+                        placeholder="Search equipment..."
+                        class="w-full bg-transparent outline-none text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400">
+
+                </div>
+
+            </div>
 
 
 
@@ -159,7 +177,7 @@
                 <!-- Body -->
                 <tbody>
 
-                    @for (item of filteredMaterials; track item.sku) {
+                    @for (item of paginatedMaterials; track item.sku) {
 
                     <tr
                         class="group relative z-0 hover:z-[99] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
@@ -342,9 +360,14 @@
 
             <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
 
-                Showing {{ (page - 1) * pageSize + 1 }}
-                to {{ Math?.min(page * pageSize, materials.length) }}
-                of {{ materials.length }} materials
+                Showing
+                {{ filteredMaterials.length ? ((page - 1) * pageSize) + 1 : 0 }}
+                -
+                to {{endItem}}
+
+                of
+
+                {{ filteredMaterials.length}} Equipment
 
             </p>
 
@@ -437,35 +460,6 @@
                 <input [(ngModel)]="newMaterial.cost" type="number" min="1" placeholder="0.00"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
-            <!-- <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Current
-                    Stock</label>
-                <input [(ngModel)]="newMaterial.stockCurrent" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Total
-                    Capacity</label>
-                <input [(ngModel)]="newMaterial.stockTotal" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Unit
-                    Cost</label>
-                <input [(ngModel)]="newMaterial.cost" type="text" placeholder="₹0.00"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
-                <select [(ngModel)]="newMaterial.vendor_id" (change)="getvendor($event)"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="" disabled selected>Select Supplier</option>
-                    @for (v of vendors; track v.id) {
-                    <option [value]="v.id">{{ v.name }}</option>
-                    }
-                    <option value="ADD_NEW" class="text-primary font-bold">+ Add New Vendor</option>
-                </select>
-            </div> -->
         </div>
 
         <div class="flex gap-3 mt-8">
@@ -523,33 +517,6 @@
                 <input [(ngModel)]="materialToEdit.cost" type="text"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
-            <!-- <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Current
-                    Stock</label>
-                <input [(ngModel)]="materialToEdit.stockCurrent" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Total
-                    Capacity</label>
-                <input [(ngModel)]="materialToEdit.stockTotal" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Unit
-                    Cost</label>
-                <input [(ngModel)]="materialToEdit.cost" type="text"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
-                <select [(ngModel)]="materialToEdit.vendor_id" (change)="getvendor($event)"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    @for (v of vendors; track v.id) {
-                    <option [value]="v.id">{{ v.name }}</option>
-                    }
-                </select>
-            </div> -->
         </div>
 
         <div class="flex gap-3 mt-8">

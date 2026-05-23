@@ -44,6 +44,7 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
   pageSize = 5;
   paginatedMaterials: any[] = [];
   Math: any;
+  searchQuery: any;
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -61,10 +62,13 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
 
 
   updatePagination() {
-    const start = (this.page - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    this.paginatedMaterials = this.materials.slice(start, end);
-  }
+
+  const start = (this.page - 1) * this.pageSize;
+  const end = start + this.pageSize;
+
+  this.paginatedMaterials =
+    this.filteredMaterials.slice(start, end);
+}
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -89,23 +93,49 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
     return Math.ceil(this.materials.length / this.pageSize);
   }
 
-
-  get filteredMaterials() {
-    let filtered = this.materials;
-
-    // if (this.selectedTab === 'Low Stock') {
-    //   filtered = filtered.filter(m => m < 20);
-    // } else if (this.selectedTab !== 'All Materials') {
-    //   filtered = filtered.filter(m => m.category.toLowerCase() === this.selectedTab.toLowerCase());
-    // }
-
-    if (this.selectedMember !== 'All Members') {
-      // In a real app, materials would have an owner or assignee. 
-      // For this demo, we'll just simulate by filtering none or all.
-    }
-
-    return filtered;
+  get endItem(): number {
+    return Math.min(
+      this.page * this.pageSize,
+      this.filteredMaterials.length
+    );
   }
+
+  onSearchChange() {
+
+    this.page = 1;
+
+    this.updatePagination();
+  }
+
+get filteredMaterials(): any[] {
+
+  let filtered = [...this.materials];
+
+  // 🔥 Tab Filter
+   if (this.selectedTab !== 'All Materials') {
+
+    filtered = filtered.filter(
+      m =>
+        (m.category || '')
+          .trim()
+          .toLowerCase() ===
+        this.selectedTab.trim().toLowerCase()
+    );
+  }
+
+  // 🔥 Search Filter
+  if (this.searchQuery) {
+
+    const q = this.searchQuery.toLowerCase();
+
+    filtered = filtered.filter((material: any) =>
+      material.name?.toLowerCase().includes(q) ||
+      material.sku?.toLowerCase().includes(q)
+    );
+  }
+
+  return filtered;
+}
 
   getDefaultMaterial(): Material {
     return {
