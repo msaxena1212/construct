@@ -106,7 +106,7 @@ const createVendor = async (req, res) => {
       officialEmail, officialPhone,
       gstNo, panCardNo,
       physicalAddress, pincode,
-      budgetAllocation, services,
+      budgetAllocation, skill, project_id
     } = req.body;
 
 
@@ -114,7 +114,7 @@ const createVendor = async (req, res) => {
       vendorLegalName, spocName, spocPhone,
       officialEmail, officialPhone,
       physicalAddress, pincode,
-      budgetAllocation, services,
+      budgetAllocation, skill,
     };
 
     const missingFields = Object.keys(alwaysRequired).filter(k => !alwaysRequired[k]);
@@ -151,10 +151,10 @@ const createVendor = async (req, res) => {
       }
     }
 
-    const servicesArray =
-      typeof services === 'string'
-        ? services.split(',').map(s => s.trim()).filter(Boolean)
-        : services;
+    const skillString =
+      Array.isArray(skill)
+        ? skill.join(', ')
+        : String(skill).trim();
 
     const budgetNum =
       parseFloat(String(budgetAllocation).replace(/[^0-9.]/g, '')) || 0;
@@ -165,9 +165,17 @@ const createVendor = async (req, res) => {
     } else if (req.file) {
       contractFiles = [`/uploads/contracts/${req.file.filename}`];
     }
+    let complianceScore = 0;
+
+    if (hasGst) complianceScore += 25;
+    if (hasPan) complianceScore += 25;
+    if (contractFiles && contractFiles.length > 0) complianceScore += 25;
+    if (budgetNum > 0) complianceScore += 15;
+    if (skillString) complianceScore += 10;
 
     const newVendor = await VendorModel.create({
       company_id,
+      project_id: project_id || null,
       name: vendorLegalName,
       spoc_name: spocName,
       spoc_phone: spocPhone,
@@ -178,10 +186,10 @@ const createVendor = async (req, res) => {
       physical_address: physicalAddress,
       pincode,
       budget_allocation: budgetNum,
-      services: servicesArray,
+      skill: skillString,
       contract_file: contractFiles ? JSON.stringify(contractFiles) : null,
       status: 'active',
-      compliance_score: 95,
+      compliance_score: complianceScore,
     });
 
     await ActivityModel.create({
@@ -224,14 +232,30 @@ const updateVendor = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Vendor not found' });
     }
 
-    if (req.body.services && typeof req.body.services === 'string') {
-      req.body.services = req.body.services
-        .split(',').map(s => s.trim()).filter(Boolean);
+    if (req.body.skill) {
+      req.body.skill = Array.isArray(req.body.skill)
+        ? req.body.skill.join(', ')
+        : String(req.body.skill).trim();
     }
 
     delete req.body.company_id;
 
     await vendor.update(req.body);
+
+    const hasGst = !!(vendor.gst_no && vendor.gst_no.trim());
+    const hasPan = !!(vendor.pan_card_no && vendor.pan_card_no.trim());
+    const hasContract = !!(vendor.contract_file);
+    const budgetNum = parseFloat(vendor.budget_allocation) || 0;
+    const hasSkill = !!(vendor.skill && vendor.skill.trim());
+
+    let complianceScore = 0;
+    if (hasGst) complianceScore += 25;
+    if (hasPan) complianceScore += 25;
+    if (hasContract) complianceScore += 25;
+    if (budgetNum > 0) complianceScore += 15;
+    if (hasSkill) complianceScore += 10;
+
+    await vendor.update({ compliance_score: complianceScore });
 
     return res.status(200).json({
       success: true,
