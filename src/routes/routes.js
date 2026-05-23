@@ -19,7 +19,7 @@ class Routes {
 
     require("../modules/equipment/routes/equipment_master.routes")(router);
     require("../modules/equipment/routes/equipment.routes")(router);
-      require("../modules/category/routes/category_routes")(router);
+    require("../modules/category/routes/category_routes")(router);
     app.use("/api/v1", router); // Use router with /api/v1 prefix
 
     const authRouter = express.Router();

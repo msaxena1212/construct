@@ -6,6 +6,10 @@ module.exports = (sequelize, Sequelize) => {
       primaryKey: true,
       autoIncrement: true,
     },
+    project_id: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+    },
     name: {
       type: Sequelize.STRING(255),
       allowNull: false,
@@ -51,10 +55,10 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       defaultValue: 0,
     },
-    services: {
-      type: Sequelize.JSON,
+    skill: {
+      type: Sequelize.TEXT,
       allowNull: false,
-      defaultValue: [],
+      allowNull: false,
     },
 
     contract_file: {
@@ -67,9 +71,9 @@ module.exports = (sequelize, Sequelize) => {
       defaultValue: "active",
     },
     compliance_score: {
-      type: Sequelize.TINYINT.UNSIGNED,
+      type: Sequelize.INTEGER,
       allowNull: false,
-      defaultValue: 95,
+      defaultValue: 0,
     },
     company_id: {
       type: Sequelize.INTEGER,
