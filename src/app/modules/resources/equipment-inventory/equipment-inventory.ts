@@ -448,6 +448,7 @@ export class EquipmentInventory {
   isSaving = false;
   showAddVendorModal = false;
   searchQuery: any;
+  showAssignProjectModal: boolean= false;
   // =========================
   // INIT
   // =========================
@@ -1243,4 +1244,176 @@ get filteredMaterials(): any[] {
     console.log(vendor, 'selected vendor');
   }
 
+  assignedProjects: any[] = [
+  {
+    project_id: null,
+    stock: null
+  }
+];
+
+projectAssignError: string = '';
+
+openAssignProjectModal(material: any) {
+
+  this.materialToEdit = material;
+
+  this.assignedProjects = [
+    {
+      project_id: null,
+      stock: null
+    }
+  ];
+
+  this.projectAssignError = '';
+
+  this.showAssignProjectModal = true;
+}
+
+addProjectRow() {
+
+  this.assignedProjects.push({
+    project_id: null,
+    stock: null
+  });
+
+}
+
+removeProjectRow(index: number) {
+
+  if (this.assignedProjects.length === 1) {
+    return;
+  }
+
+  this.assignedProjects.splice(index, 1);
+
+  this.validateAssignedStock();
+}
+
+validateAssignedStock(): boolean {
+
+  this.projectAssignError = '';
+
+  let totalAssignedStock = 0;
+
+  const selectedProjects: any[] = [];
+
+  for (const item of this.assignedProjects) {
+
+    // Empty validation
+    if (!item.project_id || item.stock === null || item.stock === '') {
+
+      this.projectAssignError =
+        'Please select project and enter stock for all rows';
+
+      return false;
+    }
+
+    // Negative validation
+    if (+item.stock <= 0) {
+
+      this.projectAssignError =
+        'Stock quantity must be greater than 0';
+
+      return false;
+    }
+
+    // Duplicate project validation
+    if (selectedProjects.includes(item.project_id)) {
+
+      this.projectAssignError =
+        'Same project cannot be selected multiple times';
+
+      return false;
+    }
+
+    selectedProjects.push(item.project_id);
+
+    totalAssignedStock += Number(item.stock);
+  }
+
+  // Total stock validation
+  if (totalAssignedStock > this.materialToEdit.stockIn) {
+
+    this.projectAssignError =
+      `Assigned stock (${totalAssignedStock}) cannot exceed available stock (${this.materialToEdit.stockIn})`;
+
+    return false;
+  }
+
+  return true;
+}
+
+getTotalAssignedStock(): number {
+
+  return this.assignedProjects.reduce(
+    (sum, item) => sum + (Number(item.stock) || 0),
+    0
+  );
+}
+
+getRemainingStock(): number {
+
+  return (
+    Number(this.materialToEdit?.stockIn || 0) -
+    this.getTotalAssignedStock()
+  );
+}
+
+  assignProjects() {
+
+    const isValid = this.validateAssignedStock();
+
+    if (!isValid) {
+      return;
+    }
+
+    // project name add karo
+    const projectsWithName = this.assignedProjects.map(item => {
+
+      const project = this.projects.find(
+        (p: any) => p.id == item.project_id
+      );
+
+      return {
+        ...item,
+        project_name: project?.name || '',
+        status: 'ASSIGNED'
+      };
+
+    });
+
+    const payload = {
+      equipment_id: this.materialToEdit.id,
+      projects: projectsWithName
+    };
+
+    console.log(payload);
+
+    this.materialService
+      .updateMaterial(this.materialToEdit.id, payload)
+      .subscribe({
+        next: () => {
+
+          this.showEditModal = false;
+          this.materialToEdit = null;
+
+          this.toast.success('Material updated successfully');
+
+          this.materialService.loadMaterials();
+
+          this.showAssignProjectModal = false;
+
+        },
+
+        error: (err) => {
+
+          console.error('Update failed', err);
+
+          this.toast.error(
+            err?.error?.message || 'Failed to update material'
+          );
+
+        }
+      });
+  }
 }

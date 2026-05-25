@@ -291,20 +291,35 @@ export class NewQuotations implements OnInit {
   // FILTER RESOURCES
   // =========================
 
+  onTypeChange() {
+
+    this.searchQuery = '';
+
+    this.loadResourcesByType();
+
+  }
+
   filterResources() {
 
-    const query = this.searchQuery.toLowerCase();
-    this.selectedMaterials.clear();
+    const query = this.searchQuery.toLowerCase().trim();
     if (this.selectedType === 'MATERIAL') {
 
-      this.loadResourcesByType()
+      this.filteredMaterialsTab = this.materials.filter((mat: any) =>
+        mat.name?.toLowerCase().includes(query) ||
+        mat.category?.toLowerCase().includes(query) ||
+        mat.sku?.toLowerCase().includes(query)
+      );
 
     } else {
-
-      this.loadResourcesByType()
-
+      // this.loadResourcesByType();
+      this.filteredMaterialsTab = this.equipments.filter((eq: any) =>
+        eq.name?.toLowerCase().includes(query) ||
+        eq.category?.toLowerCase().includes(query) ||
+        eq.sku?.toLowerCase().includes(query)
+      );
 
     }
+
   }
 
 
@@ -331,25 +346,24 @@ export class NewQuotations implements OnInit {
       this.materialService.materials$.subscribe((res: any) => {
 
         this.materials = res || [];
-
-        this.filteredMaterialsTab = this.materials;
+        this.filteredMaterialsTab = [...this.materials];
 
       });
 
     } else {
-      this.equipmentService.loadMaterials()
+
+      this.equipmentService.loadMaterials();
+
       this.equipmentService.materials$.subscribe((res: any) => {
 
         this.equipments = res || [];
-
-        this.filteredMaterialsTab = this.equipments;
+        this.filteredMaterialsTab = [...this.equipments];
 
       });
 
     }
 
   }
-
 
   get filteredMaterials() {
 
@@ -360,8 +374,8 @@ export class NewQuotations implements OnInit {
 
   toggleMaterial(sku: string) {
 
-    console.log(sku,'sku fdfgdfgffhfg');
-    
+    console.log(sku, 'sku fdfgdfgffhfg');
+
 
     if (this.selectedMaterials.has(sku)) {
 
@@ -375,59 +389,59 @@ export class NewQuotations implements OnInit {
   }
 
 
-nextStep() {
+  nextStep() {
 
-  // STEP 1
-  if (this.currentStep === 1) {
+    // STEP 1
+    if (this.currentStep === 1) {
 
-    if (this.selectedMaterials.size === 0) {
+      if (this.selectedMaterials.size === 0) {
 
-      this.toast.error('Please select at least one item');
+        this.toast.error('Please select at least one item');
 
-      return;
+        return;
+      }
+
+      this.prepareQuoteItems();
     }
 
-    this.prepareQuoteItems();
-  }
 
+    // STEP 2
+    if (this.currentStep === 2) {
 
-  // STEP 2
-  if (this.currentStep === 2) {
-
-    // Check every item vendor
-    const missingVendor = this.quoteItems.find(
-      (item: any) => !item.vendorId
-    );
-
-    if (missingVendor) {
-
-      this.toast.error(
-        `Please select vendor for ${missingVendor.name}`
+      // Check every item vendor
+      const missingVendor = this.quoteItems.find(
+        (item: any) => !item.vendorId
       );
 
-      return;
-    }
+      if (missingVendor) {
+
+        this.toast.error(
+          `Please select vendor for ${missingVendor.name}`
+        );
+
+        return;
+      }
 
 
-    // Check quantity
-    const invalidQty = this.quoteItems.find(
-      (item: any) => !item.quantity || item.quantity <= 0
-    );
-
-    if (invalidQty) {
-
-      this.toast.error(
-        `Please enter valid quantity for ${invalidQty.name}`
+      // Check quantity
+      const invalidQty = this.quoteItems.find(
+        (item: any) => !item.quantity || item.quantity <= 0
       );
 
-      return;
+      if (invalidQty) {
+
+        this.toast.error(
+          `Please enter valid quantity for ${invalidQty.name}`
+        );
+
+        return;
+      }
+
     }
 
+    this.currentStep++;
+
   }
-
-  this.currentStep++;
-
-}
 
 
   prevStep() {
@@ -633,4 +647,8 @@ nextStep() {
       }
     });
   }
+
+  removeQuoteItem(index: number) {
+  this.quoteItems.splice(index, 1);;
+}
 }

@@ -112,11 +112,11 @@ export class Materials {
   }
 
   get endItem(): number {
-  return Math.min(
-    this.page * this.pageSize,
-    this.filteredMaterials.length
-  );
-}
+    return Math.min(
+      this.page * this.pageSize,
+      this.filteredMaterials.length
+    );
+  }
 
   get filteredMaterials(): any[] {
 
@@ -160,14 +160,14 @@ export class Materials {
     this.updatePagination();
   }
 
- updatePagination() {
+  updatePagination() {
 
-  const start = (this.page - 1) * this.pageSize;
-  const end = start + this.pageSize;
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
 
-  this.paginatedMaterials =
-    this.filteredMaterials.slice(start, end);
-}
+    this.paginatedMaterials =
+      this.filteredMaterials.slice(start, end);
+  }
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -194,10 +194,10 @@ export class Materials {
 
   onSearchChange() {
 
-  this.page = 1;
+    this.page = 1;
 
-  this.updatePagination();
-}
+    this.updatePagination();
+  }
 
 
   onSupplierChange() {
@@ -567,200 +567,222 @@ export class Materials {
 
   showAssignProjectModal = false;
 
-selectedProjects: number[] = [];
+  selectedProjects: number[] = [];
 
-toggleProjectSelection(projectId: number) {
+  toggleProjectSelection(projectId: number) {
 
-  if (this.selectedProjects.includes(projectId)) {
+    if (this.selectedProjects.includes(projectId)) {
 
-    this.selectedProjects =
-      this.selectedProjects.filter(id => id !== projectId);
+      this.selectedProjects =
+        this.selectedProjects.filter(id => id !== projectId);
 
-  } else {
+    } else {
 
-    this.selectedProjects.push(projectId);
+      this.selectedProjects.push(projectId);
 
+    }
   }
-}
 
-// assignProjects() {
+  // assignProjects() {
 
-//   const payload = {
-//     material_id: this.materialToEdit.id,
-//     project_ids: this.selectedProjects
-//   };
+  //   const payload = {
+  //     material_id: this.materialToEdit.id,
+  //     project_ids: this.selectedProjects
+  //   };
 
-//   console.log(payload);
+  //   console.log(payload);
 
-//   // API CALL HERE
+  //   // API CALL HERE
 
-//   this.showAssignProjectModal = false;
-// }
+  //   this.showAssignProjectModal = false;
+  // }
 
-// openAssignProjectModal(material: any) {
+  // openAssignProjectModal(material: any) {
 
-//   this.materialToEdit = material;
+  //   this.materialToEdit = material;
 
-//   this.selectedProjects = [];
+  //   this.selectedProjects = [];
 
-//   // agar pehle se assigned projects hain
-//   if (material.project_ids?.length) {
+  //   // agar pehle se assigned projects hain
+  //   if (material.project_ids?.length) {
 
-//     this.selectedProjects = [...material.project_ids];
+  //     this.selectedProjects = [...material.project_ids];
 
-//   }
+  //   }
 
-//   this.showAssignProjectModal = true;
-// }
+  //   this.showAssignProjectModal = true;
+  // }
 
-assignedProjects: any[] = [
-  {
-    project_id: null,
-    stock: null
-  }
-];
-
-projectAssignError: string = '';
-
-openAssignProjectModal(material: any) {
-
-  this.materialToEdit = material;
-
-  this.assignedProjects = [
+  assignedProjects: any[] = [
     {
       project_id: null,
       stock: null
     }
   ];
 
-  this.projectAssignError = '';
+  projectAssignError: string = '';
 
-  this.showAssignProjectModal = true;
-}
+  openAssignProjectModal(material: any) {
 
-addProjectRow() {
+    this.materialToEdit = material;
 
-  this.assignedProjects.push({
-    project_id: null,
-    stock: null
-  });
-
-}
-
-removeProjectRow(index: number) {
-
-  if (this.assignedProjects.length === 1) {
-    return;
-  }
-
-  this.assignedProjects.splice(index, 1);
-
-  this.validateAssignedStock();
-}
-
-validateAssignedStock(): boolean {
-
-  this.projectAssignError = '';
-
-  let totalAssignedStock = 0;
-
-  const selectedProjects: any[] = [];
-
-  for (const item of this.assignedProjects) {
-
-    // Empty validation
-    if (!item.project_id || item.stock === null || item.stock === '') {
-
-      this.projectAssignError =
-        'Please select project and enter stock for all rows';
-
-      return false;
-    }
-
-    // Negative validation
-    if (+item.stock <= 0) {
-
-      this.projectAssignError =
-        'Stock quantity must be greater than 0';
-
-      return false;
-    }
-
-    // Duplicate project validation
-    if (selectedProjects.includes(item.project_id)) {
-
-      this.projectAssignError =
-        'Same project cannot be selected multiple times';
-
-      return false;
-    }
-
-    selectedProjects.push(item.project_id);
-
-    totalAssignedStock += Number(item.stock);
-  }
-
-  // Total stock validation
-  if (totalAssignedStock > this.materialToEdit.stockIn) {
-
-    this.projectAssignError =
-      `Assigned stock (${totalAssignedStock}) cannot exceed available stock (${this.materialToEdit.stockIn})`;
-
-    return false;
-  }
-
-  return true;
-}
-
-getTotalAssignedStock(): number {
-
-  return this.assignedProjects.reduce(
-    (sum, item) => sum + (Number(item.stock) || 0),
-    0
-  );
-}
-
-getRemainingStock(): number {
-
-  return (
-    Number(this.materialToEdit?.stockIn || 0) -
-    this.getTotalAssignedStock()
-  );
-}
-
-assignProjects() {
-
-  const isValid = this.validateAssignedStock();
-
-  if (!isValid) {
-    return;
-  }
-
-  const payload = {
-    material_id: this.materialToEdit.id,
-    projects: this.assignedProjects
-  };
-
-  console.log(payload);
-
-  /*
-  Example Payload
-
-  {
-    material_id: 1,
-    projects: [
+    this.assignedProjects = [
       {
-        project_id: 2,
-        stock: 50
-      },
-      {
-        project_id: 5,
-        stock: 120
+        project_id: null,
+        stock: null
       }
-    ]
-  }
-  */
+    ];
 
-  this.showAssignProjectModal = false;
-}
+    this.projectAssignError = '';
+
+    this.showAssignProjectModal = true;
+  }
+
+  addProjectRow() {
+
+    this.assignedProjects.push({
+      project_id: null,
+      stock: null
+    });
+
+  }
+
+  removeProjectRow(index: number) {
+
+    if (this.assignedProjects.length === 1) {
+      return;
+    }
+
+    this.assignedProjects.splice(index, 1);
+
+    this.validateAssignedStock();
+  }
+
+  validateAssignedStock(): boolean {
+
+    this.projectAssignError = '';
+
+    let totalAssignedStock = 0;
+
+    const selectedProjects: any[] = [];
+
+    for (const item of this.assignedProjects) {
+
+      // Empty validation
+      if (!item.project_id || item.stock === null || item.stock === '') {
+
+        this.projectAssignError =
+          'Please select project and enter stock for all rows';
+
+        return false;
+      }
+
+      // Negative validation
+      if (+item.stock <= 0) {
+
+        this.projectAssignError =
+          'Stock quantity must be greater than 0';
+
+        return false;
+      }
+
+      // Duplicate project validation
+      if (selectedProjects.includes(item.project_id)) {
+
+        this.projectAssignError =
+          'Same project cannot be selected multiple times';
+
+        return false;
+      }
+
+      selectedProjects.push(item.project_id);
+
+      totalAssignedStock += Number(item.stock);
+    }
+
+    // Total stock validation
+    if (totalAssignedStock > this.materialToEdit.stockIn) {
+
+      this.projectAssignError =
+        `Assigned stock (${totalAssignedStock}) cannot exceed available stock (${this.materialToEdit.stockIn})`;
+
+      return false;
+    }
+
+    return true;
+  }
+
+  getTotalAssignedStock(): number {
+
+    return this.assignedProjects.reduce(
+      (sum, item) => sum + (Number(item.stock) || 0),
+      0
+    );
+  }
+
+  getRemainingStock(): number {
+
+    return (
+      Number(this.materialToEdit?.stockIn || 0) -
+      this.getTotalAssignedStock()
+    );
+  }
+
+  assignProjects() {
+
+    const isValid = this.validateAssignedStock();
+
+    if (!isValid) {
+      return;
+    }
+
+    // project name add karo
+    const projectsWithName = this.assignedProjects.map(item => {
+
+      const project = this.projects.find(
+        (p: any) => p.id == item.project_id
+      );
+
+      return {
+        ...item,
+        project_name: project?.name || '',
+        status: 'ASSIGNED'
+      };
+
+    });
+
+    const payload = {
+      material_id: this.materialToEdit.id,
+      projects: projectsWithName
+    };
+
+    console.log(payload);
+
+    this.materialService
+      .updateMaterial(this.materialToEdit.id, payload)
+      .subscribe({
+        next: () => {
+
+          this.showEditModal = false;
+          this.materialToEdit = null;
+
+          this.toast.success('Material updated successfully');
+
+          this.materialService.loadMaterials();
+
+          this.showAssignProjectModal = false;
+
+        },
+
+        error: (err) => {
+
+          console.error('Update failed', err);
+
+          this.toast.error(
+            err?.error?.message || 'Failed to update material'
+          );
+
+        }
+      });
+  }
 }
