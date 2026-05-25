@@ -22,8 +22,7 @@ class equipmentController {
         category,
         stockIn,
         vendor_name,
-        project_name,
-        project_id,
+        stockUsed,
         cost,
         status,
         vendor_id,
@@ -60,8 +59,7 @@ class equipmentController {
           category,
           stockIn,
           vendor_name,
-          project_name,
-          project_id,
+          stockUsed,
           cost,
           status,
           vendor_id,
@@ -74,8 +72,7 @@ class equipmentController {
           category,
           stockIn: Number(equipment.stockIn) + Number(stockIn),
           vendor_name,
-          project_name,
-          project_id,
+          stockUsed,
           cost,
           status,
           vendor_id,
@@ -111,11 +108,10 @@ class equipmentController {
           stockIn,
           cost,
           vendor_name,
-          project_name,
           equipment_id: equipment.id,
           equipment_master_id,
           company_id,
-          project_id,
+          stockUsed,
           vendor_id,
           status: "UPDATED",
 
@@ -138,8 +134,7 @@ class equipmentController {
           category,
           stockIn,
           vendor_name,
-          project_name,
-          project_id,
+          stockUsed,
           cost,
           status,
           vendor_id,
@@ -176,11 +171,10 @@ class equipmentController {
           stockIn,
           cost,
           vendor_name,
-          project_name,
+          stockUsed,
           equipment_id: equipment.id,
           equipment_master_id,
           company_id,
-          project_id,
           vendor_id,
           status: "CREATED",
 
@@ -218,6 +212,12 @@ class equipmentController {
 
       const equipments = await db.equipment.findAll({
         where: { isDeleted: false, company_id },
+        include: [
+          {
+            model: db.equipment_project_stock,
+            as: "equipment_project_stock"
+          }
+        ],
         order: [['createdAt', 'DESC']]
       });
 
@@ -293,29 +293,102 @@ class equipmentController {
         name,
         sku,
         category,
-        stockIn,
         vendor_name,
-        project_name,
-        project_id,
         cost,
         status,
         vendor_id,
         equipment_master_id,
-      } = req.body;
+        stockUsed,
+        stockIn,
+        quotation_id
+      } = equipment;
 
-      await equipment.update({
-        name,
-        sku,
-        category,
-        // stockIn: Number(equipment.stockIn) + Number(stockIn),
-        vendor_name,
-        project_name,
-        project_id,
-        cost,
-        status,
-        vendor_id,
-        equipment_master_id
-      });
+      const { projects } = req.body;
+
+      // total assigned stock
+      const totalUsedStock = projects.reduce((sum, item) => {
+        return sum + Number(item.stock || 0);
+      }, 0);
+
+      // update equipment table stockUsed
+      await db.equipment.update(
+        {
+          stockUsed: Number(stockUsed || 0) + totalUsedStock,
+          stockRemaining: stockIn - (Number(stockUsed || 0) + totalUsedStock)
+        },
+        {
+          where: {
+            id,
+            company_id
+          }
+        }
+      );
+
+      // create entries project wise
+      const project_multiple = await Promise.all(
+        projects.map(async (project) => {
+
+          // const projectData = await db.project.findOne({
+          //   where: {
+          //     id: project.project_id
+          //   }
+          // });
+
+          return await db.equipment_project_stock.create({
+            equipment_id: id,
+            project_id: project.project_id,
+
+            name,
+            sku,
+            category,
+            vendor_name,
+
+            stockUsed: project.stock,
+
+            cost,
+            status: project.status,
+            vendor_id,
+            equipment_master_id,
+
+            project_name: project.project_name,
+            quotation_id,
+            company_id
+          });
+
+          await db.equipment_history.create({
+            name,
+            sku,
+            category,
+            stockIn,
+            stockUsed: project.stock,
+            cost,
+            vendor_name,
+            project_name: project.project_name,
+            equipment_id: equipment.id,
+            equipment_master_id,
+            company_id,
+            project_id: project.project_id,
+            vendor_id,
+            status: "UPDATED",
+
+          });
+
+        })
+      );
+
+      // await equipment.update({
+      //   name,
+      //   sku,
+      //   category,
+      //   // stockIn: Number(equipment.stockIn) + Number(stockIn),
+      //   vendor_name,
+      //   project_name,
+      //   project_id,
+      //   cost,
+      //   status,
+      //   vendor_id,
+      //   equipment_master_id
+      // });
 
       // const existingequipment = await db.equipment_master.findOne({
       //   where: {
@@ -338,22 +411,22 @@ class equipmentController {
       // );
 
       // ================= CREATE HISTORY =================
-      await db.equipment_history.create({
-        name,
-        sku,
-        category,
-        stockIn,
-        cost,
-        vendor_name,
-        project_name,
-        equipment_id: equipment.id,
-        equipment_master_id,
-        company_id,
-        project_id,
-        vendor_id,
-        status: "UPDATED",
+      // await db.equipment_history.create({
+      //   name,
+      //   sku,
+      //   category,
+      //   stockIn,
+      //   cost,
+      //   vendor_name,
+      //   project_name,
+      //   equipment_id: equipment.id,
+      //   equipment_master_id,
+      //   company_id,
+      //   project_id,
+      //   vendor_id,
+      //   status: "UPDATED",
 
-      });
+      // });
 
 
       res.status(200).json({

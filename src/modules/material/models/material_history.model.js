@@ -27,6 +27,11 @@ module.exports = (sequelize, Sequelize) => {
         defaultValue: 0,
       },
 
+      stockUsed: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+
       cost: {
         type: Sequelize.STRING,
       },

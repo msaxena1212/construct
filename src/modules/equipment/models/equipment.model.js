@@ -35,9 +35,16 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
       },
 
-      project_name: {
-        type: Sequelize.STRING,
+      stockUsed: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
       },
+
+      stockRemaining: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+
 
       status: {
         type: Sequelize.STRING,
