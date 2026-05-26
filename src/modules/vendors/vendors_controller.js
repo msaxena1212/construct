@@ -242,7 +242,7 @@ const updateVendor = async (req, res) => {
 
     const hasGst = !!(req.body.gst_no ?? vendor.gst_no);
     const hasPan = !!(req.body.pan_card_no ?? vendor.pan_card_no);
-    const hasFile = !!(vendor.contract_file); 
+    const hasFile = !!(vendor.contract_file);
     const budget = parseFloat(req.body.budget_allocation ?? vendor.budget_allocation) || 0;
     const skill = (req.body.skill ?? vendor.skill ?? '').toString().trim();
 
