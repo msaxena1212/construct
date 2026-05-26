@@ -324,37 +324,105 @@ class equipmentController {
         }
       );
 
+      // // create entries project wise
+      // const project_multiple = await Promise.all(
+      //   projects.map(async (project) => {
+
+      //     // const projectData = await db.project.findOne({
+      //     //   where: {
+      //     //     id: project.project_id
+      //     //   }
+      //     // });
+
+      //     return await db.equipment_project_stock.create({
+      //       equipment_id: id,
+      //       project_id: project.project_id,
+      //       name,
+      //       sku,
+      //       category,
+      //       vendor_name,
+      //       stockUsed: project.stock,
+      //       cost,
+      //       status: project.status,
+      //       vendor_id,
+      //       equipment_master_id,
+      //       project_name: project.project_name,
+      //       quotation_id,
+      //       company_id
+      //     });
+
+      //     await db.equipment_history.create({
+      //       name,
+      //       sku,
+      //       category,
+      //       stockIn,
+      //       stockUsed: project.stock,
+      //       cost,
+      //       vendor_name,
+      //       project_name: project.project_name,
+      //       equipment_id: equipment.id,
+      //       equipment_master_id,
+      //       company_id,
+      //       project_id: project.project_id,
+      //       vendor_id,
+      //       status: "UPDATED",
+
+      //     });
+
+      //   })
+      // );
+
       // create entries project wise
       const project_multiple = await Promise.all(
         projects.map(async (project) => {
 
-          // const projectData = await db.project.findOne({
-          //   where: {
-          //     id: project.project_id
-          //   }
-          // });
-
-          return await db.equipment_project_stock.create({
-            equipment_id: id,
-            project_id: project.project_id,
-
-            name,
-            sku,
-            category,
-            vendor_name,
-
-            stockUsed: project.stock,
-
-            cost,
-            status: project.status,
-            vendor_id,
-            equipment_master_id,
-
-            project_name: project.project_name,
-            quotation_id,
-            company_id
+          // Check existing record by equipment_id + project_id
+          const existingProjectStock = await db.equipment_project_stock.findOne({
+            where: {
+              equipment_id: id,
+              project_id: project.project_id
+            }
           });
 
+          let projectStockData;
+
+          if (existingProjectStock) {
+
+            // Add previous stock + new stock
+            const updatedStock =
+              Number(existingProjectStock.stockUsed || 0) +
+              Number(project.stock || 0);
+
+            // Update existing record
+            await existingProjectStock.update({
+              stockUsed: updatedStock,
+
+            });
+
+            projectStockData = existingProjectStock;
+
+          } else {
+
+            // Create new record
+            projectStockData = await db.equipment_project_stock.create({
+              equipment_id: id,
+              project_id: project.project_id,
+              name,
+              sku,
+              category,
+              vendor_name,
+              stockUsed: project.stock,
+              cost,
+              status: project.status,
+              vendor_id,
+              equipment_master_id,
+              project_name: project.project_name,
+              quotation_id,
+              company_id
+            });
+          }
+
+          // Create equipment history
           await db.equipment_history.create({
             name,
             sku,
@@ -370,9 +438,9 @@ class equipmentController {
             project_id: project.project_id,
             vendor_id,
             status: "UPDATED",
-
           });
 
+          return projectStockData;
         })
       );
 
@@ -539,7 +607,178 @@ class equipmentController {
     }
   };
 
+  /**
+   * EQUIPMENT STOCK TRANSFER API
+   */
+  async equipment_stock_transfer(req, res) {
+    try {
 
+      const { equipment_id } = req.params;
+
+      const { note, transfers } = req.body;
+
+      const company_id = req.user.company_id;
+
+      // Check equipment exists
+      const equipment = await db.equipment.findOne({
+        where: {
+          id: equipment_id,
+          isDeleted: false,
+          company_id
+        }
+      });
+
+      if (!equipment) {
+        return res.status(404).json({
+          message: "Equipment not found."
+        });
+      }
+
+      const {
+        name,
+        sku,
+        category,
+        vendor_name,
+        cost,
+        status,
+        vendor_id,
+        equipment_master_id,
+        quotation_id
+      } = equipment;
+
+      // Validate transfers
+      if (!transfers || !Array.isArray(transfers) || transfers.length === 0) {
+        return res.status(400).json({
+          message: "Transfers data is required"
+        });
+      }
+
+      for (const item of transfers) {
+
+        const {
+          from_project_id,
+          to_project_id,
+          quantity
+        } = item;
+
+        // Source stock
+        const fromStock = await db.equipment_project_stock.findOne({
+          where: {
+            equipment_id,
+            project_id: from_project_id,
+            company_id
+          }
+        });
+
+        if (!fromStock) {
+          return res.status(404).json({
+            message: `Source project stock not found`
+          });
+        }
+
+        // Check stock
+        if (Number(fromStock.stockUsed) < Number(quantity)) {
+          return res.status(400).json({
+            message: `Insufficient stock in source project`
+          });
+        }
+
+        // Deduct stock from source
+        const updatedFromStock =
+          Number(fromStock.stockUsed) - Number(quantity);
+
+        await fromStock.update({
+          stockUsed: updatedFromStock
+        });
+
+        // Destination project data
+        const projectData = await db.project.findOne({
+          where: {
+            id: to_project_id,
+            company_id
+          }
+        });
+
+        if (!projectData) {
+          return res.status(404).json({
+            message: "Destination project not found"
+          });
+        }
+
+        // Find or create destination stock
+        const [toStock, created] =
+          await db.equipment_project_stock.findOrCreate({
+
+            where: {
+              equipment_id,
+              project_id: to_project_id,
+              company_id
+            },
+
+            defaults: {
+              equipment_id,
+              project_id: to_project_id,
+              name,
+              sku,
+              category,
+              vendor_name,
+              stockUsed: quantity,
+              cost,
+              status: "ASSIGNED",
+              vendor_id,
+              equipment_master_id,
+              project_name: projectData.name,
+              quotation_id,
+              company_id
+            }
+
+          });
+
+        // If already exists then update stock
+        if (!created) {
+
+          const updatedToStock =
+            Number(toStock.stockUsed) + Number(quantity);
+
+          await toStock.update({
+            stockUsed: updatedToStock
+          });
+        }
+
+        // Create history
+        await db.equipment_history.create({
+          name,
+          sku,
+          category,
+          stockUsed: quantity,
+          cost,
+          vendor_name,
+          equipment_id,
+          equipment_master_id,
+          company_id,
+          project_id: to_project_id,
+          vendor_id,
+          project_name: projectData.name,
+          status: "TRANSFER",
+          note
+        });
+
+      }
+
+      return res.status(200).json({
+        message: "Equipment stock transferred successfully"
+      });
+
+    } catch (error) {
+
+      console.log("[EQUIPMENT_STOCK_TRANSFER_ERROR]", error);
+
+      return res.status(500).json({
+        message: "Internal server error",
+        error: error.message
+      });
+    }
+  }
 
 }
 
