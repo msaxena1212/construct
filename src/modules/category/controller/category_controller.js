@@ -249,6 +249,87 @@ class CategoryController {
     }
   }
 
+
+    /**
+   * Update Category
+   */
+  async updateCategorybyid(req, res) {
+    try {
+
+      const { id } = req.params;
+
+      const {
+        category_name,
+        category_type,
+        status
+      } = req.body;
+
+      const company_id = req.user.company_id;
+
+      if (!company_id) {
+        return res.status(401).json({
+          message: "Unauthorized. Company context missing."
+        });
+      }
+
+      const category = await db.category.findOne({
+        where: {
+          id,
+          isDeleted: false,
+          company_id
+        }
+      });
+
+      if (!category) {
+        return res.status(404).json({
+          message: "Category not found."
+        });
+      }
+
+      // Duplicate Check
+      if (category_name) {
+
+        const existingCategory = await db.category.findOne({
+          where: {
+            category_name,
+            company_id,
+            isDeleted: false
+          }
+        });
+
+        if (
+          existingCategory &&
+          existingCategory.id !== Number(id)
+        ) {
+          return res.status(409).json({
+            message: "Category already exists."
+          });
+        }
+      }
+
+      await category.update({
+        category_name,
+        category_type,
+        status
+      });
+
+      return res.status(200).json({
+        message: "Category updated successfully.",
+        data: category
+      });
+
+    } catch (error) {
+
+      console.error("[UPDATE_CATEGORY_ERROR]", error);
+
+      return res.status(500).json({
+        message: "Error updating category.",
+        error: error.message
+      });
+    }
+  }
+
+
   /**
    * Delete Category (Soft Delete)
    */

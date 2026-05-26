@@ -14,6 +14,9 @@ module.exports = (router) => {
     // Update category
     router.put("/updateCategory/:id", categoryCtrl.updateCategory);
 
+    // Update category ny id
+    router.put("/updateCategorybyid/:id", categoryCtrl.updateCategorybyid);
+
     // Delete category (Soft Delete)
     router.delete("/deleteCategory/:id", categoryCtrl.deleteCategory);
 

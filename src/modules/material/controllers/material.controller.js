@@ -19,9 +19,8 @@ class MaterialController {
         sku,
         category,
         stockIn,
+        stockUsed,
         vendor_name,
-        project_name,
-        project_id,
         cost,
         status,
         vendor_id,
@@ -48,7 +47,7 @@ class MaterialController {
 
 
       const material = await db.material.findOne({
-        where: { isDeleted: false, company_id, project_id, material_master_id }
+        where: { isDeleted: false, company_id, material_master_id }
       });
 
       if (material) {
@@ -58,8 +57,7 @@ class MaterialController {
           category,
           stockIn,
           vendor_name,
-          project_name,
-          project_id,
+          stockUsed,
           cost,
           status,
           vendor_id,
@@ -72,8 +70,7 @@ class MaterialController {
           category,
           stockIn: Number(material.stockIn) + Number(stockIn),
           vendor_name,
-          project_name,
-          project_id,
+          stockUsed,
           cost,
           status,
           vendor_id,
@@ -109,11 +106,10 @@ class MaterialController {
           stockIn,
           cost,
           vendor_name,
-          project_name,
           material_id: material.id,
           material_master_id,
           company_id,
-          project_id,
+          stockUsed,
           vendor_id,
           status: "UPDATED",
 
@@ -136,8 +132,7 @@ class MaterialController {
           category,
           stockIn,
           vendor_name,
-          project_name,
-          project_id,
+          stockUsed,
           cost,
           status,
           vendor_id,
@@ -174,11 +169,10 @@ class MaterialController {
           stockIn,
           cost,
           vendor_name,
-          project_name,
+          stockUsed,
           material_id: material.id,
           material_master_id,
           company_id,
-          project_id,
           vendor_id,
           status: "CREATED",
 
@@ -210,29 +204,51 @@ class MaterialController {
     try {
 
       const company_id = req.user.company_id;
+
       if (!company_id) {
-        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+        return res.status(401).json({
+          message: "Unauthorized. Company context missing."
+        });
       }
 
       const materials = await db.material.findAll({
-        where: { isDeleted: false, company_id },
+        where: {
+          isDeleted: false,
+          company_id
+        },
+
+        include: [
+          {
+            model: db.material_project_stock,
+            as: "material_project_stock"
+          }
+        ],
+
         order: [['createdAt', 'DESC']]
       });
 
-
       if (materials.length > 0) {
-        return res
-          .status(200)
-          .send({ code: 200, message: "Success", data: materials });
+        return res.status(200).send({
+          code: 200,
+          message: "Success",
+          data: materials
+        });
       } else {
-        return res.status(404).send({ code: 404, message: "No data found" });
+        return res.status(404).send({
+          code: 404,
+          message: "No data found"
+        });
       }
+
     } catch (error) {
-      return res
-        .status(500)
-        .send({ code: 500, message: error.message || "Server Error" });
+
+      return res.status(500).send({
+        code: 500,
+        message: error.message || "Server Error"
+      });
+
     }
-  };
+  }
 
   /**
    * Get Material By ID
@@ -274,46 +290,181 @@ class MaterialController {
       const { id } = req.params;
 
       const company_id = req.user.company_id;
+
       if (!company_id) {
-        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+        return res.status(401).json({
+          message: "Unauthorized. Company context missing."
+        });
       }
 
-
       const material = await db.material.findOne({
-        where: { id, isDeleted: false, company_id }
+        where: {
+          id,
+          isDeleted: false,
+          company_id
+        }
       });
 
       if (!material) {
-        return res.status(404).json({ message: "Material not found." });
+        return res.status(404).json({
+          message: "Material not found."
+        });
       }
 
       const {
         name,
         sku,
         category,
-        stockIn,
         vendor_name,
-        project_name,
-        project_id,
         cost,
         status,
         vendor_id,
         material_master_id,
-      } = req.body;
+        stockUsed,
+        stockIn,
+        quotation_id
+      } = material;
 
-      await material.update({
-        name,
-        sku,
-        category,
-        // stockIn: Number(material.stockIn) + Number(stockIn),
-        vendor_name,
-        project_name,
-        project_id,
-        cost,
-        status,
-        vendor_id,
-        material_master_id
-      });
+      const { projects } = req.body;
+
+      // total assigned stock
+      const totalUsedStock = projects.reduce((sum, item) => {
+        return sum + Number(item.stock || 0);
+      }, 0);
+
+      // update material table stockUsed
+      await db.material.update(
+        {
+          stockUsed: Number(stockUsed || 0) + totalUsedStock,
+          stockRemaining: stockIn - (Number(stockUsed || 0) + totalUsedStock)
+        },
+        {
+          where: {
+            id,
+            company_id
+          }
+        }
+      );
+
+      // // create entries project wise
+      // const project_multiple = await Promise.all(
+      //   projects.map(async (project) => {
+
+      //     // const projectData = await db.project.findOne({
+      //     //   where: {
+      //     //     id: project.project_id
+      //     //   }
+      //     // });
+
+      //     return await db.material_project_stock.create({
+      //       material_id: id,
+      //       project_id: project.project_id,
+      //       name,
+      //       sku,
+      //       category,
+      //       vendor_name,
+      //       stockUsed: project.stock,
+      //       cost,
+      //       status: project.status,
+      //       vendor_id,
+      //       material_master_id,
+      //       project_name: project.project_name,
+      //       quotation_id,
+      //       company_id
+      //     });
+
+      //     await db.material_history.create({
+      //       name,
+      //       sku,
+      //       category,
+      //       stockIn,
+      //       stockUsed: project.stock,
+      //       cost,
+      //       vendor_name,
+      //       project_name: project.project_name,
+      //       material_id: material.id,
+      //       material_master_id,
+      //       company_id,
+      //       project_id: project.project_id,
+      //       vendor_id,
+      //       status: "UPDATED",
+
+      //     });
+
+
+      //   })
+      // );
+
+      const project_multiple = await Promise.all(
+        projects.map(async (project) => {
+
+          // Check existing record by material_id + project_id
+          const existingProjectStock = await db.material_project_stock.findOne({
+            where: {
+              material_id: id,
+              project_id: project.project_id
+            }
+          });
+
+          let projectStockData;
+
+          if (existingProjectStock) {
+
+            // Add old stock + new stock
+            const updatedStock =
+              Number(existingProjectStock.stockUsed || 0) +
+              Number(project.stock || 0);
+
+            // Update existing record
+            await existingProjectStock.update({
+              stockUsed: updatedStock
+            });
+
+            projectStockData = existingProjectStock;
+
+          } else {
+
+            // Create new record
+            projectStockData = await db.material_project_stock.create({
+              material_id: id,
+              project_id: project.project_id,
+              name,
+              sku,
+              category,
+              vendor_name,
+              stockUsed: project.stock,
+              cost,
+              status: project.status,
+              vendor_id,
+              material_master_id,
+              project_name: project.project_name,
+              quotation_id,
+              company_id
+            });
+          }
+
+          // Material history create
+          await db.material_history.create({
+            name,
+            sku,
+            category,
+            stockIn,
+            stockUsed: project.stock,
+            cost,
+            vendor_name,
+            project_name: project.project_name,
+            material_id: material.id,
+            material_master_id,
+            company_id,
+            project_id: project.project_id,
+            vendor_id,
+            status: "UPDATED",
+          });
+
+          return projectStockData;
+        })
+      );
+
 
       // const existingMaterial = await db.material_master.findOne({
       //   where: {
@@ -336,22 +487,21 @@ class MaterialController {
       // );
 
       // ================= CREATE HISTORY =================
-      await db.material_history.create({
-        name,
-        sku,
-        category,
-        stockIn,
-        cost,
-        vendor_name,
-        project_name,
-        material_id: material.id,
-        material_master_id,
-        company_id,
-        project_id,
-        vendor_id,
-        status: "UPDATED",
+      // await db.material_history.create({
+      //   name,
+      //   sku,
+      //   category,
+      //   stockIn,
+      //   cost,
+      //   vendor_name,
+      //   material_id: material.id,
+      //   material_master_id,
+      //   company_id,
+      //   stockUsed,
+      //   vendor_id,
+      //   status: "UPDATED",
 
-      });
+      // });
 
 
       res.status(200).json({
@@ -413,7 +563,7 @@ class MaterialController {
       }
 
 
-      const material = await db.material.findOne({
+      const material = await db.material_project_stock.findOne({
         where: { project_id: id, isDeleted: false, company_id }
       });
 
@@ -431,8 +581,178 @@ class MaterialController {
       });
     }
   }
+/**
+ * MATERIAL STOCK TRANSFER API
+ */
+async material_stock_transfer(req, res) {
+  try {
 
+    const { material_id } = req.params;
 
+    const { note, transfers } = req.body;
+
+    const company_id = req.user.company_id;
+
+    // Check material exists
+    const material = await db.material.findOne({
+      where: {
+        id: material_id,
+        isDeleted: false,
+        company_id
+      }
+    });
+
+    if (!material) {
+      return res.status(404).json({
+        message: "Material not found."
+      });
+    }
+
+    const {
+      name,
+      sku,
+      category,
+      vendor_name,
+      cost,
+      status,
+      vendor_id,
+      material_master_id,
+      quotation_id
+    } = material;
+
+    // Validate transfers
+    if (!transfers || !Array.isArray(transfers) || transfers.length === 0) {
+      return res.status(400).json({
+        message: "Transfers data is required"
+      });
+    }
+
+    for (const item of transfers) {
+
+      const {
+        from_project_id,
+        to_project_id,
+        quantity
+      } = item;
+
+      // Source stock
+      const fromStock = await db.material_project_stock.findOne({
+        where: {
+          material_id,
+          project_id: from_project_id,
+          company_id
+        }
+      });
+
+      if (!fromStock) {
+        return res.status(404).json({
+          message: `Source project stock not found`
+        });
+      }
+
+      // Check stock
+      if (Number(fromStock.stockUsed) < Number(quantity)) {
+        return res.status(400).json({
+          message: `Insufficient stock in source project`
+        });
+      }
+
+      // Deduct stock from source
+      const updatedFromStock =
+        Number(fromStock.stockUsed) - Number(quantity);
+
+      await fromStock.update({
+        stockUsed: updatedFromStock
+      });
+
+      // Destination project data
+      const projectData = await db.project.findOne({
+        where: {
+          id: to_project_id,
+          company_id
+        }
+      });
+
+      if (!projectData) {
+        return res.status(404).json({
+          message: "Destination project not found"
+        });
+      }
+
+      // Find or create destination stock
+      const [toStock, created] =
+        await db.material_project_stock.findOrCreate({
+
+          where: {
+            material_id,
+            project_id: to_project_id,
+            company_id
+          },
+
+          defaults: {
+            material_id,
+            project_id: to_project_id,
+            name,
+            sku,
+            category,
+            vendor_name,
+            stockUsed: quantity,
+            cost,
+            status:"ASSIGNED",
+            vendor_id,
+            material_master_id,
+            project_name: projectData.name,
+            quotation_id,
+            company_id
+          }
+
+        });
+
+      // If already exists then update stock
+      if (!created) {
+
+        const updatedToStock =
+          Number(toStock.stockUsed) + Number(quantity);
+
+        await toStock.update({
+          stockUsed: updatedToStock
+        });
+      }
+
+      // Create history
+      await db.material_history.create({
+        name,
+        sku,
+        category,
+        stockUsed: quantity,
+        cost,
+        vendor_name,
+        material_id,
+        material_master_id,
+        company_id,
+        project_id: to_project_id,
+        vendor_id,
+        project_name: projectData.project_name,
+        status: "TRANSFER",
+        note
+      });
+
+    }
+
+    return res.status(200).json({
+      message: "Stock transferred successfully"
+    });
+
+  } catch (error) {
+
+    console.log("[MATERIAL_STOCK_TRANSFER_ERROR]", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+}
 
 }
 
