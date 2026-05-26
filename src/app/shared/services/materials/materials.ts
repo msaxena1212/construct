@@ -29,6 +29,7 @@ export class MaterialService {
   private apiUrlCreateMaterial = `${this.baseUrl}/createMaterial`;
   private apiUrlUpdateMaterial = `${this.baseUrl}/updateMaterial`;
   private apiUrlDeleteMaterial = `${this.baseUrl}/deleteMaterial`;
+  private apiUrlMaterialStockTransfer = `${this.baseUrl}/material_stock_transfer`;
 
   private materialsSubject = new BehaviorSubject<Material[]>([]);
   materials$ = this.materialsSubject.asObservable();
@@ -76,6 +77,9 @@ export class MaterialService {
   // UPDATE
   updateMaterial(id: number, data: any) {
     return this.http.put<any>(`${this.apiUrlUpdateMaterial}/${id}`, data);
+  }
+  material_stock_transfer(id: number, data: any) {
+    return this.http.put<any>(`${this.apiUrlMaterialStockTransfer}/${id}`, data);
   }
 
   // DELETE

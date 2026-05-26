@@ -723,7 +723,7 @@ export class Materials {
   getRemainingStock(): number {
 
     return (
-      Number(this.materialToEdit?.stockIn || 0) -
+      Number(this.materialToEdit?.stockRemaining || 0) -
       this.getTotalAssignedStock()
     );
   }
@@ -770,6 +770,12 @@ export class Materials {
 
           this.materialService.loadMaterials();
 
+          this.materialService.materials$.subscribe(m => {
+            this.materials = m;
+            this.page = 1; // 🔥 reset page (important)
+            this.updatePagination(); // ✅ yahi sahi jagah hai
+          });
+
           this.showAssignProjectModal = false;
 
         },
@@ -785,4 +791,190 @@ export class Materials {
         }
       });
   }
+
+  selectedProjectStock: any = null;
+  showProjectStockPopup = false;
+
+  openProjectStockPopup(item: any) {
+
+    this.selectedProjectStock = item;
+
+    this.showProjectStockPopup = true;
+
+  }
+
+  showStockTransferModal = false;
+
+  stockTransferData: any = {
+    material_id: '',
+    stockIn: 0,
+    transfer_note: '',
+    transfers: []
+  };
+
+  selectedMaterial: any = null;
+
+  getProjectStock(projectId: any): number {
+    if (!projectId || !this.selectedMaterial?.material_project_stock) {
+      return 0;
+    }
+
+    const stock = this.selectedMaterial.material_project_stock.find(
+      (x: any) => x.project_id
+        == projectId
+    );
+
+    return stock?.stockUsed || 0;
+  }
+
+  openStockTransferModal(material: any) {
+
+    this.selectedMaterial = material;
+    console.log(material, 'material for stock transfer');
+
+
+    this.stockTransferData = {
+
+      material_id: material.id,
+
+      stockIn: material.stockIn,
+
+      transfer_note: '',
+
+      transfers: [
+        {
+          from_project_id: material.project_id || '',
+          to_project_id: '',
+          quantity: 0
+        }
+      ]
+    };
+
+    this.showStockTransferModal = true;
+  }
+
+  addTransferRow() {
+
+    this.stockTransferData.transfers.push({
+      from_project_id: '',
+      to_project_id: '',
+      quantity: 0
+    });
+
+  }
+
+
+
+  removeTransferRow(index: number) {
+
+    this.stockTransferData.transfers.splice(index, 1);
+
+  }
+
+
+
+  getTotalTransferQty(): number {
+
+    return this.stockTransferData.transfers.reduce(
+      (sum: number, item: any) =>
+        sum + Number(item.quantity || 0),
+      0
+    );
+
+  }
+
+
+
+  transferStock() {
+
+    if (!this.stockTransferData.transfers.length) {
+      this.toast.error('Add at least one transfer');
+      return;
+    }
+
+    for (const item of this.stockTransferData.transfers) {
+
+      if (!item.from_project_id) {
+        this.toast.error('Select From Project');
+        return;
+      }
+
+      if (!item.to_project_id) {
+        this.toast.error('Select To Project');
+        return;
+      }
+
+      if (
+        item.from_project_id ===
+        item.to_project_id
+      ) {
+        this.toast.error('From & To project cannot be same');
+        return;
+      }
+
+      if (!item.quantity || item.quantity <= 0) {
+        this.toast.error('Enter valid quantity');
+        return;
+      }
+
+    }
+
+    const totalQty = this.getTotalTransferQty();
+
+    if (totalQty > this.stockTransferData.stockIn) {
+      this.toast.error('Total transfer quantity exceeds available stock');
+      return;
+    }
+
+    const payload = {
+      note: this.stockTransferData.transfer_note,
+
+      transfers: this.stockTransferData.transfers.map((t: any) => ({
+        from_project_id: t.from_project_id,
+        to_project_id: t.to_project_id,
+        quantity: t.quantity
+      }))
+    };
+
+    this.materialService
+      .material_stock_transfer(
+
+        this.stockTransferData.material_id,
+
+        payload
+
+      )
+      .subscribe({
+
+        next: () => {
+
+          this.toast.success(
+
+            'Material transferred successfully'
+
+          );
+
+          this.materialService.loadMaterials();
+          this.showStockTransferModal = false;
+
+        },
+
+        error: (err) => {
+
+          console.error('Update failed', err);
+
+          this.toast.error(
+
+            err?.error?.message ||
+
+            'Failed to update material'
+
+          );
+
+        }
+
+      });
+  }
 }
+
+
