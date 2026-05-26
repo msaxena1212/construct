@@ -24,4 +24,6 @@ module.exports = (router) => {
   // Get equipment_history all
   router.get("/getAllequipments_history", equipmentCtrl.getAllequipments_history);
 
+  router.put("/equipment_stock_transfer/:equipment_id", equipmentCtrl.equipment_stock_transfer);
+
 };

@@ -20,4 +20,7 @@ module.exports = (router) => {
   // Get material by project ID
   router.get("/getMaterialByprojectId/:id", materialCtrl.getMaterialByprojectId);
 
+
+  router.put("/material_stock_transfer/:material_id", materialCtrl. material_stock_transfer);
+
 };
