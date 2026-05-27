@@ -112,43 +112,36 @@ export class Vendors implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
-      this.projectId = params.get('projectId') || '';
       this.viewingVendorId = params.get('id');
-
-      if (this.projectId) {
-        this.projectService.getProjectTasks(this.projectId).subscribe({
-          next: (res: any) => {
-            const tasks = res?.data || [];
-            this.allTasks = this.viewingVendorId
-              ? tasks.filter((t: any) =>
-                String(t.vendor_id) === String(this.viewingVendorId) ||
-                String(t.vendorId) === String(this.viewingVendorId))
-              : tasks;
-          },
-          error: (err) => console.error('Task load failed', err),
-        });
-      }
-
       this.syncSelectedVendor();
     });
-
     this.getSkill();
-
-    this.vendorService.vendors$.subscribe(v => {
-      this.vendors = v;
-      this.syncSelectedVendor();
-    });
+    this.vendorService.vendors$.subscribe(v => { this.vendors = v; this.syncSelectedVendor(); });
     this.vendorService.stats$.subscribe(s => (this.stats = s));
     this.vendorService.activities$.subscribe(a => (this.activities = a));
-
     this.laborService.workers$.subscribe(w => (this.laborWorkers = w));
     this.laborService.stats$.subscribe(s => (this.laborStats = s));
     this.laborService.loading$.subscribe(l => (this.laborLoading = l));
-
     this.invoiceService.invoices$.subscribe(inv => (this.invoices = inv));
     this.auditService.audits$.subscribe(audits => (this.vendorAudits = audits));
   }
 
+  private loadVendorSubData(vendorId: string): void {
+    this.invoiceService.loadInvoices(vendorId);
+    this.auditService.loadAudits(vendorId);
+
+    const projectId = this.selectedVendor?.project_id;
+    if (projectId) {
+      this.projectService.getProjectTasks(projectId).subscribe({
+        next: (res: any) => {
+          this.allTasks = res?.data || [];
+        },
+        error: (err) => console.error('Task load failed', err),
+      });
+    } else {
+      this.allTasks = [];
+    }
+  }
   getSkill(): void {
     this.skillMasterService.loadSkills().subscribe({
       next: (res) => {
@@ -177,11 +170,6 @@ export class Vendors implements OnInit {
     }
   }
 
-  private loadVendorSubData(vendorId: string): void {
-    this.invoiceService.loadInvoices(vendorId);
-    this.auditService.loadAudits(vendorId);
-  }
-
   get filteredVendors(): Vendor[] {
     if (this.selectedMember === 'All Members') return this.vendors;
     return this.vendors.filter(v => v.assignee === this.selectedMember);
@@ -190,16 +178,11 @@ export class Vendors implements OnInit {
   openVendorDetail(vendor: Vendor): void {
     this.router.navigate(['/master/resources/vendors', vendor.id]);
   }
-
   closeDetail(): void {
     this.laborService.clearWorkers();
     this.invoiceService.clearInvoices();
     this.auditService.clearAudits();
-    this.router.navigate(
-      this.projectId
-        ? ['/master/resources/vendors', this.projectId]
-        : ['/master/resources/vendors'],
-    );
+    this.router.navigate(['/master/resources/vendors']);
   }
 
   getFileName(filePath: string): string {

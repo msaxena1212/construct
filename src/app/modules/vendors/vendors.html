@@ -211,9 +211,9 @@
               </div>
               <div class="flex-1">
                 <p class="font-bold text-on-surface">{{ task.title }}</p>
-                <p class="text-xs text-outline">{{ task.date }}</p>
+                <p class="text-xs text-outline">{{ task.due_date | date:'dd MMM yyyy' }}</p>
               </div>
-              <select [value]="task.statusRaw" (change)="updateTaskStatus(task, $any($event.target).value)"
+              <select [value]="task.status" (change)="updateTaskStatus(task, $any($event.target).value)"
                 class="text-[10px] font-black bg-surface-container-low border-none rounded-lg px-2 py-1 outline-none cursor-pointer appearance-none"
                 (click)="$event.stopPropagation()">
                 <option value="pending">Pending</option>
@@ -1620,7 +1620,8 @@
     </div>
 
     <div class="px-5 pb-4 pt-2 flex justify-center">
-      <button class="w-[110px] h-[34px] rounded-lg bg-slate-200 dark:bg-slate-700 text-[11px] font-bold uppercase">
+      <button (click)="showVendorDetailModal = false"
+        class="w-[110px] h-[34px] rounded-lg bg-slate-200 dark:bg-slate-700 text-[11px] font-bold uppercase">
         Close
       </button>
     </div>
