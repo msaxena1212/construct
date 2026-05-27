@@ -69,7 +69,7 @@
             <div class="flex items-baseline gap-2">
 
                 <span class="text-3xl font-black text-secondary">
-                    {{ materials.filter(item => item.status === 'ASSIGNED').length }}
+                    {{ noOfProjectsAssigned }}
                 </span>
 
                 <span class="material-symbols-outlined text-secondary-container"
@@ -111,7 +111,7 @@
             <div class="flex items-baseline gap-2">
 
                 <span class="text-3xl font-black">
-                    {{ materials.filter(item => item.status === 'NOT ASSIGNED').length }}
+                    {{ noOfProjectsNotAssigned }}
                 </span>
 
                 <span class="material-symbols-outlined text-outline">
@@ -174,7 +174,8 @@
                             search
                         </span>
 
-                        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Search materials..."
+                        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+                            placeholder="Search materials..."
                             class="w-full bg-transparent outline-none text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400">
 
                     </div>
@@ -204,6 +205,9 @@
                             <th class="px-6 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
                                 Stock
                             </th>
+                            <th class="px-6 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                Assigned Projects
+                            </th>
 
                             <th class="px-6 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
                                 Cost
@@ -214,7 +218,7 @@
                             </th>
 
                             <th class="px-6 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-                                Status
+                                Action
                             </th>
 
                         </tr>
@@ -226,7 +230,7 @@
 
                         @for (item of paginatedMaterials; track item.id) {
 
-                        <tr 
+                        <tr
                             class="group relative z-0 hover:z-[9999] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
 
                             <!-- Material -->
@@ -298,27 +302,99 @@
 
                                 <div class="w-[210px] flex flex-col gap-3">
 
-                                    <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3 text-sm font-black">
 
-                                        <span class="text-sm font-black text-slate-700 dark:text-slate-200">
-                                            {{ item.stockIn }} Units
-                                        </span>
+                                        <!-- Available -->
+                                        <div class="flex items-center gap-1 text-slate-800 dark:text-slate-100">
 
-                                        <span class="text-[11px] font-bold text-emerald-600">
-                                            In Stock
+                                            <span class="material-symbols-outlined text-[16px]">
+                                                inventory_2
+                                            </span>
+
+                                            <span>{{ item.stockRemaining }}</span>
+
+                                        </div>
+
+                                        <!-- Status -->
+                                        <span [ngClass]="item.stockUsed >= item.stockRemaining
+      ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
+      : 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'" class="ml-2 px-2.5 py-1 rounded-full
+           text-[10px] font-black uppercase tracking-wide">Stock
+
                                         </span>
 
                                     </div>
-
                                     <!-- Progress -->
                                     <div
                                         class="relative w-full h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
 
                                         <div class="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary via-primary-container to-secondary-container transition-all duration-700"
-                                            [style.width.%]="item.stockIn > 100 ? 100 : item.stockIn">
+                                            [style.width.%]="item.stockRemaining > 100 ? 100 : item.stockRemaining">
                                         </div>
 
                                     </div>
+
+                                </div>
+
+                            </td>
+
+                            <td class="px-6 py-5 bg-white dark:bg-slate-900
+         border-y border-slate-200 dark:border-slate-800">
+
+                                <div (click)="item.material_project_stock?.length > 0 && openProjectStockPopup(item)"
+                                    class="inline-flex items-center gap-3 px-3.5 py-2
+           rounded-xl border transition-all duration-300" [ngClass]="item.material_project_stock?.length > 0
+      ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/10'
+      : 'cursor-not-allowed opacity-70 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40'">
+
+                                    <!-- Icon -->
+                                    <div [ngClass]="item.material_project_stock?.length > 0
+        ? 'bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600'
+        : 'bg-slate-200 dark:bg-slate-700 text-slate-500'"
+                                        class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0">
+
+                                        <span class="material-symbols-outlined text-[18px]">
+
+                                            {{ item.material_project_stock?.length > 0
+                                            ? 'apartment'
+                                            : 'inventory_2' }}
+
+                                        </span>
+
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="flex flex-col leading-tight">
+
+                                        <span class="text-sm font-black text-slate-800 dark:text-white">
+
+                                            {{ item.material_project_stock?.length || 0 }}
+
+                                            {{ (item.material_project_stock?.length || 0) === 1
+                                            ? 'Project'
+                                            : 'Projects' }}
+
+                                        </span>
+
+                                        <span [ngClass]="item.material_project_stock?.length > 0
+          ? 'text-indigo-600 dark:text-indigo-400'
+          : 'text-rose-500 dark:text-rose-400'" class="text-[10px] font-bold uppercase tracking-wide">
+
+                                            {{ item.material_project_stock?.length > 0
+                                            ? 'View'
+                                            : 'Not Assigned' }}
+
+                                        </span>
+
+                                    </div>
+
+                                    <!-- Arrow -->
+                                    <span class="material-symbols-outlined text-[14px]
+             text-slate-400">
+
+                                        arrow_forward_ios
+
+                                    </span>
 
                                 </div>
 
@@ -378,7 +454,7 @@
                                 <div class="flex items-center justify-between gap-4">
 
                                     <!-- Status -->
-                                    <span
+                                    <!-- <span
                                         class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-wide"
                                         [ngClass]="item.status === 'ASSIGNED'
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -391,7 +467,7 @@
 
                                         {{ item.status }}
 
-                                    </span>
+                                    </span> -->
 
                                     <!-- Actions -->
                                     <div class="flex items-center gap-2">
@@ -405,8 +481,12 @@
                                             </span>
 
                                         </button>
-                                        <button (click)="openEditModal($event, item)"
-                                            class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                                        <button (click)="openStockTransferModal(item)"
+                                            [disabled]="!item.material_project_stock?.length" [ngClass]="
+      item.material_project_stock?.length
+        ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg cursor-pointer'
+        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
+    " class="w-11 h-11 rounded-2xl transition-all duration-200 flex items-center justify-center">
 
                                             <span class="material-symbols-outlined text-[18px]">
                                                 transfer_within_a_station
@@ -450,9 +530,9 @@
             <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
 
                 Showing
-               {{ filteredMaterials.length ? ((page - 1) * pageSize) + 1 : 0 }}
+                {{ filteredMaterials.length ? ((page - 1) * pageSize) + 1 : 0 }}
                 -
-               {{endItem}}
+                {{endItem}}
 
                 of
 
@@ -673,257 +753,264 @@
 }
 
 @if (showAssignProjectModal) {
-<div
-  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-  (click)="showAssignProjectModal = false">
+<div class="fixed inset-0 z-[100] flex items-center justify-center
+         bg-slate-900/50 backdrop-blur-sm p-3" (click)="showAssignProjectModal = false">
 
-  <div
-    class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl p-8 max-h-[90vh] overflow-y-auto"
-    (click)="$event.stopPropagation()">
+    <div class="bg-white dark:bg-slate-900 rounded-[28px]
+           shadow-[0_25px_80px_rgba(0,0,0,0.25)]
+           w-full max-w-3xl max-h-[90vh]
+           overflow-y-auto border border-slate-200 dark:border-slate-800" (click)="$event.stopPropagation()">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
+        <!-- Header -->
+        <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95
+             backdrop-blur border-b border-slate-100 dark:border-slate-800
+             px-6 py-5 flex items-center justify-between">
 
-      <div>
-        <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-          Assign Material
-        </h3>
+            <div>
+                <h3 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                    Assign Material
+                </h3>
 
-        <p class="text-sm text-slate-500 mt-1 font-medium">
-          Allocate stock project wise
-        </p>
-      </div>
+                <p class="text-xs md:text-sm text-slate-500 mt-1 font-medium">
+                    Allocate stock project wise
+                </p>
+            </div>
 
-      <button
-        (click)="showAssignProjectModal = false"
-        class="w-10 h-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800
-               flex items-center justify-center transition-all">
+            <button (click)="showAssignProjectModal = false" class="w-10 h-10 rounded-xl hover:bg-slate-100
+               dark:hover:bg-slate-800 flex items-center
+               justify-center transition-all duration-200">
 
-        <span class="material-symbols-outlined">close</span>
-      </button>
-
-    </div>
-
-    <!-- Material Info -->
-    <div
-      class="mb-8 p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50
-             border border-slate-200 dark:border-slate-700">
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        <div>
-          <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">
-            Material Name
-          </p>
-
-          <p class="text-sm font-black text-slate-900 dark:text-white">
-            {{ materialToEdit?.name }}
-          </p>
-        </div>
-
-        <div>
-          <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">
-            Available Stock
-          </p>
-
-          <p class="text-sm font-black text-emerald-600">
-            {{ materialToEdit?.stockIn }}
-          </p>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- Dynamic Rows -->
-    <div class="space-y-5">
-
-      @for (item of assignedProjects; track $index) {
-
-      <div
-        class="p-5 rounded-2xl border border-slate-200 dark:border-slate-700
-               bg-slate-50/50 dark:bg-slate-800/30">
-
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-
-          <!-- Project Dropdown -->
-          <div class="md:col-span-7">
-
-            <label
-              class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2 block">
-
-              Select Project
-            </label>
-
-            <select
-              [(ngModel)]="item.project_id"
-              (change)="validateAssignedStock()"
-              class="w-full px-4 py-3 rounded-2xl border
-                     border-slate-200 dark:border-slate-700
-                     bg-white dark:bg-slate-900
-                     text-sm font-bold outline-none">
-
-              <option [ngValue]="null">Choose Project</option>
-
-              @for (project of projects; track project.id) {
-              <option [ngValue]="project.id">
-                {{ project.name }}
-              </option>
-              }
-
-            </select>
-
-          </div>
-
-          <!-- Stock Input -->
-          <div class="md:col-span-4">
-
-            <label
-              class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2 block">
-
-              Stock Qty
-            </label>
-
-            <input
-              type="number"
-              min="1"
-              [(ngModel)]="item.stock"
-              (input)="validateAssignedStock()"
-              placeholder="Enter stock"
-              class="w-full px-4 py-3 rounded-2xl border
-                     border-slate-200 dark:border-slate-700
-                     bg-white dark:bg-slate-900
-                     text-sm font-bold outline-none">
-
-          </div>
-
-          <!-- Remove Button -->
-          <div class="md:col-span-1">
-
-            <button
-              type="button"
-              (click)="removeProjectRow($index)"
-              [disabled]="assignedProjects.length === 1"
-              class="w-12 h-12 rounded-2xl bg-rose-100
-                     text-rose-600 hover:scale-105 transition-all
-                     flex items-center justify-center
-                     disabled:opacity-40 disabled:cursor-not-allowed">
-
-              <span class="material-symbols-outlined">
-                delete
-              </span>
+                <span class="material-symbols-outlined text-[20px]">
+                    close
+                </span>
 
             </button>
 
-          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6">
+
+            <!-- Material Info -->
+            <div class="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40
+               border border-slate-200 dark:border-slate-700">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em]
+                      font-black text-slate-400 mb-1">
+                            Material Name
+                        </p>
+
+                        <p class="text-sm md:text-base font-black text-slate-900 dark:text-white">
+                            {{ materialToEdit?.name }}
+                        </p>
+                    </div>
+
+                    <div class="md:text-right">
+                        <p class="text-[10px] uppercase tracking-[0.2em]
+                      font-black text-slate-400 mb-1">
+                            Available Stock
+                        </p>
+
+                        <p class="text-lg font-black text-emerald-600">
+                            {{ materialToEdit?.stockRemaining }}
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Dynamic Rows -->
+            <div class="space-y-3">
+
+                @for (item of assignedProjects; track $index) {
+
+                <div class="p-4 rounded-2xl border border-slate-200
+                 dark:border-slate-700 bg-slate-50/60
+                 dark:bg-slate-800/30 transition-all">
+
+                    <div class="grid grid-cols-12 gap-3 items-end">
+
+                        <!-- Project -->
+                        <div class="col-span-12 md:col-span-7">
+
+                            <label class="text-[9px] uppercase tracking-[0.18em]
+                       font-black text-slate-400 mb-1.5 block">
+
+                                Select Project
+                            </label>
+
+                            <select [(ngModel)]="item.project_id" (change)="validateAssignedStock()" class="w-full px-4 py-3 rounded-xl border
+                       border-slate-200 dark:border-slate-700
+                       bg-white dark:bg-slate-900
+                       text-sm font-semibold outline-none
+                       focus:ring-2 focus:ring-indigo-500/20
+                       focus:border-indigo-500 transition-all">
+
+                                <option [ngValue]="null">
+                                    Choose Project
+                                </option>
+
+                                @for (project of projects; track project.id) {
+                                <option [ngValue]="project.id">
+                                    {{ project.name }}
+                                </option>
+                                }
+
+                            </select>
+
+                        </div>
+
+                        <!-- Qty -->
+                        <div class="col-span-9 md:col-span-4">
+
+                            <label class="text-[9px] uppercase tracking-[0.18em]
+                       font-black text-slate-400 mb-1.5 block">
+
+                                Stock Qty
+                            </label>
+
+                            <input type="number" min="1" [(ngModel)]="item.stock" (input)="validateAssignedStock()"
+                                placeholder="Enter qty" class="w-full px-4 py-3 rounded-xl border
+                       border-slate-200 dark:border-slate-700
+                       bg-white dark:bg-slate-900
+                       text-sm font-semibold outline-none
+                       focus:ring-2 focus:ring-indigo-500/20
+                       focus:border-indigo-500 transition-all">
+
+                        </div>
+
+                        <!-- Remove -->
+                        <div class="col-span-3 md:col-span-1 flex justify-end">
+
+                            <button type="button" (click)="removeProjectRow($index)"
+                                [disabled]="assignedProjects.length === 1" class="w-11 h-11 rounded-xl bg-rose-100
+                       text-rose-600 hover:bg-rose-200
+                       transition-all flex items-center
+                       justify-center disabled:opacity-40
+                       cursor-pointer disabled:hover:bg-rose-100">
+
+                                <span class="material-symbols-outlined text-[18px]">
+                                    delete
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                }
+
+            </div>
+
+            <!-- Add More -->
+            <button type="button" (click)="addProjectRow()" class="mt-5 w-full border-2 border-dashed
+               border-indigo-300 dark:border-indigo-700
+               rounded-2xl py-3.5 text-indigo-600
+               dark:text-indigo-400 font-black text-sm
+               hover:bg-indigo-50 dark:hover:bg-indigo-900/10
+               transition-all flex items-center
+               justify-center gap-2">
+
+                <span class="material-symbols-outlined text-[20px]">
+                    add
+                </span>
+
+                Add More Project
+
+            </button>
+
+            <!-- Summary -->
+            <div class="mt-6 p-5 rounded-2xl border border-indigo-200
+               dark:border-indigo-800 bg-indigo-50
+               dark:bg-indigo-900/10">
+
+                <div class="grid grid-cols-2 gap-4">
+
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em]
+                      font-black text-slate-400 mb-1">
+                            Total Assigned
+                        </p>
+
+                        <p class="text-2xl font-black text-indigo-600">
+                            {{ getTotalAssignedStock() }}
+                        </p>
+                    </div>
+
+                    <div class="text-right">
+                        <p class="text-[10px] uppercase tracking-[0.2em]
+                      font-black text-slate-400 mb-1">
+                            Remaining Stock
+                        </p>
+
+                        <p [ngClass]="getRemainingStock() < 0
+                ? 'text-rose-600'
+                : 'text-emerald-600'" class="text-2xl font-black">
+
+                            {{ getRemainingStock() }}
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Error -->
+            @if (projectAssignError) {
+
+            <div class="mt-5 flex items-start gap-3 px-4 py-3 rounded-2xl
+               bg-rose-50 dark:bg-rose-900/10
+               border border-rose-200 dark:border-rose-800
+               text-rose-700 dark:text-rose-400">
+
+                <span class="material-symbols-outlined text-[20px]">
+                    error
+                </span>
+
+                <p class="text-sm font-semibold leading-relaxed">
+                    {{ projectAssignError }}
+                </p>
+
+            </div>
+
+            }
+
+            <!-- Footer -->
+            <div class="flex flex-col md:flex-row gap-3 mt-8">
+
+                <button (click)="showAssignProjectModal = false" class="flex-1 py-3.5 rounded-2xl border
+                 border-slate-200 dark:border-slate-700
+                 text-sm font-black hover:bg-slate-50
+                 dark:hover:bg-slate-800 transition-all">
+
+                    Cancel
+
+                </button>
+
+                <button (click)="assignProjects()" [disabled]="getRemainingStock() < 0" class="flex-1 py-3.5 rounded-2xl bg-indigo-600
+                 text-white text-sm font-black
+                 shadow-xl shadow-indigo-500/20
+                 hover:shadow-2xl hover:-translate-y-0.5
+                 transition-all disabled:opacity-50
+                 disabled:cursor-not-allowed
+                 disabled:hover:translate-y-0">
+
+                    Assign Stock
+
+                </button>
+
+            </div>
 
         </div>
 
-      </div>
-
-      }
-
     </div>
-
-    <!-- Add More -->
-    <button
-      type="button"
-      (click)="addProjectRow()"
-      class="mt-6 w-full border-2 border-dashed border-indigo-300
-             rounded-2xl py-4 text-indigo-600 font-black text-sm
-             hover:bg-indigo-50 transition-all
-             flex items-center justify-center gap-2">
-
-      <span class="material-symbols-outlined">add</span>
-
-      Add More Project
-
-    </button>
-
-    <!-- Stock Summary -->
-    <div
-      class="mt-8 p-5 rounded-2xl border border-indigo-200
-             bg-indigo-50 dark:bg-indigo-900/10 dark:border-indigo-800">
-
-      <div class="grid grid-cols-2 gap-4">
-
-        <div>
-          <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">
-            Total Assigned
-          </p>
-
-          <p class="text-2xl font-black text-indigo-600">
-            {{ getTotalAssignedStock() }}
-          </p>
-        </div>
-
-        <div class="text-right">
-          <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">
-            Remaining Stock
-          </p>
-
-          <p
-            [ngClass]="getRemainingStock() < 0
-              ? 'text-rose-600'
-              : 'text-emerald-600'"
-            class="text-2xl font-black">
-
-            {{ getRemainingStock() }}
-          </p>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- Error Message -->
-    @if (projectAssignError) {
-
-    <div
-      class="mt-5 flex items-center gap-3 px-5 py-4 rounded-2xl
-             bg-rose-50 border border-rose-200 text-rose-700">
-
-      <span class="material-symbols-outlined">
-        error
-      </span>
-
-      <p class="text-sm font-bold">
-        {{ projectAssignError }}
-      </p>
-
-    </div>
-
-    }
-
-    <!-- Footer -->
-    <div class="flex gap-4 mt-10">
-
-      <button
-        (click)="showAssignProjectModal = false"
-        class="flex-1 py-4 rounded-2xl border border-slate-200
-               dark:border-slate-700 text-sm font-black
-               hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-
-        Cancel
-
-      </button>
-
-      <button
-        (click)="assignProjects()"
-        [disabled]="getRemainingStock() < 0"
-        class="flex-1 py-4 rounded-2xl bg-indigo-600 text-white
-               text-sm font-black shadow-xl shadow-indigo-500/20
-               hover:scale-[1.02] transition-all
-               disabled:opacity-50 disabled:cursor-not-allowed
-               disabled:hover:scale-100">
-
-         Assign Stock
-
-      </button>
-
-    </div>
-
-  </div>
 </div>
 }
 
@@ -950,6 +1037,169 @@
         </div>
     </div>
 </div>
+}
+
+<!-- Project Assignment Popup -->
+@if (showProjectStockPopup) {
+
+<div class="fixed inset-0 z-[120] flex items-center justify-center
+         bg-slate-950/60 backdrop-blur-sm p-4" (click)="showProjectStockPopup = false">
+
+    <div (click)="$event.stopPropagation()" class="w-full max-w-2xl rounded-[30px]
+           bg-white dark:bg-slate-900
+           border border-slate-200 dark:border-slate-800
+           shadow-[0_30px_100px_rgba(0,0,0,0.35)]
+           overflow-hidden">
+
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-slate-200
+             dark:border-slate-800 flex items-center justify-between">
+
+            <div>
+
+                <h3 class="text-xl font-black text-slate-900 dark:text-white">
+
+                    Project Assignment
+
+                </h3>
+
+                <p class="text-sm text-slate-500 mt-1">
+
+                    {{ selectedProjectStock?.name }}
+
+                </p>
+
+            </div>
+
+            <button (click)="showProjectStockPopup = false" class="w-10 h-10 rounded-xl hover:bg-slate-100
+               dark:hover:bg-slate-800 flex items-center
+               justify-center transition-all">
+
+                <span class="material-symbols-outlined">
+                    close
+                </span>
+
+            </button>
+
+        </div>
+
+        <!-- Body -->
+        <div class="p-6">
+
+            @if (!selectedProjectStock?.material_project_stock?.length) {
+
+            <!-- Empty -->
+            <div class="flex flex-col items-center justify-center
+               py-14 text-center">
+
+                <div class="w-20 h-20 rounded-3xl bg-slate-100
+                 dark:bg-slate-800 flex items-center
+                 justify-center mb-5">
+
+                    <span class="material-symbols-outlined text-[40px]
+                   text-slate-400">
+
+                        inventory_2
+
+                    </span>
+
+                </div>
+
+                <h4 class="text-lg font-black text-slate-800
+                 dark:text-white">
+
+                    No Project Assigned
+
+                </h4>
+
+                <p class="text-sm text-slate-500 mt-2">
+
+                    This material is not assigned to any project yet.
+
+                </p>
+
+            </div>
+
+            } @else {
+
+            <!-- Assigned Projects -->
+            <div class="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+
+                @for (p of selectedProjectStock.material_project_stock; track $index) {
+
+                <div class="p-5 rounded-2xl border border-slate-200
+                 dark:border-slate-700 bg-slate-50/70
+                 dark:bg-slate-800/40">
+
+                    <div class="flex items-center justify-between gap-4">
+
+                        <!-- Left -->
+                        <div class="flex items-center gap-4">
+
+                            <div class="w-14 h-14 rounded-2xl
+                       bg-indigo-100 dark:bg-indigo-500/10
+                       text-indigo-600 flex items-center
+                       justify-center">
+
+                                <span class="material-symbols-outlined">
+                                    apartment
+                                </span>
+
+                            </div>
+
+                            <div>
+
+                                <h4 class="text-sm font-black text-slate-800
+                         dark:text-white">
+
+                                    {{ p.project_name }}
+
+                                </h4>
+
+                                <p class="text-xs text-slate-400 mt-1">
+
+                                    Assigned Project
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Stock -->
+                        <div class="text-right">
+
+                            <h4 class="text-2xl font-black text-indigo-600">
+
+                                {{ p.stockUsed }}
+
+                            </h4>
+
+                            <p class="text-[11px] uppercase tracking-wide
+                       text-slate-400 font-bold">
+
+                                Units
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                }
+
+            </div>
+
+            }
+
+        </div>
+
+    </div>
+
+</div>
+
 }
 
 <!-- Filters Dropdown Overlay -->
@@ -983,6 +1233,306 @@
         <button (click)="showFilters = false"
             class="w-full mt-6 py-2 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest">Apply
             Filters</button>
+    </div>
+</div>
+}
+
+@if (showStockTransferModal) {
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+    (click)="showStockTransferModal = false">
+
+    <div class="bg-white dark:bg-slate-900 rounded-[28px] shadow-[0_20px_70px_rgba(0,0,0,0.35)] w-full max-w-3xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="relative px-6 py-5 border-b border-slate-200 dark:border-slate-800">
+
+            <div class="flex items-center justify-between">
+
+                <div>
+
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-[0.25em] mb-2">
+
+                        <span class="material-symbols-outlined text-[14px]">
+                            swap_horiz
+                        </span>
+
+                        Stock Transfer
+                    </div>
+
+                    <h2 class="text-2xl font-black leading-none text-slate-900 dark:text-white">
+                        Stock Transfer
+                    </h2>
+
+                    <p class="text-slate-500 dark:text-slate-400 text-xs mt-2 font-medium">
+                        Move material stock between projects
+                    </p>
+
+                </div>
+
+                <button (click)="showStockTransferModal = false"
+                    class="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center">
+
+                    <span class="material-symbols-outlined text-[20px]">
+                        close
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-5 max-h-[65vh] overflow-y-auto">
+
+            <!-- Material -->
+            <div
+                class="flex items-center gap-4 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
+
+                <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+
+                    <span class="material-symbols-outlined text-[26px]">
+                        inventory_2
+                    </span>
+
+                </div>
+
+                <div class="flex-1 min-w-0">
+
+                    <h3 class="text-lg font-black truncate">
+                        {{ selectedMaterial?.name }}
+                    </h3>
+
+                    <div class="flex flex-wrap items-center gap-2 mt-2">
+
+                        <div class="px-3 py-1 rounded-xl bg-slate-200 dark:bg-slate-700 text-[11px] font-black">
+                            SKU : {{ selectedMaterial?.sku }}
+                        </div>
+
+                        <div class="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-700 text-[11px] font-black">
+                            Main Stock : {{ stockTransferData.stockIn }}
+                        </div>
+
+                        <div class="px-3 py-1 rounded-xl bg-amber-100 text-amber-700 text-[11px] font-black">
+                            Transfer Qty : {{ getTotalTransferQty() }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Transfer Rows -->
+            <div class="space-y-4">
+
+                @for (item of stockTransferData.transfers; track $index) {
+
+                <div
+                    class="relative p-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+
+                    <!-- Remove -->
+                    @if (stockTransferData.transfers.length > 1) {
+                    <button (click)="removeTransferRow($index)"
+                        class="absolute top-4 right-4 w-9 h-9 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-all flex items-center justify-center">
+
+                        <span class="material-symbols-outlined text-[18px]">
+                            delete
+                        </span>
+
+                    </button>
+                    }
+
+                    <!-- Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_130px] gap-4 items-start">
+
+                        <!-- From -->
+                        <div>
+
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
+                                From Project
+                            </label>
+
+                            <select [(ngModel)]="item.from_project_id"
+                                class="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/20">
+
+                                <option value="">Select Project</option>
+
+                                @for (p of projects; track p.id) {
+                                <option [value]="p.id">
+                                    {{ p.name }} (Stock : {{ getProjectStock(p.id) }})
+                                </option>
+                                }
+
+                            </select>
+
+                            <!-- From Project Selected Stock -->
+                            @if (item.from_project_id) {
+                            <div
+                                class="mt-3 px-4 py-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
+
+                                <div class="flex items-center justify-between">
+
+                                    <div class="flex items-center gap-2">
+
+                                        <span class="material-symbols-outlined text-[18px] text-emerald-600">
+                                            inventory
+                                        </span>
+
+                                        <span
+                                            class="text-[11px] font-black uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                                            Available Stock
+                                        </span>
+
+                                    </div>
+
+                                    <span class="text-lg font-black text-emerald-700 dark:text-emerald-300">
+                                        {{ getProjectStock(item.from_project_id) }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+                            }
+
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center pt-10">
+
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg">
+
+                                <span class="material-symbols-outlined">
+                                    east
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <!-- To -->
+                        <div>
+
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
+                                To Project
+                            </label>
+
+                            <select [(ngModel)]="item.to_project_id"
+                                class="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/20">
+
+                                <option value="">Select Project</option>
+
+                                @for (p of projects; track p.id) {
+                                <option [value]="p.id">
+                                    {{ p.name }} (Stock : {{ getProjectStock(p.id) }})
+                                </option>
+                                }
+
+                            </select>
+
+                            <!-- To Project Selected Stock -->
+                            @if (item.to_project_id) {
+                            <div
+                                class="mt-3 px-4 py-3 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20">
+
+                                <div class="flex items-center justify-between">
+
+                                    <div class="flex items-center gap-2">
+
+                                        <span class="material-symbols-outlined text-[18px] text-blue-600">
+                                            warehouse
+                                        </span>
+
+                                        <span
+                                            class="text-[11px] font-black uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                                            Current Stock
+                                        </span>
+
+                                    </div>
+
+                                    <span class="text-lg font-black text-blue-700 dark:text-blue-300">
+                                        {{ getProjectStock(item.to_project_id) }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+                            }
+
+                        </div>
+
+                        <!-- Qty -->
+                        <div>
+
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
+                                Quantity
+                            </label>
+
+                            <input [(ngModel)]="item.quantity" type="number" min="1" placeholder="0"
+                                class="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-black outline-none focus:ring-4 focus:ring-primary/20">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                }
+
+            </div>
+
+            <!-- Add -->
+            <button (click)="addTransferRow()"
+                class="w-full py-3 rounded-2xl border-2 border-dashed border-primary/30 text-primary font-black hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
+
+                <span class="material-symbols-outlined">
+                    add
+                </span>
+
+                Add Transfer Row
+
+            </button>
+
+            <!-- Note -->
+            <div>
+
+                <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
+                    Remarks
+                </label>
+
+                <textarea [(ngModel)]="stockTransferData.transfer_note" rows="3" placeholder="Write transfer note..."
+                    class="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-semibold outline-none focus:ring-4 focus:ring-primary/20 resize-none">
+        </textarea>
+
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div
+            class="px-6 py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
+
+            <button (click)="showStockTransferModal = false"
+                class="flex-1 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 text-sm font-black hover:bg-white dark:hover:bg-slate-800 transition-all">
+
+                Cancel
+            </button>
+
+            <button (click)="transferStock()"
+                class="flex-[1.2] py-3 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-white text-sm font-black shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+
+                <span class="material-symbols-outlined">
+                    swap_horiz
+                </span>
+
+                Transfer Stock
+            </button>
+
+        </div>
+
     </div>
 </div>
 }

@@ -2,13 +2,10 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaterialService, Material } from '../../../shared/services/materials/materials';
-// import { VendorService, Vendor } from '../../services/vendor.service';
 import { CommonModule } from '@angular/common';
 import { VendorsServices } from '../../vendors/services/vendors-services';
 import { MaterialMasterService } from '../../../shared/services/master/material-master';
 import { Toast, ToastrService } from 'ngx-toastr';
-// import { RbacService } from '../../../shared/services/rbac/rbac.service';
-
 
 @Component({
   selector: 'app-materials',
@@ -19,7 +16,6 @@ import { Toast, ToastrService } from 'ngx-toastr';
 export class Materials {
   private materialService = inject(MaterialService);
   private MaterialMasterService = inject(MaterialMasterService);
-  // private vendorService = inject(VendorService);
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
@@ -33,7 +29,6 @@ export class Materials {
   selectedTab = 'All Materials';
   tabs = ['All Materials', 'Low Stock', 'Concrete', 'Steel', 'Electrical', 'Lumber'];
 
-  // Modal States
   showAddModal = false;
   showEditModal = false;
   showDeleteModal = false;
@@ -79,17 +74,28 @@ export class Materials {
   showAddVendorModal = false;
   Number: any;
   searchQuery: any;
+  noOfProjectsAssigned: number = 0;
+  noOfProjectsNotAssigned: number=0;
 
   ngOnInit() {
     this.materialService.loadMaterials();
 
-    this.materialService.materials$.subscribe(m => {
+    this.materialService.materials$.subscribe((m:any) => {
       this.materials = m;
-      this.page = 1; // 🔥 reset page (important)
-      this.updatePagination(); // ✅ yahi sahi jagah hai
+
+      this.noOfProjectsAssigned = m.filter(
+        (x:any) => x.material_project_stock && x.material_project_stock.length > 0
+      ).length;
+
+      this.noOfProjectsNotAssigned = m.filter(
+        (x:any) => !x.material_project_stock || x.material_project_stock.length === 0
+      ).length;
+
+
+      this.page = 1;
+      this.updatePagination();
     });
-    //  this.materialService.materials$.subscribe(m => this.materials = m);
-    this.MaterialMasterService.loadMaterials();
+    
     this.loadProjects();
 
     this.MaterialMasterService.materials$.subscribe(m => {
@@ -112,11 +118,11 @@ export class Materials {
   }
 
   get endItem(): number {
-  return Math.min(
-    this.page * this.pageSize,
-    this.filteredMaterials.length
-  );
-}
+    return Math.min(
+      this.page * this.pageSize,
+      this.filteredMaterials.length
+    );
+  }
 
   get filteredMaterials(): any[] {
 
@@ -156,18 +162,18 @@ export class Materials {
 
   changeTab(tab: string) {
     this.selectedTab = tab;
-    this.page = 1; // optional reset page
+    this.page = 1;
     this.updatePagination();
   }
 
- updatePagination() {
+  updatePagination() {
 
-  const start = (this.page - 1) * this.pageSize;
-  const end = start + this.pageSize;
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
 
-  this.paginatedMaterials =
-    this.filteredMaterials.slice(start, end);
-}
+    this.paginatedMaterials =
+      this.filteredMaterials.slice(start, end);
+  }
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -194,10 +200,10 @@ export class Materials {
 
   onSearchChange() {
 
-  this.page = 1;
+    this.page = 1;
 
-  this.updatePagination();
-}
+    this.updatePagination();
+  }
 
 
   onSupplierChange() {
@@ -249,16 +255,6 @@ export class Materials {
     this.newMaterial = this.getDefaultMaterial();
     this.showAddModal = true;
   }
-
-  // getvendor(vendorId: any) {
-  //   console.log(vendorId.target.value, this.vendors, 'sdzfdsfds');
-  //   const vendor = this.vendors.find((v: any) => v.id == vendorId.target.value);
-  //   this.newMaterial.vendor_name = vendor?.name || '';
-  //   console.log(vendor, 'vendor');
-  //   this.newMaterial.vendor_id = vendorId.target.value || '';
-  // }
-
-
 
   getProject(projectId: any) {
 
@@ -567,200 +563,414 @@ export class Materials {
 
   showAssignProjectModal = false;
 
-selectedProjects: number[] = [];
+  selectedProjects: number[] = [];
 
-toggleProjectSelection(projectId: number) {
+  toggleProjectSelection(projectId: number) {
 
-  if (this.selectedProjects.includes(projectId)) {
+    if (this.selectedProjects.includes(projectId)) {
 
-    this.selectedProjects =
-      this.selectedProjects.filter(id => id !== projectId);
+      this.selectedProjects =
+        this.selectedProjects.filter(id => id !== projectId);
 
-  } else {
+    } else {
 
-    this.selectedProjects.push(projectId);
+      this.selectedProjects.push(projectId);
 
+    }
   }
-}
 
-// assignProjects() {
+  // assignProjects() {
 
-//   const payload = {
-//     material_id: this.materialToEdit.id,
-//     project_ids: this.selectedProjects
-//   };
+  //   const payload = {
+  //     material_id: this.materialToEdit.id,
+  //     project_ids: this.selectedProjects
+  //   };
 
-//   console.log(payload);
+  //   console.log(payload);
 
-//   // API CALL HERE
+  //   // API CALL HERE
 
-//   this.showAssignProjectModal = false;
-// }
+  //   this.showAssignProjectModal = false;
+  // }
 
-// openAssignProjectModal(material: any) {
+  // openAssignProjectModal(material: any) {
 
-//   this.materialToEdit = material;
+  //   this.materialToEdit = material;
 
-//   this.selectedProjects = [];
+  //   this.selectedProjects = [];
 
-//   // agar pehle se assigned projects hain
-//   if (material.project_ids?.length) {
+  //   // agar pehle se assigned projects hain
+  //   if (material.project_ids?.length) {
 
-//     this.selectedProjects = [...material.project_ids];
+  //     this.selectedProjects = [...material.project_ids];
 
-//   }
+  //   }
 
-//   this.showAssignProjectModal = true;
-// }
+  //   this.showAssignProjectModal = true;
+  // }
 
-assignedProjects: any[] = [
-  {
-    project_id: null,
-    stock: null
-  }
-];
-
-projectAssignError: string = '';
-
-openAssignProjectModal(material: any) {
-
-  this.materialToEdit = material;
-
-  this.assignedProjects = [
+  assignedProjects: any[] = [
     {
       project_id: null,
       stock: null
     }
   ];
 
-  this.projectAssignError = '';
+  projectAssignError: string = '';
 
-  this.showAssignProjectModal = true;
-}
+  openAssignProjectModal(material: any) {
 
-addProjectRow() {
+    this.materialToEdit = material;
 
-  this.assignedProjects.push({
-    project_id: null,
-    stock: null
-  });
+    this.assignedProjects = [
+      {
+        project_id: null,
+        stock: null
+      }
+    ];
 
-}
+    this.projectAssignError = '';
 
-removeProjectRow(index: number) {
-
-  if (this.assignedProjects.length === 1) {
-    return;
+    this.showAssignProjectModal = true;
   }
 
-  this.assignedProjects.splice(index, 1);
+  addProjectRow() {
 
-  this.validateAssignedStock();
-}
+    this.assignedProjects.push({
+      project_id: null,
+      stock: null
+    });
 
-validateAssignedStock(): boolean {
+  }
 
-  this.projectAssignError = '';
+  removeProjectRow(index: number) {
 
-  let totalAssignedStock = 0;
+    if (this.assignedProjects.length === 1) {
+      return;
+    }
 
-  const selectedProjects: any[] = [];
+    this.assignedProjects.splice(index, 1);
 
-  for (const item of this.assignedProjects) {
+    this.validateAssignedStock();
+  }
 
-    // Empty validation
-    if (!item.project_id || item.stock === null || item.stock === '') {
+  validateAssignedStock(): boolean {
+
+    this.projectAssignError = '';
+
+    let totalAssignedStock = 0;
+
+    const selectedProjects: any[] = [];
+
+    for (const item of this.assignedProjects) {
+
+      // Empty validation
+      if (!item.project_id || item.stock === null || item.stock === '') {
+
+        this.projectAssignError =
+          'Please select project and enter stock for all rows';
+
+        return false;
+      }
+
+      // Negative validation
+      if (+item.stock <= 0) {
+
+        this.projectAssignError =
+          'Stock quantity must be greater than 0';
+
+        return false;
+      }
+
+      // Duplicate project validation
+      if (selectedProjects.includes(item.project_id)) {
+
+        this.projectAssignError =
+          'Same project cannot be selected multiple times';
+
+        return false;
+      }
+
+      selectedProjects.push(item.project_id);
+
+      totalAssignedStock += Number(item.stock);
+    }
+
+    // Total stock validation
+    if (totalAssignedStock > this.materialToEdit.stockIn) {
 
       this.projectAssignError =
-        'Please select project and enter stock for all rows';
+        `Assigned stock (${totalAssignedStock}) cannot exceed available stock (${this.materialToEdit.stockIn})`;
 
       return false;
     }
 
-    // Negative validation
-    if (+item.stock <= 0) {
+    return true;
+  }
 
-      this.projectAssignError =
-        'Stock quantity must be greater than 0';
+  getTotalAssignedStock(): number {
 
-      return false;
+    return this.assignedProjects.reduce(
+      (sum, item) => sum + (Number(item.stock) || 0),
+      0
+    );
+  }
+
+  getRemainingStock(): number {
+
+    return (
+      Number(this.materialToEdit?.stockRemaining || 0) -
+      this.getTotalAssignedStock()
+    );
+  }
+
+  assignProjects() {
+
+    const isValid = this.validateAssignedStock();
+
+    if (!isValid) {
+      return;
     }
 
-    // Duplicate project validation
-    if (selectedProjects.includes(item.project_id)) {
+    // project name add karo
+    const projectsWithName = this.assignedProjects.map(item => {
 
-      this.projectAssignError =
-        'Same project cannot be selected multiple times';
+      const project = this.projects.find(
+        (p: any) => p.id == item.project_id
+      );
 
-      return false;
-    }
+      return {
+        ...item,
+        project_name: project?.name || '',
+        status: 'ASSIGNED'
+      };
 
-    selectedProjects.push(item.project_id);
+    });
 
-    totalAssignedStock += Number(item.stock);
+    const payload = {
+      material_id: this.materialToEdit.id,
+      projects: projectsWithName
+    };
+
+    console.log(payload);
+
+    this.materialService
+      .updateMaterial(this.materialToEdit.id, payload)
+      .subscribe({
+        next: () => {
+
+          this.showEditModal = false;
+          this.materialToEdit = null;
+
+          this.toast.success('Material updated successfully');
+
+          this.materialService.loadMaterials();
+
+          this.materialService.materials$.subscribe(m => {
+            this.materials = m;
+            this.page = 1; // 🔥 reset page (important)
+            this.updatePagination(); // ✅ yahi sahi jagah hai
+          });
+
+          this.showAssignProjectModal = false;
+
+        },
+
+        error: (err) => {
+
+          console.error('Update failed', err);
+
+          this.toast.error(
+            err?.error?.message || 'Failed to update material'
+          );
+
+        }
+      });
   }
 
-  // Total stock validation
-  if (totalAssignedStock > this.materialToEdit.stockIn) {
+  selectedProjectStock: any = null;
+  showProjectStockPopup = false;
 
-    this.projectAssignError =
-      `Assigned stock (${totalAssignedStock}) cannot exceed available stock (${this.materialToEdit.stockIn})`;
+  openProjectStockPopup(item: any) {
 
-    return false;
+    this.selectedProjectStock = item;
+
+    this.showProjectStockPopup = true;
+
   }
 
-  return true;
-}
+  showStockTransferModal = false;
 
-getTotalAssignedStock(): number {
-
-  return this.assignedProjects.reduce(
-    (sum, item) => sum + (Number(item.stock) || 0),
-    0
-  );
-}
-
-getRemainingStock(): number {
-
-  return (
-    Number(this.materialToEdit?.stockIn || 0) -
-    this.getTotalAssignedStock()
-  );
-}
-
-assignProjects() {
-
-  const isValid = this.validateAssignedStock();
-
-  if (!isValid) {
-    return;
-  }
-
-  const payload = {
-    material_id: this.materialToEdit.id,
-    projects: this.assignedProjects
+  stockTransferData: any = {
+    material_id: '',
+    stockIn: 0,
+    transfer_note: '',
+    transfers: []
   };
 
-  console.log(payload);
+  selectedMaterial: any = null;
 
-  /*
-  Example Payload
+  getProjectStock(projectId: any): number {
+    if (!projectId || !this.selectedMaterial?.material_project_stock) {
+      return 0;
+    }
 
-  {
-    material_id: 1,
-    projects: [
-      {
-        project_id: 2,
-        stock: 50
-      },
-      {
-        project_id: 5,
-        stock: 120
-      }
-    ]
+    const stock = this.selectedMaterial.material_project_stock.find(
+      (x: any) => x.project_id
+        == projectId
+    );
+
+    return stock?.stockUsed || 0;
   }
-  */
 
-  this.showAssignProjectModal = false;
+  openStockTransferModal(material: any) {
+
+    this.selectedMaterial = material;
+    console.log(material, 'material for stock transfer');
+
+
+    this.stockTransferData = {
+
+      material_id: material.id,
+
+      stockIn: material.stockIn,
+
+      transfer_note: '',
+
+      transfers: [
+        {
+          from_project_id: material.project_id || '',
+          to_project_id: '',
+          quantity: 0
+        }
+      ]
+    };
+
+    this.showStockTransferModal = true;
+  }
+
+  addTransferRow() {
+
+    this.stockTransferData.transfers.push({
+      from_project_id: '',
+      to_project_id: '',
+      quantity: 0
+    });
+
+  }
+
+
+
+  removeTransferRow(index: number) {
+
+    this.stockTransferData.transfers.splice(index, 1);
+
+  }
+
+
+
+  getTotalTransferQty(): number {
+
+    return this.stockTransferData.transfers.reduce(
+      (sum: number, item: any) =>
+        sum + Number(item.quantity || 0),
+      0
+    );
+
+  }
+
+
+
+  transferStock() {
+
+    if (!this.stockTransferData.transfers.length) {
+      this.toast.error('Add at least one transfer');
+      return;
+    }
+
+    for (const item of this.stockTransferData.transfers) {
+
+      if (!item.from_project_id) {
+        this.toast.error('Select From Project');
+        return;
+      }
+
+      if (!item.to_project_id) {
+        this.toast.error('Select To Project');
+        return;
+      }
+
+      if (
+        item.from_project_id ===
+        item.to_project_id
+      ) {
+        this.toast.error('From & To project cannot be same');
+        return;
+      }
+
+      if (!item.quantity || item.quantity <= 0) {
+        this.toast.error('Enter valid quantity');
+        return;
+      }
+
+    }
+
+    const totalQty = this.getTotalTransferQty();
+
+    if (totalQty > this.stockTransferData.stockIn) {
+      this.toast.error('Total transfer quantity exceeds available stock');
+      return;
+    }
+
+    const payload = {
+      note: this.stockTransferData.transfer_note,
+
+      transfers: this.stockTransferData.transfers.map((t: any) => ({
+        from_project_id: t.from_project_id,
+        to_project_id: t.to_project_id,
+        quantity: t.quantity
+      }))
+    };
+
+    this.materialService
+      .material_stock_transfer(
+
+        this.stockTransferData.material_id,
+
+        payload
+
+      )
+      .subscribe({
+
+        next: () => {
+
+          this.toast.success(
+
+            'Material transferred successfully'
+
+          );
+
+          this.materialService.loadMaterials();
+          this.showStockTransferModal = false;
+
+        },
+
+        error: (err) => {
+
+          console.error('Update failed', err);
+
+          this.toast.error(
+
+            err?.error?.message ||
+
+            'Failed to update material'
+
+          );
+
+        }
+
+      });
+  }
 }
-}
+
+

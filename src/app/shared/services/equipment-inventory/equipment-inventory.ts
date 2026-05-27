@@ -28,6 +28,7 @@ export class EquipmentInventoryService {
   private apiUrlGetAllMaterials = `${this.baseUrl}/getAllequipments`;
   private apiUrlCreateMaterial = `${this.baseUrl}/createequipment`;
   private apiUrlUpdateMaterial = `${this.baseUrl}/updateequipment`;
+  private apiUrlEquipmentStockTransfer = `${this.baseUrl}/equipment_stock_transfer`;
   private apiUrlDeleteMaterial = `${this.baseUrl}/deleteequipment`;
 
   private materialsSubject = new BehaviorSubject<Material[]>([]);
@@ -76,6 +77,9 @@ export class EquipmentInventoryService {
   // UPDATE
   updateMaterial(id: number, data: any) {
     return this.http.put<any>(`${this.apiUrlUpdateMaterial}/${id}`, data);
+  }
+  equipment_stock_transfer(id: number, data: any) {
+    return this.http.put<any>(`${this.apiUrlEquipmentStockTransfer}/${id}`, data);
   }
 
   // DELETE
