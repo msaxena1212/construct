@@ -4,13 +4,13 @@
 
     <div>
       <h2 class="text-3xl font-black text-slate-800 dark:text-white">
-        Skill/Services Master
+        Skill & Services Master
       </h2>
 
     </div>
 
     <!-- Actions -->
-   
+
 
 
     <button (click)="openAddModal()"
@@ -27,7 +27,7 @@
 
       </div>
 
-      Add Skill/Services
+      Add Skill & Services
 
     </button>
 
@@ -41,7 +41,7 @@
 
       <div>
         <h3 class="text-lg font-black tracking-tight text-slate-800 dark:text-white">
-          Skill  Master
+          Skill & Services Master
         </h3>
 
         <p class="text-xs text-slate-500 font-medium mt-1">
@@ -59,8 +59,7 @@
             search
           </span>
 
-          <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
-            placeholder="Search skills..."
+          <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Search skills..."
             class="w-full bg-transparent outline-none text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400">
 
         </div>
@@ -79,7 +78,7 @@
           <tr>
 
             <th class="px-6 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-              Skill/Services
+              Skill & Services
             </th>
 
             <th class="px-6 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -312,7 +311,7 @@
 
         <h3 class="text-2xl font-black text-slate-800">
 
-          {{ isEditMode ? 'Edit Skill/Services' : 'Add Skill/Services' }}
+          {{ isEditMode ? 'Edit Skill & Services' : 'Add Skill & Services' }}
 
         </h3>
 
@@ -321,7 +320,7 @@
           {{
           isEditMode
           ? 'Update existing skill details'
-          : 'Create a new skill/services record'
+          : 'Create a new skill & services record'
           }}
 
         </p>
@@ -342,7 +341,7 @@
     <div class="mb-5">
 
       <label class="text-sm font-black block mb-2 text-slate-700">
-        Skill/Services Name
+        Skill & Services Name
       </label>
 
       <input type="text" [(ngModel)]="newSkill.skill_name" placeholder="Enter skill name"

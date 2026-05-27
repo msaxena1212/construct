@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 
 interface BackendVendor {
   id: string;
+  project_id: number | null;
   company_id: string;
   name: string;
   spoc_name: string;
@@ -70,6 +71,7 @@ export interface Invoice {
 
 export interface Vendor {
   company_id: any;
+  project_id: number | null;
   id: string;
   name: string;
   type: string;
@@ -170,6 +172,7 @@ export class VendorsServices {
     return {
       company_id: b.company_id,
       id: b.id,
+      project_id: b.project_id ?? null,
       name: b.name,
       type: 'Subcontractor',
       email: b.official_email,
