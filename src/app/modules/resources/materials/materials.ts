@@ -2,13 +2,10 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaterialService, Material } from '../../../shared/services/materials/materials';
-// import { VendorService, Vendor } from '../../services/vendor.service';
 import { CommonModule } from '@angular/common';
 import { VendorsServices } from '../../vendors/services/vendors-services';
 import { MaterialMasterService } from '../../../shared/services/master/material-master';
 import { Toast, ToastrService } from 'ngx-toastr';
-// import { RbacService } from '../../../shared/services/rbac/rbac.service';
-
 
 @Component({
   selector: 'app-materials',
@@ -19,7 +16,6 @@ import { Toast, ToastrService } from 'ngx-toastr';
 export class Materials {
   private materialService = inject(MaterialService);
   private MaterialMasterService = inject(MaterialMasterService);
-  // private vendorService = inject(VendorService);
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
@@ -33,7 +29,6 @@ export class Materials {
   selectedTab = 'All Materials';
   tabs = ['All Materials', 'Low Stock', 'Concrete', 'Steel', 'Electrical', 'Lumber'];
 
-  // Modal States
   showAddModal = false;
   showEditModal = false;
   showDeleteModal = false;
@@ -97,11 +92,10 @@ export class Materials {
       ).length;
 
 
-      this.page = 1; // 🔥 reset page (important)
-      this.updatePagination(); // ✅ yahi sahi jagah hai
+      this.page = 1;
+      this.updatePagination();
     });
-    //  this.materialService.materials$.subscribe(m => this.materials = m);
-    this.MaterialMasterService.loadMaterials();
+    
     this.loadProjects();
 
     this.MaterialMasterService.materials$.subscribe(m => {
@@ -168,7 +162,7 @@ export class Materials {
 
   changeTab(tab: string) {
     this.selectedTab = tab;
-    this.page = 1; // optional reset page
+    this.page = 1;
     this.updatePagination();
   }
 
@@ -261,16 +255,6 @@ export class Materials {
     this.newMaterial = this.getDefaultMaterial();
     this.showAddModal = true;
   }
-
-  // getvendor(vendorId: any) {
-  //   console.log(vendorId.target.value, this.vendors, 'sdzfdsfds');
-  //   const vendor = this.vendors.find((v: any) => v.id == vendorId.target.value);
-  //   this.newMaterial.vendor_name = vendor?.name || '';
-  //   console.log(vendor, 'vendor');
-  //   this.newMaterial.vendor_id = vendorId.target.value || '';
-  // }
-
-
 
   getProject(projectId: any) {
 
