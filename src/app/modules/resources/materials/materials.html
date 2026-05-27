@@ -69,7 +69,7 @@
             <div class="flex items-baseline gap-2">
 
                 <span class="text-3xl font-black text-secondary">
-                    {{ materials.filter(item => item.status === 'ASSIGNED').length }}
+                    {{ noOfProjectsAssigned }}
                 </span>
 
                 <span class="material-symbols-outlined text-secondary-container"
@@ -111,7 +111,7 @@
             <div class="flex items-baseline gap-2">
 
                 <span class="text-3xl font-black">
-                    {{ materials.filter(item => item.status === 'NOT ASSIGNED').length }}
+                    {{ noOfProjectsNotAssigned }}
                 </span>
 
                 <span class="material-symbols-outlined text-outline">

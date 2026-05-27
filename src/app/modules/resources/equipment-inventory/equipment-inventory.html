@@ -25,7 +25,7 @@
          
         </div> -->
     </div>
-    <!-- 
+    
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 
         <div
@@ -59,7 +59,7 @@
             <div class="flex items-baseline gap-2">
 
                 <span class="text-3xl font-black text-secondary">
-                    {{ materials.filter(item => item.status === 'ASSIGNED').length }}
+                    {{ noOfProjectsAssigned }}
                 </span>
 
                 <span class="material-symbols-outlined text-secondary-container"
@@ -99,7 +99,7 @@
             <div class="flex items-baseline gap-2">
 
                 <span class="text-3xl font-black">
-                    {{ materials.filter(item => item.status === 'NOT ASSIGNED').length }}
+                    {{noOfProjectsNotAssigned }}
                 </span>
 
                 <span class="material-symbols-outlined text-outline">
@@ -110,7 +110,7 @@
 
         </div>
 
-    </div> -->
+    </div>
 
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">

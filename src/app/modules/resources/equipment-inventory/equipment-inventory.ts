@@ -90,14 +90,23 @@ export class EquipmentInventory {
   showAddVendorModal = false;
   searchQuery: any;
   showAssignProjectModal: boolean = false;
+  noOfProjectsAssigned: number = 0;
+  noOfProjectsNotAssigned: number=0;
 
   ngOnInit() {
 
     this.materialService.loadMaterials();
 
-    this.materialService.materials$.subscribe(m => {
+    this.materialService.materials$.subscribe((m: any[]) => {
 
       this.materials = m;
+      this.noOfProjectsAssigned = m.filter(
+        x => x.equipment_project_stock && x.equipment_project_stock.length > 0
+      ).length;
+
+      this.noOfProjectsNotAssigned = m.filter(
+        x => !x.equipment_project_stock || x.equipment_project_stock.length === 0
+      ).length;
 
       this.page = 1;
 
@@ -1096,9 +1105,9 @@ export class EquipmentInventory {
     this.materialService
       .equipment_stock_transfer(
 
-       this.stockTransferData.material_id,
+        this.stockTransferData.material_id,
 
-       payload
+        payload
 
       )
       .subscribe({

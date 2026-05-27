@@ -79,12 +79,24 @@ export class Materials {
   showAddVendorModal = false;
   Number: any;
   searchQuery: any;
+  noOfProjectsAssigned: number = 0;
+  noOfProjectsNotAssigned: number=0;
 
   ngOnInit() {
     this.materialService.loadMaterials();
 
-    this.materialService.materials$.subscribe(m => {
+    this.materialService.materials$.subscribe((m:any) => {
       this.materials = m;
+
+      this.noOfProjectsAssigned = m.filter(
+        (x:any) => x.material_project_stock && x.material_project_stock.length > 0
+      ).length;
+
+      this.noOfProjectsNotAssigned = m.filter(
+        (x:any) => !x.material_project_stock || x.material_project_stock.length === 0
+      ).length;
+
+
       this.page = 1; // 🔥 reset page (important)
       this.updatePagination(); // ✅ yahi sahi jagah hai
     });
