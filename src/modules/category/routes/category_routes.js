@@ -20,4 +20,8 @@ module.exports = (router) => {
     // Delete category (Soft Delete)
     router.delete("/deleteCategory/:id", categoryCtrl.deleteCategory);
 
+    router.get("/getCategoryandtypeById/:id", categoryCtrl.getCategoryandtypeById);
+
+
+
 };
