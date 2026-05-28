@@ -7,6 +7,8 @@ class CategoryController {
     this.getCategoryById = this.getCategoryById.bind(this);
     this.updateCategory = this.updateCategory.bind(this);
     this.deleteCategory = this.deleteCategory.bind(this);
+    this.getCategoryandtypeById = this.getCategoryandtypeById.bind(this);
+
   }
 
   /**
@@ -250,9 +252,9 @@ class CategoryController {
   }
 
 
-    /**
-   * Update Category
-   */
+  /**
+ * Update Category
+ */
   async updateCategorybyid(req, res) {
     try {
 
@@ -378,6 +380,50 @@ class CategoryController {
       });
     }
   }
+
+  async getCategoryandtypeById(req, res) {
+    try {
+
+      const { id } = req.params;
+
+      const company_id = req.user.company_id;
+
+      if (!company_id) {
+        return res.status(401).json({
+          message: "Unauthorized. Company context missing."
+        });
+      }
+
+      const category = await db.category.findOne({
+        where: {
+          id,
+          isDeleted: false,
+          company_id
+        }
+      });
+
+      if (!category) {
+        return res.status(404).json({
+          message: "Category not found."
+        });
+      }
+
+      return res.status(200).json({
+        data: category
+      });
+
+    } catch (error) {
+
+      console.error("[GET_CATEGORY_BY_ID_ERROR]", error);
+
+      return res.status(500).json({
+        message: "Error fetching category.",
+        error: error.message
+      });
+    }
+  }
+
+
 }
 
 module.exports = new CategoryController();

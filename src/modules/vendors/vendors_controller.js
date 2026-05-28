@@ -240,22 +240,22 @@ const updateVendor = async (req, res) => {
 
     delete req.body.company_id;
 
-    await vendor.update(req.body);
-
-    const hasGst = !!(vendor.gst_no && vendor.gst_no.trim());
-    const hasPan = !!(vendor.pan_card_no && vendor.pan_card_no.trim());
-    const hasContract = !!(vendor.contract_file);
-    const budgetNum = parseFloat(vendor.budget_allocation) || 0;
-    const hasSkill = !!(vendor.skill && vendor.skill.trim());
+    const hasGst = !!(req.body.gst_no ?? vendor.gst_no);
+    const hasPan = !!(req.body.pan_card_no ?? vendor.pan_card_no);
+    const hasFile = !!(vendor.contract_file);
+    const budget = parseFloat(req.body.budget_allocation ?? vendor.budget_allocation) || 0;
+    const skill = (req.body.skill ?? vendor.skill ?? '').toString().trim();
 
     let complianceScore = 0;
     if (hasGst) complianceScore += 25;
     if (hasPan) complianceScore += 25;
-    if (hasContract) complianceScore += 25;
-    if (budgetNum > 0) complianceScore += 15;
-    if (hasSkill) complianceScore += 10;
+    if (hasFile) complianceScore += 25;
+    if (budget > 0) complianceScore += 15;
+    if (skill) complianceScore += 10;
 
-    await vendor.update({ compliance_score: complianceScore });
+    req.body.compliance_score = complianceScore;
+
+    await vendor.update(req.body);
 
     return res.status(200).json({
       success: true,
