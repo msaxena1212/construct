@@ -380,14 +380,22 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [(ngModel)]="newMaterial.category"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="Concrete">Concrete</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Lumber">Lumber</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Chemicals">Chemicals</option>
+                <select [(ngModel)]="newMaterial.category" class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800
+         text-sm font-bold outline-none bg-white dark:bg-slate-900">
+
+                    <!-- Default Disabled Option -->
+                    <option value="" disabled selected>
+                        Select Category
+                    </option>
+
+                    @for (category of categories; track $index) {
+
+                    <option [value]="category.category_name">
+                        {{ category.category_name }}
+                    </option>
+
+                    }
+
                 </select>
             </div>
 
@@ -397,35 +405,6 @@
                 <input [(ngModel)]="newMaterial.cost" type="number" min="1" placeholder="0.00"
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
-            <!-- <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Current
-                    Stock</label>
-                <input [(ngModel)]="newMaterial.stockCurrent" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Total
-                    Capacity</label>
-                <input [(ngModel)]="newMaterial.stockTotal" type="number"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Unit
-                    Cost</label>
-                <input [(ngModel)]="newMaterial.cost" type="text" placeholder="₹0.00"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
-                <select [(ngModel)]="newMaterial.vendor_id" (change)="getvendor($event)"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="" disabled selected>Select Supplier</option>
-                    @for (v of vendors; track v.id) {
-                    <option [value]="v.id">{{ v.name }}</option>
-                    }
-                    <option value="ADD_NEW" class="text-primary font-bold">+ Add New Vendor</option>
-                </select>
-            </div> -->
         </div>
 
         <div class="flex gap-3 mt-8">
@@ -460,20 +439,30 @@
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
             <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">SKU Code</label>
+                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">SKU
+                    Code</label>
                 <input [(ngModel)]="materialToEdit.sku" type="text" readonly
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold outline-none cursor-not-allowed">
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [(ngModel)]="materialToEdit.category"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="Concrete">Concrete</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Lumber">Lumber</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Chemicals">Chemicals</option>
+                <select [(ngModel)]="materialToEdit.category" class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800
+         text-sm font-bold outline-none bg-white dark:bg-slate-900">
+
+                    <!-- Default Disabled Option -->
+                    <option value="" disabled selected>
+                        Select Category
+                    </option>
+
+                    @for (category of categories; track $index) {
+
+                    <option [value]="category.category_name"
+                        [selected]="category.category_name === materialToEdit.category">
+                        {{ category.category_name }}
+                    </option>
+
+                    }
+
                 </select>
             </div>
 
@@ -534,7 +523,8 @@
         </div>
         <h3 class="text-xl font-black mb-2">Delete Material?</h3>
         <p class="text-outline text-sm font-medium mb-8">Are you sure you want to remove <span
-                class="text-on-surface font-black">"{{ materialToDelete.name }}"</span>? This action cannot be undone.
+                class="text-on-surface font-black">"{{ materialToDelete.name }}"</span>? This action cannot be
+            undone.
         </p>
 
         <div class="flex gap-3">

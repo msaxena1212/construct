@@ -443,14 +443,22 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [(ngModel)]="newMaterial.category"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="Concrete">Concrete</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Lumber">Lumber</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Chemicals">Chemicals</option>
+                   <select [(ngModel)]="newMaterial.category" class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800
+         text-sm font-bold outline-none bg-white dark:bg-slate-900">
+
+                    <!-- Default Disabled Option -->
+                    <option value="" disabled selected>
+                        Select Category
+                    </option>
+
+                    @for (category of categories; track $index) {
+
+                    <option [value]="category.category_name">
+                        {{ category.category_name }}
+                    </option>
+
+                    }
+
                 </select>
             </div>
 
@@ -500,14 +508,22 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [(ngModel)]="materialToEdit.category"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="Concrete">Concrete</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Lumber">Lumber</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Chemicals">Chemicals</option>
+                    <select [(ngModel)]="materialToEdit.category" class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800
+         text-sm font-bold outline-none bg-white dark:bg-slate-900">
+
+                    <!-- Default Disabled Option -->
+                    <option value="" disabled selected>
+                        Select Category
+                    </option>
+
+                    @for (category of categories; track $index) {
+
+                    <option [value]="category.category_name">
+                        {{ category.category_name }}
+                    </option>
+
+                    }
+
                 </select>
             </div>
 

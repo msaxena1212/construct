@@ -36,10 +36,10 @@ private categoryService = inject(CategoryServeice);
 
   ngOnInit(): void {
 
-    this.getSkills();
+    this.getCategories();
   }
 
-  getSkills() {
+  getCategories() {
 
     this.categoryService.loadCategories().subscribe({
 
@@ -174,7 +174,7 @@ get filteredCategories(): any[] {
 
           this.closeModal();
 
-          this.getSkills();
+          this.getCategories();
         },
 
         error: (err) => {
@@ -224,7 +224,7 @@ get filteredCategories(): any[] {
 
           this.closeModal();
 
-          this.getSkills();
+          this.getCategories();
         },
 
         error: (err) => {
@@ -239,10 +239,10 @@ get filteredCategories(): any[] {
       });
   }
 
-  deleteSkill(id: number) {
+  deleteCategory(id: number) {
 
     const confirmDelete =
-      confirm('Are you sure you want to delete this skill?');
+      confirm('Are you sure you want to delete this category?');
 
     if (!confirmDelete) return;
 
@@ -256,7 +256,7 @@ get filteredCategories(): any[] {
             'Category deleted successfully'
           );
 
-          this.getSkills();
+          this.getCategories();
         },
 
         error: (err) => {

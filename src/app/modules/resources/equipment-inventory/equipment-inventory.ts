@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { VendorsServices } from '../../vendors/services/vendors-services';
 import { Equipment } from '../../../shared/services/master/equipment';
 import { ToastrService } from 'ngx-toastr';
+import { CategoryServeice } from '../../../shared/services/master/category-serveice';
 
 @Component({
   selector: 'app-equipment-inventory',
@@ -20,26 +21,17 @@ export class EquipmentInventory {
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
+  private categoryService = inject(CategoryServeice);
 
-  team = [
-    { name: 'All Members' },
-    { name: 'Marcus Thorne' },
-    { name: 'Sarah Chen' }
-  ];
+  // team = [
+  //   { name: 'All Members' },
+  //   { name: 'Marcus Thorne' },
+  //   { name: 'Sarah Chen' }
+  // ];
 
-  selectedMember = 'All Members';
+  // selectedMember = 'All Members';
 
-  selectedTab = 'All Materials';
-
-  tabs = [
-    'All Materials',
-    'Low Stock',
-    'Concrete',
-    'Steel',
-    'Electrical',
-    'Lumber'
-  ];
-
+  selectedTab = 'All Equipment';
   showAddModal = false;
   showEditModal = false;
   showDeleteModal = false;
@@ -91,7 +83,8 @@ export class EquipmentInventory {
   searchQuery: any;
   showAssignProjectModal: boolean = false;
   noOfProjectsAssigned: number = 0;
-  noOfProjectsNotAssigned: number=0;
+  noOfProjectsNotAssigned: number = 0;
+  categories: any[] = [];
 
   ngOnInit() {
 
@@ -125,7 +118,37 @@ export class EquipmentInventory {
     });
 
     this.getVendor();
+    this.getCategories();
 
+  }
+
+
+  getCategories() {
+
+    this.categoryService.loadCategories().subscribe({
+
+      next: () => {
+
+        this.categoryService.categories$.subscribe((res) => {
+
+          this.categories = [
+            {
+              category_name: 'All Equipment',
+              isDefault: true
+            },
+            ...res.filter((c: any) => c.category_type === 'Equipment')
+          ];
+          this.updatePagination();
+        });
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.toast.error('Failed to load skills');
+      }
+    });
   }
 
   get filteredMaterials(): any[] {
@@ -139,7 +162,7 @@ export class EquipmentInventory {
         m => m.stockIn < 20
       );
 
-    } else if (this.selectedTab !== 'All Materials') {
+    } else if (this.selectedTab !== 'All Equipment') {
 
       filtered = filtered.filter(
         m =>
@@ -200,9 +223,9 @@ export class EquipmentInventory {
 
   }
 
-  changeTab(tab: string) {
+  changeTab(tab: any) {
 
-    this.selectedTab = tab;
+    this.selectedTab = tab.category_name || tab;
 
     this.page = 1;
 
@@ -567,21 +590,21 @@ export class EquipmentInventory {
 
   ];
 
-  get filteredDeliveries() {
+  // get filteredDeliveries() {
 
-    if (this.selectedMember === 'All Members') {
+  //   if (this.selectedMember === 'All Members') {
 
-      return this.deliveries;
+  //     return this.deliveries;
 
-    }
+  //   }
 
-    return this.deliveries.filter(
+  //   return this.deliveries.filter(
 
-      d => d.assignee === this.selectedMember
+  //     d => d.assignee === this.selectedMember
 
-    );
+  //   );
 
-  }
+  // }
 
 
   getSelectedMat(event: any) {

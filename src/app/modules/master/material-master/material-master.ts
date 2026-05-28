@@ -5,6 +5,7 @@ import { MaterialMasterService, Material } from '../../../shared/services/master
 import { VendorsServices } from '../../vendors/services/vendors-services';
 import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
+import { CategoryServeice } from '../../../shared/services/master/category-serveice';
 
 @Component({
   selector: 'app-material-master',
@@ -18,6 +19,7 @@ export class MaterialMaster {
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
+private categoryService = inject(CategoryServeice);
 
 
   team = [
@@ -47,6 +49,7 @@ export class MaterialMaster {
   paginatedMaterials: any[] = [];
   Math: any;
   searchQuery: any;
+  categories: any[]= [];
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -59,6 +62,31 @@ export class MaterialMaster {
 
     this.vendorService.vendors$.subscribe(v => {
       this.vendors = v;
+    });
+
+    this.getCategories();
+  }
+
+  getCategories() {
+
+    this.categoryService.loadCategories().subscribe({
+
+      next: () => {
+
+        this.categoryService.categories$.subscribe((res) => {
+
+          this.categories = res.filter((c: any) => c.category_type === 'Material');
+
+          this.updatePagination();
+        });
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.toast.error('Failed to load skills');
+      }
     });
   }
 
