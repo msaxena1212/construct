@@ -346,55 +346,6 @@ class MaterialController {
         }
       );
 
-      // // create entries project wise
-      // const project_multiple = await Promise.all(
-      //   projects.map(async (project) => {
-
-      //     // const projectData = await db.project.findOne({
-      //     //   where: {
-      //     //     id: project.project_id
-      //     //   }
-      //     // });
-
-      //     return await db.material_project_stock.create({
-      //       material_id: id,
-      //       project_id: project.project_id,
-      //       name,
-      //       sku,
-      //       category,
-      //       vendor_name,
-      //       stockUsed: project.stock,
-      //       cost,
-      //       status: project.status,
-      //       vendor_id,
-      //       material_master_id,
-      //       project_name: project.project_name,
-      //       quotation_id,
-      //       company_id
-      //     });
-
-      //     await db.material_history.create({
-      //       name,
-      //       sku,
-      //       category,
-      //       stockIn,
-      //       stockUsed: project.stock,
-      //       cost,
-      //       vendor_name,
-      //       project_name: project.project_name,
-      //       material_id: material.id,
-      //       material_master_id,
-      //       company_id,
-      //       project_id: project.project_id,
-      //       vendor_id,
-      //       status: "UPDATED",
-
-      //     });
-
-
-      //   })
-      // );
-
       const project_multiple = await Promise.all(
         projects.map(async (project) => {
 
@@ -466,26 +417,6 @@ class MaterialController {
       );
 
 
-      // const existingMaterial = await db.material_master.findOne({
-      //   where: {
-      //     id: material_master_id
-      //   }
-      // });
-
-      // const updatedStock =
-      //   Number(existingMaterial.stockAvailable) + Number(stockIn);
-
-      // await db.material_master.update(
-      //   {
-      //     stockAvailable: updatedStock
-      //   },
-      //   {
-      //     where: {
-      //       id: material_master_id
-      //     }
-      //   }
-      // );
-
       // ================= CREATE HISTORY =================
       // await db.material_history.create({
       //   name,
@@ -552,6 +483,7 @@ class MaterialController {
       });
     }
   }
+
 
   async getMaterialByprojectId(req, res) {
     try {

@@ -83,36 +83,6 @@ class QuotationController {
 
                 total_amount += Number(item.totalPrice);
 
-                // Material Stock Update
-                // if (item.material_master_id) {
-
-                //     const existingMaterial = await db.material_master.findOne({
-                //         where: {
-                //             id: item.material_master_id
-                //         }
-                //     });
-
-                //     if (existingMaterial) {
-
-                //         const updatedStock =
-                //             Number(existingMaterial.stockAvailable) +
-                //             Number(item.quantity);
-
-
-                //         console.log(updatedStock, "stock");
-
-                //         await db.material_master.update(
-                //             {
-                //                 stockAvailable: updatedStock
-                //             },
-                //             {
-                //                 where: {
-                //                     id: item.material_master_id
-                //                 }
-                //             }
-                //         );
-                //     }
-                // }
             }
 
             // Create Quotation
@@ -569,74 +539,6 @@ class QuotationController {
         }
     }
 
-    // /**
-    //  * Update Quotation
-    //  */
-    // async update_quotation(req, res) {
-    //     try {
-
-    //         const { id } = req.params;
-
-    //         const company_id = req.user.company_id;
-
-    //         const quotation = await db.quotation.findOne({
-    //             where: {
-    //                 id,
-    //                 company_id,
-    //                 isDeleted: false
-    //             }
-    //         });
-
-    //         if (!quotation) {
-    //             return res.status(404).json({
-    //                 message: "Quotation not found."
-    //             });
-    //         }
-
-    //         const {
-    //             name,
-    //             sku,
-    //             category,
-    //             quantity,
-    //             unit_cost,
-    //             total_cost,
-    //             vendor_name,
-    //             status,
-    //             material_master_id,
-    //             equipment_master_id,
-    //             vendor_id,
-    //             quotation_status
-    //         } = req.body;
-
-    //         await quotation.update({
-    //             name,
-    //             sku,
-    //             category,
-    //             quantity,
-    //             unit_cost,
-    //             total_cost,
-    //             vendor_name,
-    //             status,
-    //             material_master_id,
-    //             equipment_master_id,
-    //             vendor_id,
-    //             quotation_status
-    //         });
-
-    //         return res.status(200).json({
-    //             message: "Quotation updated successfully.",
-    //             data: quotation
-    //         });
-
-    //     } catch (error) {
-    //         console.error("[UPDATE_QUOTATION_ERROR]", error);
-
-    //         return res.status(500).json({
-    //             message: "Error updating quotation.",
-    //             error: error.message
-    //         });
-    //     }
-    // }
 
     /**
      * Update Quotation
@@ -892,44 +794,6 @@ class QuotationController {
         }
     }
 
-    // ===============================
-    // GET ALL MATERIAL QUOTATIONS
-    // ===============================
-    // async getall_material_quotation(req, res) {
-    //     try {
-
-    //         const company_id = req.user.company_id;
-
-    //         const quotations = await db.quotation.findAll({
-    //             where: {
-    //                 status: "MATERIAL",
-    //                 isDeleted: false,
-    //                 company_id
-    //             },
-    //             order: [["createdAt", "DESC"]]
-    //         });
-
-    //         if (quotations.length === 0) {
-    //             return res.status(404).json({
-    //                 message: "No material quotations found."
-    //             });
-    //         }
-
-    //         return res.status(200).json({
-    //             message: "Material quotations fetched successfully.",
-    //             data: quotations
-    //         });
-
-    //     } catch (error) {
-
-    //         console.error("[GETALL_MATERIAL_QUOTATION_ERROR]", error);
-
-    //         return res.status(500).json({
-    //             message: "Error fetching material quotations.",
-    //             error: error.message
-    //         });
-    //     }
-    // }
 
     /**
      * Get All Material Quotations
@@ -1124,5 +988,6 @@ class QuotationController {
 
 
 }
+
 
 module.exports = new QuotationController();
