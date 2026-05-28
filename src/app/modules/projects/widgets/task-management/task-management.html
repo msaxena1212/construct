@@ -7,7 +7,6 @@
     </div>
     <div class="flex items-center gap-3 flex-wrap">
 
-        <!-- Milestone -->
         <div
             class="relative flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl shadow-sm min-w-[240px]">
 
@@ -41,14 +40,11 @@
             </select>
 
             <span class="material-symbols-outlined absolute right-4 text-slate-400 text-[18px] pointer-events-none">
-
                 expand_more
-
             </span>
 
         </div>
 
-        <!-- Member Filter -->
         <div
             class="relative flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl shadow-sm min-w-[220px]">
 
@@ -74,21 +70,15 @@
             </select>
 
             <span class="material-symbols-outlined absolute right-4 text-slate-400 text-[18px] pointer-events-none">
-
                 expand_more
-
             </span>
 
         </div>
-
-        <!-- Refresh -->
         <button (click)="fetchTasks()" [disabled]="loading"
             class="flex items-center gap-2 px-5 py-[11px] bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-200 dark:border-slate-800 cursor-pointer disabled:opacity-60">
 
             <span class="material-symbols-outlined text-lg" [class.animate-spin]="loading">
-
                 sync
-
             </span>
 
             Refresh
@@ -97,6 +87,7 @@
 
     </div>
 </div>
+
 @if (!selectedMilestoneId) {
 <div
     class="flex flex-col items-center justify-center min-h-[400px] border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
@@ -109,7 +100,6 @@
 </div>
 }
 @else {
-<!-- Kanban Board Layout -->
 <div class="relative">
     @if (loading) {
     <div class="absolute inset-0 z-10 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-3xl">
@@ -119,10 +109,11 @@
         </div>
     </div>
     }
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 min-h-[716px]" cdkDropListGroup>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6" cdkDropListGroup>
         @for (column of columns; track column.id) {
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between px-2 mb-2">
+
+            <div class="flex items-center justify-between px-2">
                 <div class="flex items-center gap-3">
                     <div [class]="'w-2.5 h-2.5 rounded-full ' + column.color"></div>
                     <h3 class="text-sm font-black uppercase tracking-widest text-slate-500">{{ column.title }}</h3>
@@ -135,89 +126,100 @@
                 </button>
             </div>
 
-            <!-- Drop List Container -->
-            <div cdkDropList [id]="column.id" [cdkDropListData]="column.tasks" (cdkDropListDropped)="drop($event)"
-                class="flex-1 flex flex-col gap-4 min-h-[200px]">
-                @for (task of column.tasks; track task.id) {
-                <div cdkDrag (click)="openTaskDetail(task)"
-                    [class]="'glass-card p-5 rounded-2xl shadow-sm border border-white/40 group hover:shadow-xl hover:-translate-y-1 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ' + (task.status === 'Completed' ? 'opacity-75 grayscale-[0.5]' : '')">
+            <div class="kanban-column-scroll" [id]="column.id + '-wrapper'">
 
-                    <div class="cdk-drag-placeholder" *cdkDragPlaceholder></div>
+                <div cdkDropList [id]="column.id" [cdkDropListData]="column.tasks" (cdkDropListDropped)="drop($event)"
+                    class="flex flex-col gap-4 min-h-[200px]">
 
-                    <div class="flex justify-between items-start mb-4">
-                        <span
-                            [class]="'px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter ' + task.priorityClass">{{
-                            task.priority }}</span>
-                        <div class="flex items-center gap-1">
-                            @if (task.sub_tasks?.length) {
-                            <span class="material-symbols-outlined text-slate-400 text-xs">task</span>
-                            }
-                            @if (task.comments?.length) {
-                            <span class="material-symbols-outlined text-slate-400 text-xs">chat_bubble</span>
-                            }
+                    @for (task of column.tasks; track task.id) {
+                    <div cdkDrag (click)="openTaskDetail(task)"
+                        [class]="'glass-card p-5 rounded-2xl shadow-sm border border-white/40 group hover:shadow-xl hover:-translate-y-1 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden ' + (task.status === 'Completed' ? 'opacity-75 grayscale-[0.5]' : '')">
+
+                        <div class="cdk-drag-placeholder" *cdkDragPlaceholder></div>
+
+                        <div class="flex justify-between items-start mb-4">
+                            <span
+                                [class]="'px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter ' + task.priorityClass">{{
+                                task.priority }}</span>
+                            <div class="flex items-center gap-1">
+                                @if (task.sub_tasks?.length) {
+                                <span class="material-symbols-outlined text-slate-400 text-xs">task</span>
+                                }
+                                @if (task.comments?.length) {
+                                <span class="material-symbols-outlined text-slate-400 text-xs">chat_bubble</span>
+                                }
+                            </div>
+                        </div>
+
+                        <h4
+                            [class]="'font-bold text-slate-900 mb-2 leading-snug ' + (task.status === 'Completed' ? 'line-through text-slate-400' : '')">
+                            {{ task.title }}</h4>
+
+                        @if (task.description) {
+                        <p class="text-xs text-slate-500 mb-6 line-clamp-2">{{ task.description }}</p>
+                        }
+                        @if (task.sub_tasks?.length) {
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Subtasks</span>
+                                <span class="text-[10px] font-bold text-slate-500">{{ ((task.sub_tasks || []) |
+                                    subtaskProgress) }}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-1 rounded-full">
+                                <div class="bg-primary h-1 rounded-full transition-all"
+                                    [style.width.%]="((task.sub_tasks || []) | subtaskProgress)"></div>
+                            </div>
+                        </div>
+                        }
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-[10px] font-bold"
+                                [class.text-amber-500]="task.status === 'In Progress'"
+                                [class.text-blue-600]="task.status === 'Review'"
+                                [class.text-green-600]="task.status === 'Completed'"
+                                [class.text-slate-400]="task.status === 'To Do'">
+                                <span class="material-symbols-outlined text-sm">
+                                    {{ task.status === 'In Progress' ? 'update' :
+                                    (task.status === 'Review' ? 'visibility' :
+                                    (task.status === 'Completed' ? 'check_circle' : 'calendar_today')) }}
+                                </span>
+                                {{ task.due_date ? (task.due_date | date: 'MMM dd, yyyy') : task.status }}
+                            </div>
+
+                            <div class="flex -space-x-2">
+                                @for (assignee of task.assignees; track assignee.id) {
+                                <img class="w-6 h-6 rounded-lg ring-2 ring-white object-cover"
+                                    [src]="assignee.avatar || 'assets/default-avatar.png'"
+                                    [title]="assignee.firstname" />
+                                }
+                            </div>
                         </div>
                     </div>
-
-                    <h4
-                        [class]="'font-bold text-slate-900 mb-2 leading-snug ' + (task.status === 'Completed' ? 'line-through text-slate-400' : '')">
-                        {{ task.title }}</h4>
-
-                    @if (task.description) {
-                    <p class="text-xs text-slate-500 mb-6 line-clamp-2">{{ task.description }}</p>
                     }
 
-                    <!-- Progress Indicator -->
-                    @if (task.sub_tasks?.length) {
-                    <div class="mb-4">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Subtasks</span>
-                            <span class="text-[10px] font-bold text-slate-500">{{ ((task.sub_tasks || []) |
-                                subtaskProgress)
-                                }}%</span>
-                        </div>
-                        <div class="w-full bg-slate-100 h-1 rounded-full">
-                            <div class="bg-primary h-1 rounded-full transition-all"
-                                [style.width.%]="((task.sub_tasks || []) | subtaskProgress)"></div>
-                        </div>
-                    </div>
-                    }
-
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-[10px] font-bold"
-                            [class.text-amber-500]="task.status === 'In Progress'"
-                            [class.text-blue-600]="task.status === 'Review'"
-                            [class.text-green-600]="task.status === 'Completed'"
-                            [class.text-slate-400]="task.status === 'To Do'">
-                            <span class="material-symbols-outlined text-sm">
-                                {{ task.status === 'In Progress' ? 'update' :
-                                (task.status === 'Review' ? 'visibility' :
-                                (task.status === 'Completed' ? 'check_circle' : 'calendar_today')) }}
-                            </span>
-                            {{ task.due_date ? (task.due_date | date: 'MMM dd, yyyy') : task.status }}
-                        </div>
-
-                        <div class="flex -space-x-2">
-                            @for (assignee of task.assignees; track assignee.id) {
-                            <img class="w-6 h-6 rounded-lg ring-2 ring-white object-cover"
-                                [src]="assignee.avatar || 'assets/default-avatar.png'" [title]="assignee.firstname" />
-                            }
-                        </div>
-                    </div>
                 </div>
-                }
             </div>
+
+            @if (column.tasks.length > 2) {
+            <div class="scroll-hint flex items-center justify-center gap-1.5 pt-1">
+                <span class="material-symbols-outlined text-slate-300 text-base">keyboard_double_arrow_down</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    {{ column.tasks.length - 2 }} more
+                </span>
+            </div>
+            }
+
         </div>
         }
     </div>
 </div>
 
-<!-- Contextual FAB -->
 <button (click)="openAddTaskModal()"
     class="fixed bottom-8 right-8 w-14 h-14 rounded-2xl bg-linear-to-br from-primary to-primary-container text-white shadow-2xl shadow-primary/40 flex items-center justify-center active:scale-90 transition-all z-50 group cursor-pointer">
     <span class="material-symbols-outlined text-3xl transition-transform group-hover:rotate-90">add</span>
 </button>
 }
-<!-- Modals -->
+
 @if (selectedTask) {
 <app-task-detail [task]="selectedTask" (close)="closeTaskDetail()"></app-task-detail>
 }

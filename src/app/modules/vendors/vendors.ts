@@ -129,6 +129,7 @@ export class Vendors implements OnInit {
   private loadVendorSubData(vendorId: string): void {
     this.invoiceService.loadInvoices(vendorId);
     this.auditService.loadAudits(vendorId);
+    this.laborService.loadLaborForVendor(vendorId);
 
     const projectId = this.selectedVendor?.project_id;
     if (projectId) {
