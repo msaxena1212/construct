@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { VendorsServices } from '../../vendors/services/vendors-services';
 import { MaterialMasterService } from '../../../shared/services/master/material-master';
 import { Toast, ToastrService } from 'ngx-toastr';
+import { CategoryServeice } from '../../../shared/services/master/category-serveice';
 
 @Component({
   selector: 'app-materials',
@@ -19,15 +20,9 @@ export class Materials {
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
+  private categoryService = inject(CategoryServeice);
 
-  team = [
-    { name: 'All Members' },
-    { name: 'Marcus Thorne' },
-    { name: 'Sarah Chen' }
-  ];
-  selectedMember = 'All Members';
   selectedTab = 'All Materials';
-  tabs = ['All Materials', 'Low Stock', 'Concrete', 'Steel', 'Electrical', 'Lumber'];
 
   showAddModal = false;
   showEditModal = false;
@@ -76,6 +71,7 @@ export class Materials {
   searchQuery: any;
   noOfProjectsAssigned: number = 0;
   noOfProjectsNotAssigned: number=0;
+  categories: any[]= [];
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -103,6 +99,35 @@ export class Materials {
     });
 
     this.getVendors();
+    this.getCategories();
+  }
+
+    getCategories() {
+
+    this.categoryService.loadCategories().subscribe({
+
+      next: () => {
+
+        this.categoryService.categories$.subscribe((res) => {
+
+          this.categories = [
+            {
+              category_name: 'All Materials',
+              isDefault: true
+            },
+            ...res.filter((c: any) => c.category_type === 'Material')
+          ];
+          this.updatePagination();
+        });
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.toast.error('Failed to load skills');
+      }
+    });
   }
 
   loadProjects() {
@@ -153,15 +178,16 @@ export class Materials {
 
       filtered = filtered.filter((material: any) =>
         material.name?.toLowerCase().includes(q) ||
-        material.sku?.toLowerCase().includes(q)
+        material.sku?.toLowerCase().includes(q) ||
+        material.category?.toLowerCase().includes(q)
       );
     }
 
     return filtered;
   }
 
-  changeTab(tab: string) {
-    this.selectedTab = tab;
+  changeTab(tab: any) {
+    this.selectedTab = tab.category_name || tab;
     this.page = 1;
     this.updatePagination();
   }
@@ -356,21 +382,6 @@ export class Materials {
     }
 
     return 'NOT ASSIGNED';
-  }
-
-  exportReport() {
-    console.log('Exporting materials report...');
-    alert('Materials report exported successfully (Simulated)');
-  }
-
-  deliveries = [
-    { time: '09:00', period: 'AM', item: 'Lumber Pine Planks (400 Units)', location: 'Site A - Skyline Towers', status: 'In Transit', statusColor: 'bg-blue-50 text-blue-600', assignee: 'Marcus Thorne' },
-    { time: '14:30', period: 'PM', item: 'HVAC Ducting Components', location: 'Site C - Riverside Mall', status: 'Confirmed', statusColor: 'bg-surface-container text-outline', assignee: 'Sarah Chen' }
-  ];
-
-  get filteredDeliveries() {
-    if (this.selectedMember === 'All Members') return this.deliveries;
-    return this.deliveries.filter(d => d.assignee === this.selectedMember);
   }
 
   getSelectedMat(event: any) {
@@ -578,36 +589,6 @@ export class Materials {
 
     }
   }
-
-  // assignProjects() {
-
-  //   const payload = {
-  //     material_id: this.materialToEdit.id,
-  //     project_ids: this.selectedProjects
-  //   };
-
-  //   console.log(payload);
-
-  //   // API CALL HERE
-
-  //   this.showAssignProjectModal = false;
-  // }
-
-  // openAssignProjectModal(material: any) {
-
-  //   this.materialToEdit = material;
-
-  //   this.selectedProjects = [];
-
-  //   // agar pehle se assigned projects hain
-  //   if (material.project_ids?.length) {
-
-  //     this.selectedProjects = [...material.project_ids];
-
-  //   }
-
-  //   this.showAssignProjectModal = true;
-  // }
 
   assignedProjects: any[] = [
     {

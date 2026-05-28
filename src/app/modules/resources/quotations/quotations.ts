@@ -82,7 +82,7 @@ onSearchChange() {
 
     quote.quotation_number?.toLowerCase().includes(q) ||
 
-    quote.sales_person?.toLowerCase().includes(q)
+    quote.sales_person?.toLowerCase().includes(q) || quote.quotation_type?.toLowerCase().includes(q) 
 
   );
 }

@@ -14,22 +14,13 @@ import { CategoryServeice } from '../../../shared/services/master/category-serve
   styleUrl: './material-master.scss',
 })
 export class MaterialMaster {
-    private materialService = inject(MaterialMasterService);
-  // private vendorService = inject(VendorService);
+  private materialService = inject(MaterialMasterService);
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
-private categoryService = inject(CategoryServeice);
+  private categoryService = inject(CategoryServeice);
 
-
-  team = [
-    { name: 'All Members' },
-    { name: 'Marcus Thorne' },
-    { name: 'Sarah Chen' }
-  ];
-  selectedMember = 'All Members';
   selectedTab = 'All Materials';
-  // tabs = ['All Materials', 'Low Stock', 'Concrete', 'Steel', 'Electrical', 'Lumber'];
 
   // Modal States
   showAddModal = false;
@@ -49,7 +40,7 @@ private categoryService = inject(CategoryServeice);
   paginatedMaterials: any[] = [];
   Math: any;
   searchQuery: any;
-  categories: any[]= [];
+  categories: any[] = [];
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -91,14 +82,14 @@ private categoryService = inject(CategoryServeice);
   }
 
 
- updatePagination() {
+  updatePagination() {
 
-  const start = (this.page - 1) * this.pageSize;
-  const end = start + this.pageSize;
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
 
-  this.paginatedMaterials =
-    this.filteredMaterials.slice(start, end);
-}
+    this.paginatedMaterials =
+      this.filteredMaterials.slice(start, end);
+  }
   nextPage() {
     if (this.page < this.totalPages()) {
       this.page++;
@@ -136,35 +127,35 @@ private categoryService = inject(CategoryServeice);
     this.updatePagination();
   }
 
-get filteredMaterials(): any[] {
+  get filteredMaterials(): any[] {
 
-  let filtered = [...this.materials];
+    let filtered = [...this.materials];
 
-  // 🔥 Tab Filter
-   if (this.selectedTab !== 'All Materials') {
+    // 🔥 Tab Filter
+    if (this.selectedTab !== 'All Materials') {
 
-    filtered = filtered.filter(
-      m =>
-        (m.category || '')
-          .trim()
-          .toLowerCase() ===
-        this.selectedTab.trim().toLowerCase()
-    );
+      filtered = filtered.filter(
+        m =>
+          (m.category || '')
+            .trim()
+            .toLowerCase() ===
+          this.selectedTab.trim().toLowerCase()
+      );
+    }
+
+    // 🔥 Search Filter
+    if (this.searchQuery) {
+
+      const q = this.searchQuery.toLowerCase();
+
+      filtered = filtered.filter((material: any) =>
+        material.name?.toLowerCase().includes(q) ||
+        material.sku?.toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
   }
-
-  // 🔥 Search Filter
-  if (this.searchQuery) {
-
-    const q = this.searchQuery.toLowerCase();
-
-    filtered = filtered.filter((material: any) =>
-      material.name?.toLowerCase().includes(q) ||
-      material.sku?.toLowerCase().includes(q)
-    );
-  }
-
-  return filtered;
-}
 
   getDefaultMaterial(): Material {
     return {
@@ -187,22 +178,12 @@ get filteredMaterials(): any[] {
   }
 
   addMaterial() {
-    // this.newMaterial.stockPercent = Math.round(
-    //   (this.newMaterial.stockCurrent / this.newMaterial.stockTotal) * 100
-    // );
-
-    // this.newMaterial.status = this.calculateStatus(
-    //   this.newMaterial.stockPercent
-    // );
-
     this.materialService.addMaterial({ ...this.newMaterial }).subscribe({
       next: (res) => {
         console.log('Material created', res);
         this.showAddModal = false;
         this.toast.success('Material added successfully');
         this.materialService.loadMaterials();
-
-        // optional: form reset
         this.getDefaultMaterial();
       },
       error: (err) => {
@@ -267,25 +248,6 @@ get filteredMaterials(): any[] {
         });
     }
   }
-  // calculateStatus(percent: number): 'Optimal' | 'Adequate' | 'Critical' {
-  //   if (percent < 20) return 'Critical';
-  //   if (percent < 60) return 'Adequate';
-  //   return 'Optimal';
-  // }
 
-  // exportReport() {
-  //   console.log('Exporting materials report...');
-  //   alert('Materials report exported successfully (Simulated)');
-  // }
-
-  // deliveries = [
-  //   { time: '09:00', period: 'AM', item: 'Lumber Pine Planks (400 Units)', location: 'Site A - Skyline Towers', status: 'In Transit', statusColor: 'bg-blue-50 text-blue-600', assignee: 'Marcus Thorne' },
-  //   { time: '14:30', period: 'PM', item: 'HVAC Ducting Components', location: 'Site C - Riverside Mall', status: 'Confirmed', statusColor: 'bg-surface-container text-outline', assignee: 'Sarah Chen' }
-  // ];
-
-  // get filteredDeliveries() {
-  //   if (this.selectedMember === 'All Members') return this.deliveries;
-  //   return this.deliveries.filter(d => d.assignee === this.selectedMember);
-  // }
 }
 
