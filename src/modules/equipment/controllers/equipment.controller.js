@@ -324,54 +324,6 @@ class equipmentController {
         }
       );
 
-      // // create entries project wise
-      // const project_multiple = await Promise.all(
-      //   projects.map(async (project) => {
-
-      //     // const projectData = await db.project.findOne({
-      //     //   where: {
-      //     //     id: project.project_id
-      //     //   }
-      //     // });
-
-      //     return await db.equipment_project_stock.create({
-      //       equipment_id: id,
-      //       project_id: project.project_id,
-      //       name,
-      //       sku,
-      //       category,
-      //       vendor_name,
-      //       stockUsed: project.stock,
-      //       cost,
-      //       status: project.status,
-      //       vendor_id,
-      //       equipment_master_id,
-      //       project_name: project.project_name,
-      //       quotation_id,
-      //       company_id
-      //     });
-
-      //     await db.equipment_history.create({
-      //       name,
-      //       sku,
-      //       category,
-      //       stockIn,
-      //       stockUsed: project.stock,
-      //       cost,
-      //       vendor_name,
-      //       project_name: project.project_name,
-      //       equipment_id: equipment.id,
-      //       equipment_master_id,
-      //       company_id,
-      //       project_id: project.project_id,
-      //       vendor_id,
-      //       status: "UPDATED",
-
-      //     });
-
-      //   })
-      // );
-
       // create entries project wise
       const project_multiple = await Promise.all(
         projects.map(async (project) => {
@@ -444,39 +396,7 @@ class equipmentController {
         })
       );
 
-      // await equipment.update({
-      //   name,
-      //   sku,
-      //   category,
-      //   // stockIn: Number(equipment.stockIn) + Number(stockIn),
-      //   vendor_name,
-      //   project_name,
-      //   project_id,
-      //   cost,
-      //   status,
-      //   vendor_id,
-      //   equipment_master_id
-      // });
 
-      // const existingequipment = await db.equipment_master.findOne({
-      //   where: {
-      //     id: equipment_master_id
-      //   }
-      // });
-
-      // const updatedStock =
-      //   Number(existingequipment.stockAvailable) + Number(stockIn);
-
-      // await db.equipment_master.update(
-      //   {
-      //     stockAvailable: updatedStock
-      //   },
-      //   {
-      //     where: {
-      //       id: equipment_master_id
-      //     }
-      //   }
-      // );
 
       // ================= CREATE HISTORY =================
       // await db.equipment_history.create({
