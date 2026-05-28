@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { MaterialMaster } from './material-master/material-master';
 import { EquipmentMaster } from './equipment-master/equipment-master';
 import { SkillMaster } from './skill-master/skill-master';
+import { Category } from './category/category';
 
 const routes: Routes = [
   {
@@ -16,6 +17,10 @@ const routes: Routes = [
   {
     path: 'skill',
     component: SkillMaster
+  },
+  {
+    path: 'category',
+    component: Category
   }
 ];
 

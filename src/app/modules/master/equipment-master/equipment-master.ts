@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Equipment, Material } from '../../../shared/services/master/equipment';
 import { VendorsServices } from '../../vendors/services/vendors-services';
 import { ToastrService } from 'ngx-toastr';
+import { CategoryServeice } from '../../../shared/services/master/category-serveice';
 
 @Component({
   selector: 'app-equipment-master',
@@ -17,6 +18,7 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
   private materialService = inject(Equipment);
+  private categoryService = inject(CategoryServeice);
 
   team = [
     { name: 'All Members' },
@@ -45,6 +47,7 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
   paginatedMaterials: any[] = [];
   Math: any;
   searchQuery: any;
+  categories: any;
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -58,17 +61,41 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
     this.vendorService.vendors$.subscribe(v => {
       this.vendors = v;
     });
+    this.getCategories();
+  }
+
+  getCategories() {
+
+    this.categoryService.loadCategories().subscribe({
+
+      next: () => {
+
+        this.categoryService.categories$.subscribe((res) => {
+
+          this.categories = res.filter((c: any) => c.category_type === 'Equipment');
+
+          this.updatePagination();
+        });
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.toast.error('Failed to load skills');
+      }
+    });
   }
 
 
   updatePagination() {
 
-  const start = (this.page - 1) * this.pageSize;
-  const end = start + this.pageSize;
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
 
-  this.paginatedMaterials =
-    this.filteredMaterials.slice(start, end);
-}
+    this.paginatedMaterials =
+      this.filteredMaterials.slice(start, end);
+  }
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -107,35 +134,35 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
     this.updatePagination();
   }
 
-get filteredMaterials(): any[] {
+  get filteredMaterials(): any[] {
 
-  let filtered = [...this.materials];
+    let filtered = [...this.materials];
 
-  // 🔥 Tab Filter
-   if (this.selectedTab !== 'All Materials') {
+    // 🔥 Tab Filter
+    if (this.selectedTab !== 'All Materials') {
 
-    filtered = filtered.filter(
-      m =>
-        (m.category || '')
-          .trim()
-          .toLowerCase() ===
-        this.selectedTab.trim().toLowerCase()
-    );
+      filtered = filtered.filter(
+        m =>
+          (m.category || '')
+            .trim()
+            .toLowerCase() ===
+          this.selectedTab.trim().toLowerCase()
+      );
+    }
+
+    // 🔥 Search Filter
+    if (this.searchQuery) {
+
+      const q = this.searchQuery.toLowerCase();
+
+      filtered = filtered.filter((material: any) =>
+        material.name?.toLowerCase().includes(q) ||
+        material.sku?.toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
   }
-
-  // 🔥 Search Filter
-  if (this.searchQuery) {
-
-    const q = this.searchQuery.toLowerCase();
-
-    filtered = filtered.filter((material: any) =>
-      material.name?.toLowerCase().includes(q) ||
-      material.sku?.toLowerCase().includes(q)
-    );
-  }
-
-  return filtered;
-}
 
   getDefaultMaterial(): Material {
     return {

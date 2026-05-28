@@ -7,25 +7,6 @@
             </h2>
         </div>
         <div class="flex gap-3">
-            <!-- <div
-                class="flex items-center gap-3 bg-surface-container-highest px-4 py-2 rounded-xl border border-outline-variant/10 shadow-sm">
-                <span class="material-symbols-outlined text-outline text-sm">filter_alt</span>
-                <select [(ngModel)]="selectedMember"
-                    class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-on-surface outline-none cursor-pointer appearance-none pr-4">
-                    <option *ngFor="let m of team" [value]="m.name">{{ m.name }}</option>
-                </select>
-            </div>
-            <button (click)="showFilters = !showFilters"
-                class="px-5 py-2.5 bg-surface-container-highest text-primary rounded-xl font-bold flex items-center gap-2 hover:bg-surface-dim transition-colors cursor-pointer">
-                <span class="material-symbols-outlined text-lg"
-                    style="font-variation-settings: 'FILL' 1;">filter_list</span>
-                Filters
-            </button>
-            <button (click)="exportReport()"
-                class="px-5 py-2.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center gap-2 hover:scale-[1.02] transition-transform cursor-pointer">
-                <span class="material-symbols-outlined text-lg">download</span>
-                Export Report
-            </button> -->
             <button (click)="openAddModal()"
                 class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
 
@@ -49,59 +30,7 @@
         </div>
     </div>
 
-    <!-- Bento Stats -->
-    <!-- <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">Total SKU</span>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black">1,248</span>
-                <span class="text-xs font-bold text-green-600">+12%</span>
-            </div>
-        </div>
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32 border-l-4 border-l-secondary-container">
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">Low Stock Alerts</span>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-secondary">24</span>
-                <span class="material-symbols-outlined text-secondary-container"
-                    style="font-variation-settings: 'FILL' 1;">warning</span>
-            </div>
-        </div>
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">Inventory Value</span>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-primary">₹412.5k</span>
-            </div>
-        </div>
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">Awaiting Delivery</span>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black">8</span>
-                <span class="material-symbols-outlined text-outline">local_shipping</span>
-            </div>
-        </div>
-    </div> -->
 
-    <!-- Filter Tabs -->
-    <!-- <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
-        @for (tab of tabs; track tab) {
-        <button (click)="selectedTab = tab"
-            [class]="selectedTab === tab ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-dim'"
-            class="px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap cursor-pointer transition-colors">
-            {{ tab }}
-        </button>
-        }
-        <div
-            class="ml-auto flex items-center gap-4 text-xs font-bold text-outline uppercase tracking-widest px-4 cursor-pointer hover:text-primary transition-colors">
-            Sorted by: Usage Rate
-            <span class="material-symbols-outlined text-sm">unfold_more</span>
-        </div>
-    </div> -->
-
-    <!-- Inventory Table Container -->
     <div
         class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800 overflow-hidden shadow-sm">
 
@@ -443,14 +372,22 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [(ngModel)]="newMaterial.category"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="Concrete">Concrete</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Lumber">Lumber</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Chemicals">Chemicals</option>
+                <select [(ngModel)]="newMaterial.category" class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800
+         text-sm font-bold outline-none bg-white dark:bg-slate-900">
+
+                    <!-- Default Disabled Option -->
+                    <option value="" disabled selected>
+                        Select Category
+                    </option>
+
+                    @for (category of categories; track $index) {
+
+                    <option [value]="category.category_name">
+                        {{ category.category_name }}
+                    </option>
+
+                    }
+
                 </select>
             </div>
 
@@ -500,14 +437,22 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [(ngModel)]="materialToEdit.category"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="Concrete">Concrete</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Lumber">Lumber</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Chemicals">Chemicals</option>
+                <select [(ngModel)]="materialToEdit.category" class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800
+         text-sm font-bold outline-none bg-white dark:bg-slate-900">
+
+                    <!-- Default Disabled Option -->
+                    <option value="" disabled selected>
+                        Select Category
+                    </option>
+
+                    @for (category of categories; track $index) {
+
+                    <option [value]="category.category_name">
+                        {{ category.category_name }}
+                    </option>
+
+                    }
+
                 </select>
             </div>
 

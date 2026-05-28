@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { VendorsServices } from '../../vendors/services/vendors-services';
 import { Equipment } from '../../../shared/services/master/equipment';
 import { ToastrService } from 'ngx-toastr';
+import { CategoryServeice } from '../../../shared/services/master/category-serveice';
 
 @Component({
   selector: 'app-equipment-inventory',
@@ -20,26 +21,9 @@ export class EquipmentInventory {
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
+  private categoryService = inject(CategoryServeice);
 
-  team = [
-    { name: 'All Members' },
-    { name: 'Marcus Thorne' },
-    { name: 'Sarah Chen' }
-  ];
-
-  selectedMember = 'All Members';
-
-  selectedTab = 'All Materials';
-
-  tabs = [
-    'All Materials',
-    'Low Stock',
-    'Concrete',
-    'Steel',
-    'Electrical',
-    'Lumber'
-  ];
-
+  selectedTab = 'All Equipment';
   showAddModal = false;
   showEditModal = false;
   showDeleteModal = false;
@@ -91,7 +75,8 @@ export class EquipmentInventory {
   searchQuery: any;
   showAssignProjectModal: boolean = false;
   noOfProjectsAssigned: number = 0;
-  noOfProjectsNotAssigned: number=0;
+  noOfProjectsNotAssigned: number = 0;
+  categories: any[] = [];
 
   ngOnInit() {
 
@@ -125,7 +110,37 @@ export class EquipmentInventory {
     });
 
     this.getVendor();
+    this.getCategories();
 
+  }
+
+
+  getCategories() {
+
+    this.categoryService.loadCategories().subscribe({
+
+      next: () => {
+
+        this.categoryService.categories$.subscribe((res) => {
+
+          this.categories = [
+            {
+              category_name: 'All Equipment',
+              isDefault: true
+            },
+            ...res.filter((c: any) => c.category_type === 'Equipment')
+          ];
+          this.updatePagination();
+        });
+      },
+
+      error: (err) => {
+
+        console.error(err);
+
+        this.toast.error('Failed to load skills');
+      }
+    });
   }
 
   get filteredMaterials(): any[] {
@@ -139,7 +154,7 @@ export class EquipmentInventory {
         m => m.stockIn < 20
       );
 
-    } else if (this.selectedTab !== 'All Materials') {
+    } else if (this.selectedTab !== 'All Equipment') {
 
       filtered = filtered.filter(
         m =>
@@ -157,7 +172,8 @@ export class EquipmentInventory {
 
       filtered = filtered.filter((material: any) =>
         material.name?.toLowerCase().includes(q) ||
-        material.sku?.toLowerCase().includes(q)
+        material.sku?.toLowerCase().includes(q) ||
+        material.category?.toLowerCase().includes(q)
       );
     }
 
@@ -179,30 +195,22 @@ export class EquipmentInventory {
   }
 
   loadProjects() {
-
     this.materialService.getProjects().subscribe({
-
       next: (res: any) => {
-
         this.projects = res?.data || [];
-
-        console.log('Projects =>', this.projects);
-
       },
 
       error: (err) => {
-
-        console.log(err);
-
+      console.log(err);
       }
 
     });
 
   }
 
-  changeTab(tab: string) {
+  changeTab(tab: any) {
 
-    this.selectedTab = tab;
+    this.selectedTab = tab.category_name || tab;
 
     this.page = 1;
 
@@ -441,13 +449,9 @@ export class EquipmentInventory {
           next: () => {
 
             this.showEditModal = false;
-
             this.materialToEdit = null;
-
             this.toast.success(
-
               'Material updated successfully'
-
             );
 
             this.materialService.loadMaterials();
@@ -455,15 +459,10 @@ export class EquipmentInventory {
           },
 
           error: (err) => {
-
             console.error('Update failed', err);
-
             this.toast.error(
-
               err?.error?.message ||
-
               'Failed to update material'
-
             );
 
           }
@@ -475,11 +474,8 @@ export class EquipmentInventory {
   }
 
   openDeleteModal(event: Event, material: Material) {
-
     event.stopPropagation();
-
     this.materialToDelete = material;
-
     this.showDeleteModal = true;
 
   }
@@ -487,7 +483,6 @@ export class EquipmentInventory {
   confirmDelete() {
 
     if (this.materialToDelete) {
-
       this.materialService
         .deleteMaterial(this.materialToDelete.id)
         .subscribe({
@@ -495,29 +490,19 @@ export class EquipmentInventory {
           next: () => {
 
             this.showDeleteModal = false;
-
             this.materialToDelete = null;
-
             this.toast.success(
-
               'Material deleted successfully'
-
             );
 
             this.materialService.loadMaterials();
-
           },
 
           error: (err) => {
-
             console.error('Delete failed', err);
-
             this.toast.error(
-
               err?.error?.message ||
-
               'Failed to delete material'
-
             );
 
           }
@@ -530,59 +515,14 @@ export class EquipmentInventory {
 
 
   calculateStatus(percent: number): 'ASSIGNED' {
-
     return 'ASSIGNED';
-
   }
 
   exportReport() {
-
     console.log('Exporting materials report...');
-
     alert('Materials report exported successfully (Simulated)');
 
   }
-
-  deliveries = [
-
-    {
-      time: '09:00',
-      period: 'AM',
-      item: 'Lumber Pine Planks (400 Units)',
-      location: 'Site A - Skyline Towers',
-      status: 'In Transit',
-      statusColor: 'bg-blue-50 text-blue-600',
-      assignee: 'Marcus Thorne'
-    },
-
-    {
-      time: '14:30',
-      period: 'PM',
-      item: 'HVAC Ducting Components',
-      location: 'Site C - Riverside Mall',
-      status: 'Confirmed',
-      statusColor: 'bg-surface-container text-outline',
-      assignee: 'Sarah Chen'
-    }
-
-  ];
-
-  get filteredDeliveries() {
-
-    if (this.selectedMember === 'All Members') {
-
-      return this.deliveries;
-
-    }
-
-    return this.deliveries.filter(
-
-      d => d.assignee === this.selectedMember
-
-    );
-
-  }
-
 
   getSelectedMat(event: any) {
 
@@ -899,15 +839,12 @@ export class EquipmentInventory {
   }
 
   assignProjects() {
-
     const isValid = this.validateAssignedStock();
-
     if (!isValid) {
       return;
     }
 
     const projectsWithName = this.assignedProjects.map(item => {
-
       const project = this.projects.find(
         (p: any) => p.id == item.project_id
       );
@@ -934,19 +871,14 @@ export class EquipmentInventory {
 
           this.showEditModal = false;
           this.materialToEdit = null;
-
           this.toast.success('Material updated successfully');
-
           this.materialService.loadMaterials();
-
           this.showAssignProjectModal = false;
 
         },
 
         error: (err) => {
-
           console.error('Update failed', err);
-
           this.toast.error(
             err?.error?.message || 'Failed to update material'
           );
@@ -959,15 +891,12 @@ export class EquipmentInventory {
   showProjectStockPopup = false;
 
   openProjectStockPopup(item: any) {
-
     this.selectedProjectStock = item;
-
     this.showProjectStockPopup = true;
 
   }
 
   showStockTransferModal = false;
-
   stockTransferData: any = {
     material_id: '',
     stockIn: 0,
@@ -978,35 +907,25 @@ export class EquipmentInventory {
   selectedMaterial: any = null;
 
   getProjectStock(projectId: any): number {
-
     if (!projectId || !this.selectedMaterial?.equipment_project_stock) {
       console.log('Stock for project', projectId, '=>');
 
       return 0;
     }
-
     const stock = this.selectedMaterial.equipment_project_stock.find(
       (x: any) => x.project_id == projectId
     );
-
     console.log
       ('Stock for project', projectId, '=>', stock);
-
     return stock?.stockUsed || 0;
   }
 
   openStockTransferModal(material: any) {
-
     this.selectedMaterial = material;
-
     this.stockTransferData = {
-
       material_id: material.id,
-
       stockIn: material.stockIn,
-
       transfer_note: '',
-
       transfers: [
         {
           from_project_id: material.project_id || '',
@@ -1020,7 +939,6 @@ export class EquipmentInventory {
   }
 
   addTransferRow() {
-
     this.stockTransferData.transfers.push({
       from_project_id: '',
       to_project_id: '',
@@ -1029,15 +947,11 @@ export class EquipmentInventory {
 
   }
 
-
-
   removeTransferRow(index: number) {
 
     this.stockTransferData.transfers.splice(index, 1);
 
   }
-
-
 
   getTotalTransferQty(): number {
 
@@ -1048,8 +962,6 @@ export class EquipmentInventory {
     );
 
   }
-
-
 
   transferStock() {
 
@@ -1104,20 +1016,13 @@ export class EquipmentInventory {
 
     this.materialService
       .equipment_stock_transfer(
-
         this.stockTransferData.material_id,
-
         payload
-
       )
       .subscribe({
-
         next: () => {
-
           this.toast.success(
-
             'Material transferred successfully'
-
           );
 
           this.materialService.loadMaterials();
@@ -1126,15 +1031,10 @@ export class EquipmentInventory {
         },
 
         error: (err) => {
-
           console.error('Update failed', err);
-
           this.toast.error(
-
             err?.error?.message ||
-
             'Failed to update material'
-
           );
 
         }
