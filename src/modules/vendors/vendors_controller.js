@@ -364,7 +364,61 @@ const createActivity = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+const getVendorByprojectTaskId = async (req, res) => {
+  try {
+    const company_id = getCompanyId(req);
 
+    const { project_id, task_id } = req.query;
+
+    if (!project_id || !task_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'project_id and task_id are required',
+      });
+    }
+
+    const projectTask = await ProjectTaskModel.findOne({
+      where: {
+        project_id,
+        task_id,
+        company_id,
+      },
+    });
+
+    if (!projectTask) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project task not found',
+      });
+    }
+
+    const vendor = await VendorModel.findOne({
+      where: {
+        id: projectTask.vendor_id,
+        company_id,
+      },
+    });
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vendor not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: vendor,
+    });
+  } catch (err) {
+    console.error('[getVendorByprojectTaskId]', err);
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 module.exports = {
   getAllVendors,
   getVendorById,
@@ -374,4 +428,5 @@ module.exports = {
   getStats,
   getActivities,
   createActivity,
+  getVendorByprojectTaskId
 };
