@@ -986,6 +986,98 @@ class QuotationController {
         }
     }
 
+// quatation_company
+
+    async getall_quotation_company(req, res) {
+        try {
+
+            const company_id = req.user.company_id;
+
+            const quotations = await db.quotation.findAll({
+                where: {
+                    isDeleted: false,
+                    company_id
+                },
+                order: [["createdAt", "DESC"]]
+            });
+
+            if (quotations.length > 0) {
+
+                const formattedData = quotations.map((quotation) => {
+
+                    let items = quotation.items;
+
+                    // Convert string into JSON
+                    if (typeof items === "string") {
+                        items = JSON.parse(items);
+                    }
+
+                    return {
+                        ...quotation.toJSON(),
+                        items
+                    };
+                });
+
+                return res.status(200).json({
+                    code: 200,
+                    message: "Success",
+                    data: formattedData
+                });
+
+            } else {
+
+                return res.status(404).json({
+                    code: 404,
+                    message: "No data found"
+                });
+            }
+
+        } catch (error) {
+
+            console.error("[GETALL_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching quotations.",
+                error: error.message
+            });
+        }
+    }
+
+    async getbyid_quotation_company(req, res) {
+        try {
+
+            const { id } = req.params;
+
+            const company_id = req.user.company_id;
+
+            const quotation = await db.quotation.findOne({
+                where: {
+                    id,
+                    company_id,
+                    isDeleted: false
+                }
+            });
+
+            if (!quotation) {
+                return res.status(404).json({
+                    message: "Quotation not found."
+                });
+            }
+
+            return res.status(200).json({
+                data: quotation
+            });
+
+        } catch (error) {
+            console.error("[GET_QUOTATION_BY_ID_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching quotation.",
+                error: error.message
+            });
+        }
+    }
+
 
 }
 
