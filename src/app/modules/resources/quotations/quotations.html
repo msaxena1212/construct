@@ -416,6 +416,7 @@
                 <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Material</th>
                 <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Qty
                 </th>
+                <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
                 <th class="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Unit
                   Price
                 </th>
@@ -431,7 +432,8 @@
                     }}</p>
                 </td>
                 <td class="px-6 py-4 text-center font-bold text-slate-600 dark:text-slate-400">{{ item.quantity }}</td>
-                <td class="px-6 py-4 text-center font-black text-slate-900 dark:text-slate-200">₹{{
+                <td class="px-6 py-4 text-left font-bold text-slate-600 dark:text-slate-400">{{ item.category }}</td>
+                <td class="px-6 py-4 text-right font-black text-slate-900 dark:text-slate-200">₹{{
                   item.unitPrice.toLocaleString() }}</td>
                 <td class="px-6 py-4 text-right font-black text-slate-900 dark:text-slate-200">₹{{
                   item.totalPrice.toLocaleString() }}</td>

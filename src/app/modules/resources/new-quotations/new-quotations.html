@@ -361,10 +361,9 @@
 
             <!-- Quantity -->
             <td class="px-8 py-6">
-
-              <input type="number" min="1" [(ngModel)]="item.quantity" (ngModelChange)="updateLineTotal(item)" class="w-24 bg-slate-50 border-none rounded-xl text-sm p-3
-                     focus:ring-2 focus:ring-primary/20 transition-all font-bold">
-
+              <input type="number" min="1" max="1000" [(ngModel)]="item.quantity" (input)="checkQuantity(item, $event)"
+                (ngModelChange)="updateLineTotal(item)" class="w-24 bg-slate-50 border-none rounded-xl text-sm p-3
+    focus:ring-2 focus:ring-primary/20 transition-all font-bold" />
             </td>
 
             <!-- Unit Price -->

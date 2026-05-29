@@ -6,10 +6,7 @@ import { Component } from '@angular/core';
   templateUrl: './calendar.html',
   styleUrl: './calendar.scss',
 })
-export class Calendar {// component.ts
-
-// component.ts
-
+export class Calendar {
 currentDate = new Date();
 
 currentMonth = this.currentDate.getMonth();
