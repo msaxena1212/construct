@@ -87,4 +87,12 @@ module.exports = (router) => {
         quotationCtrl.get_equipment_quotation_by_id
     );
 
+
+    router.get("/getall_quotation_company", quotationCtrl.getall_quotation_company);
+
+    router.get("/getbyid_quotation_company/:id", quotationCtrl.getbyid_quotation_company);
+
+
+    
+
 };
