@@ -120,7 +120,7 @@
                     <span class="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-black text-slate-500">{{
                         column.count }}</span>
                 </div>
-                <button (click)="openAddTaskModal(column.title)"
+                <button *ngIf="column.title == 'To Do'" (click)="openAddTaskModal(column.title)"
                     class="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer">
                     <span class="material-symbols-outlined">add</span>
                 </button>

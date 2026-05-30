@@ -283,9 +283,9 @@
 <app-project-timeline [projectId]="project.id" [selectedMember]="selectedMember"></app-project-timeline>
 } @else if (activeTab === 'Budget') {
 <app-project-budget></app-project-budget>
-} @else if (activeTab === 'Gallery') {
+<!-- } @else if (activeTab === 'Gallery') {
 <app-site-gallery (uploadMedia)="openDrawingUpload()" [projectId]="project.id"
-  [documents]="project.documents || []"></app-site-gallery>
+  [documents]="project.documents || []"></app-site-gallery> -->
 } @else if (activeTab === 'Files') {
 <app-project-files [documents]="project.documents || []" (uploadMedia)="openDrawingUpload()"></app-project-files>
 } @else if (activeTab === 'Updates') {
