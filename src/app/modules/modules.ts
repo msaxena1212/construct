@@ -71,6 +71,7 @@ export class Modules implements OnInit, AfterContentChecked, DoCheck {
 
     setInterval(() => {
       this.updateDateTime();
+      // this.speakJuice();
     }, 1000);
   }
 
@@ -82,11 +83,53 @@ export class Modules implements OnInit, AfterContentChecked, DoCheck {
     this.changeDref.detectChanges();
   }
 
-  updateDateTime() {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
-    this.currentDateTime = `${now.toLocaleDateString('en-IN', options)} , ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
-  }
+// speakJuice() {
+
+//   const speech = new SpeechSynthesisUtterance(
+//     'गन्ने का जूस, बड़ा गिलास, सिर्फ 20 रुपए'
+//   );
+
+//   speech.lang = 'hi-IN';
+
+//   const voices = window.speechSynthesis.getVoices();
+
+//   const femaleVoice = voices.find(
+//     voice =>
+//       voice.lang.includes('hi') ||
+//       voice.name.toLowerCase().includes('female') ||
+//       voice.name.toLowerCase().includes('zira')
+//   );
+
+//   if (femaleVoice) {
+//     speech.voice = femaleVoice;
+//   }
+
+//   speech.pitch = 1.2;
+//   speech.rate = 0.9;
+//   speech.volume = 1;
+
+//   window.speechSynthesis.cancel();
+//   window.speechSynthesis.speak(speech);
+// }
+
+updateDateTime() {
+  const now = new Date();
+
+  const date = now.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+
+  const time = now.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+
+  this.currentDateTime = `${date} , ${time}`;
+}
 
   navToggel(index: any, nav: any, event: Event) {
     if (!nav.subMenu || nav.subMenu.length === 0) return;

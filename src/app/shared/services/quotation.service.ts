@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 export interface QuoteItem {
   materialSku: string;
   name: string;
+  category: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;

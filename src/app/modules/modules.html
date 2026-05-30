@@ -29,7 +29,7 @@
                     <ul class="submenu" [ngClass]="navIndexvalue == i ? 'open' : ''">
                         <li *ngFor="let subNav of nav.subMenu; let j = index">
                             <a [routerLink]="subNav.path" routerLinkActive="activeRoute" [title]="subNav.subMenuName">
-                                 <mat-icon class="nav-icon-material">{{ subNav.icon || 'folder' }}</mat-icon>
+                                <mat-icon class="nav-icon-material">{{ subNav.icon || 'folder' }}</mat-icon>
                                 <span class="nav-text" style="padding-left: 20px;">{{ subNav.subMenuName || subNav.name
                                     }}</span>
                             </a>
@@ -63,8 +63,8 @@
                 <div class="relative">
                     <div class="profile-trigger" (click)="showDropdown($event)" [class.active]="showList">
                         <div class="profile-avatar-container">
-                            <img [src]="currentUser?.avatar ? serverUrl + currentUser?.avatar : '../../../../assets/image/profile-photo.png'" 
-                                 class="profile-img" alt="User">
+                            <img [src]="currentUser?.avatar ? serverUrl + currentUser?.avatar : '../../../../assets/image/profile-photo.png'"
+                                class="profile-img" alt="User">
                             <div class="status-indicator"></div>
                         </div>
                         <div class="profile-meta hidden md:block">
@@ -77,8 +77,10 @@
                     <!-- Enhanced Dropdown Menu -->
                     <div class="dropdown-profile-menu" *ngIf="showList" @fadeInOut>
                         <div class="dropdown-header">
-                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Signed in as</p>
-                            <p class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{{ currentUser?.email }}</p>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Signed in as
+                            </p>
+                            <p class="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{{
+                                currentUser?.email }}</p>
                         </div>
                         <div class="dropdown-divider"></div>
                         <a (click)="profile()" class="dropdown-item">

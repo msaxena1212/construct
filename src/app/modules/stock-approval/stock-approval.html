@@ -1,100 +1,227 @@
-<div class="container">
+<section class="p-6 flex flex-col gap-6 animate-in fade-in duration-500">
 
-  <h2 class="title">Stock Requests</h2>
+  <!-- Header -->
+  <div
+    class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
-  <div *ngIf="loading" class="loading">
-    Loading...
+    <div>
+      <h2
+        class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
+        Stock Requests
+      </h2>
+
+      <p class="text-slate-500 dark:text-slate-400 mt-1">
+        Manage all material stock requests easily
+      </p>
+    </div>
+
+    <!-- Count -->
+    <div
+      class="px-5 py-3 rounded-2xl bg-primary/10 text-primary font-bold text-sm w-fit">
+      Total Requests : {{ stockRequests.length || 0 }}
+    </div>
+
   </div>
 
-  <div class="request-grid">
+  <!-- Loading -->
+  <div *ngIf="loading"
+    class="flex items-center justify-center py-20">
 
-    <mat-card class="request-card" *ngFor="let request of stockRequests">
+    <div
+      class="h-14 w-14 border-4 border-primary border-t-transparent rounded-full animate-spin">
+    </div>
 
-      <mat-card-content>
+  </div>
 
-        <h3>{{ request.task_title }}</h3>
+  <!-- Empty State -->
+  <div *ngIf="!loading && stockRequests.length === 0"
+    class="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700
+           p-16 text-center bg-white dark:bg-slate-900">
 
-        <p>
-          <strong>Material ID:</strong>
-          {{ request.material_id }}
-        </p>
+    <span class="material-symbols-outlined text-6xl text-slate-400">
+      inventory_2
+    </span>
 
-        <p>
-          <strong>Requested Qty:</strong>
-          {{ request.requested_qty }}
-        </p>
+    <h3 class="mt-4 text-xl font-bold text-slate-700 dark:text-white">
+      No Stock Requests Found
+    </h3>
 
-        <p>
-          <strong>Available Qty:</strong>
-          {{ request.available_qty }}
-        </p>
+  </div>
 
-        <p>
-          <strong>Project ID:</strong>
-          {{ request.project_id }}
-        </p>
-          <p>
-            <strong>Status:</strong>
-            <span [ngClass]="request.status">
-              {{ request.status }}
+  <!-- Grid -->
+  <div
+    class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+    <div *ngFor="let request of stockRequests"
+      class="group rounded-[28px] overflow-hidden
+             bg-white dark:bg-slate-900
+             border border-slate-200 dark:border-slate-800
+             shadow-sm hover:shadow-2xl
+             hover:-translate-y-1 transition-all duration-300">
+
+      <!-- Top -->
+      <div
+        class="p-6 border-b border-slate-100 dark:border-slate-800
+               flex items-start justify-between gap-4">
+
+        <div>
+
+          <div
+            class="h-14 w-14 rounded-2xl bg-primary/10 text-primary
+                   flex items-center justify-center mb-4">
+
+            <span class="material-symbols-outlined text-3xl">
+              inventory
             </span>
+
+          </div>
+
+          <h3
+            class="text-lg font-bold text-slate-800 dark:text-white leading-snug">
+            {{ request.task_title }}
+          </h3>
+
+          <p class="text-sm text-slate-500 mt-1">
+            Request ID #{{ request.id }}
           </p>
-        <p>
-          <strong>Created:</strong>
-          {{ request.createdAt | date:'medium' }}
-        </p>
 
-      </mat-card-content>
+        </div>
 
-      <mat-card-actions align="end">
+        <!-- Status -->
+        <div>
 
-        <!-- <button
-          mat-raised-button
-          color="primary"
-          (click)="getRequestById(request.id)"
-        >
-          View
-        </button> -->
+          <span
+            class="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
+            [ngClass]="{
+              'bg-amber-100 text-amber-700': request.status === 'pending',
+              'bg-emerald-100 text-emerald-700': request.status === 'approved',
+              'bg-rose-100 text-rose-700': request.status === 'rejected'
+            }">
+
+            {{ request.status }}
+
+          </span>
+
+        </div>
+
+      </div>
+
+      <!-- Body -->
+      <div class="p-6 flex flex-col gap-4">
+
+        <div
+          class="grid grid-cols-2 gap-4">
+
+          <div
+            class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+
+            <p class="text-xs text-slate-500 mb-1">
+              Requested Qty
+            </p>
+
+            <h4
+              class="text-xl font-black text-slate-800 dark:text-white">
+              {{ request.requested_qty }}
+            </h4>
+
+          </div>
+
+          <div
+            class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+
+            <p class="text-xs text-slate-500 mb-1">
+              Available Qty
+            </p>
+
+            <h4
+              class="text-xl font-black text-slate-800 dark:text-white">
+              {{ request.available_qty }}
+            </h4>
+
+          </div>
+
+        </div>
+
+        <!-- Info -->
+        <div class="flex flex-col gap-3 text-sm">
+
+          <div class="flex items-center justify-between">
+
+            <span class="text-slate-500">
+              Material ID
+            </span>
+
+            <span class="font-bold text-slate-700 dark:text-slate-200">
+              #{{ request.material_id }}
+            </span>
+
+          </div>
+
+          <div class="flex items-center justify-between">
+
+            <span class="text-slate-500">
+              Project ID
+            </span>
+
+            <span class="font-bold text-slate-700 dark:text-slate-200">
+              #{{ request.project_id }}
+            </span>
+
+          </div>
+
+          <div class="flex items-center justify-between">
+
+            <span class="text-slate-500">
+              Created
+            </span>
+
+            <span class="font-semibold text-slate-700 dark:text-slate-200">
+              {{ request.createdAt | date:'mediumDate' }}
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div
+        *ngIf="request.status === 'pending'"
+        class="p-6 pt-0 flex items-center gap-3">
+
+        <!-- Approve -->
         <button
-          *ngIf="request.status === 'pending'"
-          mat-raised-button
-          color="accent"
           (click)="approveRequest(request.id)"
-        >
+          class="flex-1 h-12 rounded-2xl
+                 bg-emerald-500 hover:bg-emerald-600
+                 text-white font-bold
+                 transition-all duration-300
+                 hover:scale-[1.02]
+                 shadow-lg shadow-emerald-500/20">
+
           Approve
+
         </button>
 
+        <!-- Reject -->
         <button
-          *ngIf="request.status === 'pending'"
-          mat-raised-button
-          color="warn"
           (click)="rejectRequest(request.id)"
-        >
+          class="flex-1 h-12 rounded-2xl
+                 bg-rose-500 hover:bg-rose-600
+                 text-white font-bold
+                 transition-all duration-300
+                 hover:scale-[1.02]
+                 shadow-lg shadow-rose-500/20">
+
           Reject
+
         </button>
 
-      </mat-card-actions>
+      </div>
 
-    </mat-card>
+    </div>
 
   </div>
 
-  <!-- Selected Request Details -->
-  <div class="details-card" *ngIf="selectedRequest">
-
-    <h2>Request Details</h2>
-
-    <p><strong>ID:</strong> {{ selectedRequest.id }}</p>
-
-    <p><strong>Task:</strong> {{ selectedRequest.task_title }}</p>
-
-    <p><strong>Requested Qty:</strong> {{ selectedRequest.requested_qty }}</p>
-
-    <p><strong>Available Qty:</strong> {{ selectedRequest.available_qty }}</p>
-
-    <p><strong>Material ID:</strong> {{ selectedRequest.material_id }}</p>
-
-    <p><strong>Project ID:</strong> {{ selectedRequest.project_id }}</p>
-  </div>
-
-</div>
+</section>
