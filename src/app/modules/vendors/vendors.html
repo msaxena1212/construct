@@ -253,7 +253,7 @@
                 <th class="py-4">Amount</th>
                 <th class="py-4">Date</th>
                 <th class="py-4">Status</th>
-                <th class="py-4">Invoice</th>
+                <th class="py-4">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -269,10 +269,24 @@
                   </span>
                 </td>
                 <td class="py-4">
-                  <button (click)="viewInvoice(inv)"
-                    class="flex items-center gap-1.5 text-xs font-bold text-primary opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
-                    <span class="material-symbols-outlined text-sm">open_in_new</span> View / Print
-                  </button>
+                  <div class="flex items-center gap-3">
+
+                    <button (click)="viewInvoice(inv)"
+                      class="flex items-center gap-1.5 text-xs font-bold text-primary opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                      <span class="material-symbols-outlined text-sm">visibility</span>
+                    </button>
+
+                    <button (click)="payInvoice(inv)"
+                      class="flex items-center gap-1.5 text-xs font-bold text-green-600 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                      <span class="material-symbols-outlined text-sm">payments</span>
+                    </button>
+
+                    <button (click)="cancelInvoice(inv)"
+                      class="flex items-center gap-1.5 text-xs font-bold text-red-600 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+                      <span class="material-symbols-outlined text-sm">cancel</span>
+                    </button>
+
+                  </div>
                 </td>
               </tr>
               } @empty {
@@ -288,7 +302,140 @@
     </div>
   </div>
   }
+  @if (payInvoiceeModal) {
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
 
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-black">Vendor Invoice Payment</h3>
+        <button (click)="closePayModal()"
+          class="material-symbols-outlined text-slate-500 hover:text-red-500 cursor-pointer">
+          close
+        </button>
+      </div>
+
+      <div class="space-y-3">
+
+        <!-- Invoice Info -->
+        <div class="bg-slate-50 rounded-xl p-4 space-y-2">
+          <div class="flex justify-between items-center">
+            <p class="text-xs text-slate-500">Invoice Number</p>
+            <p class="font-bold text-sm">{{ selectedInvoice?.invoice_number }}</p>
+          </div>
+          <div class="flex justify-between items-center">
+            <p class="text-xs text-slate-500">Invoice Date</p>
+            <p class="font-semibold text-sm">{{ selectedInvoice?.invoice_date }}</p>
+          </div>
+          <div class="flex justify-between items-center">
+            <p class="text-xs text-slate-500">Subtotal</p>
+            <p class="font-semibold text-sm">₹{{ (+( selectedInvoice?.subtotal || 0)).toLocaleString('en-IN') }}</p>
+          </div>
+          <div class="flex justify-between items-center">
+            <p class="text-xs text-slate-500">Tax Amount</p>
+            <p class="font-semibold text-sm text-amber-600">₹{{ (+(selectedInvoice?.tax_amount ||
+              0)).toLocaleString('en-IN') }}</p>
+          </div>
+          <div class="flex justify-between items-center border-t border-slate-200 pt-2 mt-1">
+            <p class="text-xs font-black text-slate-600 uppercase tracking-wide">Grand Total</p>
+            <p class="font-black text-base text-green-600">₹{{ (+(selectedInvoice?.grand_total ||
+              0)).toLocaleString('en-IN') }}</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-4 space-y-2">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-xs text-slate-500">Vendor</p>
+              <p class="font-bold text-sm">{{ selectedVendor?.name }}</p>
+            </div>
+
+            <div class="text-right space-y-1">
+              <p class="text-xs text-slate-500">Project</p>
+              <p class="font-semibold text-sm">{{ projectdata?.name || '—' }}</p>
+
+              <p class="text-xs text-slate-500">% Complete</p>
+              <p class="font-semibold text-sm">{{ projectdata?.progress ?? '—' }}%</p>
+
+              <p class="text-xs text-slate-500">Lumpsum</p>
+              <p class="font-semibold text-sm">₹{{ (projectdata?.budget?.total ?? projectdata?.budget_total ??
+                projectdata?.budget_summary?.total ?? 0) | number }}</p>
+            </div>
+          </div>
+          @if (selectedVendor?.project_id) {
+          <div class="flex justify-between items-center">
+            <p class="text-xs text-slate-500">Project ID</p>
+            <p class="font-semibold text-sm">#{{ selectedVendor?.project_id }}</p>
+          </div>
+          }
+        </div>
+
+        <div>
+          <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
+            Amount to Pay (₹) <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
+            <input [(ngModel)]="paymentForm.amount" type="number" min="0" [max]="selectedInvoice?.grand_total ?? null"
+              [placeholder]="(+(selectedInvoice?.grand_total || 0)).toString()"
+              class="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">
+            Grand total: ₹{{ (+(selectedInvoice?.grand_total || 0)).toLocaleString('en-IN') }}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
+            Payment Mode <span class="text-red-500">*</span>
+          </label>
+          <select [(ngModel)]="paymentForm.mode"
+            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
+            <option value="">Select mode</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="UPI">UPI</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
+            Reference / Transaction No.
+            <span class="normal-case font-normal tracking-normal text-slate-400 ml-1">(Optional)</span>
+          </label>
+          <input [(ngModel)]="paymentForm.reference" type="text" placeholder="e.g. UTR123456789"
+            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
+        </div>
+
+        @if (paymentError) {
+        <div class="flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+          <span class="material-symbols-outlined text-red-600 text-sm">error</span>
+          <p class="text-xs font-bold text-red-600">{{ paymentError }}</p>
+        </div>
+        }
+
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <button (click)="closePayModal()"
+          class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">
+          Cancel
+        </button>
+        <button (click)="confirmPayment()" [disabled]="isProcessingPayment"
+          class="px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-bold cursor-pointer hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2">
+          @if (isProcessingPayment) {
+          <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          Processing...
+          } @else {
+          <span class="material-symbols-outlined text-sm">payments</span>
+          Confirm Payment
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+  }
 </section>
 
 
@@ -1237,7 +1384,6 @@
           </button>
 
         </div>
-        >
         <div class="grid items-center gap-x-2 mb-1 px-1" [style.grid-template-columns]="
             hasLaborItems()
             ? '130px 1fr 60px 70px 100px 80px 90px 32px'
