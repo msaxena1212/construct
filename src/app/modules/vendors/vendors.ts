@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
 import {
   VendorsServices,
   Vendor,
@@ -22,11 +21,13 @@ import { IProjectTask } from '../../shared/interfaces/project.interface';
   selector: 'app-vendors',
   standalone: false,
   templateUrl: './vendors.html',
-  styleUrl: './vendors.scss',
+  styleUrls: ['./vendors.scss'],
 })
 export class Vendors implements OnInit {
 
   @Input() projectId: string | number = '';
+
+  projectdata: any = null;
 
   private vendorService = inject(VendorsServices);
   private laborService = inject(VendorsLaborServices);
@@ -40,10 +41,12 @@ export class Vendors implements OnInit {
   allTasks: IProjectTask[] = [];
   skillOptions: { value: string; label: string }[] = [];
 
+  selectedInvoice: VendorInvoice | null = null;
 
   showAddModal = false;
   showInvoiceModal = false;
   showVendorDetailModal = false;
+  payInvoiceeModal = false;
   showAuditModal = false;
   showBillingModal = false;
   showLaborModal = false;
@@ -60,6 +63,14 @@ export class Vendors implements OnInit {
     { num: 3, label: 'Budget' },
     { num: 4, label: 'Documents' },
   ];
+
+  paymentForm: { amount: number | null; mode: string; reference: string } = {
+    amount: null,
+    mode: '',
+    reference: '',
+  };
+  paymentError = '';
+  isProcessingPayment = false;
 
   isEditMode = false;
   editingVendorId: string | null = null;
@@ -79,8 +90,12 @@ export class Vendors implements OnInit {
 
   laborWorkers: LaborWorker[] = [];
   laborStats: LaborStats = {
-    totalPersonnel: 0, onSite: 0, remaining: 0,
-    activePersonnel: 0, skillCompliance: '0%', skillComposition: [],
+    totalPersonnel: 0,
+    onSite: 0,
+    remaining: 0,
+    activePersonnel: 0,
+    skillCompliance: '0%',
+    skillComposition: [],
   };
   laborLoading = false;
 
@@ -91,7 +106,6 @@ export class Vendors implements OnInit {
   newVendor: any = this.defaultVendor();
   invoiceForm: any = this.defaultInvoice();
   auditForm: any = { quality: 5, timeliness: 5, safety: 5, observations: '' };
-
 
   editingLaborId: number | null = null;
   editLaborForm: any = {};
@@ -109,6 +123,7 @@ export class Vendors implements OnInit {
   readonly sumRate = (acc: number, w: LaborWorker): number =>
     acc + (Number(w.daily_rate) || 0) * (w.labor_count || 0);
 
+  // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -116,7 +131,10 @@ export class Vendors implements OnInit {
       this.syncSelectedVendor();
     });
     this.getSkill();
-    this.vendorService.vendors$.subscribe(v => { this.vendors = v; this.syncSelectedVendor(); });
+    this.vendorService.vendors$.subscribe(v => {
+      this.vendors = v;
+      this.syncSelectedVendor();
+    });
     this.vendorService.stats$.subscribe(s => (this.stats = s));
     this.vendorService.activities$.subscribe(a => (this.activities = a));
     this.laborService.workers$.subscribe(w => (this.laborWorkers = w));
@@ -125,6 +143,8 @@ export class Vendors implements OnInit {
     this.invoiceService.invoices$.subscribe(inv => (this.invoices = inv));
     this.auditService.audits$.subscribe(audits => (this.vendorAudits = audits));
   }
+
+  // ─── Data Loaders ────────────────────────────────────────────────────────────
 
   private loadVendorSubData(vendorId: string): void {
     this.invoiceService.loadInvoices(vendorId);
@@ -137,15 +157,27 @@ export class Vendors implements OnInit {
         next: (res: any) => {
           this.allTasks = res?.data || [];
         },
-        error: (err) => console.error('Task load failed', err),
+        error: (err: any) => console.error('Task load failed', err),
+      });
+
+      this.projectService.getProjectById(projectId).subscribe({
+        next: (res: any) => {
+          this.projectdata = res?.data ?? null;
+        },
+        error: (err: any) => {
+          this.projectdata = null;
+          console.error('Project load failed', err);
+        },
       });
     } else {
       this.allTasks = [];
+      this.projectdata = null;
     }
   }
+
   getSkill(): void {
     this.skillMasterService.loadSkills().subscribe({
-      next: (res) => {
+      next: (res: any) => {
         if (res.success && Array.isArray(res.data)) {
           this.skillOptions = res.data.map((s: any) => ({
             value: s.skill_name?.toLowerCase().replace(/\s+/g, '_') ?? s.id,
@@ -156,20 +188,37 @@ export class Vendors implements OnInit {
     });
   }
 
+  getProjectById(): void {
+    if (!this.projectId) return;
+    this.projectService.getProjectById(this.projectId).subscribe({
+      next: (res: any) => {
+        this.projectdata = res?.data ?? null;
+      },
+      error: (err: any) => console.error('Project load failed', err),
+    });
+  }
 
   private syncSelectedVendor(): void {
-    if (!this.viewingVendorId) { this.selectedVendor = undefined; return; }
+    if (!this.viewingVendorId) {
+      this.selectedVendor = undefined;
+      return;
+    }
     const local = this.vendorService.getVendorById(this.viewingVendorId);
     if (local) {
       this.selectedVendor = local;
       this.loadVendorSubData(this.viewingVendorId);
     } else {
       this.vendorService.getVendorByIdFromApi(this.viewingVendorId).subscribe({
-        next: v => { this.selectedVendor = v; this.loadVendorSubData(this.viewingVendorId!); },
+        next: v => {
+          this.selectedVendor = v;
+          this.loadVendorSubData(this.viewingVendorId!);
+        },
         error: () => this.router.navigate(['/master/resources/vendors']),
       });
     }
   }
+
+  // ─── Vendor List ─────────────────────────────────────────────────────────────
 
   get filteredVendors(): Vendor[] {
     if (this.selectedMember === 'All Members') return this.vendors;
@@ -179,10 +228,12 @@ export class Vendors implements OnInit {
   openVendorDetail(vendor: Vendor): void {
     this.router.navigate(['/master/resources/vendors', vendor.id]);
   }
+
   closeDetail(): void {
     this.laborService.clearWorkers();
     this.invoiceService.clearInvoices();
     this.auditService.clearAudits();
+    this.projectdata = null;
     this.router.navigate(['/master/resources/vendors']);
   }
 
@@ -190,6 +241,7 @@ export class Vendors implements OnInit {
     return filePath.split('/').pop() ?? filePath;
   }
 
+  // ─── Add / Edit Vendor Modal ──────────────────────────────────────────────────
 
   openAddModal(): void {
     this.isEditMode = false;
@@ -201,7 +253,6 @@ export class Vendors implements OnInit {
     this.currentStep = 1;
     this.showAddModal = true;
   }
-
 
   editVendorDetail(vendor?: Vendor): void {
     const v = vendor ?? this.selectedVendor;
@@ -229,13 +280,16 @@ export class Vendors implements OnInit {
     this.showAddModal = true;
   }
 
-
   nextStep(): void {
     this.stepError = '';
 
     if (this.currentStep === 1) {
-      if (!this.newVendor.name?.trim()) { this.stepError = 'Vendor Legal Name is required.'; return; }
-      if (!this.newVendor.spoc.name?.trim()) { this.stepError = 'SPOC Name is required.'; return; }
+      if (!this.newVendor.name?.trim()) {
+        this.stepError = 'Vendor Legal Name is required.'; return;
+      }
+      if (!this.newVendor.spoc.name?.trim()) {
+        this.stepError = 'SPOC Name is required.'; return;
+      }
       if (!this.newVendor.spoc.phone?.trim() || this.newVendor.spoc.phone.length < 10) {
         this.stepError = 'SPOC Phone must be 10 digits.'; return;
       }
@@ -250,22 +304,30 @@ export class Vendors implements OnInit {
     if (this.currentStep === 2) {
       const gst = this.newVendor.kyc.gst?.trim();
       const pan = this.newVendor.kyc.pan?.trim();
-      if (!gst && !pan) { this.stepError = 'At least one of GST No. or PAN Card No. is required.'; return; }
+      if (!gst && !pan) {
+        this.stepError = 'At least one of GST No. or PAN Card No. is required.'; return;
+      }
       if (gst && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gst)) {
         this.stepError = 'Invalid GST format. Expected: 22AAAAA0000A1Z5'; return;
       }
       if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(pan)) {
         this.stepError = 'Invalid PAN format. Expected: ABCDE1234F'; return;
       }
-      if (!this.newVendor.address.street?.trim()) { this.stepError = 'Physical address is required.'; return; }
+      if (!this.newVendor.address.street?.trim()) {
+        this.stepError = 'Physical address is required.'; return;
+      }
       if (!this.newVendor.address.pincode?.trim() || this.newVendor.address.pincode.length < 6) {
         this.stepError = 'Enter a valid 6-digit pincode.'; return;
       }
     }
 
     if (this.currentStep === 3) {
-      if (!this.newVendor.budget?.toString().trim()) { this.stepError = 'Budget allocation is required.'; return; }
-      if (!this.newVendor.skill?.trim()) { this.stepError = 'At least one service is required.'; return; }
+      if (!this.newVendor.budget?.toString().trim()) {
+        this.stepError = 'Budget allocation is required.'; return;
+      }
+      if (!this.newVendor.skill?.trim()) {
+        this.stepError = 'At least one service is required.'; return;
+      }
     }
 
     if (this.currentStep < 4) this.currentStep++;
@@ -275,7 +337,6 @@ export class Vendors implements OnInit {
     this.stepError = '';
     if (this.currentStep > 1) this.currentStep--;
   }
-
 
   addVendor(): void {
     if (this.isSaving) return;
@@ -308,7 +369,7 @@ export class Vendors implements OnInit {
         this.currentStep = 1;
         this.contractFiles = [];
       },
-      error: err => {
+      error: (err: any) => {
         this.isSaving = false;
         this.stepError = err?.error?.message ?? 'Vendor onboard failed. Please try again.';
       },
@@ -346,13 +407,12 @@ export class Vendors implements OnInit {
           if (updated) this.selectedVendor = updated;
         }
       },
-      error: err => {
+      error: (err: any) => {
         this.isSaving = false;
         this.stepError = err?.error?.message ?? 'Update failed. Please try again.';
       },
     });
   }
-
 
   deleteVendor(id: string): void {
     if (this.isDeleting) return;
@@ -360,19 +420,27 @@ export class Vendors implements OnInit {
     this.isDeleting = true;
     this.vendorService.deleteVendor(id).subscribe({
       next: () => { this.isDeleting = false; },
-      error: err => { this.isDeleting = false; alert('Delete failed: ' + (err?.error?.message ?? 'Server error')); },
+      error: (err: any) => {
+        this.isDeleting = false;
+        alert('Delete failed: ' + (err?.error?.message ?? 'Server error'));
+      },
     });
   }
 
+  // ─── File Handling ────────────────────────────────────────────────────────────
 
   onContractFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files) return;
     this.fileError = '';
     const MAX_SIZE = 10 * 1024 * 1024;
-    const ALLOWED = ['application/pdf', 'application/msword',
+    const ALLOWED = [
+      'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/jpeg', 'image/png'];
+      'image/jpeg',
+      'image/png',
+    ];
 
     const incoming = Array.from(input.files);
     const combined = [...this.contractFiles, ...incoming];
@@ -380,8 +448,12 @@ export class Vendors implements OnInit {
     if (combined.length > 10) { this.fileError = 'Maximum 10 files allowed.'; return; }
 
     for (const f of incoming) {
-      if (!ALLOWED.includes(f.type)) { this.fileError = `"${f.name}" has an unsupported format.`; return; }
-      if (f.size > MAX_SIZE) { this.fileError = `"${f.name}" exceeds the 10 MB limit (${this.getFileSize(f.size)}).`; return; }
+      if (!ALLOWED.includes(f.type)) {
+        this.fileError = `"${f.name}" has an unsupported format.`; return;
+      }
+      if (f.size > MAX_SIZE) {
+        this.fileError = `"${f.name}" exceeds the 10 MB limit (${this.getFileSize(f.size)}).`; return;
+      }
     }
 
     this.contractFiles = combined;
@@ -423,6 +495,7 @@ export class Vendors implements OnInit {
     return 'text-outline';
   }
 
+  // ─── Invoice ──────────────────────────────────────────────────────────────────
 
   openSubmission(): void {
     this.invoiceForm = this.defaultInvoice();
@@ -433,7 +506,6 @@ export class Vendors implements OnInit {
     if (item.type !== 'labor') item.hours = 0;
     this.calculateInvoiceTotals();
   }
-
 
   hasLaborItems(): boolean {
     return this.invoiceForm.items.some((item: any) => item.type === 'labor');
@@ -456,7 +528,6 @@ export class Vendors implements OnInit {
   calculateInvoiceTotals(): void {
     let subtotal = 0;
     let totalGST = 0;
-
     const gstMap: Record<number, number> = {};
 
     this.invoiceForm.items.forEach((item: any) => {
@@ -480,7 +551,6 @@ export class Vendors implements OnInit {
     this.invoiceForm.subtotal = subtotal;
     this.invoiceForm.taxAmount = totalGST;
     this.invoiceForm.grandTotal = subtotal + totalGST;
-
     this.invoiceForm.gstBreakdown = Object.entries(gstMap)
       .map(([rateStr, amount]) => ({ rate: Number(rateStr), amount }))
       .sort((a, b) => a.rate - b.rate);
@@ -495,7 +565,7 @@ export class Vendors implements OnInit {
       invoice_date: new Date().toISOString().split('T')[0],
       items: this.invoiceForm.items,
       subtotal: this.invoiceForm.subtotal,
-      tax_rate: this.invoiceForm.taxRate,
+      tax_rate: this.invoiceForm.taxRate ?? 0,
       tax_amount: this.invoiceForm.taxAmount,
       grand_total: this.invoiceForm.grandTotal,
     };
@@ -506,23 +576,87 @@ export class Vendors implements OnInit {
         this.showInvoiceModal = false;
         this.vendorService.loadStats();
       },
-      error: err => {
+      error: (err: any) => {
         this.isSavingInvoice = false;
         alert('Invoice submission failed: ' + (err?.error?.message ?? 'Server error'));
       },
     });
   }
 
+  // ─── Pay Invoice ──────────────────────────────────────────────────────────────
+
+  payInvoice(inv: VendorInvoice): void {
+    this.selectedInvoice = inv;
+    this.paymentForm = {
+      amount: Number(inv.grand_total) || null,
+      mode: '',
+      reference: '',
+    };
+    this.paymentError = '';
+    this.isProcessingPayment = false;
+    this.payInvoiceeModal = true;
+  }
+
+  closePayModal(): void {
+    this.payInvoiceeModal = false;
+    this.selectedInvoice = null;
+    this.paymentForm = { amount: null, mode: '', reference: '' };
+    this.paymentError = '';
+    this.isProcessingPayment = false;
+  }
+
+  confirmPayment(): void {
+    if (!this.selectedInvoice || this.isProcessingPayment) return;
+    this.paymentError = '';
+
+    if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
+      this.paymentError = 'Please enter a valid amount.';
+      return;
+    }
+    if (!this.paymentForm.mode) {
+      this.paymentError = 'Please select a payment mode.';
+      return;
+    }
+
+    this.isProcessingPayment = true;
+    this.invoiceService.updateStatus(this.selectedInvoice.id, 'Paid').subscribe({
+      next: () => {
+        this.isProcessingPayment = false;
+        this.closePayModal();
+        if (this.selectedVendor) {
+          this.invoiceService.loadInvoices(this.selectedVendor.id);
+          this.vendorService.loadStats();
+        }
+      },
+      error: (err: any) => {
+        this.isProcessingPayment = false;
+        this.paymentError = err?.error?.message ?? 'Payment failed. Please try again.';
+      },
+    });
+  }
+
+  cancelInvoice(inv: VendorInvoice): void {
+    if (!confirm(`Cancel invoice ${inv.invoice_number}?`)) return;
+    this.invoiceService.updateStatus(inv.id, 'Rejected').subscribe({
+      next: () => {
+        if (this.selectedVendor) {
+          this.invoiceService.loadInvoices(this.selectedVendor.id);
+          this.vendorService.loadStats();
+        }
+      },
+      error: (err: any) => alert('Cancel failed: ' + (err?.error?.message ?? 'Server error')),
+    });
+  }
 
   viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;
 
     let invoiceItems: any[] = [];
     try {
-      invoiceItems = Array.isArray(inv.items)
-        ? inv.items
-        : JSON.parse(inv.items as any);
-    } catch { invoiceItems = []; }
+      invoiceItems = Array.isArray(inv.items) ? inv.items : JSON.parse(inv.items as any);
+    } catch {
+      invoiceItems = [];
+    }
 
     const gstMap: Record<number, number> = {};
     invoiceItems.forEach((item: any) => {
@@ -564,10 +698,9 @@ export class Vendors implements OnInit {
   <title>Invoice ${inv.invoice_number}</title>
   <style>
     body { font-family: sans-serif; padding: 40px; color: #1e293b; }
-    h1   { font-size: 24px; font-weight: 900; margin: 0; }
+    h1 { font-size: 24px; font-weight: 900; margin: 0; }
     table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-    th { background: #f1f5f9; padding: 10px 12px; text-align: left;
-         font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+    th { background: #f1f5f9; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
     @media print { button { display: none !important; } }
   </style>
 </head>
@@ -582,20 +715,17 @@ export class Vendors implements OnInit {
       <p style="color:#64748b;margin:4px 0 0;">${inv.invoice_date}</p>
       <span style="display:inline-block;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700;
         background:${inv.status === 'Paid' ? '#dcfce7' : inv.status === 'Rejected' ? '#fee2e2' : '#fef3c7'};
-        color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Rejected' ? '#dc2626' : '#b45309'};
-        margin-top:6px;">
+        color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Rejected' ? '#dc2626' : '#b45309'};margin-top:6px;">
         ${inv.status}
       </span>
     </div>
   </div>
-
   ${vendor ? `
   <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;">
     <p style="margin:0;font-weight:700;">Bill To: ${vendor.name}</p>
     <p style="margin:4px 0 0;color:#64748b;">${vendor.address?.street || ''} ${vendor.address?.pincode || ''}</p>
     <p style="margin:4px 0 0;color:#64748b;">GST: ${vendor.kyc?.gst || '—'} | PAN: ${vendor.kyc?.pan || '—'}</p>
   </div>` : ''}
-
   <table>
     <thead>
       <tr>
@@ -603,7 +733,7 @@ export class Vendors implements OnInit {
         <th>Description</th>
         <th style="text-align:center;">Qty</th>
         ${hasLabor ? '<th style="text-align:center;">Hours</th>' : ''}
-        <th style="text-align:right;">Rate/hr (₹)</th>
+        <th style="text-align:right;">Rate (₹)</th>
         <th style="text-align:center;">Tax %</th>
         <th style="text-align:right;">Tax (₹)</th>
         <th style="text-align:right;">Total (₹)</th>
@@ -611,34 +741,24 @@ export class Vendors implements OnInit {
     </thead>
     <tbody>${itemRows}</tbody>
   </table>
-
-  <!-- ── Summary ── -->
   <div style="margin-top:24px;max-width:340px;margin-left:auto;">
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
       <span style="color:#64748b;">Subtotal (excl. Tax)</span>
       <span style="font-weight:700;">₹${Number(inv.subtotal).toLocaleString('en-IN')}</span>
     </div>
-
-    <!-- Per-rate GST breakdown -->
     ${taxBreakdownRows}
-
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
       <span style="color:#64748b;">Total Tax</span>
       <span style="font-weight:700;">₹${Number(inv.tax_amount).toLocaleString('en-IN')}</span>
     </div>
-
     <div style="display:flex;justify-content:space-between;padding:12px 0;">
       <span style="font-weight:900;">Grand Total</span>
-      <span style="color:#4f46e5;font-size:18px;font-weight:900;">
-        ₹${Number(inv.grand_total).toLocaleString('en-IN')}
-      </span>
+      <span style="color:#4f46e5;font-size:18px;font-weight:900;">₹${Number(inv.grand_total).toLocaleString('en-IN')}</span>
     </div>
   </div>
-
   <div style="margin-top:32px;text-align:center;">
     <button onclick="window.print()"
-      style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;
-             font-weight:700;font-size:14px;cursor:pointer;">
+      style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">
       Print / Save as PDF
     </button>
   </div>
@@ -649,6 +769,7 @@ export class Vendors implements OnInit {
     if (win) { win.document.write(html); win.document.close(); }
   }
 
+  // ─── Billing ──────────────────────────────────────────────────────────────────
 
   openBilling(): void {
     if (this.selectedVendor && this.invoices.length === 0) {
@@ -661,11 +782,17 @@ export class Vendors implements OnInit {
     return this.invoices.reduce((acc, inv) => acc + Number(inv.grand_total), 0);
   }
 
+  // ─── Audit ────────────────────────────────────────────────────────────────────
 
   openAudit(): void {
     const latest = this.vendorAudits[0];
     this.auditForm = latest
-      ? { quality: Number(latest.quality), timeliness: Number(latest.timeliness), safety: Number(latest.safety), observations: latest.observations ?? '' }
+      ? {
+        quality: Number(latest.quality),
+        timeliness: Number(latest.timeliness),
+        safety: Number(latest.safety),
+        observations: latest.observations ?? '',
+      }
       : { quality: 5, timeliness: 5, safety: 5, observations: '' };
     this.showAuditModal = true;
   }
@@ -680,10 +807,12 @@ export class Vendors implements OnInit {
     if (this.isSavingAudit || !this.selectedVendor) return;
     this.isSavingAudit = true;
     this.auditService.createAudit(this.selectedVendor.id, {
-      quality: this.auditForm.quality, timeliness: this.auditForm.timeliness,
-      safety: this.auditForm.safety, observations: this.auditForm.observations,
+      quality: this.auditForm.quality,
+      timeliness: this.auditForm.timeliness,
+      safety: this.auditForm.safety,
+      observations: this.auditForm.observations,
     }).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isSavingAudit = false;
         this.showAuditModal = false;
         if (this.selectedVendor && res.data?.composite_score != null) {
@@ -691,15 +820,18 @@ export class Vendors implements OnInit {
         }
         this.vendorService.loadVendors();
       },
-      error: err => {
+      error: (err: any) => {
         this.isSavingAudit = false;
         alert('Audit failed: ' + (err?.error?.message ?? 'Server error'));
       },
     });
   }
 
-  openVendorDetailData(): void { this.showVendorDetailModal = true; }
+  openVendorDetailData(): void {
+    this.showVendorDetailModal = true;
+  }
 
+  // ─── Vendor Status ────────────────────────────────────────────────────────────
 
   updateVendorStatus(status: string): void {
     if (!this.selectedVendor) return;
@@ -709,10 +841,11 @@ export class Vendors implements OnInit {
         const updated = this.vendorService.getVendorById(this.selectedVendor!.id);
         if (updated) this.selectedVendor = updated;
       },
-      error: err => alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) => alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
 
+  // ─── Labor Modal ─────────────────────────────────────────────────────────────
 
   openLaborModal(): void {
     if (!this.selectedVendor) return;
@@ -747,7 +880,6 @@ export class Vendors implements OnInit {
     }
 
     const laborCount = Math.max(1, parseInt(this.newLabor.labor_count) || 1);
-
     const payload = {
       vendor_id: this.selectedVendor.id,
       skill: this.newLabor.skill,
@@ -763,7 +895,7 @@ export class Vendors implements OnInit {
         this.showAddLaborForm = false;
         this.newLabor = this.defaultLabor();
       },
-      error: err => {
+      error: (err: any) => {
         this.isSavingLabor = false;
         this.laborError = err?.error?.message ?? 'Failed to add worker.';
       },
@@ -782,7 +914,6 @@ export class Vendors implements OnInit {
     };
   }
 
-
   saveLaborEdit(id: number): void {
     const payload = {
       skill: this.editLaborForm.skill,
@@ -792,16 +923,18 @@ export class Vendors implements OnInit {
     };
     this.laborService.updateWorker(id, payload).subscribe({
       next: () => { this.editingLaborId = null; },
-      error: err => alert('Update failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) => alert('Update failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
 
-  cancelLaborEdit(): void { this.editingLaborId = null; }
+  cancelLaborEdit(): void {
+    this.editingLaborId = null;
+  }
 
   deleteLaborWorker(id: number): void {
     if (!confirm('Remove this worker?')) return;
     this.laborService.deleteWorker(id).subscribe({
-      error: err => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
 
@@ -809,7 +942,7 @@ export class Vendors implements OnInit {
     this.laborService.updateWorker(worker.id, { status }).subscribe();
   }
 
-
+  // ─── Tasks ────────────────────────────────────────────────────────────────────
 
   updateTaskStatus(task: any, statusRaw: string): void {
     this.projectService.updateTask(task.id, { status: statusRaw }).subscribe();
@@ -818,10 +951,11 @@ export class Vendors implements OnInit {
   deleteTask(taskId: number): void {
     if (!confirm('Remove this task?')) return;
     this.projectService.deleteTask(taskId).subscribe({
-      error: err => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
 
+  // ─── UI Helpers ──────────────────────────────────────────────────────────────
 
   getSkillBarWidth(count: number): number {
     const max = Math.max(...this.laborStats.skillComposition.map(s => s.count), 1);
@@ -830,25 +964,30 @@ export class Vendors implements OnInit {
 
   getSkillBarColor(skill: string): string {
     const colors: Record<string, string> = {
-      'Masonry': 'bg-blue-500', 'Electrical': 'bg-yellow-500',
-      'Structural Steel': 'bg-red-500', 'Plumbing': 'bg-green-500',
-      'HVAC': 'bg-purple-500', 'Carpentry': 'bg-orange-400',
-      'Painting': 'bg-pink-400', 'Other': 'bg-slate-400',
+      'Masonry': 'bg-blue-500',
+      'Electrical': 'bg-yellow-500',
+      'Structural Steel': 'bg-red-500',
+      'Plumbing': 'bg-green-500',
+      'HVAC': 'bg-purple-500',
+      'Carpentry': 'bg-orange-400',
+      'Painting': 'bg-pink-400',
+      'Other': 'bg-slate-400',
     };
     return colors[skill] ?? 'bg-slate-400';
   }
 
   getTaskStatusColor(status: string): string {
     const map: Record<string, string> = {
-      'Completed': 'bg-green-100 text-green-700',
-      'In Progress': 'bg-blue-100 text-blue-700',
-      'Pending': 'bg-amber-100 text-amber-700',
-      'On Hold': 'bg-slate-100 text-slate-500',
+      'completed': 'bg-green-100 text-green-700',
+      'in_progress': 'bg-blue-100 text-blue-700',
+      'pending': 'bg-amber-100 text-amber-700',
+      'on_hold': 'bg-slate-100 text-slate-500',
     };
-    return map[status] ?? 'bg-slate-100 text-slate-500';
+    // Case-insensitive match
+    return map[status?.toLowerCase()] ?? 'bg-slate-100 text-slate-500';
   }
 
-
+  // ─── Defaults ────────────────────────────────────────────────────────────────
 
   private defaultVendor() {
     return {
@@ -864,11 +1003,14 @@ export class Vendors implements OnInit {
     return {
       number: 'INV-' + Math.floor(Math.random() * 9000 + 1000),
       date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      items: [{ type: '', description: '', quantity: 1, hours: 0, unitPrice: 0, gst: 18, baseAmount: 0, gstAmount: 0, total: 0 }],
-      subtotal: 0, taxAmount: 0, grandTotal: 0, gstBreakdown: [] as { rate: number; amount: number }[],
+      items: [{
+        type: '', description: '', quantity: 1, hours: 0,
+        unitPrice: 0, gst: 18, baseAmount: 0, gstAmount: 0, total: 0,
+      }],
+      subtotal: 0, taxAmount: 0, taxRate: 0, grandTotal: 0,
+      gstBreakdown: [] as { rate: number; amount: number }[],
     };
   }
-
 
   private defaultLabor() {
     return { skill: '', status: 'active', daily_rate: '', labor_count: 1 };
