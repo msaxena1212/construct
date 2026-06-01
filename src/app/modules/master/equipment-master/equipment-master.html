@@ -346,17 +346,18 @@
 
 <!-- Modals -->
 <!-- Add Material Modal -->
-@if (showAddModal) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
-        (click)="$event.stopPropagation()">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-black tracking-tight">New Equipment</h3>
-            <button (click)="showAddModal = false"
-                class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
+<app-common-dialog
+    [open]="showAddModal"
+    title="New Equipment"
+    icon="construction"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Add Equipment"
+    (closed)="showAddModal = false"
+    (primary)="addMaterial()"
+>
+    <div class="p-8">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
@@ -399,29 +400,23 @@
             </div>
         </div>
 
-        <div class="flex gap-3 mt-8">
-            <button (click)="showAddModal = false"
-                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
-            <button (click)="addMaterial()"
-                class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Add
-                Equipment</button>
-        </div>
     </div>
-</div>
-}
+</app-common-dialog>
 
 <!-- Edit Material Modal -->
-@if (showEditModal && materialToEdit) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
-        (click)="$event.stopPropagation()">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-black tracking-tight">Edit Equipment</h3>
-            <button (click)="showEditModal = false"
-                class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
+<app-common-dialog
+    [open]="showEditModal && !!materialToEdit"
+    title="Edit Equipment"
+    icon="edit_square"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Save Changes"
+    (closed)="showEditModal = false"
+    (primary)="updateMaterial()"
+>
+    @if (materialToEdit) {
+    <div class="p-8">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
@@ -464,41 +459,32 @@
             </div>
         </div>
 
-        <div class="flex gap-3 mt-8">
-            <button (click)="showEditModal = false"
-                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
-            <button (click)="updateMaterial()"
-                class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Save
-                Changes</button>
-        </div>
     </div>
-</div>
-}
+    }
+</app-common-dialog>
 
 <!-- Delete Confirmation Modal -->
-@if (showDeleteModal && materialToDelete) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"
-        (click)="$event.stopPropagation()">
-        <div
-            class="w-20 h-20 bg-error-container/20 text-error rounded-full flex items-center justify-center mx-auto mb-6">
-            <span class="material-symbols-outlined text-4xl">delete_forever</span>
-        </div>
-        <h3 class="text-xl font-black mb-2">Delete Material?</h3>
-        <p class="text-outline text-sm font-medium mb-8">Are you sure you want to remove <span
+<app-common-dialog
+    [open]="showDeleteModal && !!materialToDelete"
+    variant="danger"
+    title="Delete Equipment?"
+    subtitle="This action cannot be undone."
+    icon="delete_forever"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Delete Item"
+    (closed)="showDeleteModal = false"
+    (primary)="confirmDelete()"
+>
+    @if (materialToDelete) {
+    <div class="p-8 text-center">
+        <p class="text-outline text-sm font-medium">Are you sure you want to remove <span
                 class="text-on-surface font-black">"{{ materialToDelete.name }}"</span>? This action cannot be undone.
         </p>
-
-        <div class="flex gap-3">
-            <button (click)="showDeleteModal = false"
-                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
-            <button (click)="confirmDelete()"
-                class="flex-1 py-3 rounded-xl bg-error text-white text-sm font-bold cursor-pointer shadow-lg shadow-error/20 hover:scale-[1.02] transition-transform">Delete
-                Item</button>
-        </div>
     </div>
-</div>
-}
+    }
+</app-common-dialog>
 
 <!-- Filters Dropdown Overlay -->
 @if (showFilters) {

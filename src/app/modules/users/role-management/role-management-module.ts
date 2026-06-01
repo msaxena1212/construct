@@ -6,6 +6,7 @@ import { RoleManagement } from './role-management';
 import { RoleFormDialog } from './role-form-dialog/role-form-dialog';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../../shared/material/material-module';
+import { CommonDialogComponent } from '../../../shared/components/common-dialog/common-dialog';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { MaterialModule } from '../../../shared/material/material-module';
     RoleManagementRoutingModule,
     ReactiveFormsModule,
     FormsModule,
-    MaterialModule
+    MaterialModule,
+    CommonDialogComponent
   ]
 })
 export class RoleManagementModule { }

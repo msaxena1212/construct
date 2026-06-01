@@ -4,13 +4,14 @@ import { ToastrModule, ToastrService } from 'ngx-toastr';
 import { ProjectService } from '../../services/project-service';
 import { IProjectTask, IUser } from '../../../../shared/interfaces/project.interface';
 import { CommonModule } from '@angular/common';
+import { CommonDialogComponent } from '../../../../shared/components/common-dialog/common-dialog';
 
 @Component({
   selector: 'app-add-task',
   standalone: true,
   templateUrl: './add-task.html',
   styleUrl: './add-task.scss',
-  imports: [CommonModule, FormsModule, ToastrModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ToastrModule, ReactiveFormsModule, CommonDialogComponent],
 })
 export class AddTask implements OnInit {
   @Input() projectId: string | number = '';

@@ -4,6 +4,7 @@ import { ToastrService } from 'ngx-toastr';
 import { IProjectSubTask, IProjectTask, IUser, IProjectTaskDependency, IProject } from '../../../../shared/interfaces/project.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CommonDialogComponent } from '../../../../shared/components/common-dialog/common-dialog';
 
 @Component({
   selector: 'app-task-detail',
@@ -13,6 +14,7 @@ import { FormsModule } from '@angular/forms';
   imports: [
     CommonModule,
     FormsModule,
+    CommonDialogComponent,
   ]
 })
 export class TaskDetail implements OnInit {
@@ -27,6 +29,8 @@ export class TaskDetail implements OnInit {
   newComment = '';
   newSubTaskTitle = '';
   showUploadModal = false;
+  showDeleteSubTaskModal = false;
+  subTaskToDelete: number | null = null;
   isUploading = false;
 
   selectedPredecessorId: any = '';
@@ -119,12 +123,29 @@ export class TaskDetail implements OnInit {
     });
   }
 
+  openDeleteSubTaskDialog(subTaskId: number) {
+    this.subTaskToDelete = subTaskId;
+    this.showDeleteSubTaskModal = true;
+  }
+
+  closeDeleteSubTaskDialog() {
+    this.showDeleteSubTaskModal = false;
+    this.subTaskToDelete = null;
+  }
+
+  confirmDeleteSubTask() {
+    if (!this.subTaskToDelete) return;
+
+    this.removeSubTask(this.subTaskToDelete);
+  }
+
   removeSubTask(subTaskId: number) {
     this.projectService.deleteSubTask(subTaskId).subscribe({
       next: () => {
         if (this.task.sub_tasks) {
           this.task.sub_tasks = this.task.sub_tasks.filter((i: IProjectSubTask) => i.id !== subTaskId);
         }
+        this.closeDeleteSubTaskDialog();
         this.toastr.info('Sub-task removed');
       }
     });

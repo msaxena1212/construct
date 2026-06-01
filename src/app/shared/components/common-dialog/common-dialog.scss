@@ -1,0 +1,43 @@
+:host {
+  display: contents;
+}
+
+.common-dialog-panel {
+  width: min(48rem, calc(100vw - 2rem));
+  max-width: min(48rem, calc(100vw - 2rem));
+
+  height: auto;
+  max-height: 85vh;
+
+  display: flex;
+  flex-direction: column;
+
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  will-change: transform, opacity;
+}
+
+.common-dialog-header {
+  flex-shrink: 0;
+  min-height: 78px;
+}
+
+.common-dialog-footer {
+  flex-shrink: 0;
+  min-height: 72px;
+}
+
+.common-dialog-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.common-dialog-footer button {
+  min-width: 9rem;
+  min-height: 3rem;
+}
+
+.common-dialog-header .material-symbols-outlined {
+  width: 2.5rem;
+  height: 2.5rem;
+}

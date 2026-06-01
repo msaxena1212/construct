@@ -1,5 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { TeamService } from '../services/team.service';
@@ -10,31 +9,55 @@ import { environment } from '../../../../../environments/environment';
   standalone: false,
   templateUrl: './edit-user-modal.html',
 })
-export class EditUserModalComponent implements OnInit {
+export class EditUserModalComponent implements OnInit, OnChanges {
+  @Input() open = false;
+  @Input() user: any;
+  @Input() roles: any[] = [];
+  @Output() closed = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<void>();
+
   teamForm: FormGroup;
-  roles: any[] = [];
   loading = false;
   selectedFile: File | null = null;
   avatarPreview: string | null = null;
   serverUrl = environment.serverUrl;
 
   constructor(
-    public dialogRef: MatDialogRef<EditUserModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
     private fb: FormBuilder,
     private teamService: TeamService,
     private toast: ToastrService
   ) {
-    this.roles = data.roles || [];
     this.teamForm = this.fb.group({
-      firstname: [data.user.firstname, Validators.required],
-      lastname: [data.user.lastname, Validators.required],
-      email: [data.user.email, [Validators.required, Validators.email]],
-      role_id: [data.user.role_id, Validators.required]
+      firstname: ['', Validators.required],
+      lastname: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      role_id: ['', Validators.required]
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.user) {
+      this.teamForm.patchValue({
+        firstname: this.user.firstname,
+        lastname: this.user.lastname,
+        email: this.user.email,
+        role_id: this.user.role_id
+      });
+      this.avatarPreview = this.user.avatar ? `${this.serverUrl}${this.user.avatar}` : null;
+    }
+  }
+
+  ngOnChanges(): void {
+    if (this.user) {
+      this.teamForm.patchValue({
+        firstname: this.user.firstname,
+        lastname: this.user.lastname,
+        email: this.user.email,
+        role_id: this.user.role_id
+      });
+      this.avatarPreview = this.user.avatar ? `${this.serverUrl}${this.user.avatar}` : null;
+    }
+  }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -62,11 +85,12 @@ export class EditUserModalComponent implements OnInit {
       formData.append('avatar', this.selectedFile);
     }
 
-    this.teamService.updateUser(this.data.user.id, formData).subscribe({
+    this.teamService.updateUser(this.user.id, formData).subscribe({
       next: (res) => {
         this.loading = false;
         this.toast.success(res.message || "User updated successfully!");
-        this.dialogRef.close(true);
+        this.saved.emit();
+        this.closed.emit();
       },
       error: (err) => {
         this.loading = false;

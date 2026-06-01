@@ -324,14 +324,13 @@
     </button>
   </div>
 
-  @if (showModal) {
-  <div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
-    (click)="closeModal()">
-
-    <!-- Modal -->
-    <div
-      class="relative w-full max-w-3xl rounded-[32px] bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300"
-      (click)="$event.stopPropagation()">
+  <app-common-dialog
+    [open]="showModal"
+    maxWidth="max-w-3xl"
+    backdropClass="bg-slate-900/50"
+    panelClass="relative rounded-[32px] bg-white dark:bg-slate-900 animate-in zoom-in-95 duration-300"
+    (closed)="closeModal()"
+  >
 
       <!-- Top Glow -->
       <div
@@ -528,9 +527,6 @@
 
       </div>
 
-    </div>
-
-  </div>
-  }
+  </app-common-dialog>
 
 </div>

@@ -1,0 +1,127 @@
+@if (open) {
+  @if (showBackdrop) {
+    <div
+      class="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-hidden backdrop-blur-sm"
+      [ngClass]="backdropClass"
+      (click)="onBackdropClick()">
+
+      <ng-container *ngTemplateOutlet="dialogPanel"></ng-container>
+
+    </div>
+  } @else {
+    <ng-container *ngTemplateOutlet="dialogPanel"></ng-container>
+  }
+}
+
+<ng-template #dialogPanel>
+
+  <div
+    class="common-dialog-panel w-full max-h-[90vh] bg-white dark:bg-slate-900 rounded-[28px] border overflow-hidden shadow-[0_25px_80px_-30px_rgba(15,23,42,0.6)] flex flex-col"
+    [ngClass]="[dialogWidthClass, panelClass, dialogVariantClass]"
+    [style.max-width]="computedMaxWidth"
+    (click)="$event.stopPropagation()">
+
+    @if (variant === 'danger') {
+      <div class="h-1 w-full bg-red-600 dark:bg-red-500"></div>
+    }
+
+    @if (title || subtitle || badge || icon || showCloseButton) {
+
+      <div
+        class="common-dialog-header shrink-0 px-6 py-5 border-b flex items-center justify-between gap-4"
+        [ngClass]="headerClass">
+
+        <div class="min-w-0 flex items-center gap-3">
+
+          @if (resolvedIcon) {
+            <span
+              class="material-symbols-outlined h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+              [ngClass]="iconClass">
+              {{ resolvedIcon }}
+            </span>
+          }
+
+          <div class="min-w-0">
+
+            @if (badge) {
+              <span
+                class="inline-flex w-fit items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-widest"
+                [ngClass]="resolvedBadgeClass">
+                {{ badge }}
+              </span>
+            }
+
+            @if (title) {
+              <h3 class="mt-1 truncate text-lg font-bold text-slate-900 dark:text-slate-50">
+                {{ title }}
+              </h3>
+            }
+
+            @if (subtitle) {
+              <p class="mt-0.5 truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+                {{ subtitle }}
+              </p>
+            }
+
+          </div>
+
+        </div>
+
+        <div class="flex shrink-0 items-center gap-2">
+
+          <ng-content select="[dialog-header-actions]"></ng-content>
+
+          @if (showCloseButton) {
+            <button
+              type="button"
+              (click)="onCancel()"
+              class="material-symbols-outlined h-9 w-9 rounded-full bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white transition-colors flex items-center justify-center">
+              close
+            </button>
+          }
+
+        </div>
+
+      </div>
+    }
+
+    <!-- BODY -->
+
+    <div class="common-dialog-body">
+      <ng-content></ng-content>
+    </div>
+
+    @if (showFooter) {
+
+      <div
+        class="common-dialog-footer shrink-0 px-6 py-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+
+        <ng-content select="[dialog-footer]"></ng-content>
+
+        @if (showDefaultFooterButtons) {
+
+          <button
+            type="button"
+            (click)="onCancel()"
+            class="min-w-[9rem] px-5 py-3 rounded-full text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800">
+            {{ cancelLabel }}
+          </button>
+
+          <button
+            type="button"
+            (click)="primary.emit()"
+            [disabled]="primaryDisabled"
+            class="min-w-[9rem] px-5 py-3 rounded-full text-[11px] font-black uppercase tracking-widest shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            [ngClass]="primaryButtonClass">
+            {{ primaryLabel }}
+          </button>
+
+        }
+
+      </div>
+
+    }
+
+  </div>
+
+</ng-template>

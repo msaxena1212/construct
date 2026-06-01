@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CommonDialogComponent } from '../common-dialog/common-dialog';
 
 @Component({
   selector: 'app-vendor-add-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CommonDialogComponent],
   templateUrl: './vendor-add-modal.html',
 })
 export class VendorAddComponent {

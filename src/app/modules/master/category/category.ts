@@ -21,6 +21,10 @@ private categoryService = inject(CategoryServeice);
 
   showAddModal = false;
 
+  showDeleteModal = false;
+
+  categoryToDelete: any = null;
+
   isEditMode = false;
 
   selectedSkillId: number | null = null;
@@ -159,6 +163,12 @@ get filteredCategories(): any[] {
     this.showAddModal = false;
   }
 
+  closeDeleteModal() {
+
+    this.showDeleteModal = false;
+
+    this.categoryToDelete = null;
+  }
 
   addCategory() {
 
@@ -239,15 +249,19 @@ get filteredCategories(): any[] {
       });
   }
 
-  deleteCategory(id: number) {
+  deleteCategory(category: any) {
 
-    const confirmDelete =
-      confirm('Are you sure you want to delete this category?');
+    this.categoryToDelete = category;
 
-    if (!confirmDelete) return;
+    this.showDeleteModal = true;
+  }
+
+  confirmDelete() {
+
+    if (!this.categoryToDelete?.id) return;
 
     this.categoryService
-      .deleteCategory(id)
+      .deleteCategory(this.categoryToDelete.id)
       .subscribe({
 
         next: () => {
@@ -255,6 +269,10 @@ get filteredCategories(): any[] {
           this.toast.success(
             'Category deleted successfully'
           );
+
+          this.showDeleteModal = false;
+
+          this.categoryToDelete = null;
 
           this.getCategories();
         },

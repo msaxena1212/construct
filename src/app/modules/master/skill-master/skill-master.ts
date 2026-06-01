@@ -23,6 +23,10 @@ export class SkillMaster implements OnInit {
 
   showAddModal = false;
 
+  showDeleteModal = false;
+
+  skillToDelete: any = null;
+
   isEditMode = false;
 
   selectedSkillId: number | null = null;
@@ -159,6 +163,12 @@ export class SkillMaster implements OnInit {
     this.showAddModal = false;
   }
 
+  closeDeleteModal() {
+
+    this.showDeleteModal = false;
+
+    this.skillToDelete = null;
+  }
 
   addSkill() {
 
@@ -238,15 +248,19 @@ export class SkillMaster implements OnInit {
       });
   }
 
-  deleteSkill(id: number) {
+  deleteSkill(skill: any) {
 
-    const confirmDelete =
-      confirm('Are you sure you want to delete this skill?');
+    this.skillToDelete = skill;
 
-    if (!confirmDelete) return;
+    this.showDeleteModal = true;
+  }
+
+  confirmDelete() {
+
+    if (!this.skillToDelete?.id) return;
 
     this.skillService
-      .deleteSkill(id)
+      .deleteSkill(this.skillToDelete.id)
       .subscribe({
 
         next: () => {
@@ -254,6 +268,10 @@ export class SkillMaster implements OnInit {
           this.toast.success(
             'Skill deleted successfully'
           );
+
+          this.showDeleteModal = false;
+
+          this.skillToDelete = null;
 
           this.getSkills();
         },

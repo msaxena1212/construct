@@ -1,5 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { TeamService } from '../services/team.service';
@@ -10,17 +9,18 @@ import { TeamService } from '../services/team.service';
   templateUrl: './invite-user-modal.html',
 })
 export class InviteUserModalComponent implements OnInit {
+  @Input() open = false;
+  @Input() roles: any[] = [];
+  @Output() closed = new EventEmitter<void>();
+  @Output() saved = new EventEmitter<void>();
+
   teamForm: FormGroup;
-  roles: any[] = [];
 
   constructor(
-    public dialogRef: MatDialogRef<InviteUserModalComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any,
     private fb: FormBuilder,
     private teamService: TeamService,
     private toast: ToastrService
   ) {
-    this.roles = data.roles || [];
     this.teamForm = this.fb.group({
       firstname: ['', Validators.required],
       lastname: ['', Validators.required],
@@ -41,7 +41,8 @@ export class InviteUserModalComponent implements OnInit {
     this.teamService.inviteUser(this.teamForm.value).subscribe({
       next: (res) => {
         this.toast.success(res.message || "Invite sent successfully!");
-        this.dialogRef.close(true);
+        this.saved.emit();
+        this.closed.emit();
       },
       error: (err) => {
         this.toast.error(err.error?.message || "Failed to invite user");

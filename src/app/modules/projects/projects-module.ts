@@ -19,6 +19,7 @@ import { MilestoneFormDialog } from './dialogs/milestone-form-dialog/milestone-f
 import { MaterialModule } from '../../shared/material/material-module';
 import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
 import { StockApprovalModule } from '../stock-approval/stock-approval-module';
+import { CommonDialogComponent } from '../../shared/components/common-dialog/common-dialog';
 
 @NgModule({
   declarations: [
@@ -40,7 +41,8 @@ import { StockApprovalModule } from '../stock-approval/stock-approval-module';
     DragDropModule,
     MaterialModule,
     TaskManagement,
-    StockApprovalModule
+    StockApprovalModule,
+    CommonDialogComponent
   ],
 })
 export class ProjectsModule {}

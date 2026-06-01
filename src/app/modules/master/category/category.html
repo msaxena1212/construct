@@ -231,7 +231,7 @@
                 </button>
 
                 <!-- Delete -->
-                <button (click)="deleteCategory(item.id)"
+                <button (click)="deleteCategory(item)"
                   class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
                   <span class="material-symbols-outlined text-[18px]">
@@ -349,48 +349,19 @@
 
 </section>
 
-<!-- Modal -->
-@if (showAddModal) {
-
-<div
-  class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-
-  <div
-    class="bg-white dark:bg-slate-900 rounded-[28px] p-7 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800">
-
-    <!-- Modal Header -->
-    <div class="flex items-center justify-between mb-7">
-
-      <div>
-
-        <h3 class="text-2xl font-black text-slate-800 dark:text-white">
-
-          {{ isEditMode ? 'Edit Category' : 'Add Category' }}
-
-        </h3>
-
-        <p class="text-sm text-slate-400 font-medium mt-1">
-
-          {{
-          isEditMode
-          ? 'Update existing category details'
-          : 'Create a new category record'
-          }}
-
-        </p>
-
-      </div>
-
-      <button (click)="closeModal()"
-        class="w-10 h-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-all">
-
-        <span class="material-symbols-outlined">
-          close
-        </span>
-
-      </button>
-
-    </div>
+<app-common-dialog
+  [open]="showAddModal"
+  [title]="isEditMode ? 'Edit Category' : 'Add Category'"
+  [subtitle]="isEditMode ? 'Update existing category details' : 'Create a new category record'"
+  icon="category"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  [primaryLabel]="isEditMode ? 'Update' : 'Save'"
+  (closed)="closeModal()"
+  (primary)="isEditMode ? updateCategory() : addCategory()"
+>
+  <div class="p-7">
 
     <!-- Category Name -->
     <div class="mb-5">
@@ -430,27 +401,28 @@
 
     </div>
 
-    <!-- Buttons -->
-    <div class="flex gap-3">
-
-      <button (click)="closeModal()"
-        class="flex-1 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-
-        Cancel
-
-      </button>
-
-      <button (click)="isEditMode ? updateCategory() : addCategory()"
-        class="flex-1 bg-primary text-white rounded-2xl py-3 font-bold shadow-lg hover:scale-[1.02] transition-all">
-
-        {{ isEditMode ? 'Update' : 'Save' }}
-
-      </button>
-
-    </div>
-
   </div>
+</app-common-dialog>
 
-</div>
-
-}
+<!-- Delete Confirmation Modal -->
+<app-common-dialog
+  [open]="showDeleteModal && !!categoryToDelete"
+  variant="danger"
+  title="Delete Category?"
+  subtitle="This action cannot be undone."
+  icon="delete_forever"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  primaryLabel="Delete Item"
+  (closed)="closeDeleteModal()"
+  (primary)="confirmDelete()"
+>
+  @if (categoryToDelete) {
+  <div class="p-8 text-center">
+    <p class="text-outline text-sm font-medium">Are you sure you want to remove <span
+        class="text-on-surface font-black">"{{ categoryToDelete.category_name }}"</span>? This action cannot be undone.
+    </p>
+  </div>
+  }
+</app-common-dialog>

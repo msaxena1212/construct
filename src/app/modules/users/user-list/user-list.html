@@ -292,4 +292,19 @@
     </div>
     }
   </div>
+
+  <app-invite-user-modal
+    [open]="showInviteModal"
+    [roles]="roles"
+    (closed)="closeInviteModal()"
+    (saved)="onModalSaved()"
+  ></app-invite-user-modal>
+
+  <app-edit-user-modal
+    [open]="showEditModal"
+    [roles]="roles"
+    [user]="selectedUser"
+    (closed)="closeEditModal()"
+    (saved)="onModalSaved()"
+  ></app-edit-user-modal>
 </div>

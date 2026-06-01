@@ -2,9 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { TeamService } from './services/team.service';
-import { MatDialog } from '@angular/material/dialog';
-import { InviteUserModalComponent } from './invite-user-modal/invite-user-modal';
-import { EditUserModalComponent } from './edit-user-modal/edit-user-modal';
 import { ITeam } from '../../../shared/interfaces/project.interface';
 import { ApiResponse } from '../../../shared/interfaces/core.interface';
 import { environment } from '../../../../environments/environment';
@@ -19,12 +16,14 @@ export class UserList implements OnInit {
   teamMembers: ITeam[] = [];
   roles: any[] = [];
   serverUrl = environment.serverUrl;
+  showInviteModal = false;
+  showEditModal = false;
+  selectedUser: any = null;
 
   constructor(
     private fb: FormBuilder,
     private teamService: TeamService,
-    private toast: ToastrService,
-    private dialog: MatDialog
+    private toast: ToastrService
   ) { }
 
   ngOnInit(): void {
@@ -55,31 +54,28 @@ export class UserList implements OnInit {
   }
 
   openInviteModal() {
-    const dialogRef = this.dialog.open(InviteUserModalComponent, {
-      width: '500px',
-      data: { roles: this.roles },
-      panelClass: 'custom-dialog-container'
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadTeam();
-      }
-    });
+    this.showInviteModal = true;
   }
 
   openEditModal(user: any) {
-    const dialogRef = this.dialog.open(EditUserModalComponent, {
-      width: '500px',
-      data: { user, roles: this.roles },
-      panelClass: 'custom-dialog-container'
-    });
+    this.selectedUser = user;
+    this.showEditModal = true;
+  }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadTeam();
-      }
-    });
+  onModalSaved() {
+    this.loadTeam();
+    this.showInviteModal = false;
+    this.showEditModal = false;
+    this.selectedUser = null;
+  }
+
+  closeInviteModal() {
+    this.showInviteModal = false;
+  }
+
+  closeEditModal() {
+    this.showEditModal = false;
+    this.selectedUser = null;
   }
 
   toggleStatus(member: any) {

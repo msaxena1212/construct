@@ -373,27 +373,18 @@
 </div>
 
 <!-- View Details Modal -->
-<div *ngIf="showViewModal && selectedQuote"
-  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-  <div
-    class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-    <div class="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest"
-            [ngClass]="getStatusClass(selectedQuote.status)">{{ selectedQuote.status }}</span>
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">ID: {{ selectedQuote.quotation_number
-            }}</span>
-        </div>
-        <h3 class="text-2xl font-black text-slate-900 dark:text-slate-50">Quotation Breakdown</h3>
-      </div>
-      <button (click)="closeViewModal()"
-        class="p-3 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-2xl transition-all cursor-pointer">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-
-    <div class="p-10 space-y-8 overflow-y-auto max-h-[60vh]">
+<app-common-dialog
+  [open]="showViewModal && !!selectedQuote"
+  title="Quotation Breakdown"
+  [subtitle]="selectedQuote ? 'ID: ' + selectedQuote.quotation_number : ''"
+  [badge]="selectedQuote?.status || ''"
+  [badgeClass]="selectedQuote ? getStatusClass(selectedQuote.status) : ''"
+  icon="request_quote"
+  [showCloseButton]="true"
+  (closed)="closeViewModal()"
+>
+  @if (selectedQuote) {
+    <div class="p-10 space-y-8">
       <div class="grid grid-cols-2 gap-8">
         <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
           <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Originating Member</p>
@@ -452,18 +443,23 @@
       <button (click)="closeViewModal()"
         class="flex-1 py-4 bg-primary text-white rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">Done</button>
     </div> -->
-  </div>
-</div>
+  }
+</app-common-dialog>
 
 <!-- Negotiation Modal -->
-<div *ngIf="showNegotiateModal && selectedQuote"
-  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-  <div
-    class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-amber-100 dark:border-amber-900/20">
-    <div class="bg-amber-50 dark:bg-amber-900/10 p-8 border-b border-amber-100 dark:border-amber-900/20">
-      <h3 class="text-2xl font-black text-amber-600 tracking-tight">Vendor Approval Hub</h3>
-      <p class="text-sm text-amber-600/70 font-bold uppercase tracking-widest mt-1">Lifecycle Correction & Feedback</p>
-    </div>
+<app-common-dialog
+  [open]="showNegotiateModal && !!selectedQuote"
+  title="Vendor Approval Hub"
+  subtitle="Lifecycle Correction & Feedback"
+  icon="approval"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Discard Changes"
+  primaryLabel="Update"
+  (closed)="closeNegotiateModal()"
+  (primary)="updateQuoteStatus()"
+>
+  @if (selectedQuote) {
 
     <div class="p-10 space-y-8">
       <div>
@@ -499,36 +495,27 @@
       </div>
     </div>
 
-    <div class="p-10 pt-0 flex gap-4">
-      <button (click)="closeNegotiateModal()"
-        class="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">Discard
-        Changes</button>
-      <button (click)="updateQuoteStatus()"
-        class="flex-[2] py-4 bg-amber-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-amber-200 hover:scale-[1.02] transition-transform">
-        Update</button>
-    </div>
-  </div>
-</div>
+  }
+</app-common-dialog>
 
-@if (showDeleteModal && quoteToDelete) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"
-    (click)="$event.stopPropagation()">
-    <div class="w-20 h-20 bg-error-container/20 text-error rounded-full flex items-center justify-center mx-auto mb-6">
-      <span class="material-symbols-outlined text-4xl">delete_forever</span>
-    </div>
-    <h3 class="text-xl font-black mb-2">Delete Quotation?</h3>
-    <p class="text-outline text-sm font-medium mb-8">Are you sure you want to remove <span
+<app-common-dialog
+  [open]="showDeleteModal && !!quoteToDelete"
+  variant="danger"
+  title="Delete Quotation?"
+  subtitle="This action cannot be undone."
+  icon="delete_forever"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  primaryLabel="Delete Item"
+  (closed)="showDeleteModal = false"
+  (primary)="confirmDelete(quoteToDelete!)"
+>
+  @if (quoteToDelete) {
+    <div class="p-8 text-center">
+    <p class="text-outline text-sm font-medium">Are you sure you want to remove <span
         class="text-on-surface font-black">"{{ quoteToDelete.quotation_number }}"</span>? This action cannot be undone.
     </p>
-
-    <div class="flex gap-3">
-      <button (click)="showDeleteModal = false"
-        class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
-      <button (click)="confirmDelete(quoteToDelete)"
-        class="flex-1 py-3 rounded-xl bg-error text-white text-sm font-bold cursor-pointer shadow-lg shadow-error/20 hover:scale-[1.02] transition-transform">Delete
-        Item</button>
     </div>
-  </div>
-</div>
-}
+  }
+</app-common-dialog>

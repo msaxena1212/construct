@@ -7,9 +7,10 @@ import { FormsModule } from '@angular/forms';
 import { EquipmentMaster } from './equipment-master/equipment-master';
 import { SkillMaster } from './skill-master/skill-master';
 import { Category } from './category/category';
+import { CommonDialogComponent } from '../../shared/components/common-dialog/common-dialog';
 
 @NgModule({
   declarations: [MaterialMaster, EquipmentMaster, SkillMaster, Category],
-  imports: [CommonModule, MasterRoutingModule, FormsModule],
+  imports: [CommonModule, MasterRoutingModule, FormsModule, CommonDialogComponent],
 })
 export class MasterModule {}

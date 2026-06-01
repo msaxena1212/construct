@@ -302,17 +302,20 @@
     </div>
   </div>
   }
-  @if (payInvoiceeModal) {
-  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-black">Vendor Invoice Payment</h3>
-        <button (click)="closePayModal()"
-          class="material-symbols-outlined text-slate-500 hover:text-red-500 cursor-pointer">
-          close
-        </button>
-      </div>
+  <app-common-dialog
+    [open]="payInvoiceeModal"
+    backdropClass="bg-black/50"
+    panelClass="bg-white rounded-2xl p-6"
+    title="Vendor Invoice Payment"
+    subtitle="Pay selected vendor invoice"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Confirm Payment"
+    [primaryDisabled]="isProcessingPayment"
+    (closed)="closePayModal()"
+    (primary)="confirmPayment()"
+  >
 
       <div class="space-y-3">
 
@@ -415,39 +418,18 @@
         }
 
       </div>
-
-      <div class="flex justify-end gap-3 mt-6">
-        <button (click)="closePayModal()"
-          class="px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">
-          Cancel
-        </button>
-        <button (click)="confirmPayment()" [disabled]="isProcessingPayment"
-          class="px-5 py-2 bg-green-600 text-white rounded-xl text-sm font-bold cursor-pointer hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2">
-          @if (isProcessingPayment) {
-          <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-          Processing...
-          } @else {
-          <span class="material-symbols-outlined text-sm">payments</span>
-          Confirm Payment
-          }
-        </button>
-      </div>
-
-    </div>
-  </div>
-  }
+  </app-common-dialog>
 </section>
 
 
 <!-- ══════════════════════════════════════ LABOR MODAL ══════════════════════════════════════ -->
-@if (showLaborModal && selectedVendor) {
-<div
-  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
-  (click)="closeLaborModal()">
-
-  <div
-    class="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-[798px] max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 my-4"
-    (click)="$event.stopPropagation()">
+<app-common-dialog
+  [open]="showLaborModal && !!selectedVendor"
+  maxWidth="max-w-[798px]"
+  backdropClass="bg-slate-900/50"
+  panelClass="bg-white dark:bg-slate-900 rounded-[2rem] max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 my-4"
+  (closed)="closeLaborModal()"
+>
 
     <div
       class="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 px-4 sm:px-6 py-4 text-white relative shrink-0 overflow-hidden">
@@ -997,33 +979,22 @@
 
     </div>
 
-  </div>
-
-</div>
-}
+</app-common-dialog>
 
 
 <!-- ══════════════════════════════════════ ADD / EDIT VENDOR MODAL ══════════════════════════════════════ -->
-@if (showAddModal) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-3 overflow-y-auto"
-  (click)="showAddModal = false">
-  <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl my-auto flex flex-col" max-h-[92vh]
-    overflow-hidden (click)="$event.stopPropagation()">
-
-    <div class="flex justify-between items-center px-6 pt-6 pb-4 border-b border-outline-variant/10 shrink-0">
-      <div>
-        <h3 class="text-xl font-black tracking-tight">
-          {{ isEditMode ? 'Update Onboard New' : 'Onboard New' }} Vendor
-        </h3>
-        <p class="text-xs text-outline font-medium mt-0.5">
-          {{ isEditMode ? 'Update vendor information below.' : 'Complete documentation to begin work.' }}
-        </p>
-      </div>
-      <button (click)="showAddModal = false"
-        class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-        <span class="material-symbols-outlined text-[20px]">close</span>
-      </button>
-    </div>
+<app-common-dialog
+  [open]="showAddModal"
+  maxWidth="max-w-2xl"
+  backdropClass="bg-slate-900/40"
+  panelClass="bg-white dark:bg-slate-900 rounded-2xl my-auto flex flex-col max-h-[92vh] overflow-hidden"
+  title="{{ isEditMode ? 'Update Onboard New' : 'Onboard New' }} Vendor"
+  subtitle="{{ isEditMode ? 'Update vendor information below.' : 'Complete documentation to begin work.' }}"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  [showDefaultFooterButtons]="false"
+  (closed)="showAddModal = false"
+>
 
     <div class="px-6 pt-5 pb-4 shrink-0">
       <div class="flex items-center">
@@ -1287,7 +1258,7 @@
   </div>
 
 
-  <div class="px-6 py-4 border-t border-outline-variant/10 flex gap-3 shrink-0">
+  <div dialog-footer class="flex gap-3 shrink-0">
     @if (currentStep > 1) {
     <button (click)="prevStep()" [disabled]="isSaving"
       class="flex-1 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-black uppercase tracking-wide cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
@@ -1318,20 +1289,17 @@
       }
   </div>
 
-</div>
-</div>
-}
+</app-common-dialog>
 
 
 <!-- ══════════════════════════════════════ INVOICE MODAL ══════════════════════════════════════ -->
-@if (showInvoiceModal) {
-<div
-  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 animate-in fade-in duration-300"
-  (click)="showInvoiceModal = false">
-
-  <div
-    class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[88vh] flex flex-col my-auto animate-in zoom-in-95 duration-300"
-    (click)="$event.stopPropagation()">
+<app-common-dialog
+  [open]="showInvoiceModal"
+  maxWidth="max-w-3xl"
+  backdropClass="bg-slate-900/50"
+  panelClass="bg-white dark:bg-slate-900 rounded-3xl max-h-[88vh] flex flex-col my-auto animate-in zoom-in-95 duration-300"
+  (closed)="showInvoiceModal = false"
+>
 
     <div class="flex justify-between items-center px-6 pt-5 pb-4 border-b border-outline-variant/10 shrink-0">
       <h3 class="text-xl font-black tracking-tight">
@@ -1645,20 +1613,18 @@
 
     </div>
 
-  </div>
-</div>
-}
+</app-common-dialog>
 
 
 <!-- ══════════════════════════════════════ VENDOR DETAILS MODAL ══════════════════════════════════════ -->
-@if (showVendorDetailModal && selectedVendor) {
-<div
-  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 animate-in fade-in duration-300"
-  (click)="showVendorDetailModal = false">
-
-  <div
-    class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[92vh] overflow-hidden"
-    (click)="$event.stopPropagation()">
+<app-common-dialog
+  [open]="showVendorDetailModal && !!selectedVendor"
+  maxWidth="max-w-2xl"
+  backdropClass="bg-slate-900/50"
+  panelClass="bg-white dark:bg-slate-900 rounded-3xl flex flex-col max-h-[92vh] overflow-hidden"
+  (closed)="showVendorDetailModal = false"
+>
+  @if (selectedVendor) {
 
     <div class="flex justify-between items-center px-5 pt-4 pb-2 border-b border-outline-variant/10">
       <h3 class="text-2xl font-black tracking-tight">Vendor Details</h3>
@@ -1772,18 +1738,18 @@
       </button>
     </div>
 
-  </div>
-</div>
-}
+  }
+</app-common-dialog>
 
 
 <!-- ══════════════════════════════════════ AUDIT MODAL ══════════════════════════════════════ -->
-@if (showAuditModal) {
-<div
-  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300"
-  (click)="showAuditModal = false">
-  <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl p-5 max-h-[92vh] overflow-hidden"
-    (click)="$event.stopPropagation()">
+<app-common-dialog
+  [open]="showAuditModal"
+  maxWidth="max-w-2xl"
+  backdropClass="bg-slate-900/50"
+  panelClass="bg-white dark:bg-slate-900 rounded-3xl p-5 max-h-[92vh] overflow-hidden"
+  (closed)="showAuditModal = false"
+>
     <div class="flex justify-between items-start mb-5">
       <h3 class="text-2xl font-black leading-none">Compliance Audit</h3>
       <button (click)="showAuditModal = false"
@@ -1843,18 +1809,17 @@
         }
       </button>
     </div>
-  </div>
-</div>
-}
+</app-common-dialog>
 
 
 <!-- ══════════════════════════════════════ BILLING MODAL ══════════════════════════════════════ -->
-@if (showBillingModal) {
-<div
-  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300"
-  (click)="showBillingModal = false">
-  <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl p-5 animate-in zoom-in-95 duration-300"
-    (click)="$event.stopPropagation()">
+<app-common-dialog
+  [open]="showBillingModal"
+  maxWidth="max-w-2xl"
+  backdropClass="bg-slate-900/50"
+  panelClass="bg-white dark:bg-slate-900 rounded-3xl p-5 animate-in zoom-in-95 duration-300"
+  (closed)="showBillingModal = false"
+>
     <div class="flex justify-between items-center mb-6">
       <h3 class="text-2xl font-black tracking-tight">Billing Summary</h3>
       <button (click)="showBillingModal = false"
@@ -1922,6 +1887,4 @@
       <button (click)="showBillingModal = false"
         class="w-[120px] py-3 rounded-2xl bg-on-surface text-white text-xs font-black uppercase tracking-wide cursor-pointer shadow-md hover:scale-[1.02] transition-transform">Close</button>
     </div>
-  </div>
-</div>
-}
+</app-common-dialog>

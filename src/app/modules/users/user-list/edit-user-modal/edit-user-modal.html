@@ -1,10 +1,10 @@
-<div class="p-6 max-w-2xl bg-white dark:bg-slate-900 rounded-3xl">
+<app-common-dialog [open]="open">
     <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-100 dark:border-slate-800">
         <div>
             <h2 class="text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Edit Team Member</h2>
             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Modify account details and permissions</p>
         </div>
-        <button mat-dialog-close class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border-none cursor-pointer">
+        <button type="button" (click)="closed.emit()" class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border-none cursor-pointer">
             <mat-icon>close</mat-icon>
         </button>
     </div>
@@ -14,7 +14,7 @@
         <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative group">
                 <div class="w-24 h-24 rounded-[32px] bg-slate-100 dark:bg-slate-800 overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl">
-                    <img [src]="avatarPreview || (data.user.avatar ? serverUrl + data.user.avatar : 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop')" 
+                    <img [src]="avatarPreview || (user?.avatar ? serverUrl + user.avatar : 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop')" 
                          class="w-full h-full object-cover" alt="Avatar">
                 </div>
                 <label for="avatar-upload" class="absolute inset-0 flex items-center justify-center bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all rounded-[32px] cursor-pointer backdrop-blur-xs">
@@ -63,7 +63,7 @@
         </div>
 
         <div class="flex gap-4 pt-6 mt-4">
-            <button type="button" mat-dialog-close
+            <button type="button" (click)="closed.emit()"
                 class="flex-1 py-4 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border-none cursor-pointer">
                 Cancel
             </button>
@@ -79,4 +79,4 @@
             </button>
         </div>
     </form>
-</div>
+</app-common-dialog>

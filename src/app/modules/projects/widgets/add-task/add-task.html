@@ -1,7 +1,10 @@
-<div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-    <div [formGroup]="taskForm"
-        class="w-full max-w-4xl bg-surface-container-lowest rounded-3xl shadow-2xl border border-outline-variant/10 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col">
+<app-common-dialog
+    [open]="true"
+    [closeOnBackdrop]="false"
+    maxWidth="max-w-4xl"
+    panelClass="bg-surface-container-lowest border border-outline-variant/10 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col"
+>
+    <div [formGroup]="taskForm" class="flex min-h-0 flex-col">
         <!-- Header -->
         <div class="px-8 py-6 border-b border-outline-variant/10 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-4">
@@ -439,9 +442,14 @@
     </div>
 
     <!-- Stock Shortage Dialog -->
-@if (showStockDialog && stockDialogData) {
-<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-  <div class="w-full max-w-sm bg-surface-container-lowest rounded-3xl shadow-2xl border border-outline-variant/10 overflow-hidden animate-in zoom-in-95 duration-300">
+<app-common-dialog
+  [open]="showStockDialog && !!stockDialogData"
+  [closeOnBackdrop]="false"
+  maxWidth="max-w-sm"
+  backdropClass="bg-slate-900/60"
+  panelClass="bg-surface-container-lowest border border-outline-variant/10 animate-in zoom-in-95 duration-300"
+>
+@if (stockDialogData) {
     
     <!-- Icon + Header -->
     <div class="px-6 pt-6 pb-4 flex flex-col items-center text-center gap-3">
@@ -505,8 +513,7 @@
       </button>
     </div>
 
-  </div>
-</div>
 }
+</app-common-dialog>
 
-</div>
+</app-common-dialog>

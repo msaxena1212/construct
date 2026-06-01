@@ -7,6 +7,7 @@ import { MaterialModule } from '../../../shared/material/material-module';
 import { ReactiveFormsModule } from '@angular/forms';
 import { InviteUserModalComponent } from './invite-user-modal/invite-user-modal';
 import { EditUserModalComponent } from './edit-user-modal/edit-user-modal';
+import { CommonDialogComponent } from '../../../shared/components/common-dialog/common-dialog';
 
 
 @NgModule({
@@ -19,7 +20,8 @@ import { EditUserModalComponent } from './edit-user-modal/edit-user-modal';
     CommonModule,
     UserListRoutingModule,
     MaterialModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    CommonDialogComponent
   ]
 })
 export class UserListModule { }

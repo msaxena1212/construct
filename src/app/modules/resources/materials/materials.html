@@ -587,18 +587,18 @@
 
 <!-- Modals -->
 <!-- Add Material Modal -->
-@if (showAddModal) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-    (click)="showAddModal = false">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
-        (click)="$event.stopPropagation()">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-black tracking-tight">New Inventory Item</h3>
-            <button (click)="showAddModal = false"
-                class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
+<app-common-dialog
+    [open]="showAddModal"
+    title="New Inventory Item"
+    icon="inventory_2"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Add to Inventory"
+    (closed)="showAddModal = false"
+    (primary)="addMaterial()"
+>
+    <div class="p-8">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
@@ -666,30 +666,23 @@
             </div>
         </div>
 
-        <div class="flex gap-3 mt-8">
-            <button (click)="showAddModal = false"
-                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
-            <button (click)="addMaterial()"
-                class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Add
-                to Inventory</button>
-        </div>
     </div>
-</div>
-}
+</app-common-dialog>
 
 <!-- Edit Material Modal -->
-@if (showEditModal && materialToEdit) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
-    (click)="showEditModal = false">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto"
-        (click)="$event.stopPropagation()">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-black tracking-tight">Edit material</h3>
-            <button (click)="showEditModal = false"
-                class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
+<app-common-dialog
+    [open]="showEditModal && !!materialToEdit"
+    title="Edit Material"
+    icon="edit_square"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Save Changes"
+    (closed)="showEditModal = false"
+    (primary)="updateMaterial()"
+>
+    @if (materialToEdit) {
+    <div class="p-8">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="md:col-span-2">
@@ -741,55 +734,24 @@
             </select>
         </div>
 
-        <div class="flex gap-3 mt-8">
-            <button (click)="showEditModal = false"
-                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
-            <button (click)="updateMaterial()"
-                class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform">Save
-                Changes</button>
-        </div>
     </div>
-</div>
-}
+    }
+</app-common-dialog>
 
-@if (showAssignProjectModal) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center
-         bg-slate-900/50 backdrop-blur-sm p-3" (click)="showAssignProjectModal = false">
-
-    <div class="bg-white dark:bg-slate-900 rounded-[28px]
-           shadow-[0_25px_80px_rgba(0,0,0,0.25)]
-           w-full max-w-3xl max-h-[90vh]
-           overflow-y-auto border border-slate-200 dark:border-slate-800" (click)="$event.stopPropagation()">
-
-        <!-- Header -->
-        <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95
-             backdrop-blur border-b border-slate-100 dark:border-slate-800
-             px-6 py-5 flex items-center justify-between">
-
-            <div>
-                <h3 class="text-xl md:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                    Assign Material
-                </h3>
-
-                <p class="text-xs md:text-sm text-slate-500 mt-1 font-medium">
-                    Allocate stock project wise
-                </p>
-            </div>
-
-            <button (click)="showAssignProjectModal = false" class="w-10 h-10 rounded-xl hover:bg-slate-100
-               dark:hover:bg-slate-800 flex items-center
-               justify-center transition-all duration-200">
-
-                <span class="material-symbols-outlined text-[20px]">
-                    close
-                </span>
-
-            </button>
-
-        </div>
-
-        <!-- Body -->
-        <div class="p-6">
+<app-common-dialog
+    [open]="showAssignProjectModal"
+    title="Assign Material"
+    subtitle="Allocate stock project wise"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Assign Stock"
+    (closed)="showAssignProjectModal = false"
+    (primary)="assignProjects()"
+    panelClass="max-w-3xl"
+    [contentClass]="'overflow-y-auto'"
+>
+    <div class="p-6">
 
             <!-- Material Info -->
             <div class="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40
@@ -982,109 +944,45 @@
 
             }
 
-            <!-- Footer -->
-            <div class="flex flex-col md:flex-row gap-3 mt-8">
-
-                <button (click)="showAssignProjectModal = false" class="flex-1 py-3.5 rounded-2xl border
-                 border-slate-200 dark:border-slate-700
-                 text-sm font-black hover:bg-slate-50
-                 dark:hover:bg-slate-800 transition-all">
-
-                    Cancel
-
-                </button>
-
-                <button (click)="assignProjects()" [disabled]="getRemainingStock() < 0" class="flex-1 py-3.5 rounded-2xl bg-indigo-600
-                 text-white text-sm font-black
-                 shadow-xl shadow-indigo-500/20
-                 hover:shadow-2xl hover:-translate-y-0.5
-                 transition-all disabled:opacity-50
-                 disabled:cursor-not-allowed
-                 disabled:hover:translate-y-0">
-
-                    Assign Stock
-
-                </button>
-
-            </div>
-
         </div>
 
-    </div>
-</div>
-}
+    </app-common-dialog>
 
 <!-- Delete Confirmation Modal -->
-@if (showDeleteModal && materialToDelete) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center"
-        (click)="$event.stopPropagation()">
-        <div
-            class="w-20 h-20 bg-error-container/20 text-error rounded-full flex items-center justify-center mx-auto mb-6">
-            <span class="material-symbols-outlined text-4xl">delete_forever</span>
-        </div>
-        <h3 class="text-xl font-black mb-2">Delete Material?</h3>
-        <p class="text-outline text-sm font-medium mb-8">Are you sure you want to remove <span
+<app-common-dialog
+    [open]="showDeleteModal && !!materialToDelete"
+    variant="danger"
+    title="Delete Material?"
+    subtitle="This action cannot be undone."
+    icon="delete_forever"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Delete Item"
+    (closed)="showDeleteModal = false"
+    (primary)="confirmDelete()"
+>
+    @if (materialToDelete) {
+    <div class="p-8 text-center">
+        <p class="text-outline text-sm font-medium">Are you sure you want to remove <span
                 class="text-on-surface font-black">"{{ materialToDelete.name }}"</span>? This action cannot be undone.
         </p>
-
-        <div class="flex gap-3">
-            <button (click)="showDeleteModal = false"
-                class="flex-1 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold cursor-pointer hover:bg-slate-50 transition-colors">Cancel</button>
-            <button (click)="confirmDelete()"
-                class="flex-1 py-3 rounded-xl bg-error text-white text-sm font-bold cursor-pointer shadow-lg shadow-error/20 hover:scale-[1.02] transition-transform">Delete
-                Item</button>
-        </div>
     </div>
-</div>
-}
+    }
+</app-common-dialog>
 
 <!-- Project Assignment Popup -->
-@if (showProjectStockPopup) {
-
-<div class="fixed inset-0 z-[120] flex items-center justify-center
-         bg-slate-950/60 backdrop-blur-sm p-4" (click)="showProjectStockPopup = false">
-
-    <div (click)="$event.stopPropagation()" class="w-full max-w-2xl rounded-[30px]
-           bg-white dark:bg-slate-900
-           border border-slate-200 dark:border-slate-800
-           shadow-[0_30px_100px_rgba(0,0,0,0.35)]
-           overflow-hidden">
-
-        <!-- Header -->
-        <div class="px-6 py-5 border-b border-slate-200
-             dark:border-slate-800 flex items-center justify-between">
-
-            <div>
-
-                <h3 class="text-xl font-black text-slate-900 dark:text-white">
-
-                    Project Assignment
-
-                </h3>
-
-                <p class="text-sm text-slate-500 mt-1">
-
-                    {{ selectedProjectStock?.name }}
-
-                </p>
-
-            </div>
-
-            <button (click)="showProjectStockPopup = false" class="w-10 h-10 rounded-xl hover:bg-slate-100
-               dark:hover:bg-slate-800 flex items-center
-               justify-center transition-all">
-
-                <span class="material-symbols-outlined">
-                    close
-                </span>
-
-            </button>
-
-        </div>
-
-        <!-- Body -->
-        <div class="p-6">
+<app-common-dialog
+    [open]="showProjectStockPopup"
+    title="Project Assignment"
+    [subtitle]="selectedProjectStock?.name"
+    [showCloseButton]="true"
+    [showFooter]="false"
+    (closed)="showProjectStockPopup = false"
+    panelClass="p-6 max-w-2xl"
+    [contentClass]="'overflow-y-auto'"
+>
+    <div class="p-6">
 
             @if (!selectedProjectStock?.material_project_stock?.length) {
 
@@ -1196,11 +1094,7 @@
 
         </div>
 
-    </div>
-
-</div>
-
-}
+    </app-common-dialog>
 
 <!-- Filters Dropdown Overlay -->
 @if (showFilters) {
@@ -1237,55 +1131,21 @@
 </div>
 }
 
-@if (showStockTransferModal) {
-<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
-    (click)="showStockTransferModal = false">
-
-    <div class="bg-white dark:bg-slate-900 rounded-[28px] shadow-[0_20px_70px_rgba(0,0,0,0.35)] w-full max-w-3xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-        (click)="$event.stopPropagation()">
-
-        <!-- Header -->
-        <div class="relative px-6 py-5 border-b border-slate-200 dark:border-slate-800">
-
-            <div class="flex items-center justify-between">
-
-                <div>
-
-                    <div
-                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold uppercase tracking-[0.25em] mb-2">
-
-                        <span class="material-symbols-outlined text-[14px]">
-                            swap_horiz
-                        </span>
-
-                        Stock Transfer
-                    </div>
-
-                    <h2 class="text-2xl font-black leading-none text-slate-900 dark:text-white">
-                        Stock Transfer
-                    </h2>
-
-                    <p class="text-slate-500 dark:text-slate-400 text-xs mt-2 font-medium">
-                        Move material stock between projects
-                    </p>
-
-                </div>
-
-                <button (click)="showStockTransferModal = false"
-                    class="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center">
-
-                    <span class="material-symbols-outlined text-[20px]">
-                        close
-                    </span>
-
-                </button>
-
-            </div>
-
-        </div>
+<app-common-dialog
+    [open]="showStockTransferModal"
+    title="Stock Transfer"
+    subtitle="Move material stock between projects"
+    icon="swap_horiz"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Cancel"
+    primaryLabel="Transfer Stock"
+    (closed)="showStockTransferModal = false"
+    (primary)="transferStock()"
+>
 
         <!-- Body -->
-        <div class="p-6 space-y-5 max-h-[65vh] overflow-y-auto">
+        <div class="p-6 space-y-5">
 
             <!-- Material -->
             <div
@@ -1511,31 +1371,7 @@
 
         </div>
 
-        <!-- Footer -->
-        <div
-            class="px-6 py-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
-
-            <button (click)="showStockTransferModal = false"
-                class="flex-1 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 text-sm font-black hover:bg-white dark:hover:bg-slate-800 transition-all">
-
-                Cancel
-            </button>
-
-            <button (click)="transferStock()"
-                class="flex-[1.2] py-3 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-white text-sm font-black shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-
-                <span class="material-symbols-outlined">
-                    swap_horiz
-                </span>
-
-                Transfer Stock
-            </button>
-
-        </div>
-
-    </div>
-</div>
-}
+</app-common-dialog>
 
 <app-vendor-add-modal [showAddModal]="showAddVendorModal" [newVendor]="newVendor" [errorMsg]="errorMsg"
     [contractFile]="contractFile" [isSaving]="isSaving" (close)="showAddVendorModal = false" (save)="addVendor()"

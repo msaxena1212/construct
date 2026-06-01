@@ -1,75 +1,93 @@
-<form [formGroup]="form" class="">
-    <div class="flex justify-between items-center">
-        <h3 mat-dialog-title class="">{{data.title}}</h3>
-        <button type="button" (click)="this.dialogRef.close()"
-            class="material-symbols-outlined text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">close</button>
+<app-common-dialog
+  [title]="data.title"
+  [badge]="isEditingMilestone ? 'Edit Milestone' : 'Add Milestone'"
+  icon="flag"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  primaryLabel="Save"
+  [primaryDisabled]="form.invalid"
+  (cancelled)="dialogRef.close()"
+  (primary)="saveMilestone()"
+>
+
+   <form [formGroup]="form">
+
+  <div class="p-7">
+
+    <!-- Milestone Name -->
+    <div class="mb-5">
+      <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
+        Milestone Name
+      </label>
+
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="Enter milestone name"
+        class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+
+      @if(form.get('name')?.invalid && form.get('name')?.touched){
+      <div class="text-red-500 text-xs mt-1">
+        Name is required
+      </div>
+      }
     </div>
-    <div class="p-6 space-y-4 bg-white dark:bg-slate-900 overflow-y-auto">
-        <div>
-            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Name</label>
-            <input type="text" formControlName="name" placeholder="E.g., Foundation phase"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm text-slate-900 dark:text-slate-50 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none">
-            @if(form.get('name')?.invalid && form.get('name')?.touched){
-            <div class="text-red-500 text-xs mt-1 ml-1 font-medium">Name is required</div>
-            }
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <!-- <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Progress
-                    (%)</label>
-                <input type="number" formControlName="progress" min="0" max="100"
-                    class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm text-slate-900 dark:text-slate-50 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none">
-                <div *ngIf="form.get('progress')?.invalid && form.get('progress')?.touched"
-                    class="text-red-500 text-xs mt-1 ml-1 font-medium">Invalid progress</div>
-            </div> -->
-            <div>
-                <label
-                    class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Color</label>
-                <div class="relative">
-                    <select formControlName="color"
-                        class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 pr-8 text-sm text-slate-900 dark:text-slate-50 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none appearance-none cursor-pointer">
-                        <option value="blue-600">Blue</option>
-                        <option value="indigo-600">Indigo</option>
-                        <option value="emerald-600">Emerald</option>
-                        <option value="amber-600">Amber</option>
-                        <option value="rose-600">Rose</option>
-                        <option value="purple-600">Purple</option>
-                        <option value="cyan-600">Cyan</option>
-                    </select>
-                    <span
-                        class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-lg">expand_more</span>
-                </div>
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Start
-                    Date</label>
-                <div class="relative flex items-center">
-                    <input [matDatepicker]="startPicker" formControlName="startDate" (click)="startPicker.open()"
-                        class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 pr-12 text-sm text-slate-900 dark:text-slate-50 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none cursor-pointer">
-                    <mat-datepicker-toggle [for]="startPicker"
-                        class="absolute right-1 text-slate-400"></mat-datepicker-toggle>
-                    <mat-datepicker #startPicker></mat-datepicker>
-                </div>
-            </div>
-            <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">End
-                    Date</label>
-                <div class="relative flex items-center">
-                    <input [matDatepicker]="endPicker" formControlName="endDate" (click)="endPicker.open()"
-                        class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 pr-12 text-sm text-slate-900 dark:text-slate-50 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none cursor-pointer">
-                    <mat-datepicker-toggle [for]="endPicker"
-                        class="absolute right-1 text-slate-400"></mat-datepicker-toggle>
-                    <mat-datepicker #endPicker></mat-datepicker>
-                </div>
-            </div>
-        </div>
+
+    <!-- Color -->
+    <div class="mb-5">
+      <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
+        Color
+      </label>
+
+      <select
+        formControlName="color"
+        class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+
+        <option value="blue-600">Blue</option>
+        <option value="indigo-600">Indigo</option>
+        <option value="emerald-600">Emerald</option>
+        <option value="amber-600">Amber</option>
+        <option value="rose-600">Rose</option>
+        <option value="purple-600">Purple</option>
+        <option value="cyan-600">Cyan</option>
+
+      </select>
     </div>
-    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-950 flex justify-end gap-3 mt-auto">
-        <button type="button" (click)="this.dialogRef.close()"
-            class="px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer bg-transparent border-none">Cancel</button>
-        <button type="button" (click)="saveMilestone()" [disabled]="form.invalid"
-            class="px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700 transition-colors cursor-pointer shadow-md border-none disabled:opacity-50 disabled:cursor-not-allowed">Save</button>
+
+    <!-- Dates -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div>
+        <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
+          Start Date
+        </label>
+
+        <input
+          [matDatepicker]="startPicker"
+          formControlName="startDate"
+          (click)="startPicker.open()"
+          class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 cursor-pointer focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+
+        <mat-datepicker #startPicker></mat-datepicker>
+      </div>
+
+      <div>
+        <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
+          End Date
+        </label>
+
+        <input
+          [matDatepicker]="endPicker"
+          formControlName="endDate"
+          (click)="endPicker.open()"
+          class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 cursor-pointer focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+
+        <mat-datepicker #endPicker></mat-datepicker>
+      </div>
+
     </div>
-</form>
+
+  </div>
+  </form>
+</app-common-dialog>

@@ -432,15 +432,20 @@
 }
 
 <!-- Submit Drawing Upload Modal (Center) -->
-@if (showDrawingUpload) {
-<div class="fixed inset-0 z-100 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm"
-  (click)="showDrawingUpload = false">
-  <div
-    class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl p-8 transform animate-in zoom-in-95 duration-200"
-    (click)="$event.stopPropagation()">
-    <h3 class="text-xl font-bold text-slate-900 dark:text-slate-50 mb-2">Submit Project Drawing</h3>
-    <p class="text-xs text-slate-500 mb-6">Upload CAD, PDF, or image files. They will be added to the project gallery.
-    </p>
+<app-common-dialog
+  [open]="showDrawingUpload"
+  title="Submit Project Drawing"
+  subtitle="Upload CAD, PDF, or image files. They will be added to the project gallery."
+  icon="cloud_upload"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  [primaryLabel]="'Upload ' + (selectedFiles.length > 0 ? '(' + selectedFiles.length + ')' : '')"
+  [primaryDisabled]="selectedFiles.length === 0"
+  (closed)="showDrawingUpload = false"
+  (primary)="submitDrawing()"
+>
+  <div class="p-8">
 
     <div (click)="fileInput.click()"
       class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors mb-6">
@@ -467,15 +472,5 @@
     </div>
     }
 
-    <div class="flex items-center justify-end gap-3">
-      <button (click)="showDrawingUpload = false"
-        class="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancel</button>
-      <button (click)="submitDrawing()" [disabled]="selectedFiles.length === 0"
-        class="px-6 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50">
-        <span class="material-symbols-outlined text-sm">cloud_upload</span> Upload {{ selectedFiles.length > 0 ? '(' +
-        selectedFiles.length + ')' : '' }}
-      </button>
-    </div>
   </div>
-</div>
-}
+</app-common-dialog>

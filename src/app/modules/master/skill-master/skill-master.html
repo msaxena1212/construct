@@ -184,7 +184,7 @@
 
                 </button>
 
-                <button (click)="deleteSkill(item.id)"
+                <button (click)="deleteSkill(item)"
                   class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
                   <span class="material-symbols-outlined text-[18px]">
@@ -298,45 +298,19 @@
 
 </section>
 
-@if (showAddModal) {
-
-<div
-  class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-
-  <div class="bg-white rounded-[28px] p-7 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-300">
-
-    <div class="flex items-center justify-between mb-7">
-
-      <div>
-
-        <h3 class="text-2xl font-black text-slate-800">
-
-          {{ isEditMode ? 'Edit Skill & Services' : 'Add Skill & Services' }}
-
-        </h3>
-
-        <p class="text-sm text-slate-400 font-medium mt-1">
-
-          {{
-          isEditMode
-          ? 'Update existing skill details'
-          : 'Create a new skill & services record'
-          }}
-
-        </p>
-
-      </div>
-
-      <button (click)="closeModal()"
-        class="w-10 h-10 rounded-xl hover:bg-slate-100 flex items-center justify-center transition-all">
-
-        <span class="material-symbols-outlined">
-          close
-        </span>
-
-      </button>
-
-    </div>
+<app-common-dialog
+  [open]="showAddModal"
+  [title]="isEditMode ? 'Edit Skill & Services' : 'Add Skill & Services'"
+  [subtitle]="isEditMode ? 'Update existing skill details' : 'Create a new skill & services record'"
+  icon="construction"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  [primaryLabel]="isEditMode ? 'Update' : 'Save'"
+  (closed)="closeModal()"
+  (primary)="isEditMode ? updateSkill() : addSkill()"
+>
+  <div class="p-7">
 
     <div class="mb-5">
 
@@ -349,26 +323,28 @@
 
     </div>
 
-    <div class="flex gap-3">
-
-      <button (click)="closeModal()"
-        class="flex-1 border border-slate-200 rounded-2xl py-3 font-bold hover:bg-slate-50 transition-all">
-
-        Cancel
-
-      </button>
-
-      <button (click)="isEditMode ? updateSkill() : addSkill()"
-        class="flex-1 bg-primary text-white rounded-2xl py-3 font-bold shadow-lg hover:scale-[1.02] transition-all">
-
-        {{ isEditMode ? 'Update' : 'Save' }}
-
-      </button>
-
-    </div>
-
   </div>
+</app-common-dialog>
 
-</div>
-
-}
+<!-- Delete Confirmation Modal -->
+<app-common-dialog
+  [open]="showDeleteModal && !!skillToDelete"
+  variant="danger"
+  title="Delete Skill?"
+  subtitle="This action cannot be undone."
+  icon="delete_forever"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  primaryLabel="Delete Item"
+  (closed)="closeDeleteModal()"
+  (primary)="confirmDelete()"
+>
+  @if (skillToDelete) {
+  <div class="p-8 text-center">
+    <p class="text-outline text-sm font-medium">Are you sure you want to remove <span
+        class="text-on-surface font-black">"{{ skillToDelete.skill_name }}"</span>? This action cannot be undone.
+    </p>
+  </div>
+  }
+</app-common-dialog>
