@@ -774,7 +774,7 @@
     panelClass="max-w-3xl"
     [contentClass]="'overflow-y-auto'"
 >
-    <div class="space-y-6">
+    <div class="p-7">
 
         <!-- Material Info -->
         <div class="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40
@@ -1133,7 +1133,7 @@
 }
 
 <app-common-dialog
-    [open]="showStockTransferModal"
+   [open]="showStockTransferModal"
     title="Stock Transfer"
     subtitle="Move material stock between projects"
     icon="swap_horiz"
@@ -1143,14 +1143,12 @@
     primaryLabel="Transfer Stock"
     (closed)="showStockTransferModal = false"
     (primary)="transferStock()"
-    panelClass="p-6 max-w-3xl"
-    [contentClass]="'overflow-y-auto'"
 >
-    <div class="p-6 space-y-5 max-h-[65vh] overflow-y-auto">
+    <div class="p-6">
 
             <!-- Material -->
             <div
-                class="flex items-center gap-4 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
+                 class="flex items-center gap-4 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
 
                 <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
 
