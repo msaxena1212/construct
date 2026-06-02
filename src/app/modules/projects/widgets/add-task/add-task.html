@@ -1,12 +1,9 @@
-<app-common-dialog
-    [open]="true"
-    [closeOnBackdrop]="false"
-    maxWidth="max-w-4xl"
-    panelClass="bg-surface-container-lowest border border-outline-variant/10 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col"
->
+<app-common-dialog [open]="true" title="Initialize Construction Task"
+    subtitle="Create and configure a new construction activity" icon="add_task" [showCloseButton]="true"
+    [showFooter]="true" maxWidth="max-w-4xl" (closed)="close.emit()" (primary)="onSubmit()" cancelLabel="Discard">
     <div [formGroup]="taskForm" class="flex min-h-0 flex-col">
         <!-- Header -->
-        <div class="px-8 py-6 border-b border-outline-variant/10 flex items-center justify-between shrink-0">
+        <!-- <div class="px-8 py-6 border-b border-outline-variant/10 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                     <span class="material-symbols-outlined">add_task</span>
@@ -18,7 +15,7 @@
                 class="p-2 hover:bg-surface-container-low rounded-full transition-colors cursor-pointer">
                 <span class="material-symbols-outlined text-outline">close</span>
             </button>
-        </div>
+        </div> -->
 
         <!-- Scrollable Form Content -->
         <div class="flex-1 overflow-y-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -39,104 +36,99 @@
                             class="w-full bg-surface-container-low border-none rounded-2xl p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none resize-none"></textarea>
                     </div>
                 </section>
-                  
+
                 <!-- vender list -->
-                    <div class="space-y-2">
-                        <label
-                            class="block text-[10px] font-black uppercase tracking-widest text-outline">Vendor</label>
-                        <select formControlName="vendorId"
-                            class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                            <option value="" disabled selected>Select Vendor</option>
-                            @for(vendor of vendors; track $index){
-                            <option [value]="vendor.id">
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Vendor</label>
+                    <select formControlName="vendorId"
+                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                        <option value="" disabled selected>Select Vendor</option>
+                        @for(vendor of vendors; track $index){
+                        <option [value]="vendor.id">
                             {{ vendor.name }}
-                            </option>
-                            }
-                        </select>
-                    </div>
+                        </option>
+                        }
+                    </select>
+                </div>
 
                 <!-- Sub-tasks Checklist -->
                 <section class="space-y-4">
-                <!-- Header -->
-                <div class="flex items-center justify-between">
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
-                        Sub-tasks Checklist
-                    </label>
+                    <!-- Header -->
+                    <div class="flex items-center justify-between">
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
+                            Sub-tasks Checklist
+                        </label>
 
-                    <button
-                        type="button"
-                        (click)="showSubTaskForm = !showSubTaskForm"
-                        class="text-[10px] font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 uppercase tracking-widest transition-colors">
+                        <button type="button" (click)="showSubTaskForm = !showSubTaskForm"
+                            class="text-[10px] font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 uppercase tracking-widest transition-colors">
 
-                        Add
-                    </button>
-                </div>
-                <!-- Wrapper -->
-                <div class="bg-surface-container-low/50 rounded-2xl p-3 space-y-3 ring-1 ring-outline-variant/10">
+                            Add
+                        </button>
+                    </div>
+                    <!-- Wrapper -->
+                    <div class="bg-surface-container-low/50 rounded-2xl p-3 space-y-3 ring-1 ring-outline-variant/10">
 
-                    <!-- Existing Checklist Items -->
-                    @for (item of checklist; track $index) {
+                        <!-- Existing Checklist Items -->
+                        @for (item of checklist; track $index) {
 
-                    <div
-                        class="p-4 bg-surface rounded-2xl border border-outline-variant/5 shadow-sm">
+                        <div class="p-4 bg-surface rounded-2xl border border-outline-variant/5 shadow-sm">
 
-                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex items-start justify-between gap-4">
 
-                            <!-- Left -->
-                            <div class="flex-1 space-y-3">
+                                <!-- Left -->
+                                <div class="flex-1 space-y-3">
 
-                                <!-- Title -->
-                                <div class="flex items-center gap-2">
+                                    <!-- Title -->
+                                    <div class="flex items-center gap-2">
 
-                                    <div>
-                                        <p class="text-sm font-black text-on-surface">
-                                            {{ item.title }}
-                                        </p>
+                                        <div>
+                                            <p class="text-sm font-black text-on-surface">
+                                                {{ item.title }}
+                                            </p>
 
-                                        <p class="text-xs text-outline font-semibold">
-                                            {{ item.itemName }}
-                                        </p>
+                                            <p class="text-xs text-outline font-semibold">
+                                                {{ item.itemName }}
+                                            </p>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Meta -->
+                                    <div class="flex flex-wrap gap-3">
+
+                                        <!-- Qty -->
+                                        <div
+                                            class="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+
+                                            <span class="material-symbols-outlined text-[14px]">
+                                                inventory_2
+                                            </span>
+
+                                            Qty: {{ item.qty }}
+                                        </div>
+                                        @if (item.pendingRequest) {
+                                        <div
+                                            class="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+                                            <span class="material-symbols-outlined text-[14px]">pending</span>
+                                            +{{ item.shortage }} Requested
+                                        </div>
+                                        }
+                                        <!-- Equipment -->
+                                        <div
+                                            class="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+
+                                            <span class="material-symbols-outlined text-[14px]">
+                                                construction
+                                            </span>
+
+                                            {{ item.equipment }}
+                                        </div>
+
                                     </div>
 
                                 </div>
-
-                                <!-- Meta -->
-                                <div class="flex flex-wrap gap-3">
-
-                                    <!-- Qty -->
-                                    <div
-                                        class="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
-
-                                        <span class="material-symbols-outlined text-[14px]">
-                                            inventory_2
-                                        </span>
-
-                                        Qty: {{ item.qty }}
-                                    </div>
-                                    @if (item.pendingRequest) {
-                                    <div class="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
-                                        <span class="material-symbols-outlined text-[14px]">pending</span>
-                                        +{{ item.shortage }} Requested
-                                    </div>
-}
-                                    <!-- Equipment -->
-                                    <div
-                                        class="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
-
-                                        <span class="material-symbols-outlined text-[14px]">
-                                            construction
-                                        </span>
-
-                                        {{ item.equipment }}
-                                    </div>
-
-                                </div>
-
-                            </div>
-                            <!-- Edit -->
-                                <button
-                                    type="button"
-                                    (click)="editSubTask($index)"
+                                <!-- Edit -->
+                                <button type="button" (click)="editSubTask($index)"
                                     class="text-primary hover:text-primary/70 transition-colors">
 
                                     <span class="material-symbols-outlined text-[18px]">
@@ -144,134 +136,112 @@
                                     </span>
 
                                 </button>
-                            <!-- Delete -->
-                            <button
-                                type="button"
-                                (click)="removeSubTask($index)"
-                                class="text-error/60 hover:text-error transition-colors">
+                                <!-- Delete -->
+                                <button type="button" (click)="removeSubTask($index)"
+                                    class="text-error/60 hover:text-error transition-colors">
 
-                                <span class="material-symbols-outlined text-[18px]">
-                                    delete
-                                </span>
+                                    <span class="material-symbols-outlined text-[18px]">
+                                        delete
+                                    </span>
 
-                            </button>
+                                </button>
+
+                            </div>
 
                         </div>
 
-                    </div>
-
-                    }
-
-                    <!-- Expandable Form -->
-                    @if (showSubTaskForm) {
-
-                    <div
-                        class="bg-surface rounded-2xl p-5 border border-outline-variant/10 space-y-5 animate-in slide-in-from-top-2 duration-200">
-
-                        <!-- Title -->
-                        <div class="space-y-2">
-
-                            <label
-                                class="text-[10px] font-black uppercase tracking-widest text-outline">
-
-                                Title
-                            </label>
-
-                            <input
-                                type="text"
-                                [(ngModel)]="newSubTask.title"
-                                [ngModelOptions]="{standalone: true}"
-                                placeholder="e.g. Concrete Work"
-                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
-                        </div>
-
-                        <!-- Qty + Material -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Material -->
-                        <div class="space-y-2">
-                            <label
-                                class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                Material
-                            </label>
-                    <!-- AFTER -->
-                        <select
-                        [(ngModel)]="newSubTask.materialId"
-                        [ngModelOptions]="{ standalone: true }">
-                        <option [ngValue]="null" disabled>Select Material</option>
-                        @for(material of materials; track material.id) {
-                            <option [ngValue]="material.id">{{ material.name }}</option>
                         }
-                        </select>
-                        </div>
-                      <!-- Qty -->
-                        <div class="space-y-2">
 
-                            <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                Quantity
-                            </label>
+                        <!-- Expandable Form -->
+                        @if (showSubTaskForm) {
 
-                            <input
-                                type="number"
-                                [(ngModel)]="newSubTask.qty"
-                                [ngModelOptions]="{standalone: true}"
-                                min="1"
-                                [max]="materials.find(m => m.id == newSubTask.materialId)?.stockIn"
-                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                        <div
+                            class="bg-surface rounded-2xl p-5 border border-outline-variant/10 space-y-5 animate-in slide-in-from-top-2 duration-200">
 
-                            @if(newSubTask.materialId){
+                            <!-- Title -->
+                            <div class="space-y-2">
+
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+
+                                    Title
+                                </label>
+
+                                <input type="text" [(ngModel)]="newSubTask.title" [ngModelOptions]="{standalone: true}"
+                                    placeholder="e.g. Concrete Work"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                            </div>
+
+                            <!-- Qty + Material -->
+                            <!-- Material -->
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                    Material
+                                </label>
+                                <!-- AFTER -->
+                                <select [(ngModel)]="newSubTask.materialId" [ngModelOptions]="{ standalone: true }"  class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                                    <option [ngValue]="null" disabled>Select Material</option>
+                                    @for(material of materials; track material.id) {
+                                    <option [ngValue]="material.id">{{ material.name }}</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Qty -->
+                            <div class="space-y-2">
+
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                    Quantity
+                                </label>
+
+                                <input type="number" [(ngModel)]="newSubTask.qty" [ngModelOptions]="{standalone: true}"
+                                    min="1" [max]="materials.find(m => m.id == newSubTask.materialId)?.stockIn"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+
+                                @if(newSubTask.materialId){
                                 <p class="text-[10px] text-primary font-bold px-1">
                                     Available Stock:
                                     {{ materials.find(m => m.id == newSubTask.materialId)?.stockIn }}
                                 </p>
-                            }
+                                }
 
-                        </div>
-                        </div>
+                            </div>
 
-                           <!-- Equipment -->
+                            <!-- Equipment -->
                             <div class="space-y-2">
 
-                                <label
-                                    class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
 
                                     Equipment
                                 </label>
 
-                                <input
-                                    type="text"
-                                    [(ngModel)]="newSubTask.equipment"
-                                    [ngModelOptions]="{standalone: true}"
-                                    placeholder="Machine / Tool"
+                                <input type="text" [(ngModel)]="newSubTask.equipment"
+                                    [ngModelOptions]="{standalone: true}" placeholder="Machine / Tool"
                                     class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
 
                             </div>
 
-                        <!-- Actions -->
-                        <div class="flex justify-end gap-3 pt-2">
+                            <!-- Actions -->
+                            <div class="flex justify-end gap-3 pt-2">
 
-                            <button
-                                type="button"
-                                (click)="showSubTaskForm = false"
-                                class="px-4 py-2 text-xs font-bold text-outline hover:text-on-surface transition-colors">
+                                <button type="button" (click)="showSubTaskForm = false"
+                                    class="px-4 py-2 text-xs font-bold text-outline hover:text-on-surface transition-colors">
 
-                                Cancel
-                            </button>
+                                    Cancel
+                                </button>
 
-                            <button
-                                type="button"
-                                (click)="addSubTask()"
-                                class="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                <button type="button" (click)="addSubTask()"
+                                    class="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
 
-                                Save
-                            </button>
+                                    Save
+                                </button>
+
+                            </div>
 
                         </div>
 
+                        }
+
                     </div>
-
-                    }
-
-                </div>
                 </section>
 
                 <!-- File Attachments -->
@@ -390,7 +360,8 @@
                                     <option [value]="type.id">{{ type.name }}</option>
                                     }
                                 </select>
-                                <input type="number" [(ngModel)]="depLag" [ngModelOptions]="{standalone: true}" placeholder="Lag"
+                                <input type="number" [(ngModel)]="depLag" [ngModelOptions]="{standalone: true}"
+                                    placeholder="Lag"
                                     class="w-20 bg-surface border-none rounded-lg p-2.5 text-xs font-bold ring-1 ring-outline-variant/10 outline-none" />
                                 <button (click)="addDependency()"
                                     class="px-4 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors">
@@ -421,7 +392,7 @@
         </div>
 
         <!-- Actions -->
-        <div
+        <!-- <div
             class="px-8 py-6 bg-surface-container-low/80 border-t border-outline-variant/10 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-2 text-outline">
                 <span class="material-symbols-outlined text-sm">info</span>
@@ -438,82 +409,145 @@
                     Initialize Task
                 </button>
             </div>
-        </div>
+        </div> -->
     </div>
 
     <!-- Stock Shortage Dialog -->
-<app-common-dialog
-  [open]="showStockDialog && !!stockDialogData"
-  [closeOnBackdrop]="false"
-  maxWidth="max-w-sm"
-  backdropClass="bg-slate-900/60"
-  panelClass="bg-surface-container-lowest border border-outline-variant/10 animate-in zoom-in-95 duration-300"
->
-@if (stockDialogData) {
-    
-    <!-- Icon + Header -->
-    <div class="px-6 pt-6 pb-4 flex flex-col items-center text-center gap-3">
-      <div class="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center">
-        <span class="material-symbols-outlined text-orange-600 text-3xl">inventory_2</span>
-      </div>
-      <h4 class="text-base font-black text-on-surface uppercase tracking-tight">
-        Insufficient Stock
-      </h4>
-      <p class="text-xs text-outline font-medium leading-relaxed">
-        Only 
-        <span class="font-black text-on-surface">{{ stockDialogData.available }}</span> 
-        units available in stock.
-        <br/>
-        You requested 
-        <span class="font-black text-on-surface">{{ newSubTask.qty }}</span> units.
-      </p>
-    </div>
+    <app-common-dialog [open]="showStockDialog && !!stockDialogData" title="Insufficient Stock"
+        subtitle="Inventory allocation & shortage request" icon="inventory_2" [showCloseButton]="true"
+        [showFooter]="false" [closeOnBackdrop]="false" maxWidth="max-w-md">
 
-    <!-- Split Info Cards -->
-    <div class="px-6 pb-4 grid grid-cols-2 gap-3">
-      
-      <!-- Allocate Now -->
-      <div class="bg-green-50 rounded-2xl p-3 text-center space-y-1">
-        <span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>
-        <p class="text-[10px] font-black uppercase tracking-widest text-green-700">Allocate Now</p>
-        <p class="text-xl font-black text-green-700">{{ stockDialogData.available }}</p>
-        <p class="text-[9px] text-green-600 font-bold">from current stock</p>
-      </div>
+        @if (stockDialogData) {
 
-      <!-- Request from Manager -->
-      <div class="bg-orange-50 rounded-2xl p-3 text-center space-y-1">
-        <span class="material-symbols-outlined text-orange-600 text-xl">pending</span>
-        <p class="text-[10px] font-black uppercase tracking-widest text-orange-700">Request More</p>
-        <p class="text-xl font-black text-orange-700">{{ stockDialogData.shortage }}</p>
-        <p class="text-[9px] text-orange-600 font-bold">sent to site manager</p>
-      </div>
+        <div class="p-6 space-y-5">
 
-    </div>
+            <!-- Summary -->
+            <div class="grid grid-cols-3 gap-3">
 
-    <!-- Info note -->
-    <div class="mx-6 mb-4 flex items-start gap-2 bg-blue-50 rounded-xl p-3">
-      <span class="material-symbols-outlined text-blue-500 text-sm mt-0.5">info</span>
-      <p class="text-[10px] text-blue-700 font-semibold leading-relaxed">
-        {{ stockDialogData.available }} units will be deducted from material stock immediately. 
-        Site manager will be notified for the remaining {{ stockDialogData.shortage }} units.
-      </p>
-    </div>
+                <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 text-center">
+                    <p class="text-[10px] font-black uppercase text-slate-500">Requested</p>
+                    <h4 class="text-2xl font-black text-slate-800 mt-1">
+                        {{ newSubTask.qty }}
+                    </h4>
+                </div>
 
-    <!-- Actions -->
-    <div class="px-6 pb-6 flex gap-3">
-      <button 
-        (click)="cancelStockRequest()"
-        class="flex-1 py-3 text-xs font-black text-outline border border-outline-variant/20 rounded-2xl hover:bg-surface-container-low transition-colors uppercase tracking-widest">
-        Cancel
-      </button>
-      <button 
-        (click)="confirmStockRequest()"
-        class="flex-1 py-3 text-xs font-black text-white bg-primary rounded-2xl shadow-lg shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest">
-        Confirm & Request
-      </button>
-    </div>
+                <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-center">
+                    <p class="text-[10px] font-black uppercase text-emerald-600">Available</p>
+                    <h4 class="text-2xl font-black text-emerald-700 mt-1">
+                        {{ stockDialogData.available }}
+                    </h4>
+                </div>
 
-}
-</app-common-dialog>
+                <div class="rounded-2xl bg-orange-50 border border-orange-200 p-4 text-center">
+                    <p class="text-[10px] font-black uppercase text-orange-600">Shortage</p>
+                    <h4 class="text-2xl font-black text-orange-700 mt-1">
+                        {{ stockDialogData.shortage }}
+                    </h4>
+                </div>
 
+            </div>
+
+            <!-- Flow -->
+            <div class="rounded-3xl border border-outline-variant/10 bg-surface-container-low p-5">
+
+                <div class="flex items-center justify-between">
+
+                    <div class="flex flex-col items-center">
+
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center">
+
+                            <span class="material-symbols-outlined text-emerald-600">
+                                check_circle
+                            </span>
+
+                        </div>
+
+                        <p class="mt-2 text-xs font-black text-emerald-700">
+                            Allocate
+                        </p>
+
+                        <p class="text-xl font-black text-emerald-700">
+                            {{ stockDialogData.available }}
+                        </p>
+
+                    </div>
+
+                    <span class="material-symbols-outlined text-outline">
+                        east
+                    </span>
+
+                    <div class="flex flex-col items-center">
+
+                        <div class="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center">
+
+                            <span class="material-symbols-outlined text-orange-600">
+                                pending
+                            </span>
+
+                        </div>
+
+                        <p class="mt-2 text-xs font-black text-orange-700">
+                            Request
+                        </p>
+
+                        <p class="text-xl font-black text-orange-700">
+                            {{ stockDialogData.shortage }}
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Message -->
+            <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4 flex gap-3">
+
+                <span class="material-symbols-outlined text-blue-600">
+                    info
+                </span>
+
+                <div>
+
+                    <p class="text-xs font-black text-blue-700">
+                        Automatic Processing
+                    </p>
+
+                    <p class="text-[11px] text-blue-600 mt-1 leading-relaxed">
+
+                        {{ stockDialogData.available }} units will be allocated immediately.
+
+                        Remaining {{ stockDialogData.shortage }} units will create a stock
+                        request for manager approval.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-2">
+
+                <button (click)="cancelStockRequest()"
+                    class="flex-1 h-12 rounded-2xl border border-slate-300 font-black">
+
+                    Cancel
+
+                </button>
+
+                <button (click)="confirmStockRequest()"
+                    class="flex-1 h-12 rounded-2xl bg-primary text-white font-black">
+
+                    Confirm & Request
+
+                </button>
+
+            </div>
+
+        </div>
+
+        }
+
+    </app-common-dialog>
 </app-common-dialog>
