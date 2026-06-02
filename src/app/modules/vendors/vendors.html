@@ -281,7 +281,7 @@
                       <span class="material-symbols-outlined text-sm">payments</span>
                     </button>
 
-                    <button (click)="cancelInvoice(inv)"
+                    <button (click)="openCancelInvoiceDialog(inv)"
                       class="flex items-center gap-1.5 text-xs font-bold text-red-600 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
                       <span class="material-symbols-outlined text-sm">cancel</span>
                     </button>
@@ -418,6 +418,28 @@
         }
 
       </div>
+  </app-common-dialog>
+
+  <app-common-dialog
+    [open]="showCancelInvoiceModal && !!selectedInvoice"
+    size="sm"
+    variant="danger"
+    title="Cancel Invoice"
+    subtitle="This action will reject the invoice and cannot be undone."
+    icon="delete_forever"
+    [showCloseButton]="true"
+    [showFooter]="true"
+    cancelLabel="Keep Invoice"
+    primaryLabel="Cancel Invoice"
+    [primaryDisabled]="isCancellingInvoice"
+    (closed)="closeCancelInvoiceDialog()"
+    (primary)="confirmCancelInvoice()"
+  >
+    <div class="px-6 py-5">
+      <p class="text-sm font-medium text-slate-600 dark:text-slate-300">
+        Are you sure you want to cancel invoice <strong>{{ selectedInvoice?.invoice_number }}</strong>?
+      </p>
+    </div>
   </app-common-dialog>
 </section>
 

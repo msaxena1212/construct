@@ -196,15 +196,16 @@
           <div
             *ngFor="let event of day.events"
             class="p-2 rounded-xl text-xs font-semibold text-white shadow-md truncate"
-            [ngClass]="{
-              'bg-orange-500': event.type === 'concrete',
-              'bg-blue-500': event.type === 'electrical',
-              'bg-emerald-500': event.type === 'plumbing',
-              'bg-red-500': event.type === 'deadline'
-            }">
+           [ngClass]="{
+             'bg-orange-500': event.type === 'concrete',
+             'bg-blue-500': event.type === 'electrical',
+             'bg-emerald-500': event.type === 'plumbing',
+             'bg-red-500': event.type === 'deadline',
+             'bg-purple-500': event.type === 'holiday'
+           }">
 
             {{ event.title }}
-
+  
           </div>
 
         </div>

@@ -47,6 +47,7 @@ export class Vendors implements OnInit {
   showInvoiceModal = false;
   showVendorDetailModal = false;
   payInvoiceeModal = false;
+  showCancelInvoiceModal = false;
   showAuditModal = false;
   showBillingModal = false;
   showLaborModal = false;
@@ -80,6 +81,7 @@ export class Vendors implements OnInit {
   isSavingLabor = false;
   isSavingAudit = false;
   isSavingInvoice = false;
+  isCancellingInvoice = false;
   laborError = '';
 
   viewingVendorId: string | null = null;
@@ -635,16 +637,33 @@ export class Vendors implements OnInit {
     });
   }
 
-  cancelInvoice(inv: VendorInvoice): void {
-    if (!confirm(`Cancel invoice ${inv.invoice_number}?`)) return;
-    this.invoiceService.updateStatus(inv.id, 'Rejected').subscribe({
+  openCancelInvoiceDialog(inv: VendorInvoice): void {
+    this.selectedInvoice = inv;
+    this.showCancelInvoiceModal = true;
+  }
+
+  closeCancelInvoiceDialog(): void {
+    this.showCancelInvoiceModal = false;
+    this.selectedInvoice = null;
+  }
+
+  confirmCancelInvoice(): void {
+    if (!this.selectedInvoice || this.isCancellingInvoice) return;
+    this.isCancellingInvoice = true;
+
+    this.invoiceService.updateStatus(this.selectedInvoice.id, 'Rejected').subscribe({
       next: () => {
+        this.isCancellingInvoice = false;
+        this.closeCancelInvoiceDialog();
         if (this.selectedVendor) {
           this.invoiceService.loadInvoices(this.selectedVendor.id);
           this.vendorService.loadStats();
         }
       },
-      error: (err: any) => alert('Cancel failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) => {
+        this.isCancellingInvoice = false;
+        alert('Cancel failed: ' + (err?.error?.message ?? 'Server error'));
+      },
     });
   }
 
