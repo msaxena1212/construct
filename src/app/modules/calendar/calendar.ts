@@ -96,7 +96,6 @@ generateCalendar(): void {
 
     const dayEvents =
       this.events.filter(x => x.date === fullDate);
-
     const today = new Date();
 
     this.calendarDays.push({
