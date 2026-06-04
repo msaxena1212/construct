@@ -500,7 +500,7 @@
     </div>
   </div>
 
-  <div class="flex justify-between items-center px-8">
+  <!-- <div class="flex justify-between items-center px-8">
     <div>
       <p class="text-sm font-bold text-slate-400">
         Total Quotation Value
@@ -516,7 +516,7 @@
         ₹{{totalAmount.toLocaleString()}}
       </h2>
     </div>
-  </div>
+  </div> -->
 
 </div>
 
@@ -540,6 +540,18 @@
           </span>
 
         </button>
+
+          <div class="flex items-center gap-4 mr-6">
+
+          <p class="text-sm font-bold text-slate-400 uppercase tracking-wide">
+            Grand Total
+          </p>
+
+          <h2 class="text-3xl font-black text-slate-900">
+            ₹{{totalAmount.toLocaleString()}}
+          </h2>
+
+        </div>
 
         <button (click)="submitQuote()" class="px-10 py-3 bg-primary rounded-2xl font-bold text-white
            transition-all shadow-lg shadow-primary/20
