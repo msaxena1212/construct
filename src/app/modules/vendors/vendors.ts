@@ -28,7 +28,7 @@ export class Vendors implements OnInit {
   @Input() projectId: string | number = '';
 
   projectdata: any = null;
-
+  private _pendingEditVendor: Vendor | null = null;
   private vendorService = inject(VendorsServices);
   private laborService = inject(VendorsLaborServices);
   private invoiceService = inject(VendorInvoiceService);
@@ -125,7 +125,6 @@ export class Vendors implements OnInit {
   readonly sumRate = (acc: number, w: LaborWorker): number =>
     acc + (Number(w.daily_rate) || 0) * (w.labor_count || 0);
 
-  // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -146,7 +145,6 @@ export class Vendors implements OnInit {
     this.auditService.audits$.subscribe(audits => (this.vendorAudits = audits));
   }
 
-  // ─── Data Loaders ────────────────────────────────────────────────────────────
 
   private loadVendorSubData(vendorId: string): void {
     this.invoiceService.loadInvoices(vendorId);
@@ -185,6 +183,10 @@ export class Vendors implements OnInit {
             value: s.skill_name?.toLowerCase().replace(/\s+/g, '_') ?? s.id,
             label: s.skill_name ?? s.name,
           }));
+          if (this._pendingEditVendor) {
+            this.editVendorDetail(this._pendingEditVendor);
+            this._pendingEditVendor = null;
+          }
         }
       },
     });
@@ -220,8 +222,6 @@ export class Vendors implements OnInit {
     }
   }
 
-  // ─── Vendor List ─────────────────────────────────────────────────────────────
-
   get filteredVendors(): Vendor[] {
     if (this.selectedMember === 'All Members') return this.vendors;
     return this.vendors.filter(v => v.assignee === this.selectedMember);
@@ -243,8 +243,6 @@ export class Vendors implements OnInit {
     return filePath.split('/').pop() ?? filePath;
   }
 
-  // ─── Add / Edit Vendor Modal ──────────────────────────────────────────────────
-
   openAddModal(): void {
     this.isEditMode = false;
     this.editingVendorId = null;
@@ -259,6 +257,10 @@ export class Vendors implements OnInit {
   editVendorDetail(vendor?: Vendor): void {
     const v = vendor ?? this.selectedVendor;
     if (!v) return;
+    if (this.skillOptions.length === 0) {
+      this._pendingEditVendor = v;
+      return;
+    }
 
     this.isEditMode = true;
     this.editingVendorId = v.id;
@@ -266,6 +268,20 @@ export class Vendors implements OnInit {
     this.stepError = '';
     this.fileError = '';
     this.contractFiles = [];
+
+    const rawSkills: string[] = Array.isArray(v.skill)
+      ? [...v.skill]
+      : (v.skill ? String(v.skill).split(',').map((s: string) => s.trim()).filter(Boolean) : []);
+
+    const normalizedSkills = rawSkills.map(raw => {
+      const match = this.skillOptions.find(
+        opt =>
+          opt.label.toLowerCase() === raw.toLowerCase() ||
+          opt.value.toLowerCase() === raw.toLowerCase() ||
+          opt.label.toLowerCase().replace(/\s+/g, '_') === raw.toLowerCase()
+      );
+      return match ? match.label : raw;
+    });
 
     this.newVendor = {
       name: v.name,
@@ -275,13 +291,12 @@ export class Vendors implements OnInit {
       kyc: { gst: v.kyc?.gst ?? '', pan: v.kyc?.pan ?? '' },
       address: { street: v.address?.street ?? '', pincode: v.address?.pincode ?? '' },
       budget: String(v.budget_allocation ?? ''),
-      skill: Array.isArray(v.skill) ? v.skill.join(', ') : (v.skill ?? ''),
+      skill: normalizedSkills,
     };
 
     this.showVendorDetailModal = false;
     this.showAddModal = true;
   }
-
   nextStep(): void {
     this.stepError = '';
 
@@ -327,11 +342,11 @@ export class Vendors implements OnInit {
       if (!this.newVendor.budget?.toString().trim()) {
         this.stepError = 'Budget allocation is required.'; return;
       }
-      if (!this.newVendor.skill?.trim()) {
-        this.stepError = 'At least one service is required.'; return;
+
+      if (!this.newVendor.skill || this.newVendor.skill.length === 0) {
+        this.stepError = 'At least one skill is required.'; return;
       }
     }
-
     if (this.currentStep < 4) this.currentStep++;
   }
 
@@ -358,7 +373,9 @@ export class Vendors implements OnInit {
     fd.append('physicalAddress', this.newVendor.address.street);
     fd.append('pincode', this.newVendor.address.pincode);
     fd.append('budgetAllocation', this.newVendor.budget);
-    fd.append('skill', this.newVendor.skill);
+    fd.append('skill', Array.isArray(this.newVendor.skill)
+      ? this.newVendor.skill.join(', ')
+      : this.newVendor.skill);
 
     if (this.projectId) fd.append('project_id', String(this.projectId));
     this.contractFiles.forEach(file => fd.append('contractFiles', file));
@@ -381,22 +398,24 @@ export class Vendors implements OnInit {
   private updateVendorData(): void {
     if (!this.editingVendorId) return;
 
-    const body: any = {
-      name: this.newVendor.name,
-      spoc_name: this.newVendor.spoc.name,
-      spoc_phone: this.newVendor.spoc.phone,
-      official_email: this.newVendor.email,
-      official_phone: this.newVendor.phone,
-      gst_no: this.newVendor.kyc.gst?.toUpperCase() || null,
-      pan_card_no: this.newVendor.kyc.pan?.toUpperCase() || null,
-      physical_address: this.newVendor.address.street,
-      pincode: this.newVendor.address.pincode,
-      budget_allocation: parseFloat(String(this.newVendor.budget).replace(/[^0-9.]/g, '')) || 0,
-      skill: this.newVendor.skill,
-    };
+    const fd = new FormData();
+    fd.append('name', this.newVendor.name);
+    fd.append('spoc_name', this.newVendor.spoc.name);
+    fd.append('spoc_phone', this.newVendor.spoc.phone);
+    fd.append('official_email', this.newVendor.email);
+    fd.append('official_phone', this.newVendor.phone);
+    fd.append('gst_no', this.newVendor.kyc.gst?.toUpperCase() || '');
+    fd.append('pan_card_no', this.newVendor.kyc.pan?.toUpperCase() || '');
+    fd.append('physical_address', this.newVendor.address.street);
+    fd.append('pincode', this.newVendor.address.pincode);
+    fd.append('budget_allocation', String(parseFloat(String(this.newVendor.budget).replace(/[^0-9.]/g, '')) || 0));
+
+    fd.append('skill', Array.isArray(this.newVendor.skill) ? this.newVendor.skill.join(', ') : this.newVendor.skill);
+
+    this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
     this.isSaving = true;
-    this.vendorService.updateVendor(this.editingVendorId, body).subscribe({
+    this.vendorService.updateVendor(this.editingVendorId, fd).subscribe({
       next: () => {
         this.isSaving = false;
         this.showAddModal = false;
@@ -416,6 +435,26 @@ export class Vendors implements OnInit {
     });
   }
 
+  toggleSkill(skillLabel: string): void {
+    if (!Array.isArray(this.newVendor.skill)) {
+      this.newVendor.skill = [];
+    }
+    const idx = this.newVendor.skill.findIndex(
+      (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
+    );
+    if (idx === -1) {
+      this.newVendor.skill.push(skillLabel); // label as-is store karo
+    } else {
+      this.newVendor.skill.splice(idx, 1);
+    }
+  }
+
+  isSkillSelected(skillLabel: string): boolean {
+    if (!Array.isArray(this.newVendor.skill)) return false;
+    return this.newVendor.skill.some(
+      (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
+    );
+  }
   deleteVendor(id: string): void {
     if (this.isDeleting) return;
     if (!confirm('Are you sure you want to remove this vendor?')) return;
@@ -428,8 +467,6 @@ export class Vendors implements OnInit {
       },
     });
   }
-
-  // ─── File Handling ────────────────────────────────────────────────────────────
 
   onContractFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -497,11 +534,19 @@ export class Vendors implements OnInit {
     return 'text-outline';
   }
 
-  // ─── Invoice ──────────────────────────────────────────────────────────────────
-
   openSubmission(): void {
-    this.invoiceForm = this.defaultInvoice();
-    this.showInvoiceModal = true;
+    if (!this.selectedVendor) return;
+
+    let started = false;
+    const sub = this.invoiceService.loading$.subscribe((loading) => {
+      if (started && !loading) {
+        this.invoiceForm = this.defaultInvoice();
+        this.showInvoiceModal = true;
+        sub.unsubscribe();
+      }
+    });
+    started = true;
+    this.invoiceService.loadInvoices(this.selectedVendor.id);
   }
 
   onTypeChange(item: any): void {
@@ -564,7 +609,7 @@ export class Vendors implements OnInit {
 
     const payload = {
       invoice_number: this.invoiceForm.number,
-      invoice_date: new Date().toISOString().split('T')[0],
+      invoice_date: this.invoiceForm.date,
       items: this.invoiceForm.items,
       subtotal: this.invoiceForm.subtotal,
       tax_rate: this.invoiceForm.taxRate ?? 0,
@@ -584,8 +629,6 @@ export class Vendors implements OnInit {
       },
     });
   }
-
-  // ─── Pay Invoice ──────────────────────────────────────────────────────────────
 
   payInvoice(inv: VendorInvoice): void {
     this.selectedInvoice = inv;
@@ -669,6 +712,15 @@ export class Vendors implements OnInit {
 
   viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;
+    const formatDate = (dateStr: string): string => {
+      if (!dateStr) return '—';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mmm = d.toLocaleString('en-US', { month: 'short' });
+      const yyyy = d.getFullYear();
+      return `${dd}/${mmm}/${yyyy}`;
+    };
 
     let invoiceItems: any[] = [];
     try {
@@ -699,8 +751,9 @@ export class Vendors implements OnInit {
 
     const itemRows = invoiceItems.map((item: any) => {
       const isLabor = item.type === 'labor';
+      const typeLabel = item.type ? String(item.type).charAt(0).toUpperCase() + String(item.type).slice(1) : '—';
       return `<tr>
-        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${item.type || '—'}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${typeLabel}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${item.description || '—'}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${item.quantity || 0}</td>
         ${hasLabor ? `<td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:center;">${isLabor ? (item.hours || 0) + 'h' : ''}</td>` : ''}
@@ -731,7 +784,7 @@ export class Vendors implements OnInit {
     </div>
     <div style="text-align:right;">
       <p style="font-weight:900;font-size:18px;margin:0;">${inv.invoice_number}</p>
-      <p style="color:#64748b;margin:4px 0 0;">${inv.invoice_date}</p>
+      <p style="color:#64748b;margin:4px 0 0;">${this.formatDate(inv.invoice_date)}</p>
       <span style="display:inline-block;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700;
         background:${inv.status === 'Paid' ? '#dcfce7' : inv.status === 'Rejected' ? '#fee2e2' : '#fef3c7'};
         color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Rejected' ? '#dc2626' : '#b45309'};margin-top:6px;">
@@ -788,8 +841,6 @@ export class Vendors implements OnInit {
     if (win) { win.document.write(html); win.document.close(); }
   }
 
-  // ─── Billing ──────────────────────────────────────────────────────────────────
-
   openBilling(): void {
     if (this.selectedVendor && this.invoices.length === 0) {
       this.invoiceService.loadInvoices(this.selectedVendor.id);
@@ -800,8 +851,6 @@ export class Vendors implements OnInit {
   get totalBilled(): number {
     return this.invoices.reduce((acc, inv) => acc + Number(inv.grand_total), 0);
   }
-
-  // ─── Audit ────────────────────────────────────────────────────────────────────
 
   openAudit(): void {
     const latest = this.vendorAudits[0];
@@ -850,8 +899,6 @@ export class Vendors implements OnInit {
     this.showVendorDetailModal = true;
   }
 
-  // ─── Vendor Status ────────────────────────────────────────────────────────────
-
   updateVendorStatus(status: string): void {
     if (!this.selectedVendor) return;
     const statusKey = status.toLowerCase() as 'active' | 'pending' | 'inactive';
@@ -863,8 +910,6 @@ export class Vendors implements OnInit {
       error: (err: any) => alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
-
-  // ─── Labor Modal ─────────────────────────────────────────────────────────────
 
   openLaborModal(): void {
     if (!this.selectedVendor) return;
@@ -961,8 +1006,6 @@ export class Vendors implements OnInit {
     this.laborService.updateWorker(worker.id, { status }).subscribe();
   }
 
-  // ─── Tasks ────────────────────────────────────────────────────────────────────
-
   updateTaskStatus(task: any, statusRaw: string): void {
     this.projectService.updateTask(task.id, { status: statusRaw }).subscribe();
   }
@@ -973,8 +1016,6 @@ export class Vendors implements OnInit {
       error: (err: any) => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
-
-  // ─── UI Helpers ──────────────────────────────────────────────────────────────
 
   getSkillBarWidth(count: number): number {
     const max = Math.max(...this.laborStats.skillComposition.map(s => s.count), 1);
@@ -1002,11 +1043,21 @@ export class Vendors implements OnInit {
       'pending': 'bg-amber-100 text-amber-700',
       'on_hold': 'bg-slate-100 text-slate-500',
     };
-    // Case-insensitive match
     return map[status?.toLowerCase()] ?? 'bg-slate-100 text-slate-500';
   }
 
-  // ─── Defaults ────────────────────────────────────────────────────────────────
+
+  sanitizePhone(event: Event, field: 'spoc' | 'official'): void {
+    const input = event.target as HTMLInputElement;
+    const cleaned = input.value.replace(/\D/g, '').slice(0, 10);
+    input.value = cleaned;
+
+    if (field === 'spoc') {
+      this.newVendor.spoc.phone = cleaned;
+    } else {
+      this.newVendor.phone = cleaned;
+    }
+  }
 
   private defaultVendor() {
     return {
@@ -1014,14 +1065,43 @@ export class Vendors implements OnInit {
       spoc: { name: '', phone: '' },
       kyc: { gst: '', pan: '' },
       address: { street: '', pincode: '' },
-      budget: '', skill: '',
+      budget: '',
+      skill: [] as string[],
     };
+  }
+  private getInvoicePrefix(): string {
+    const rawName = String(this.selectedVendor?.name ?? '');
+    const letters = rawName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+    const prefix = letters.padEnd(3, 'X');
+    return prefix === 'XXX' ? 'VND' : prefix;
+  }
+
+  private generateInvoiceNumber(): string {
+    const prefix = this.getInvoicePrefix();
+    const existing = this.invoices || [];
+
+    const regex = new RegExp('^(?:INV-)?' + prefix + '-(\\d{5})$', 'i');
+    const maxNum = existing.reduce((max, inv) => {
+      const match = String(inv.invoice_number || '').match(regex);
+      return match ? Math.max(max, parseInt(match[1], 10)) : max;
+    }, 0);
+    const nextNum = String(maxNum + 1).padStart(5, '0');
+    return `INV-${prefix}-${nextNum}`;
+  }
+
+  onInvoiceDateChange(value: string): void {
+    if (!value) return;
+    const date = new Date(value);
+    this.invoiceForm.date = this.formatDate(date);
+    this.invoiceForm.rawDate = value;
   }
 
   private defaultInvoice() {
+    const today = new Date();
     return {
-      number: 'INV-' + Math.floor(Math.random() * 9000 + 1000),
-      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      number: this.generateInvoiceNumber(),
+      date: this.formatDate(today),
+      rawDate: today.toISOString().split('T')[0],
       items: [{
         type: '', description: '', quantity: 1, hours: 0,
         unitPrice: 0, gst: 18, baseAmount: 0, gstAmount: 0, total: 0,
@@ -1029,6 +1109,16 @@ export class Vendors implements OnInit {
       subtotal: 0, taxAmount: 0, taxRate: 0, grandTotal: 0,
       gstBreakdown: [] as { rate: number; amount: number }[],
     };
+  }
+
+  public formatDate(dateInput: string | Date | undefined | null): string {
+    if (!dateInput) return '—';
+    const d = dateInput instanceof Date ? dateInput : new Date(String(dateInput));
+    if (isNaN(d.getTime())) return String(dateInput || '—');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mmm = d.toLocaleString('en-US', { month: 'short' });
+    const yyyy = d.getFullYear();
+    return `${dd}/${mmm}/${yyyy}`;
   }
 
   private defaultLabor() {

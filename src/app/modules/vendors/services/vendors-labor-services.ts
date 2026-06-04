@@ -12,7 +12,7 @@ export interface LaborWorker {
   statusLabel: string;
   statusColor: string;
   daily_rate: number;
-  labor_count: number; 
+  labor_count: number;
 }
 
 export interface LaborStats {
@@ -112,11 +112,11 @@ export class VendorsLaborServices {
   private recalcStats(): void {
     const workers = this.workersSubject.value;
 
-    const total    = workers.reduce((s, w) => s + (w.labor_count || 0), 0);
-    const onSite   = workers.filter(w => w.status === 'on_site')
-                            .reduce((s, w) => s + (w.labor_count || 0), 0);
-    const active   = workers.filter(w => ['active', 'on_site'].includes(w.status))
-                            .reduce((s, w) => s + (w.labor_count || 0), 0);
+    const total = workers.reduce((s, w) => s + (w.labor_count || 0), 0);
+    const onSite = workers.filter(w => w.status === 'on_site')
+      .reduce((s, w) => s + (w.labor_count || 0), 0);
+    const active = workers.filter(w => ['active', 'on_site'].includes(w.status))
+      .reduce((s, w) => s + (w.labor_count || 0), 0);
 
     const skillMap: Record<string, number> = {};
     workers.forEach(w => {

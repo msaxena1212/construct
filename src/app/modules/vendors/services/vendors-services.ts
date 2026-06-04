@@ -248,13 +248,21 @@ export class VendorsServices {
     );
   }
 
-  updateVendor(id: string, body: Partial<BackendVendor>): Observable<ApiSingleResponse<BackendVendor>> {
-    return this.http.put<ApiSingleResponse<BackendVendor>>(`${this.vendorUrl}/${id}`, body).pipe(
+  updateVendor(id: string, body: FormData | Partial<BackendVendor>): Observable<ApiSingleResponse<BackendVendor>> {
+    const isFormData = body instanceof FormData;
+    const request$ = isFormData
+      ? this.http.put<ApiSingleResponse<BackendVendor>>(`${this.vendorUrl}/${id}`, body)
+      : this.http.put<ApiSingleResponse<BackendVendor>>(`${this.vendorUrl}/${id}`, body);
+
+    return request$.pipe(
       tap((res) => {
         if (res.success) {
           const list = this.vendorsSubject.value;
           const idx = list.findIndex(v => v.id === id);
-          if (idx !== -1) { list[idx] = this.mapVendor(res.data); this.vendorsSubject.next([...list]); }
+          if (idx !== -1) {
+            list[idx] = this.mapVendor(res.data);
+            this.vendorsSubject.next([...list]);
+          }
           this.loadStats();
         }
       }),
