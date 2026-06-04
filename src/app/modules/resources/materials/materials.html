@@ -231,7 +231,7 @@
                         @for (item of paginatedMaterials; track item.id) {
 
                         <tr
-                            class="group relative z-0 hover:z-[9999] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl cursor-pointer">
+                            class="group relative z-0 hover:z-[9999] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl">
 
                             <!-- Material -->
                             <td
@@ -364,29 +364,27 @@
                                     </div>
 
                                     <!-- Content -->
-                                    <div class="flex flex-col leading-tight">
+                                      <div class="flex flex-col leading-tight min-w-[90px]">
 
+                                        @if ((item.material_project_stock?.length || 0) > 0) {
                                         <span class="text-sm font-black text-slate-800 dark:text-white">
-
-                                            {{ item.material_project_stock?.length || 0 }}
-
-                                            {{ (item.material_project_stock?.length || 0) === 1
-                                            ? 'Project'
-                                            : 'Projects' }}
-
+                                            {{ item.material_project_stock?.length }}
+                                            {{ item.material_project_stock?.length === 1 ? 'Project' : 'Projects' }}
                                         </span>
+                                        }
 
-                                        <span [ngClass]="item.material_project_stock?.length > 0
-          ? 'text-indigo-600 dark:text-indigo-400'
-          : 'text-rose-500 dark:text-rose-400'" class="text-[10px] font-bold uppercase tracking-wide">
+                                        <span [ngClass]="(item.material_project_stock?.length || 0) > 0
+            ? 'text-indigo-600 dark:text-indigo-400'
+            : 'text-rose-500 dark:text-rose-400'" class="text-[10px] font-bold uppercase tracking-wide">
 
-                                            {{ item.material_project_stock?.length > 0
-                                            ? 'View'
+                                            {{ (item.material_project_stock?.length || 0) > 0
+                                            ? 'Assigned'
                                             : 'Not Assigned' }}
 
                                         </span>
 
                                     </div>
+
 
                                     <!-- Arrow -->
                                     <span class="material-symbols-outlined text-[14px]
@@ -473,15 +471,15 @@
                                     <div class="flex items-center gap-2">
 
                                         <!-- Edit -->
-                                        <button (click)="openAssignProjectModal(item)"
-                                            class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                                        <button (click)="openAssignProjectModal(item)" title="Assign to Project"
+                                            class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
 
                                             <span class="material-symbols-outlined text-[18px]">
                                                 assignment_ind
                                             </span>
 
                                         </button>
-                                        <button (click)="openStockTransferModal(item)"
+                                        <button (click)="openStockTransferModal(item)" title="Transfer Stock"
                                             [disabled]="!item.material_project_stock?.length" [ngClass]="
       item.material_project_stock?.length
         ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg cursor-pointer'
@@ -495,8 +493,8 @@
                                         </button>
 
                                         <!-- Delete -->
-                                        <button (click)="openDeleteModal($event, item)"
-                                            class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                                        <button (click)="openDeleteModal($event, item)" title="Delete Material"
+                                            class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
 
                                             <span class="material-symbols-outlined text-[18px]">
                                                 delete
