@@ -17,6 +17,7 @@ export interface InvoiceItem {
 
 export interface VendorInvoice {
   id: number;
+  project_id?: number;
   vendor_id: number;
   invoice_number: string;
   invoice_date: string;
@@ -25,8 +26,34 @@ export interface VendorInvoice {
   tax_rate: number;
   tax_amount: number;
   grand_total: number;
-  status: 'Pending' | 'Paid' | 'Rejected';
+  status: 'Pending' | 'Paid' | 'Cancelled' | 'Partially Paid';
+
+  settlement_type?: 'work_poc' | 'milestone' | 'lumpsum' | null;
+  settlement_completion?: number | null;
+  milestone_ids?: number[];
+  sub_milestone_ids?: number[];
+  task_ids?: number[];
+  payment_mode?: string | null;
+  payment_reference?: string | null;
+  cheque_clearance_date?: string | null;
+  paid_amount?: number | null;
+  paid_at?: string | null;
   createdAt: string;
+}
+
+export interface PaymentPayload {
+  status: 'Paid' | 'Cancelled' | 'Pending' | 'Partially Paid';
+
+  amount?: number;
+  mode?: string;
+  reference?: string;
+  clearance_date?: string;
+
+  settlement_type?: 'work_poc' | 'milestone' | 'lumpsum';
+  settlement_completion?: number | null;
+  milestone_ids?: number[];
+  sub_milestone_ids?: number[];
+  task_ids?: number[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,7 +68,7 @@ export class VendorInvoiceService {
   invoices$ = this.invoicesSubject.asObservable();
   loading$ = this.loadingSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   loadInvoices(vendorId: string | number): void {
     this.currentVendorId = vendorId;
@@ -65,6 +92,7 @@ export class VendorInvoiceService {
   createInvoice(
     vendorId: string | number,
     payload: {
+      project_id?: number | null;
       invoice_number: string;
       invoice_date: string;
       items: InvoiceItem[];
@@ -90,7 +118,7 @@ export class VendorInvoiceService {
 
   updateStatus(
     invoiceId: number,
-    status: 'Pending' | 'Paid' | 'Rejected'
+    payload: PaymentPayload
   ): Observable<any> {
     const vendorId = this.currentVendorId;
     if (!vendorId) {
@@ -100,13 +128,13 @@ export class VendorInvoiceService {
     return this.http
       .put<any>(
         `${this.base}/${vendorId}/invoices/${invoiceId}/status`,
-        { status }
+        payload
       )
       .pipe(
         tap((res) => {
           if (res.success) {
             const list = this.invoicesSubject.value.map((inv) =>
-              inv.id === invoiceId ? { ...inv, status } : inv
+              inv.id === invoiceId ? { ...inv, ...payload, status: payload.status } : inv
             );
             this.invoicesSubject.next(list);
           }

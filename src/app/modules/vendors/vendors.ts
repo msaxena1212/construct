@@ -42,7 +42,19 @@ export class Vendors implements OnInit {
   skillOptions: { value: string; label: string }[] = [];
 
   selectedInvoice: VendorInvoice | null = null;
-
+  showSettlementCards = false;
+  selectedSettlementType: 'work_poc' | 'milestone' | 'lumpsum' = 'work_poc';
+  milestones: any[] = [];
+  subMilestones: any[] = [];
+  milestoneTasks: any[] = [];
+  selectedMilestoneId: number | null = null;
+  selectedSubMilestoneId: number | null = null;
+  selectedMilestoneIds: number[] = [];
+  selectedSubMilestoneIds: number[] = [];
+  selectedTaskIds: number[] = [];
+  settlementCompletion: number | null = null;
+  isLoadingMilestones = false;
+  isLoadingSubMilestones = false;
   showAddModal = false;
   showInvoiceModal = false;
   showVendorDetailModal = false;
@@ -65,11 +77,19 @@ export class Vendors implements OnInit {
     { num: 4, label: 'Documents' },
   ];
 
-  paymentForm: { amount: number | null; mode: string; reference: string } = {
-    amount: null,
-    mode: '',
-    reference: '',
-  };
+  paymentForm: {
+    amount: number | null;
+    project_id: number | null;
+    mode: string;
+    reference: string;
+    clearance_date: string;
+  } = {
+      amount: null,
+      project_id: null,
+      mode: '',
+      reference: '',
+      clearance_date: '',
+    };
   paymentError = '';
   isProcessingPayment = false;
 
@@ -87,6 +107,7 @@ export class Vendors implements OnInit {
   viewingVendorId: string | null = null;
   selectedVendor: Vendor | undefined = undefined;
   vendors: Vendor[] = [];
+  projects: any[] = [];
   stats: VendorStats = { totalActive: 0, pendingPayments: '₹0', compliantPartners: '0%' };
   activities: Activity[] = [];
 
@@ -143,6 +164,7 @@ export class Vendors implements OnInit {
     this.laborService.loading$.subscribe(l => (this.laborLoading = l));
     this.invoiceService.invoices$.subscribe(inv => (this.invoices = inv));
     this.auditService.audits$.subscribe(audits => (this.vendorAudits = audits));
+    this.loadProjects();
   }
 
 
@@ -153,16 +175,12 @@ export class Vendors implements OnInit {
 
     const projectId = this.selectedVendor?.project_id;
     if (projectId) {
-      this.projectService.getProjectTasks(projectId).subscribe({
-        next: (res: any) => {
-          this.allTasks = res?.data || [];
-        },
-        error: (err: any) => console.error('Task load failed', err),
-      });
-
+      this.loadProjectTasks(projectId);
       this.projectService.getProjectById(projectId).subscribe({
         next: (res: any) => {
           this.projectdata = res?.data ?? null;
+          this.setProjectMilestones(res?.data?.milestones ?? []);
+          this.updateSettlementCompletionFromProject();
         },
         error: (err: any) => {
           this.projectdata = null;
@@ -172,6 +190,7 @@ export class Vendors implements OnInit {
     } else {
       this.allTasks = [];
       this.projectdata = null;
+      this.setProjectMilestones([]);
     }
   }
 
@@ -192,6 +211,15 @@ export class Vendors implements OnInit {
     });
   }
 
+  private loadProjects(): void {
+    this.projectService.getProjects().subscribe({
+      next: (res: any) => {
+        this.projects = Array.isArray(res?.data) ? res.data : [];
+      },
+      error: (err: any) => console.error('Project list load failed', err),
+    });
+  }
+
   getProjectById(): void {
     if (!this.projectId) return;
     this.projectService.getProjectById(this.projectId).subscribe({
@@ -201,6 +229,51 @@ export class Vendors implements OnInit {
       error: (err: any) => console.error('Project load failed', err),
     });
   }
+
+  getProject(projectEvent: Event | string | number): void {
+    const projectIdValue =
+      typeof projectEvent === 'object' && projectEvent !== null && 'target' in projectEvent
+        ? (projectEvent.target as HTMLSelectElement).value
+        : projectEvent;
+
+    const selectedId = Number(projectIdValue);
+
+    this.milestones = [];
+    this.subMilestones = [];
+    this.milestoneTasks = [];
+    this.selectedMilestoneId = null;
+    this.selectedSubMilestoneId = null;
+    this.selectedMilestoneIds = [];
+    this.selectedSubMilestoneIds = [];
+    this.selectedTaskIds = [];
+
+    if (selectedId) {
+      this.showSettlementCards = true;
+      this.paymentForm.project_id = selectedId;
+      this.loadProjectTasks(selectedId);
+
+      this.isLoadingMilestones = true;
+      this.projectService.getProjectById(selectedId).subscribe({
+        next: (res: any) => {
+          this.projectdata = res?.data ?? null;
+          this.setProjectMilestones(res?.data?.milestones ?? []);
+          this.updateSettlementCompletionFromProject();
+          this.isLoadingMilestones = false;
+        },
+        error: (err: any) => {
+          this.projectdata = null;
+          this.isLoadingMilestones = false;
+          console.error('Selected project load failed', err);
+        },
+      });
+    } else {
+      this.showSettlementCards = false;
+      this.projectdata = null;
+      this.allTasks = [];
+      this.setProjectMilestones([]);
+    }
+  }
+
 
   private syncSelectedVendor(): void {
     if (!this.viewingVendorId) {
@@ -225,6 +298,174 @@ export class Vendors implements OnInit {
   get filteredVendors(): Vendor[] {
     if (this.selectedMember === 'All Members') return this.vendors;
     return this.vendors.filter(v => v.assignee === this.selectedMember);
+  }
+
+
+  get availableSubMilestones(): any[] {
+    const allMilestones = this.projectdata?.milestones ?? [];
+    if (this.selectedMilestoneIds.length === 0) return [];
+    return allMilestones.filter((m: any) =>
+      this.selectedMilestoneIds.includes(Number(m.parent_id))
+    );
+  }
+
+  get availableTaskOptions(): IProjectTask[] {
+    if (this.selectedSubMilestoneIds.length === 0) return [];
+    return (this.allTasks ?? []).filter((t: any) =>
+      this.selectedSubMilestoneIds.includes(Number(t.milestone_id))
+    );
+  }
+
+  get isSettlementCompletionEditable(): boolean {
+    return this.selectedSettlementType === 'work_poc';
+  }
+
+  get settlementCompletionLabel(): string {
+    if (this.selectedSettlementType === 'work_poc') return 'Work POC % Complete';
+    if (this.selectedSettlementType === 'milestone') return 'Milestone % Complete';
+    return 'Lump Sum % Complete';
+  }
+
+
+  private loadProjectTasks(projectId: string | number): void {
+    this.projectService.getProjectTasks(projectId).subscribe({
+      next: (res: any) => {
+        this.allTasks = res?.data || [];
+        this.syncSelectedTasksWithOptions();
+      },
+      error: (err: any) => {
+        this.allTasks = [];
+        console.error('Task load failed', err);
+      },
+    });
+  }
+
+  private setProjectMilestones(milestones: any[]): void {
+    const allMilestones = Array.isArray(milestones) ? milestones : [];
+    this.milestones = allMilestones.filter((m: any) => !m.parent_id);
+    this.subMilestones = [];
+    this.milestoneTasks = [];
+  }
+
+  private updateSettlementCompletionFromProject(): void {
+    const fieldMap: Record<typeof this.selectedSettlementType, string> = {
+      work_poc: 'work_poc_completion',
+      milestone: 'milestone_completion',
+      lumpsum: 'lumpsum_completion',
+    };
+    const rawValue = this.projectdata?.[fieldMap[this.selectedSettlementType]];
+    this.settlementCompletion =
+      rawValue == null || rawValue === '' ? null : Number(rawValue);
+  }
+
+  private getItemProgress(item: any): number | null {
+    const rawProgress =
+      item?.progress ?? item?.completion ?? item?.percent_complete ?? item?.percentage;
+    if (rawProgress != null && rawProgress !== '') {
+      const progress = Number(rawProgress);
+      return Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : null;
+    }
+    const status = String(item?.status ?? '').toLowerCase().replace(/\s+/g, '_');
+    if (status === 'completed') return 100;
+    if (status === 'in_progress' || status === 'review') return 50;
+    if (status === 'pending' || status === 'to_do' || status === 'on_hold') return 0;
+    return null;
+  }
+
+  private averageProgress(items: any[]): number | null {
+    const values = items
+      .map(item => this.getItemProgress(item))
+      .filter((value): value is number => value !== null);
+    if (values.length === 0) return null;
+    return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+  }
+
+  private updateSettlementCompletionFromSelection(): void {
+    const selectedTasks = this.allTasks.filter(task =>
+      this.selectedTaskIds.includes(Number(task.id))
+    );
+    const selectedSubMilestones = this.availableSubMilestones.filter((sm: any) =>
+      this.selectedSubMilestoneIds.includes(Number(sm.id))
+    );
+    const selectedMilestones = this.milestones.filter((m: any) =>
+      this.selectedMilestoneIds.includes(Number(m.id))
+    );
+
+    const progress =
+      this.averageProgress(selectedTasks) ??
+      this.averageProgress(selectedSubMilestones) ??
+      this.averageProgress(selectedMilestones);
+
+    if (progress != null) {
+      this.settlementCompletion = progress;
+    } else {
+      this.updateSettlementCompletionFromProject();
+    }
+  }
+
+  onMilestoneMultiSelect(): void {
+    this.selectedMilestoneIds = this.selectedMilestoneIds.map(id => Number(id));
+    const allowedSubIds = this.availableSubMilestones.map((m: any) => Number(m.id));
+    this.selectedSubMilestoneIds = this.selectedSubMilestoneIds.filter(id =>
+      allowedSubIds.includes(Number(id))
+    );
+    this.syncSelectedTasksWithOptions();
+    this.updateSettlementCompletionFromSelection();
+  }
+
+  onSubMilestoneMultiSelect(): void {
+    this.selectedSubMilestoneIds = this.selectedSubMilestoneIds.map(id => Number(id));
+    this.syncSelectedTasksWithOptions();
+    this.updateSettlementCompletionFromSelection();
+  }
+
+  onTaskMultiSelect(): void {
+    this.selectedTaskIds = this.selectedTaskIds.map(id => Number(id));
+    this.updateSettlementCompletionFromSelection();
+  }
+
+  private syncSelectedTasksWithOptions(): void {
+    const allowedTaskIds = this.availableTaskOptions.map(task => Number(task.id));
+    this.selectedTaskIds = this.selectedTaskIds.filter(id =>
+      allowedTaskIds.includes(Number(id))
+    );
+  }
+
+  onMilestoneSelect(milestoneId: number): void {
+    this.selectedMilestoneId = milestoneId;
+    this.subMilestones = [];
+    this.milestoneTasks = [];
+    this.selectedSubMilestoneId = null;
+    this.isLoadingSubMilestones = true;
+    this.subMilestones = (this.projectdata?.milestones ?? []).filter(
+      (m: any) => m.parent_id === milestoneId
+    );
+    this.isLoadingSubMilestones = false;
+  }
+
+  onSubMilestoneSelect(subMilestone: any): void {
+    this.selectedSubMilestoneId = subMilestone.id;
+    if (subMilestone.amount) {
+      this.paymentForm.amount = Number(subMilestone.amount);
+    }
+    this.milestoneTasks = (this.allTasks ?? []).filter(
+      (t: any) => t.milestone_id === subMilestone.id
+    );
+  }
+
+  onSettlementTypeChange(type: 'work_poc' | 'milestone' | 'lumpsum'): void {
+    this.selectedSettlementType = type;
+    this.selectedMilestoneId = null;
+    this.selectedSubMilestoneId = null;
+    this.selectedMilestoneIds = [];
+    this.selectedSubMilestoneIds = [];
+    this.selectedTaskIds = [];
+    this.subMilestones = [];
+    this.milestoneTasks = [];
+    this.updateSettlementCompletionFromProject();
+    if (type === 'lumpsum') {
+      this.paymentForm.amount = null;
+    }
   }
 
   openVendorDetail(vendor: Vendor): void {
@@ -271,7 +512,9 @@ export class Vendors implements OnInit {
 
     const rawSkills: string[] = Array.isArray(v.skill)
       ? [...v.skill]
-      : (v.skill ? String(v.skill).split(',').map((s: string) => s.trim()).filter(Boolean) : []);
+      : v.skill
+        ? String(v.skill).split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [];
 
     const normalizedSkills = rawSkills.map(raw => {
       const match = this.skillOptions.find(
@@ -297,16 +540,12 @@ export class Vendors implements OnInit {
     this.showVendorDetailModal = false;
     this.showAddModal = true;
   }
+
   nextStep(): void {
     this.stepError = '';
-
     if (this.currentStep === 1) {
-      if (!this.newVendor.name?.trim()) {
-        this.stepError = 'Vendor Legal Name is required.'; return;
-      }
-      if (!this.newVendor.spoc.name?.trim()) {
-        this.stepError = 'SPOC Name is required.'; return;
-      }
+      if (!this.newVendor.name?.trim()) { this.stepError = 'Vendor Legal Name is required.'; return; }
+      if (!this.newVendor.spoc.name?.trim()) { this.stepError = 'SPOC Name is required.'; return; }
       if (!this.newVendor.spoc.phone?.trim() || this.newVendor.spoc.phone.length < 10) {
         this.stepError = 'SPOC Phone must be 10 digits.'; return;
       }
@@ -317,32 +556,23 @@ export class Vendors implements OnInit {
         this.stepError = 'Official phone must be 10 digits.'; return;
       }
     }
-
     if (this.currentStep === 2) {
       const gst = this.newVendor.kyc.gst?.trim();
       const pan = this.newVendor.kyc.pan?.trim();
-      if (!gst && !pan) {
-        this.stepError = 'At least one of GST No. or PAN Card No. is required.'; return;
-      }
+      if (!gst && !pan) { this.stepError = 'At least one of GST No. or PAN Card No. is required.'; return; }
       if (gst && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gst)) {
         this.stepError = 'Invalid GST format. Expected: 22AAAAA0000A1Z5'; return;
       }
       if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(pan)) {
         this.stepError = 'Invalid PAN format. Expected: ABCDE1234F'; return;
       }
-      if (!this.newVendor.address.street?.trim()) {
-        this.stepError = 'Physical address is required.'; return;
-      }
+      if (!this.newVendor.address.street?.trim()) { this.stepError = 'Physical address is required.'; return; }
       if (!this.newVendor.address.pincode?.trim() || this.newVendor.address.pincode.length < 6) {
         this.stepError = 'Enter a valid 6-digit pincode.'; return;
       }
     }
-
     if (this.currentStep === 3) {
-      if (!this.newVendor.budget?.toString().trim()) {
-        this.stepError = 'Budget allocation is required.'; return;
-      }
-
+      if (!this.newVendor.budget?.toString().trim()) { this.stepError = 'Budget allocation is required.'; return; }
       if (!this.newVendor.skill || this.newVendor.skill.length === 0) {
         this.stepError = 'At least one skill is required.'; return;
       }
@@ -376,7 +606,6 @@ export class Vendors implements OnInit {
     fd.append('skill', Array.isArray(this.newVendor.skill)
       ? this.newVendor.skill.join(', ')
       : this.newVendor.skill);
-
     if (this.projectId) fd.append('project_id', String(this.projectId));
     this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
@@ -408,10 +637,12 @@ export class Vendors implements OnInit {
     fd.append('pan_card_no', this.newVendor.kyc.pan?.toUpperCase() || '');
     fd.append('physical_address', this.newVendor.address.street);
     fd.append('pincode', this.newVendor.address.pincode);
-    fd.append('budget_allocation', String(parseFloat(String(this.newVendor.budget).replace(/[^0-9.]/g, '')) || 0));
-
-    fd.append('skill', Array.isArray(this.newVendor.skill) ? this.newVendor.skill.join(', ') : this.newVendor.skill);
-
+    fd.append('budget_allocation', String(
+      parseFloat(String(this.newVendor.budget).replace(/[^0-9.]/g, '')) || 0
+    ));
+    fd.append('skill', Array.isArray(this.newVendor.skill)
+      ? this.newVendor.skill.join(', ')
+      : this.newVendor.skill);
     this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
     this.isSaving = true;
@@ -436,14 +667,12 @@ export class Vendors implements OnInit {
   }
 
   toggleSkill(skillLabel: string): void {
-    if (!Array.isArray(this.newVendor.skill)) {
-      this.newVendor.skill = [];
-    }
+    if (!Array.isArray(this.newVendor.skill)) this.newVendor.skill = [];
     const idx = this.newVendor.skill.findIndex(
       (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
     );
     if (idx === -1) {
-      this.newVendor.skill.push(skillLabel); // label as-is store karo
+      this.newVendor.skill.push(skillLabel);
     } else {
       this.newVendor.skill.splice(idx, 1);
     }
@@ -455,6 +684,7 @@ export class Vendors implements OnInit {
       (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
     );
   }
+
   deleteVendor(id: string): void {
     if (this.isDeleting) return;
     if (!confirm('Are you sure you want to remove this vendor?')) return;
@@ -480,21 +710,13 @@ export class Vendors implements OnInit {
       'image/jpeg',
       'image/png',
     ];
-
     const incoming = Array.from(input.files);
     const combined = [...this.contractFiles, ...incoming];
-
     if (combined.length > 10) { this.fileError = 'Maximum 10 files allowed.'; return; }
-
     for (const f of incoming) {
-      if (!ALLOWED.includes(f.type)) {
-        this.fileError = `"${f.name}" has an unsupported format.`; return;
-      }
-      if (f.size > MAX_SIZE) {
-        this.fileError = `"${f.name}" exceeds the 10 MB limit (${this.getFileSize(f.size)}).`; return;
-      }
+      if (!ALLOWED.includes(f.type)) { this.fileError = `"${f.name}" has an unsupported format.`; return; }
+      if (f.size > MAX_SIZE) { this.fileError = `"${f.name}" exceeds the 10 MB limit (${this.getFileSize(f.size)}).`; return; }
     }
-
     this.contractFiles = combined;
     input.value = '';
   }
@@ -536,11 +758,11 @@ export class Vendors implements OnInit {
 
   openSubmission(): void {
     if (!this.selectedVendor) return;
-
     let started = false;
     const sub = this.invoiceService.loading$.subscribe((loading) => {
       if (started && !loading) {
         this.invoiceForm = this.defaultInvoice();
+        this.invoiceForm.project_id = Number(this.selectedVendor?.project_id) || null;
         this.showInvoiceModal = true;
         sub.unsubscribe();
       }
@@ -589,7 +811,6 @@ export class Vendors implements OnInit {
 
       subtotal += item.baseAmount;
       totalGST += item.gstAmount;
-
       if (item.gstAmount > 0) {
         gstMap[gst] = (gstMap[gst] || 0) + item.gstAmount;
       }
@@ -608,6 +829,7 @@ export class Vendors implements OnInit {
     this.isSavingInvoice = true;
 
     const payload = {
+      project_id: this.invoiceForm.project_id,
       invoice_number: this.invoiceForm.number,
       invoice_date: this.invoiceForm.date,
       items: this.invoiceForm.items,
@@ -632,22 +854,62 @@ export class Vendors implements OnInit {
 
   payInvoice(inv: VendorInvoice): void {
     this.selectedInvoice = inv;
+    const selectedProjectId = inv.project_id ? Number(inv.project_id) : null;
+
     this.paymentForm = {
       amount: Number(inv.grand_total) || null,
+      project_id: selectedProjectId,
       mode: '',
       reference: '',
+      clearance_date: '',
     };
+
+    this.selectedSettlementType = 'work_poc';
+    this.selectedMilestoneIds = [];
+    this.selectedSubMilestoneIds = [];
+    this.selectedTaskIds = [];
+    this.settlementCompletion = null;
+    this.milestones = [];
+    this.subMilestones = [];
+    this.milestoneTasks = [];
+    this.showSettlementCards = false;
+    this.projectdata = null;
+
     this.paymentError = '';
     this.isProcessingPayment = false;
     this.payInvoiceeModal = true;
+    if (selectedProjectId) {
+      this.getProject(selectedProjectId);
+    }
   }
 
   closePayModal(): void {
     this.payInvoiceeModal = false;
     this.selectedInvoice = null;
-    this.paymentForm = { amount: null, mode: '', reference: '' };
+    this.paymentForm = { amount: null, project_id: null, mode: '', reference: '', clearance_date: '' };
     this.paymentError = '';
     this.isProcessingPayment = false;
+    this.showSettlementCards = false;
+    this.selectedSettlementType = 'work_poc';
+    this.selectedMilestoneIds = [];
+    this.selectedSubMilestoneIds = [];
+    this.selectedTaskIds = [];
+    this.settlementCompletion = null;
+    this.milestones = [];
+    this.subMilestones = [];
+    this.milestoneTasks = [];
+    this.projectdata = null;
+  }
+
+  onPaymentModeChange(mode: string): void {
+    this.paymentForm.mode = mode;
+    if (mode === 'Cash') {
+      this.paymentForm.reference = '';
+      this.paymentForm.clearance_date = '';
+    }
+    if (mode !== 'Cheque') {
+      this.paymentForm.clearance_date = '';
+    }
   }
 
   confirmPayment(): void {
@@ -662,9 +924,30 @@ export class Vendors implements OnInit {
       this.paymentError = 'Please select a payment mode.';
       return;
     }
+    if (this.paymentForm.mode === 'Cheque' && !this.paymentForm.clearance_date) {
+      this.paymentError = 'Please select cheque clearance date.';
+      return;
+    }
 
     this.isProcessingPayment = true;
-    this.invoiceService.updateStatus(this.selectedInvoice.id, 'Paid').subscribe({
+
+    const payload: any = {
+      status: 'Paid',
+      amount: this.paymentForm.amount,
+      mode: this.paymentForm.mode,
+      reference: this.paymentForm.reference || null,
+      clearance_date: this.paymentForm.clearance_date || null,
+    };
+
+    if (this.showSettlementCards && this.paymentForm.project_id) {
+      payload.settlement_type = this.selectedSettlementType;
+      payload.settlement_completion = this.settlementCompletion;
+      payload.milestone_ids = [...this.selectedMilestoneIds];
+      payload.sub_milestone_ids = [...this.selectedSubMilestoneIds];
+      payload.task_ids = [...this.selectedTaskIds];
+    }
+
+    this.invoiceService.updateStatus(this.selectedInvoice.id, payload).subscribe({
       next: () => {
         this.isProcessingPayment = false;
         this.closePayModal();
@@ -694,7 +977,7 @@ export class Vendors implements OnInit {
     if (!this.selectedInvoice || this.isCancellingInvoice) return;
     this.isCancellingInvoice = true;
 
-    this.invoiceService.updateStatus(this.selectedInvoice.id, 'Rejected').subscribe({
+    this.invoiceService.updateStatus(this.selectedInvoice.id, { status: 'Cancelled' }).subscribe({
       next: () => {
         this.isCancellingInvoice = false;
         this.closeCancelInvoiceDialog();
@@ -712,30 +995,17 @@ export class Vendors implements OnInit {
 
   viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;
-    const formatDate = (dateStr: string): string => {
-      if (!dateStr) return '—';
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mmm = d.toLocaleString('en-US', { month: 'short' });
-      const yyyy = d.getFullYear();
-      return `${dd}/${mmm}/${yyyy}`;
-    };
 
     let invoiceItems: any[] = [];
     try {
       invoiceItems = Array.isArray(inv.items) ? inv.items : JSON.parse(inv.items as any);
-    } catch {
-      invoiceItems = [];
-    }
+    } catch { invoiceItems = []; }
 
     const gstMap: Record<number, number> = {};
     invoiceItems.forEach((item: any) => {
       const gstRate = Number(item.gst) || 0;
       const gstAmt = Number(item.gstAmount) || 0;
-      if (gstAmt > 0) {
-        gstMap[gstRate] = (gstMap[gstRate] || 0) + gstAmt;
-      }
+      if (gstAmt > 0) gstMap[gstRate] = (gstMap[gstRate] || 0) + gstAmt;
     });
 
     const taxBreakdownRows = Object.entries(gstMap)
@@ -748,10 +1018,11 @@ export class Vendors implements OnInit {
       ).join('');
 
     const hasLabor = invoiceItems.some((item: any) => item.type === 'labor');
-
     const itemRows = invoiceItems.map((item: any) => {
       const isLabor = item.type === 'labor';
-      const typeLabel = item.type ? String(item.type).charAt(0).toUpperCase() + String(item.type).slice(1) : '—';
+      const typeLabel = item.type
+        ? String(item.type).charAt(0).toUpperCase() + String(item.type).slice(1)
+        : '—';
       return `<tr>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${typeLabel}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">${item.description || '—'}</td>
@@ -786,8 +1057,8 @@ export class Vendors implements OnInit {
       <p style="font-weight:900;font-size:18px;margin:0;">${inv.invoice_number}</p>
       <p style="color:#64748b;margin:4px 0 0;">${this.formatDate(inv.invoice_date)}</p>
       <span style="display:inline-block;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700;
-        background:${inv.status === 'Paid' ? '#dcfce7' : inv.status === 'Rejected' ? '#fee2e2' : '#fef3c7'};
-        color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Rejected' ? '#dc2626' : '#b45309'};margin-top:6px;">
+        background:${inv.status === 'Paid' ? '#dcfce7' : inv.status === 'Cancelled' ? '#fee2e2' : '#fef3c7'};
+        color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Cancelled' ? '#dc2626' : '#b45309'};margin-top:6px;">
         ${inv.status}
       </span>
     </div>
@@ -895,6 +1166,7 @@ export class Vendors implements OnInit {
     });
   }
 
+
   openVendorDetailData(): void {
     this.showVendorDetailModal = true;
   }
@@ -907,9 +1179,11 @@ export class Vendors implements OnInit {
         const updated = this.vendorService.getVendorById(this.selectedVendor!.id);
         if (updated) this.selectedVendor = updated;
       },
-      error: (err: any) => alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) =>
+        alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
+
 
   openLaborModal(): void {
     if (!this.selectedVendor) return;
@@ -937,11 +1211,7 @@ export class Vendors implements OnInit {
   submitLabor(): void {
     if (this.isSavingLabor || !this.selectedVendor) return;
     this.laborError = '';
-
-    if (!this.newLabor.skill) {
-      this.laborError = 'Skill is required.';
-      return;
-    }
+    if (!this.newLabor.skill) { this.laborError = 'Skill is required.'; return; }
 
     const laborCount = Math.max(1, parseInt(this.newLabor.labor_count) || 1);
     const payload = {
@@ -950,6 +1220,7 @@ export class Vendors implements OnInit {
       status: this.newLabor.status || 'active',
       daily_rate: parseFloat(this.newLabor.daily_rate) || 0,
       labor_count: laborCount,
+      assign_worker: this.newLabor.assign_worker || null,
     };
 
     this.isSavingLabor = true;
@@ -975,6 +1246,7 @@ export class Vendors implements OnInit {
       status: worker.status,
       daily_rate: worker.daily_rate,
       labor_count: worker.labor_count,
+      assign_worker: worker.assign_worker ?? '',
     };
   }
 
@@ -984,10 +1256,12 @@ export class Vendors implements OnInit {
       status: this.editLaborForm.status,
       daily_rate: parseFloat(this.editLaborForm.daily_rate) || 0,
       labor_count: Math.max(1, parseInt(this.editLaborForm.labor_count) || 1),
+      assign_worker: this.editLaborForm.assign_worker ?? null,
     };
     this.laborService.updateWorker(id, payload).subscribe({
       next: () => { this.editingLaborId = null; },
-      error: (err: any) => alert('Update failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) =>
+        alert('Update failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
 
@@ -998,13 +1272,15 @@ export class Vendors implements OnInit {
   deleteLaborWorker(id: number): void {
     if (!confirm('Remove this worker?')) return;
     this.laborService.deleteWorker(id).subscribe({
-      error: (err: any) => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) =>
+        alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
 
   updateLaborStatus(worker: LaborWorker, status: string): void {
     this.laborService.updateWorker(worker.id, { status }).subscribe();
   }
+
 
   updateTaskStatus(task: any, statusRaw: string): void {
     this.projectService.updateTask(task.id, { status: statusRaw }).subscribe();
@@ -1013,9 +1289,11 @@ export class Vendors implements OnInit {
   deleteTask(taskId: number): void {
     if (!confirm('Remove this task?')) return;
     this.projectService.deleteTask(taskId).subscribe({
-      error: (err: any) => alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
+      error: (err: any) =>
+        alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
     });
   }
+
 
   getSkillBarWidth(count: number): number {
     const max = Math.max(...this.laborStats.skillComposition.map(s => s.count), 1);
@@ -1046,12 +1324,10 @@ export class Vendors implements OnInit {
     return map[status?.toLowerCase()] ?? 'bg-slate-100 text-slate-500';
   }
 
-
   sanitizePhone(event: Event, field: 'spoc' | 'official'): void {
     const input = event.target as HTMLInputElement;
     const cleaned = input.value.replace(/\D/g, '').slice(0, 10);
     input.value = cleaned;
-
     if (field === 'spoc') {
       this.newVendor.spoc.phone = cleaned;
     } else {
@@ -1069,6 +1345,7 @@ export class Vendors implements OnInit {
       skill: [] as string[],
     };
   }
+
   private getInvoicePrefix(): string {
     const rawName = String(this.selectedVendor?.name ?? '');
     const letters = rawName.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
@@ -1079,7 +1356,6 @@ export class Vendors implements OnInit {
   private generateInvoiceNumber(): string {
     const prefix = this.getInvoicePrefix();
     const existing = this.invoices || [];
-
     const regex = new RegExp('^(?:INV-)?' + prefix + '-(\\d{5})$', 'i');
     const maxNum = existing.reduce((max, inv) => {
       const match = String(inv.invoice_number || '').match(regex);
@@ -1099,6 +1375,9 @@ export class Vendors implements OnInit {
   private defaultInvoice() {
     const today = new Date();
     return {
+      project_id: this.selectedVendor?.project_id
+        ? Number(this.selectedVendor.project_id)
+        : null,
       number: this.generateInvoiceNumber(),
       date: this.formatDate(today),
       rawDate: today.toISOString().split('T')[0],
@@ -1122,6 +1401,6 @@ export class Vendors implements OnInit {
   }
 
   private defaultLabor() {
-    return { skill: '', status: 'active', daily_rate: '', labor_count: 1 };
+    return { skill: '', status: 'active', daily_rate: '', labor_count: 1, assign_worker: '' };
   }
 }

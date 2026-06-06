@@ -11,4 +11,4 @@ import { CommonDialogComponent } from '../../shared/components/common-dialog/com
   declarations: [Vendors, CountByRolePipe],
   imports: [CommonModule, VendorsRoutingModule, FormsModule, ReactiveFormsModule, CommonDialogComponent],
 })
-export class VendorsModule {}
+export class VendorsModule { }

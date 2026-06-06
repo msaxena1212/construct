@@ -13,6 +13,7 @@ export interface LaborWorker {
   statusColor: string;
   daily_rate: number;
   labor_count: number;
+  assign_worker?: string | number;
 }
 
 export interface LaborStats {

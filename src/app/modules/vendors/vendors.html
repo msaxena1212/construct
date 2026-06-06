@@ -264,7 +264,7 @@
                 <td class="py-4 text-sm text-outline">{{ formatDate(inv.invoice_date) }}</td>
                 <td class="py-4">
                   <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-tighter"
-                    [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : inv.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'">
+                    [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : inv.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'">
                     {{ inv.status }}
                   </span>
                 </td>
@@ -309,6 +309,7 @@
 
     <div class="space-y-3">
 
+      <!-- Invoice Summary -->
       <div class="bg-slate-50 rounded-xl p-4 space-y-2">
         <div class="flex justify-between items-center">
           <p class="text-xs text-slate-500">Invoice Number</p>
@@ -320,7 +321,7 @@
         </div>
         <div class="flex justify-between items-center">
           <p class="text-xs text-slate-500">Subtotal</p>
-          <p class="font-semibold text-sm">₹{{ (+( selectedInvoice?.subtotal || 0)).toLocaleString('en-IN') }}</p>
+          <p class="font-semibold text-sm">₹{{ (+(selectedInvoice?.subtotal || 0)).toLocaleString('en-IN') }}</p>
         </div>
         <div class="flex justify-between items-center">
           <p class="text-xs text-slate-500">Tax Amount</p>
@@ -334,62 +335,271 @@
         </div>
       </div>
 
-      <div class="bg-slate-50 rounded-xl p-4 space-y-2">
-        <div class="flex justify-between items-center">
-          <div>
-            <p class="text-xs text-slate-500">Vendor</p>
-            <p class="font-bold text-sm">{{ selectedVendor?.name }}</p>
-          </div>
+      <!-- Project + Settlement Section -->
+      <div class="bg-slate-50 rounded-xl p-4 space-y-4">
 
-          <div class="text-right space-y-1">
-            <p class="text-xs text-slate-500">Project</p>
-            <p class="font-semibold text-sm">{{ projectdata?.name || '—' }}</p>
-
-            <p class="text-xs text-slate-500">% Complete</p>
-            <p class="font-semibold text-sm">{{ projectdata?.progress ?? '—' }}%</p>
-
-            <p class="text-xs text-slate-500">Lumpsum</p>
-            <p class="font-semibold text-sm">₹{{ (projectdata?.budget?.total ?? projectdata?.budget_total ??
-              projectdata?.budget_summary?.total ?? 0) | number }}</p>
-          </div>
+        <!-- Project Select -->
+        <div class="flex items-center text-[10px]">
+          <span class="font-black uppercase tracking-widest text-outline mr-2">
+            Project :
+          </span>
+          <span class="font-bold opacity-80">
+            {{ projectdata?.name }}
+          </span>
         </div>
-        @if (selectedVendor && selectedVendor.project_id) {
-        <div class="flex justify-between items-center">
-          <p class="text-xs text-slate-500">Project ID</p>
-          <p class="font-semibold text-sm">#{{ selectedVendor.project_id }}</p>
+        <!-- Settlement Cards + Milestone Drill-down -->
+        @if (showSettlementCards) {
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+          <div (click)="onSettlementTypeChange('work_poc')"
+            [ngClass]="{'bg-blue-600 text-white border-blue-600': selectedSettlementType==='work_poc'}"
+            class="cursor-pointer rounded-2xl border-2 border-slate-200 p-4 flex flex-col items-center justify-center gap-1 transition-all">
+            <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
+            <p class="text-xs font-black uppercase tracking-wider">Work POC</p>
+            @if (projectdata?.work_poc_completion != null) {
+            <p class="text-[10px] font-bold mt-1 opacity-80">{{ projectdata.work_poc_completion }}% complete</p>
+            }
+          </div>
+
+          <div (click)="onSettlementTypeChange('milestone')"
+            [ngClass]="{'bg-blue-600 text-white border-blue-600': selectedSettlementType==='milestone'}"
+            class="cursor-pointer rounded-2xl border-2 border-slate-200 p-4 flex flex-col items-center justify-center gap-1 transition-all">
+            <span class="material-symbols-outlined text-2xl">flag</span>
+            <p class="text-xs font-black uppercase tracking-wider">Milestone</p>
+            @if (projectdata?.milestone_completion != null) {
+            <p class="text-[10px] font-bold mt-1 opacity-80">{{ projectdata.milestone_completion }}% complete</p>
+            }
+          </div>
+
+          <div (click)="onSettlementTypeChange('lumpsum')"
+            [ngClass]="{'bg-blue-600 text-white border-blue-600': selectedSettlementType==='lumpsum'}"
+            class="cursor-pointer rounded-2xl border-2 border-slate-200 p-4 flex flex-col items-center justify-center gap-1 transition-all">
+            <span class="material-symbols-outlined text-2xl">payments</span>
+            <p class="text-xs font-black uppercase tracking-wider">Lump Sum</p>
+            @if (projectdata?.lumpsum_completion != null) {
+            <p class="text-[10px] font-bold mt-1 opacity-80">{{ projectdata.lumpsum_completion }}% complete</p>
+            }
+          </div>
+
+        </div>
+
+        <!-- WORK POC — Milestone Drill-down -->
+        @if (false) {
+        <div class="space-y-2">
+          <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Select Milestone</p>
+
+          @if (isLoadingMilestones) {
+          <div class="flex items-center gap-2 text-slate-400 text-xs py-2">
+            <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Loading milestones…
+          </div>
+          } @else if (milestones.length === 0) {
+          <p class="text-xs text-slate-400 italic py-2">No milestones found for this project.</p>
+          } @else {
+          @for (m of milestones; track m.id) {
+          <div (click)="onMilestoneSelect(m.id)"
+            [ngClass]="{'border-blue-500 bg-blue-50': selectedMilestoneId === m.id}"
+            class="cursor-pointer border-2 border-slate-200 rounded-xl px-4 py-3 flex items-center justify-between transition-all hover:border-blue-300">
+            <div>
+              <p class="text-sm font-bold text-slate-800">{{ m.name ?? m.title }}</p>
+              @if (m.endDate) {
+              <p class="text-[10px] text-slate-400">Due: {{ m.endDate | date:'dd/MMM/yyyy' }}</p>
+              }
+            </div>
+            <div class="text-right">
+              @if (m.progress != null) {
+              <p class="text-xs font-black" [ngClass]="m.progress >= 100 ? 'text-green-600' : 'text-amber-600'">
+                {{ m.progress }}%
+              </p>
+              <div class="w-16 h-1.5 bg-slate-200 rounded-full mt-1 overflow-hidden">
+                <div class="h-full rounded-full transition-all"
+                  [ngClass]="m.progress >= 100 ? 'bg-green-500' : 'bg-amber-400'" [style.width.%]="m.progress"></div>
+              </div>
+              }
+            </div>
+          </div>
+          }
+          }
+
+          <!-- Sub-Milestones -->
+          @if (selectedMilestoneId && subMilestones.length > 0) {
+          <div class="ml-3 mt-3 space-y-2 border-l-2 border-blue-100 pl-4">
+            <p class="text-[10px] font-black uppercase tracking-widest text-slate-500">Sub-Milestones</p>
+
+            @if (isLoadingSubMilestones) {
+            <div class="flex items-center gap-2 text-slate-400 text-xs py-2">
+              <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Loading…
+            </div>
+            } @else {
+            @for (sm of subMilestones; track sm.id) {
+            <div (click)="onSubMilestoneSelect(sm)"
+              [ngClass]="{'border-blue-500 bg-blue-50': selectedSubMilestoneId === sm.id}"
+              class="cursor-pointer border-2 border-slate-200 rounded-xl px-4 py-3 transition-all hover:border-blue-300">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-bold text-slate-800">{{ sm.name ?? sm.title }}</p>
+                <div class="text-right">
+                  @if (sm.progress != null) {
+                  <p class="text-[10px] font-bold" [ngClass]="sm.progress >= 100 ? 'text-green-600' : 'text-amber-600'">
+                    {{ sm.progress }}% done
+                  </p>
+                  }
+                </div>
+              </div>
+
+              @if (selectedSubMilestoneId === sm.id && milestoneTasks.length > 0) {
+              <div class="mt-3 space-y-1.5 pt-3 border-t border-slate-100">
+                <p class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Tasks</p>
+                @for (task of milestoneTasks; track task.id) {
+                <div class="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-slate-100">
+                  <p class="text-xs font-semibold text-slate-700">{{ task.title }}</p>
+                  <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase" [ngClass]="task.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                           task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                                           'bg-amber-100 text-amber-700'">
+                    {{ task.status }}
+                  </span>
+                </div>
+                }
+              </div>
+              }
+
+            </div>
+            }
+            }
+          </div>
+          }
+
         </div>
         }
-      </div>
 
-      <div>
-        <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
-          Amount to Pay (₹) <span class="text-red-500">*</span>
-        </label>
-        <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
-          <input [(ngModel)]="paymentForm.amount" type="number" min="0" [max]="selectedInvoice?.grand_total ?? null"
-            [placeholder]="(+(selectedInvoice?.grand_total || 0)).toString()"
-            class="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+              Milestone
+            </label>
+            @if (isLoadingMilestones) {
+            <div class="flex items-center gap-2 text-slate-400 text-xs py-2">
+              <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> Loading
+              milestones...
+            </div>
+            } @else {
+            <select multiple [(ngModel)]="selectedMilestoneIds" (ngModelChange)="onMilestoneMultiSelect()"
+              class="w-full min-h-28 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 bg-white">
+              @for (m of milestones; track m.id) {
+              <option [ngValue]="m.id">
+                {{ m.name ?? m.title }}
+              </option>
+              }
+            </select>
+            @if (milestones.length === 0) {
+            <p class="text-[10px] text-slate-400 mt-1">No milestones found for this project.</p>
+            } @else {
+            <p class="text-[10px] text-slate-400 mt-1">{{ selectedMilestoneIds.length }} selected</p>
+            }
+            }
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+              Sub-Milestone
+            </label>
+            <select multiple [(ngModel)]="selectedSubMilestoneIds" (ngModelChange)="onSubMilestoneMultiSelect()"
+              class="w-full min-h-28 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 bg-white">
+              @for (sm of availableSubMilestones; track sm.id) {
+              <option [ngValue]="sm.id">
+                {{ sm.name ?? sm.title }}{{ sm.progress > 0 ? ' - ' + sm.progress + '%' : '' }}
+              </option>
+              }
+            </select>
+            @if (availableSubMilestones.length === 0) {
+            <p class="text-[10px] text-slate-400 mt-1">Select a milestone to view sub-milestones.</p>
+            } @else {
+            <p class="text-[10px] text-slate-400 mt-1">{{ selectedSubMilestoneIds.length }} selected</p>
+            }
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+              Task
+            </label>
+            <select multiple [(ngModel)]="selectedTaskIds" (ngModelChange)="onTaskMultiSelect()"
+              class="w-full min-h-28 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 bg-white">
+              @for (task of availableTaskOptions; track task.id) {
+              <option [ngValue]="task.id">
+                {{ task.title }}{{ (task.progress ?? 0) > 0 ? ' - ' + task.progress + '%' : task.status ? ' - ' +
+                task.status : '' }}
+              </option>
+              }
+            </select>
+            @if (selectedSubMilestoneIds.length === 0) {
+            <p class="text-[10px] text-slate-400 mt-1">Select a sub-milestone to view tasks.</p>
+            } @else if (availableTaskOptions.length === 0) {
+            <p class="text-[10px] text-slate-400 mt-1">No tasks found from project task API.</p>
+            } @else {
+            <p class="text-[10px] text-slate-400 mt-1">{{ selectedTaskIds.length }} selected</p>
+            }
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+              {{ settlementCompletionLabel }}
+            </label>
+            <input [(ngModel)]="settlementCompletion" type="number" min="0" max="100"
+              [readonly]="!isSettlementCompletionEditable"
+              [ngClass]="isSettlementCompletionEditable ? 'bg-white' : 'bg-slate-100 text-slate-500 cursor-not-allowed'"
+              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20">
+            <p class="text-[10px] text-slate-400 mt-1">
+              {{ isSettlementCompletionEditable ? 'Auto-filled from selection, editable for Work POC.' : 'Auto-filled
+              from selection, read-only for Milestone and Lump Sum.' }}
+            </p>
+          </div>
         </div>
-        <p class="text-[10px] text-slate-400 mt-1">
-          Grand total: ₹{{ (+(selectedInvoice?.grand_total || 0)).toLocaleString('en-IN') }}
-        </p>
+
+        }
+
+      </div>
+      <!-- Payment Fields -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
+            Amount to Pay (₹) <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
+            <input [(ngModel)]="paymentForm.amount" type="number" min="0" [max]="selectedInvoice?.grand_total ?? null"
+              [placeholder]="(+(selectedInvoice?.grand_total || 0)).toString()"
+              class="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">
+            Grand total: ₹{{ (+(selectedInvoice?.grand_total || 0)).toLocaleString('en-IN') }}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
+            Payment Mode <span class="text-red-500">*</span>
+          </label>
+          <select [(ngModel)]="paymentForm.mode" (ngModelChange)="onPaymentModeChange($event)"
+            class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
+            <option value="">Select mode</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="UPI">UPI</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
       </div>
 
+      @if (paymentForm.mode === 'Cheque') {
       <div>
         <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
-          Payment Mode <span class="text-red-500">*</span>
+          Cheque Clearance Date <span class="text-red-500">*</span>
         </label>
-        <select [(ngModel)]="paymentForm.mode"
-          class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
-          <option value="">Select mode</option>
-          <option value="Bank Transfer">Bank Transfer</option>
-          <option value="UPI">UPI</option>
-          <option value="Cheque">Cheque</option>
-          <option value="Cash">Cash</option>
-        </select>
+        <input [(ngModel)]="paymentForm.clearance_date" type="date"
+          class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
       </div>
+      }
 
+      @if (paymentForm.mode !== 'Cash') {
       <div>
         <label class="block text-xs font-black uppercase tracking-wide text-slate-500 mb-1">
           Reference / Transaction No.
@@ -398,6 +608,7 @@
         <input [(ngModel)]="paymentForm.reference" type="text" placeholder="e.g. UTR123456789"
           class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-green-500/20">
       </div>
+      }
 
       @if (paymentError) {
       <div class="flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
@@ -407,6 +618,7 @@
       }
 
     </div>
+
   </app-common-dialog>
 
   <app-common-dialog [open]="showCancelInvoiceModal && !!selectedInvoice" size="sm" variant="danger"
@@ -424,7 +636,7 @@
 
 <!-- ══════════════════════════════════════ LABOR MODAL ══════════════════════════════════════ -->
 <app-common-dialog [open]="showLaborModal && !!selectedVendor" maxWidth="max-w-[798px]" backdropClass="bg-slate-900/50"
-  panelClass="bg-white dark:bg-slate-900 rounded-[2rem] max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 my-4"
+  panelClass="bg-white dark:bg-slate-900 rounded-[2rem] max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 my-4"
   (closed)="closeLaborModal()">
 
   <div
@@ -513,14 +725,14 @@
   </div>
 
 
-  <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+  <div class="flex-1 overflow-y-auto overflow-x-hidden p-1 sm:p-2 lg:p-2">
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 
 
       <div class="lg:col-span-12 min-w-0 space-y-6">
 
-        <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 sm:p-6">
+        <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-1 sm:p-2">
 
 
           <div class="border-2 border-dashed border-outline-variant/20 rounded-2xl overflow-hidden">
@@ -600,9 +812,8 @@
 
                   <select [(ngModel)]="newLabor.status"
                     class="w-full min-w-0 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest cursor-pointer">
-
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
                   </select>
                 </div>
 
@@ -616,6 +827,17 @@
                     class="w-full min-w-0 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest">
                 </div>
 
+              </div>
+
+              <div class="min-w-0">
+                <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1 block">Assign To</label>
+                <select [(ngModel)]="newLabor.assign_worker"
+                  class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest cursor-pointer">
+                  <option value="">Unassigned</option>
+                  @for (m of team; track m.name) {
+                  <option [value]="m.name">{{ m.name }}</option>
+                  }
+                </select>
               </div>
 
               <button (click)="submitLabor()" [disabled]="isSavingLabor"
@@ -679,6 +901,8 @@
                   </th>
                   <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">Worker
                     Count</th>
+                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">Assign
+                  </th>
                   <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-outline">Rate
                     (₹/day)</th>
                   <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-outline">Daily
@@ -695,13 +919,13 @@
 
                 @if (editingLaborId === worker.id) {
                 <tr class="border-b border-slate-200 dark:border-slate-700 bg-primary/5 dark:bg-primary/10">
-                  <td colspan="6" class="px-4 py-4">
+                  <td colspan="7" class="px-4 py-4">
                     <div class="space-y-4">
                       <p class="text-[10px] font-black uppercase tracking-widest text-primary">
                         Editing Worker #{{ worker.id }}
                       </p>
 
-                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
                         <div class="min-w-0">
                           <label class="text-[9px] font-bold text-outline uppercase block mb-1">Skill</label>
@@ -729,8 +953,18 @@
                           <label class="text-[9px] font-bold text-outline uppercase block mb-1">Status</label>
                           <select [(ngModel)]="editLaborForm.status"
                             class="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none bg-surface-container-lowest cursor-pointer">
-                            @for (s of statusOptions; track s.value) {
-                            <option [value]="s.value">{{ s.label }}</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </div>
+
+                        <div class="min-w-0">
+                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Assign To</label>
+                          <select [(ngModel)]="editLaborForm.assign_worker"
+                            class="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none bg-surface-container-lowest cursor-pointer">
+                            <option value="">Unassigned</option>
+                            @for (m of team; track m.name) {
+                            <option [value]="m.name">{{ m.name }}</option>
                             }
                           </select>
                         </div>
@@ -761,6 +995,11 @@
                   <td class="px-4 py-3 text-center">
                     <span class="inline-block px-2.5 py-1 bg-primary/10 text-primary font-black text-xs rounded-lg">
                       {{ worker.labor_count }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <span class="inline-block px-2.5 py-1 bg-primary/10 text-primary font-black text-xs rounded-lg">
+                      {{ worker.assign_worker }}
                     </span>
                   </td>
 
@@ -1189,7 +1428,6 @@
   <div class="flex-1 overflow-y-auto px-6 py-4 min-h-0">
 
     <div class="grid grid-cols-2 gap-4 mb-6">
-
       <div>
         <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
           Invoice #
@@ -1208,7 +1446,17 @@
           class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
         <p class="text-[9px] text-outline/60 mt-1">Selected: {{ invoiceForm.date }}</p>
       </div>
-
+      <!-- Project Select -->
+      <div>
+        <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Project</label>
+        <select [(ngModel)]="invoiceForm.project_id" (change)="getProject($event)"
+          class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold outline-none bg-white">
+          <option value="" disabled>Select Project</option>
+          @for (p of projects; track p.id) {
+          <option [value]="p.id">{{ p.name }}</option>
+          }
+        </select>
+      </div>
     </div>
 
     <div class="mb-5">
@@ -1704,10 +1952,10 @@
       class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-colors">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center"
-          [ngClass]="inv.status === 'Paid' ? 'bg-green-100' : inv.status === 'Rejected' ? 'bg-red-100' : 'bg-amber-100'">
+          [ngClass]="inv.status === 'Paid' ? 'bg-green-100' : inv.status === 'Cancelled' ? 'bg-red-100' : 'bg-amber-100'">
           <span class="material-symbols-outlined text-sm"
-            [ngClass]="inv.status === 'Paid' ? 'text-green-600' : inv.status === 'Rejected' ? 'text-red-600' : 'text-amber-600'">
-            {{ inv.status === 'Paid' ? 'check_circle' : inv.status === 'Rejected' ? 'cancel' : 'pending' }}
+            [ngClass]="inv.status === 'Paid' ? 'text-green-600' : inv.status === 'Cancelled' ? 'text-red-600' : 'text-amber-600'">
+            {{ inv.status === 'Paid' ? 'check_circle' : inv.status === 'Cancelled' ? 'cancel' : 'pending' }}
           </span>
         </div>
         <div>
@@ -1719,7 +1967,7 @@
       <div class="text-right flex flex-col items-end gap-1">
         <p class="font-black text-base text-on-surface">₹{{ (+inv.grand_total).toLocaleString('en-IN') }}</p>
         <span class="px-2.5 py-1 rounded-md text-[10px] font-black uppercase"
-          [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : inv.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'">
+          [ngClass]="inv.status === 'Paid' ? 'bg-green-100 text-green-700' : inv.status === 'Cancelled' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'">
           {{ inv.status }}
         </span>
         <button (click)="viewInvoice(inv)"
