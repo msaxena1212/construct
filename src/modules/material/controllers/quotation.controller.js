@@ -986,9 +986,9 @@ class QuotationController {
         }
     }
 
-// quatation_company
+    // quatation_company
 
-    async getall_quotation_company(req, res) {
+        async getall_material_quotation_company(req, res) {
         try {
 
             const company_id = req.user.company_id;
@@ -1001,78 +1001,53 @@ class QuotationController {
                 order: [["createdAt", "DESC"]]
             });
 
-            if (quotations.length > 0) {
+            if (quotations.length === 0) {
+                return res.status(404).json({
+                    message: "No quotations found."
+                });
+            }
 
-                const formattedData = quotations.map((quotation) => {
+            const materialQuotations = quotations
+                .map((quotation) => {
 
+                    // Convert items into array if string
                     let items = quotation.items;
 
-                    // Convert string into JSON
                     if (typeof items === "string") {
                         items = JSON.parse(items);
                     }
 
+                    // Filter only MATERIAL items
+                    const materialItems = Array.isArray(items)
+                        ? items.filter(
+                            (item) => item.status === "MATERIAL"
+                        )
+                        : [];
+
                     return {
                         ...quotation.toJSON(),
-                        items
+                        items: materialItems
                     };
-                });
+                })
+                .filter((quotation) => quotation.items.length > 0);
 
-                return res.status(200).json({
-                    code: 200,
-                    message: "Success",
-                    data: formattedData
-                });
-
-            } else {
-
+            if (materialQuotations.length === 0) {
                 return res.status(404).json({
-                    code: 404,
-                    message: "No data found"
-                });
-            }
-
-        } catch (error) {
-
-            console.error("[GETALL_QUOTATION_ERROR]", error);
-
-            return res.status(500).json({
-                message: "Error fetching quotations.",
-                error: error.message
-            });
-        }
-    }
-
-    async getbyid_quotation_company(req, res) {
-        try {
-
-            const { id } = req.params;
-
-            const company_id = req.user.company_id;
-
-            const quotation = await db.quotation.findOne({
-                where: {
-                    id,
-                    company_id,
-                    isDeleted: false
-                }
-            });
-
-            if (!quotation) {
-                return res.status(404).json({
-                    message: "Quotation not found."
+                    message: "No material quotations found."
                 });
             }
 
             return res.status(200).json({
-                data: quotation
+                message: "Material quotations fetched successfully.",
+                data: materialQuotations
             });
 
         } catch (error) {
-            console.error("[GET_QUOTATION_BY_ID_ERROR]", error);
+
+            console.error("[GETALL_MATERIAL_QUOTATION_ERROR]", error);
 
             return res.status(500).json({
-                message: "Error fetching quotation.",
+                message: "Error fetching material quotations.",
                 error: error.message
             });
         }
