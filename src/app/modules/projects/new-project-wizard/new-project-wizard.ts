@@ -28,6 +28,7 @@ export class NewProjectWizard implements OnInit {
   projectId: string | null = null;
   existingDocuments: any[] = [];
   serverUrl = environment.serverUrl;
+  milestoneTree:  any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -78,6 +79,8 @@ export class NewProjectWizard implements OnInit {
     this.projectService.getProjectById(id).subscribe({
       next: (res) => {
         const p = res.data;
+        const t:any = res.data;
+        this.milestoneTree = t.milestones;
         this.projectForm.patchValue({
           name: p.name,
           type: p.type || 'Commercial Renovation',

@@ -1,3 +1,5 @@
+<section class="p-4 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
 @if (project) {
 <!-- Project Header Section -->
 <section class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -9,14 +11,14 @@
     </nav>
     <div class="space-y-2">
       <div class="flex items-center gap-4">
-        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tighter text-on-surface">{{ project.name }}</h1>
+        <h1 class="text-3xl font-black text-slate-800 dark:text-white">{{ project.name }}</h1>
       </div>
       <p class="text-on-surface-variant text-lg max-w-xl font-light">{{ project.description }}</p>
     </div>
   </div>
 
   <div class="flex items-center gap-6">
-    <div
+    <!-- <div
       class="flex items-center gap-3 bg-white dark:bg-slate-800 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm self-start">
       <span class="material-symbols-outlined text-slate-400 text-sm">filter_alt</span>
       <select [(ngModel)]="selectedMember"
@@ -26,7 +28,7 @@
         <option [value]="m.name">{{ m.name }}</option>
         }
       </select>
-    </div>
+    </div> -->
     <!-- Team Avatars -->
     <div class="flex -space-x-3">
       @for (member of project.team; track member.name) {
@@ -72,9 +74,8 @@
       <div class="flex justify-between items-start mb-6">
         <div class="flex justify-between items-center w-full">
           <div>
-            <h3 class="text-xl font-black tracking-tight mb-0.5 text-slate-900 dark:text-slate-50">Milestone
-              Synchronization</h3>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Real-time Phase Integration Status
+            <h3 class="text-xl font-black tracking-tight mb-0.5 text-slate-900 dark:text-slate-50">Milestone</h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Real-time Phase Status
             </p>
           </div>
           <button (click)="openAddMilestoneModal()"
@@ -91,185 +92,187 @@
 
       <div class="mt-auto space-y-6">
         <div class="mt-auto w-full overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
-          <table class="w-full text-left border-collapse">
+          <table class="w-full table-fixed">
             <thead>
-              <tr
-                class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-[10px] uppercase tracking-widest text-slate-400 font-black">
-                <th class="p-4 rounded-tl-xl whitespace-nowrap">Milestone Name</th>
-                <th class="p-4 whitespace-nowrap">Dates</th>
-                <th class="p-4 whitespace-nowrap">Progress</th>
-                <th class="p-4 rounded-tr-xl whitespace-nowrap text-right">Actions</th>
+              <tr>
+                <th class="w-[45%] px-6 py-4 text-left">Milestone</th>
+                <th class="w-[20%] px-6 py-4 text-center">Date</th>
+                <th class="w-[25%] px-6 py-4 text-center">Progress</th>
+                <th class="w-[10%] px-6 py-4 text-left">Action</th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-transparent">
-              @for (ms of project.milestones; track ms.id) {
-              <tr
-                class="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-                <td class="p-4">
-                  <div class="flex items-center gap-3">
-                    <div [ngClass]="{
-                      'bg-blue-600': ms.color === 'blue-600',
-                      'bg-indigo-600': ms.color === 'indigo-600',
-                      'bg-emerald-600': ms.color === 'emerald-600',
-                      'bg-amber-600': ms.color === 'amber-600',
-                      'bg-rose-600': ms.color === 'rose-600',
-                      'bg-purple-600': ms.color === 'purple-600',
-                      'bg-cyan-600': ms.color === 'cyan-600'
-                    }" class="w-1.5 h-8 rounded-full shadow-sm"></div>
-                    <div class="cursor-pointer group/msname" (click)="openEditMilestoneModal(ms)">
-                      <h4
-                        class="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
-                        {{ ms.name }}
-                        <span
-                          class="material-symbols-outlined text-[12px] opacity-0 group-hover/msname:opacity-100 transition-all text-blue-600">edit</span>
-                      </h4>
-                      <span class="text-[9px] font-bold text-slate-400 mt-0.5 block">
-                        {{ ms.subMilestones?.length || 0 }} Sub-milestones
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-4 align-middle">
-                  <div
-                    class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-tight bg-slate-50 dark:bg-slate-800/50 px-2 py-1.5 rounded-lg w-max">
-                    <span class="material-symbols-outlined text-[12px]">calendar_today</span>
-                    {{ ms.startDate | date:'MMM d' }} — {{ ms.endDate | date:'MMM d' }}
-                  </div>
-                </td>
-                <td class="p-4 align-middle w-48">
-                  <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
-                      <span [ngClass]="{
-                        'text-blue-600': ms.color === 'blue-600',
-                        'text-indigo-600': ms.color === 'indigo-600',
-                        'text-emerald-600': ms.color === 'emerald-600',
-                        'text-amber-600': ms.color === 'amber-600',
-                        'text-rose-600': ms.color === 'rose-600',
-                        'text-purple-600': ms.color === 'purple-600',
-                        'text-cyan-600': ms.color === 'cyan-600'
-                      }">{{ ms.progress }}%</span>
-                      <span class="text-slate-400">Completed</span>
-                    </div>
-                    <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div [style.width]="ms.progress + '%'" [ngClass]="{
-                        'bg-blue-600': ms.color === 'blue-600',
-                        'bg-indigo-600': ms.color === 'indigo-600',
-                        'bg-emerald-600': ms.color === 'emerald-600',
-                        'bg-amber-600': ms.color === 'amber-600',
-                        'bg-rose-600': ms.color === 'rose-600',
-                        'bg-purple-600': ms.color === 'purple-600',
-                        'bg-cyan-600': ms.color === 'cyan-600'
-                      }" class="h-full rounded-full transition-all duration-1000"></div>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-4 align-middle text-right">
-                  <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <!-- <button (click)="openLinkSubProjectModal(ms)" title="Link Ops"
-                      class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center">
-                      <span class="material-symbols-outlined text-[14px]">add_link</span>
-                    </button> -->
-                    <button (click)="openAddSubMilestoneModal(ms.id)" title="Add Sub-Milestone"
-                      class="w-8 h-8 cursor-pointer rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors flex items-center justify-center">
-                      <span class="material-symbols-outlined text-[14px]">add_task</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              @if (ms.subMilestones?.length) {
-              <tr>
-                <td colspan="4" class="p-0 border-b border-slate-100 dark:border-slate-800/80">
-                  <div class="bg-slate-50/50 dark:bg-slate-800/10 py-3 px-6 pr-4">
-                    <div class="pl-6 border-l-2 border-slate-200 dark:border-slate-700 space-y-2">
-                      @for (sm of ms.subMilestones; track sm.id) {
-                      <div (click)="openEditSubMilestoneModal(ms.id, sm)"
-                        class="flex items-center justify-between group/sm cursor-pointer hover:bg-white dark:hover:bg-slate-800 p-2 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm hover:shadow-md">
-                        <div class="flex items-center gap-3">
-                          <div
-                            class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
-                            <span
-                              class="material-symbols-outlined text-sm text-indigo-500">subdirectory_arrow_right</span>
-                          </div>
-                          <div>
-                            <p
-                              class="text-[11px] font-black text-slate-700 dark:text-slate-300 group-hover/sm:text-indigo-600 transition-colors uppercase tracking-tight">
-                              {{ sm.name }}
-                            </p>
-                            <p
-                              class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5 flex items-center gap-1">
-                              <span class="w-1.5 h-1.5 rounded-full" [class.bg-emerald-500]="sm.status === 'Completed'"
-                                [class.bg-amber-500]="sm.status === 'In Progress'"
-                                [class.bg-slate-300]="sm.status !== 'Completed' && sm.status !== 'In Progress'"></span>
-                              {{ sm.status || 'Pending' }}
-                              @if(sm.startDate){<span class="opacity-50 mx-1">•</span> <span>{{ sm.startDate | date:'MMMd' }}</span>}
-                            </p>
-                          </div>
-                        </div>
 
-                        <div class="p-4 align-middle">
-                          <div
-                            class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-tight bg-slate-50 dark:bg-slate-800/50 px-2 py-1.5 rounded-lg w-max">
-                            <span class="material-symbols-outlined text-[12px]">calendar_today</span>
-                            {{ sm.startDate | date:'MMMd' }} — {{ sm.endDate | date:'MMMd' }}
-                          </div>
-                        </div>
-                        <div class="flex items-center gap-4">
-                          <div class="flex flex-col items-end w-24">
-                            <div class="w-full flex justify-between items-end mb-1">
-                              <span
-                                class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Progress</span>
-                              <span class="text-[9px] font-black text-slate-700 dark:text-slate-300">{{ sm.progress
-                                }}%</span>
-                            </div>
-                            <div class="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                              <div [style.width]="sm.progress + '%'"
-                                class="h-full bg-indigo-500 rounded-full transition-all">
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            class="opacity-0 cursor-pointer group-hover/sm:opacity-100 material-symbols-outlined text-[14px] text-slate-400 hover:text-indigo-600 transition-all p-1">edit</button>
-                        </div>
+            <tbody class="bg-white dark:bg-transparent">
+
+              @for (ms of project.milestones; track ms.id) {
+
+              <!-- Parent -->
+              <tr class="border-b border-slate-100 hover:bg-slate-50">
+
+                <!-- Milestone -->
+
+              <td class="p-4">
+
+                  <div class="flex items-center gap-3">
+
+                    <div [ngClass]="{
+
+                      'bg-blue-600': ms.color === 'blue-600',
+
+                      'bg-indigo-600': ms.color === 'indigo-600',
+
+                      'bg-emerald-600': ms.color === 'emerald-600',
+
+                      'bg-amber-600': ms.color === 'amber-600',
+
+                      'bg-rose-600': ms.color === 'rose-600',
+
+                      'bg-purple-600': ms.color === 'purple-600',
+
+                      'bg-cyan-600': ms.color === 'cyan-600'
+
+                    }" class="w-1.5 h-8 rounded-full shadow-sm"></div>
+
+                    <div class="group/msname">
+
+                      <h4
+
+                        class="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
+
+                        {{ ms.name }}
+
+                      </h4>
+
+                      <span class="text-[9px] font-bold text-slate-400 mt-0.5 block">
+
+                        {{ ms.subMilestones?.length || 0 }} Sub-milestones
+
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </td>
+
+                <!-- Date -->
+                <td class="w-[20%] px-6 py-5 text-center">
+                  {{ ms.startDate | date:'MMM d' }}
+                  -
+                  {{ ms.endDate | date:'MMM d' }}
+                </td>
+
+                <!-- Progress -->
+                <td class="w-[25%] px-6 py-5">
+                  <div class="max-w-[180px] mx-auto">
+                    <div class="flex justify-between mb-1">
+                      <span class="text-[10px] text-slate-400">Progress</span>
+                      <span class="text-[10px] font-bold">{{ ms.progress }}%</span>
+                    </div>
+
+                    <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div [style.width]="ms.progress + '%'" class="h-full bg-indigo-500 rounded-full">
                       </div>
-                      }
                     </div>
                   </div>
                 </td>
-              </tr>
-              }
-              }
-              @if (!project.milestones || project.milestones.length === 0) {
-              <tr>
-                <td colspan="4" class="p-8 text-center text-slate-400 font-medium text-xs">No milestones created yet.
+
+                <!-- Action -->
+                <td class="w-[20%] px-6 py-5">
+                  <div class="flex items-left justify-left gap-2">
+
+                    <button (click)="openEditMilestoneModal(ms)"
+                      class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center cursor-pointer"
+                      title="Edit Milestone">
+
+                      <span class="material-symbols-outlined text-[18px]">
+                        edit
+                      </span>
+
+                    </button>
+
+                    <button (click)="openAddSubMilestoneModal(ms.id)" title="Add Sub-Milestone"
+                      class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 flex items-center justify-center cursor-pointer">
+
+                      <span class="material-symbols-outlined text-[18px]">
+                        add_task
+                      </span>
+
+                    </button>
+
+                  </div>
                 </td>
+
               </tr>
+
+              @for (sm of ms.subMilestones; track sm.id) {
+
+              <tr class="bg-slate-50/40 hover:bg-slate-100 ">
+
+                <!-- Name -->
+                <td class="w-[45%] pl-16 pr-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-indigo-600">
+                      subdirectory_arrow_right
+                    </span>
+
+                    <div>
+                      <p class="text-xs font-bold">
+                        {{ sm.name }}
+                      </p>
+
+                      <p class="text-[10px] text-slate-400">
+                        {{ sm.status || 'Pending' }}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Date -->
+                <td class="w-[20%] px-6 py-4 text-center">
+                  <span class="text-xs font-medium">
+                    {{ sm.startDate | date:'MMM d' }}
+                    -
+                    {{ sm.endDate | date:'MMM d' }}
+                  </span>
+                </td>
+
+                <!-- Progress -->
+                <td class="w-[25%] px-6 py-4">
+                  <div class="max-w-[180px] mx-auto">
+                    <div class="flex justify-between mb-1">
+                      <span class="text-[10px] text-slate-400">Progress</span>
+                      <span class="text-[10px] font-bold">{{ sm.progress }}%</span>
+                    </div>
+
+                    <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div [style.width]="sm.progress + '%'" class="h-full bg-indigo-500 rounded-full">
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Action -->
+                <td class="w-[10%] px-6 py-4 text-left">
+                  <button (click)="openEditSubMilestoneModal(ms.id, sm)" title="Edit Sub-Milestone"
+                    class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center cursor-pointer">
+
+                    <span class="material-symbols-outlined text-[18px]">
+                      edit
+                    </span>
+
+                  </button>
+                </td>
+
+              </tr>
+
               }
+
+              }
+
             </tbody>
           </table>
-        </div>
 
-        <div
-          class="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex flex-wrap items-center gap-6">
-            <div class="flex flex-col">
-              <span class="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-0.5">Est. Completion</span>
-              <span class="text-slate-900 dark:text-slate-50 text-[11px] font-black uppercase">{{
-                project.estimatedCompletion | date:'MMM dd, yyyy' }}</span>
-            </div>
-            <div class="w-px h-6 bg-slate-100 dark:bg-slate-800"></div>
-            <div class="flex flex-col">
-              <span class="text-[8px] text-slate-400 uppercase font-black tracking-widest mb-0.5">Capital
-                Utilization</span>
-              <span class="text-slate-900 dark:text-slate-50 text-[11px] font-black uppercase">₹{{
-                ((project.budget?.used
-                || 0) / 1000000).toFixed(1) }}M / ₹{{ ((project.budget?.total || 0) / 1000000).toFixed(1) }}M</span>
-            </div>
-          </div>
-
-          <button
-            class="text-blue-600 font-black text-[9px] uppercase tracking-[0.2em] flex items-center gap-1.5 hover:underline">
-            FULL AUDIT <span class="material-symbols-outlined text-sm">arrow_forward</span>
-          </button>
         </div>
       </div>
     </div>
@@ -430,20 +433,14 @@
 </div>
 }
 
+</section>
+
 <!-- Submit Drawing Upload Modal (Center) -->
-<app-common-dialog
-  [open]="showDrawingUpload"
-  title="Submit Project Drawing"
-  subtitle="Upload CAD, PDF, or image files. They will be added to the project gallery."
-  icon="cloud_upload"
-  [showCloseButton]="true"
-  [showFooter]="true"
-  cancelLabel="Cancel"
+<app-common-dialog [open]="showDrawingUpload" title="Submit Project Drawing"
+  subtitle="Upload CAD, PDF, or image files. They will be added to the project gallery." icon="cloud_upload"
+  [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel"
   [primaryLabel]="'Upload ' + (selectedFiles.length > 0 ? '(' + selectedFiles.length + ')' : '')"
-  [primaryDisabled]="selectedFiles.length === 0"
-  (closed)="showDrawingUpload = false"
-  (primary)="submitDrawing()"
->
+  [primaryDisabled]="selectedFiles.length === 0" (closed)="showDrawingUpload = false" (primary)="submitDrawing()">
   <div class="p-8">
 
     <div (click)="fileInput.click()"
