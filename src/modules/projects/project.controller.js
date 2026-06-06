@@ -194,6 +194,35 @@ class ProjectController {
   /**
    * Get project details by ID
    */
+  // async getProjectById(req, res) {
+  //   try {
+  //     const { id } = req.params;
+  //     const company_id = req.user.company_id;
+
+  //     const project = await db.project.findOne({
+  //       where: { id, company_id },
+  //       include: [
+  //         { model: db.milestone, as: 'milestones' },
+  //         { model: db.project_document, as: 'documents' },
+  //         {
+  //           model: db.user,
+  //           as: 'team_members',
+  //           attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
+  //           through: { attributes: ['role'] }
+  //         }
+  //       ]
+  //     });
+
+  //     if (!project) {
+  //       return res.status(404).json({ message: "Project not found or unauthorized." });
+  //     }
+
+  //     res.status(200).json({ data: project });
+  //   } catch (error) {
+  //     res.status(500).json({ message: "Error fetching project details.", error: error.message });
+  //   }
+  // }
+
   async getProjectById(req, res) {
     try {
       const { id } = req.params;
@@ -214,12 +243,33 @@ class ProjectController {
       });
 
       if (!project) {
-        return res.status(404).json({ message: "Project not found or unauthorized." });
+        return res.status(404).json({
+          message: "Project not found or unauthorized."
+        });
       }
 
-      res.status(200).json({ data: project });
+      const projectData = project.toJSON();
+
+      const milestones = projectData.milestones || [];
+
+      projectData.milestones_with_child = milestones
+        .filter(m => m.parent_id === null)
+        .map(parent => ({
+          ...parent,
+          children: milestones.filter(
+            child => child.parent_id === parent.id
+          )
+        }));
+
+      return res.status(200).json({
+        data: projectData
+      });
+
     } catch (error) {
-      res.status(500).json({ message: "Error fetching project details.", error: error.message });
+      return res.status(500).json({
+        message: "Error fetching project details.",
+        error: error.message
+      });
     }
   }
 

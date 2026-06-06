@@ -88,9 +88,7 @@ module.exports = (router) => {
     );
 
 
-    router.get("/getall_quotation_company", quotationCtrl.getall_quotation_company);
-
-    router.get("/getbyid_quotation_company/:id", quotationCtrl.getbyid_quotation_company);
+    router.get("/getall_material_quotation_company/:id", quotationCtrl.getall_material_quotation_company);
 
 
     
