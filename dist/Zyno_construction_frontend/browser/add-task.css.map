@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/modules/projects/widgets/add-task/add-task.scss", "src/app/modules/projects/widgets/add-task/add-task.scss"],
-  "sourcesContent": ["/* AddTaskModal Styles */\r\n:host {\r\n  display: block;\r\n  z-index: 9999;\r\n}\r\n", "/* AddTaskModal Styles */\n:host {\n  display: block;\n  z-index: 9999;\n}\n/*# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJmaWxlOi8vL0U6L3p5bm9fY29uc3RydWN0aW9uX2Zyb250ZW5kL3NyYy9hcHAvbW9kdWxlcy9wcm9qZWN0cy93aWRnZXRzL2FkZC10YXNrL2FkZC10YXNrLnNjc3MiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUE7QUFDQTtFQUNFO0VBQ0EiLCJzb3VyY2VzQ29udGVudCI6WyIvKiBBZGRUYXNrTW9kYWwgU3R5bGVzICovXHJcbjpob3N0IHtcclxuICBkaXNwbGF5OiBibG9jaztcclxuICB6LWluZGV4OiA5OTk5O1xyXG59XHJcbiJdfQ== */"],
-  "mappings": ";AACA;AACE,WAAA;AACA,WAAA;ACCF;",
-  "names": []
-}

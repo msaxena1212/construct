@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/environments/environment.ts"],
-  "sourcesContent": ["export const environment = {\r\n    // serverUrl: 'http://localhost:8080',\r\n    serverUrl: 'http://192.168.20.151:3000',\r\n    // serverUrl: 'https://zynoconstructionapi.elitetraveltech.in',\r\n\r\n    production: true,\r\n};\r\n"],
-  "mappings": ";AAAO,IAAM,cAAc;;EAEvB,WAAW;;EAGX,YAAY;;",
-  "names": []
-}
