@@ -10,8 +10,9 @@ router.get('/stats', vendorCtrl.getStats);
 
 router.get('/:vendorId/invoices', invoiceCtrl.getInvoicesByVendor);
 router.post('/:vendorId/invoices', invoiceCtrl.createInvoice);
-router.put('/invoices/:id/status', invoiceCtrl.updateInvoiceStatus);
-router.delete('/invoices/:id', invoiceCtrl.deleteInvoice);
+
+router.put('/:vendorId/invoices/:id/status', invoiceCtrl.updateInvoiceStatus);
+router.delete('/:vendorId/invoices/:id', invoiceCtrl.deleteInvoice);
 
 router.get('/:vendorId/audits', auditCtrl.getAuditsByVendor);
 router.post('/:vendorId/audits', auditCtrl.createAudit);
@@ -25,7 +26,6 @@ router.post('/', (req, res, next) => {
     next();
   });
 }, vendorCtrl.createVendor);
-
 
 router.put('/:id', (req, res, next) => {
   upload.array('contractFiles', 10)(req, res, (err) => {
