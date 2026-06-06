@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -28,7 +28,6 @@ export class NewProjectWizard implements OnInit {
   projectId: string | null = null;
   existingDocuments: any[] = [];
   serverUrl = environment.serverUrl;
-  milestoneTree:  any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -79,8 +78,7 @@ export class NewProjectWizard implements OnInit {
     this.projectService.getProjectById(id).subscribe({
       next: (res) => {
         const p = res.data;
-        const t:any = res.data;
-        this.milestoneTree = t.milestones;
+        const t: any = res.data;
         this.projectForm.patchValue({
           name: p.name,
           type: p.type || 'Commercial Renovation',
@@ -113,8 +111,9 @@ export class NewProjectWizard implements OnInit {
 
         // Patch Milestones
         this.milestones.clear();
-        p.milestones?.forEach((m) => {
-          this.milestones.push(this.createMilestone(m.name, (m as any).phase || 'Drafting', m.color || 'primary'));
+        const milestonesWithChildren = t.milestones_with_child || p.milestones || [];
+        milestonesWithChildren.forEach((m: any) => {
+          this.milestones.push(this.createMilestoneFromData(m));
         });
 
         this.loading = false;
@@ -130,6 +129,7 @@ export class NewProjectWizard implements OnInit {
   get f() { return this.projectForm.controls; }
   get team() { return this.projectForm.get('team') as FormArray; }
   get milestones() { return this.projectForm.get('milestones') as FormArray; }
+  get milestoneTree() { return this.milestones; }
   get documents() { return this.projectForm.get('documents') as FormArray; }
 
   // --- Data Fetching ---
@@ -207,17 +207,41 @@ export class NewProjectWizard implements OnInit {
   // --- Step 3: Milestones ---
   createMilestone(name: string, phase: string, color: string): FormGroup {
     return this.fb.group({
+      id: [null],
       name: [name, Validators.required],
       phase: [phase],
-      color: [color]
+      color: [color],
+      progress: [0],
+      status: ['Not Started'],
+      startDate: [null],
+      endDate: [null],
+      children: this.fb.array([])
     });
+  }
+
+  createMilestoneFromData(milestone: any): FormGroup {
+    return this.fb.group({
+      id: [milestone.id || null],
+      name: [milestone.name || '', Validators.required],
+      phase: [milestone.phase || 'Drafting'],
+      color: [milestone.color || 'primary'],
+      progress: [milestone.progress || 0],
+      status: [milestone.status || 'Not Started'],
+      startDate: [milestone.startDate || milestone.start_date || null],
+      endDate: [milestone.endDate || milestone.end_date || null],
+      children: this.fb.array((milestone.children || []).map((child: any) => this.createMilestoneFromData(child)))
+    });
+  }
+
+  getMilestoneChildren(milestone: AbstractControl): FormArray {
+    return milestone.get('children') as FormArray;
   }
 
   addMilestone() {
     if (this.newMilestoneName.trim()) {
-      this.milestones.push(this.createMilestone(
+      this.milestoneTree.push(this.createMilestone(
         this.newMilestoneName.trim(),
-        `Phase ${this.milestones.length + 1}`,
+        `Phase ${this.milestoneTree.length + 1}`,
         'secondary'
       ));
       this.newMilestoneName = '';
@@ -225,7 +249,11 @@ export class NewProjectWizard implements OnInit {
   }
 
   removeMilestone(index: number) {
-    this.milestones.removeAt(index);
+    this.milestoneTree.removeAt(index);
+  }
+
+  removeChildMilestone(parent: AbstractControl, childIndex: number) {
+    this.getMilestoneChildren(parent).removeAt(childIndex);
   }
 
   // --- Thumbnail ---
@@ -260,54 +288,97 @@ export class NewProjectWizard implements OnInit {
   }
 
   // --- Final Execution ---
-  saveProject() {
-    if (this.projectForm.invalid) {
-      this.toastr.error('Please fix the errors in the form before saving.');
-      return;
-    }
+ saveProject() {
 
-    this.loading = true;
-    const formData = new FormData();
+  if (this.projectForm.invalid) {
+    this.toastr.error('Please fix the errors in the form before saving.');
+    return;
+  }
 
-    const payload = {
-      name: this.projectForm.value.name,
-      type: this.projectForm.value.type,
-      address: this.projectForm.value.address,
-      completionDate: this.projectForm.value.completionDate,
-      budgetTotal: this.projectForm.value.budgetTotal,
-      milestones: this.projectForm.value.milestones,
-      team: this.projectForm.value.team.map((m: any) => ({
-        user_id: m.user_id,
-        role: m.role
-      }))
-    };
+  this.loading = true;
 
-    formData.append('data', JSON.stringify(payload));
+  const formData = new FormData();
 
-    if (this.thumbnailFile) {
-      formData.append('thumbnail', this.thumbnailFile);
-    }
+ const milestones: any[] = [];
 
-    this.selectedFiles.forEach((file) => {
-      formData.append('blueprints', file);
+this.milestoneTree.value.forEach((parent: any) => {
+
+  milestones.push({
+    id: parent.id,
+    name: parent.name,
+    phase: parent.phase,
+    progress: parent.progress,
+    color: parent.color,
+    status: parent.status,
+    startDate: parent.startDate,
+    endDate: parent.endDate,
+    parent_id: null
+  });
+
+  if (parent.children?.length) {
+
+    parent.children.forEach((child: any) => {
+
+      milestones.push({
+        id: child.id,
+        name: child.name,
+        phase: child.phase,
+        progress: child.progress,
+        color: child.color,
+        status: child.status,
+        startDate: child.startDate,
+        endDate: child.endDate,
+        parent_id: parent.id
+      });
+
     });
 
-    const request = this.editMode && this.projectId
+  }
+
+});
+
+  const payload = {
+    name: this.projectForm.value.name,
+    type: this.projectForm.value.type,
+    address: this.projectForm.value.address,
+    completionDate: this.projectForm.value.completionDate,
+    budgetTotal: this.projectForm.value.budgetTotal,
+    milestones: milestones,
+    team: this.projectForm.value.team.map((m: any) => ({
+      user_id: m.user_id,
+      role: m.role
+    }))
+  };
+
+  formData.append('data', JSON.stringify(payload));
+
+  if (this.thumbnailFile) {
+    formData.append('thumbnail', this.thumbnailFile);
+  }
+
+  this.selectedFiles.forEach((file) => {
+    formData.append('blueprints', file);
+  });
+
+  const request =
+    this.editMode && this.projectId
       ? this.projectService.updateProject(this.projectId, formData)
       : this.projectService.createProject(formData);
 
-    request.subscribe({
-      next: () => {
-        this.loading = false;
-        this.toastr.success(this.editMode ? 'Project updated!' : 'Project initialized!');
-        this.router.navigate(['/master/projects']);
-      },
-      error: (err) => {
-        this.loading = false;
-        this.toastr.error(err.error?.message || 'Error saving project');
-      }
-    });
-  }
+  request.subscribe({
+    next: () => {
+      this.loading = false;
+      this.toastr.success(
+        this.editMode ? 'Project updated!' : 'Project initialized!'
+      );
+      this.router.navigate(['/master/projects']);
+    },
+    error: (err) => {
+      this.loading = false;
+      this.toastr.error(err.error?.message || 'Error saving project');
+    }
+  });
+}
 
   cancel() {
     this.location.back();
