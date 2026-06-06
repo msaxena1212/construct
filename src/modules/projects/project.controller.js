@@ -24,12 +24,12 @@ class ProjectController {
           {
             model: db.milestone,
             as: 'milestones',
-            attributes: ['id', 'name', 'phase', 'color', 'createdAt']
+            // attributes: ['id', 'name', 'phase', 'color', 'createdAt']
           },
           {
             model: db.project_task,
             as: 'tasks',
-            attributes: ['id', 'title', 'status', 'priority', 'due_date', 'createdAt'],
+            // attributes: ['id', 'title', 'status', 'priority', 'due_date', 'createdAt'],
             include: [
               { model: db.user, as: 'assignees', attributes: ['id', 'firstname', 'lastname', 'avatar'] }
             ]
