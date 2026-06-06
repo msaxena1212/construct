@@ -5,6 +5,7 @@ import { ProjectService } from '../../services/project-service';
 import { IProjectTask, IUser } from '../../../../shared/interfaces/project.interface';
 import { CommonModule } from '@angular/common';
 import { CommonDialogComponent } from '../../../../shared/components/common-dialog/common-dialog';
+import { EquipmentInventoryService } from '../../../../shared/services/equipment-inventory/equipment-inventory';
 
 @Component({
   selector: 'app-add-task',
@@ -23,33 +24,35 @@ export class AddTask implements OnInit {
   private projectService = inject(ProjectService);
   private toast = inject(ToastrService);
   private fb = inject(FormBuilder);
+  private materialService = inject(EquipmentInventoryService);
+
 
   taskForm!: FormGroup;
-checklist: {
-  title: string;
-  material_id: number;
-  itemName: string;
-  qty: number;
-  stockIn: number;
-  equipment: string;
-  completed: boolean;
-  requestedQty?: number;  
-  shortage?: number;  
-  pendingRequest?: boolean;
-  stock_request_id?: number;
-}[] = [];
+  checklist: {
+    title: string;
+    material_id: number;
+    itemName: string;
+    qty: number;
+    stockIn: number;
+    equipment: string;
+    completed: boolean;
+    requestedQty?: number;
+    shortage?: number;
+    pendingRequest?: boolean;
+    stock_request_id?: number;
+  }[] = [];
 
-showSubTaskForm = false;
-editingIndex: number | null = null;
+  showSubTaskForm = false;
+  editingIndex: number | null = null;
 
-newSubTask = {
-  title: '',
-  materialId: null as number | null,
-  itemName: '',
-  stockIn: 0,
-  qty: 1,
-  equipment: ''
-};
+  newSubTask = {
+    title: '',
+    materialId: null as number | null,
+    itemName: '',
+    stockIn: 0,
+    qty: 1,
+    equipment: ''
+  };
 
   dependencies: any[] = [];
   attachments: any[] = [];
@@ -75,6 +78,7 @@ newSubTask = {
   teamMembers: IUser[] = [];
   vendors: any[] = [];
   materials: any[] = [];
+  equipmentList: any[]= [];
 
   ngOnInit() {
     this.initForm();
@@ -85,6 +89,12 @@ newSubTask = {
       this.fetchTeamMembers();
       this.fetchVendors();
       this.fetchMaterials();
+      this.materialService.loadMaterials();
+
+      this.materialService.materials$.subscribe((m: any[]) => {
+
+        this.equipmentList = m;
+      })
     }
   }
 
@@ -111,228 +121,228 @@ newSubTask = {
   }
 
   fetchVendors() {
-  this.projectService.getVendors().subscribe({
-    next: (res) => {
-      this.vendors = res.data || [];
-    }
-  });
-}
-
-fetchMaterials() {
-  this.projectService.getMaterialByprojectId(this.projectId).subscribe({
-    next: (res) => {
-      // Handle both array and wrapped response
-      this.materials = Array.isArray(res.data) ? res.data : [res.data];
-      console.log('Materials loaded:', this.materials);
-    }
-  });
-}
-
-private resetSubTaskForm() {
-  this.newSubTask = { title: '', materialId: null, itemName: '', stockIn: 0, qty: 1, equipment: '' };
-  this.showSubTaskForm = false;
-  this.editingIndex = null;
-}
-
-// Add these new properties
-showStockDialog = false;
-stockDialogData: {
-  available: number;
-  shortage: number;
-  selectedMaterial: any;
-} | null = null;
-
-
-addSubTask() {
-
-  if (
-    this.newSubTask.title.trim() &&
-    this.newSubTask.materialId
-  ) {
-
-    const selectedMaterial = this.materials.find(
-      m => m.id == this.newSubTask.materialId
-    );
-
-    if (!selectedMaterial) {
-      this.toast.error('Material not found');
-      return;
-    }
-
-    // VALIDATE STOCK
-if (this.newSubTask.qty > selectedMaterial.stockIn) {
-
-  if (selectedMaterial.stockIn === 0) {
-    // Zero stock — directly show dialog with full qty as shortage
-    this.stockDialogData = {
-      available: 0,
-      shortage: this.newSubTask.qty,
-      selectedMaterial
-    };
-    this.showStockDialog = true;
-    return;
+    this.projectService.getVendors().subscribe({
+      next: (res) => {
+        this.vendors = res.data || [];
+      }
+    });
   }
 
-  // Partial stock — show dialog
-  this.stockDialogData = {
-    available: selectedMaterial.stockIn,
-    shortage: this.newSubTask.qty - selectedMaterial.stockIn,
-    selectedMaterial
-  };
-  this.showStockDialog = true;
-  return;  // ← don't save yet, wait for user confirmation
-}
+  fetchMaterials() {
+    this.projectService.getMaterialByprojectId(this.projectId).subscribe({
+      next: (res) => {
+        // Handle both array and wrapped response
+        this.materials = Array.isArray(res.data) ? res.data : [res.data];
+        console.log('Materials loaded:', this.materials);
+      }
+    });
+  }
+
+  private resetSubTaskForm() {
+    this.newSubTask = { title: '', materialId: null, itemName: '', stockIn: 0, qty: 1, equipment: '' };
+    this.showSubTaskForm = false;
+    this.editingIndex = null;
+  }
+
+  // Add these new properties
+  showStockDialog = false;
+  stockDialogData: {
+    available: number;
+    shortage: number;
+    selectedMaterial: any;
+  } | null = null;
+
+
+  addSubTask() {
+
+    if (
+      this.newSubTask.title.trim() &&
+      this.newSubTask.materialId
+    ) {
+
+      const selectedMaterial = this.materials.find(
+        m => m.id == this.newSubTask.materialId
+      );
+
+      // if (!selectedMaterial) {
+      //   this.toast.error('Material not found');
+      //   return;
+      // }
+
+      // VALIDATE STOCK
+      if (this.newSubTask.qty > selectedMaterial.stockIn) {
+
+        if (selectedMaterial.stockIn === 0) {
+          // Zero stock — directly show dialog with full qty as shortage
+          this.stockDialogData = {
+            available: 0,
+            shortage: this.newSubTask.qty,
+            selectedMaterial
+          };
+          this.showStockDialog = true;
+          return;
+        }
+
+        // Partial stock — show dialog
+        this.stockDialogData = {
+          available: selectedMaterial.stockIn,
+          shortage: this.newSubTask.qty - selectedMaterial.stockIn,
+          selectedMaterial
+        };
+        this.showStockDialog = true;
+        return;  // ← don't save yet, wait for user confirmation
+      }
+
+      const payload = {
+        title: this.newSubTask.title,
+        material_id: selectedMaterial.id,
+        itemName: selectedMaterial.name,
+        stockIn: selectedMaterial.stockIn,
+        qty: this.newSubTask.qty,
+        equipment: this.newSubTask.equipment,
+        completed: false
+      };
+
+      // EDIT
+      if (this.editingIndex !== null) {
+
+        this.checklist[this.editingIndex] = payload;
+        this.editingIndex = null;
+
+      } else {
+
+        // CREATE
+        this.checklist.push(payload);
+
+      }
+
+      // RESET
+      this.newSubTask = {
+        title: '',
+        materialId: null,
+        itemName: '',
+        stockIn: 0,
+        qty: 1,
+        equipment: ''
+      };
+
+      this.showSubTaskForm = false;
+    }
+  }
+
+  editSubTask(index: number) {
+
+    const item = this.checklist[index];
+
+    this.newSubTask = {
+      title: item.title,
+      materialId: item.material_id,
+      itemName: item.itemName,
+      stockIn: item.stockIn,
+      qty: item.requestedQty ?? item.qty,
+      equipment: item.equipment
+    };
+
+    this.editingIndex = index;
+    this.showSubTaskForm = true;
+  }
+
+  confirmStockRequest() {
+
+    if (!this.stockDialogData) return;
+
+    const { available, shortage, selectedMaterial } = this.stockDialogData;
 
     const payload = {
       title: this.newSubTask.title,
       material_id: selectedMaterial.id,
       itemName: selectedMaterial.name,
-      stockIn: selectedMaterial.stockIn,
-      qty: this.newSubTask.qty,
+      stockIn: available,
+      qty: available,
+      requestedQty: this.newSubTask.qty,
+      shortage,
+      pendingRequest: true,
       equipment: this.newSubTask.equipment,
       completed: false
     };
 
-    // EDIT
+    // ================= EDIT =================
+
     if (this.editingIndex !== null) {
 
-      this.checklist[this.editingIndex] = payload;
-      this.editingIndex = null;
+      const oldItem = this.checklist[this.editingIndex];
 
-    } else {
+      // UPDATE CHECKLIST
+      this.checklist[this.editingIndex] = {
+        ...payload,
+        stock_request_id: oldItem.stock_request_id
+      };
 
-      // CREATE
-      this.checklist.push(payload);
-
-    }
-
-    // RESET
-    this.newSubTask = {
-      title: '',
-     materialId: null,
-      itemName: '',
-      stockIn: 0,
-      qty: 1,
-      equipment: ''
-    };
-
-    this.showSubTaskForm = false;
-  }
-}
-
-editSubTask(index: number) {
-
-  const item = this.checklist[index];
-
-  this.newSubTask = {
-    title: item.title,
-    materialId: item.material_id,
-    itemName: item.itemName,
-    stockIn: item.stockIn,
-      qty: item.requestedQty ?? item.qty,
-    equipment: item.equipment
-  };
-
-  this.editingIndex = index;
-  this.showSubTaskForm = true;
-}
-
-confirmStockRequest() {
-
-  if (!this.stockDialogData) return;
-
-  const { available, shortage, selectedMaterial } = this.stockDialogData;
-
-  const payload = {
-    title: this.newSubTask.title,
-    material_id: selectedMaterial.id,
-    itemName: selectedMaterial.name,
-    stockIn: available,
-    qty: available,
-    requestedQty: this.newSubTask.qty,
-    shortage,
-    pendingRequest: true,
-    equipment: this.newSubTask.equipment,
-    completed: false
-  };
-
-  // ================= EDIT =================
-
-  if (this.editingIndex !== null) {
-
-    const oldItem = this.checklist[this.editingIndex];
-
-    // UPDATE CHECKLIST
-    this.checklist[this.editingIndex] = {
-      ...payload,
-      stock_request_id: oldItem.stock_request_id
-    };
-
-    // PUT API
-        if (!oldItem.stock_request_id) {
+      // PUT API
+      if (!oldItem.stock_request_id) {
         this.toast.error('Stock request id not found');
         return;
       }
       this.projectService.updateAdditionalStockRequest(
-      oldItem.stock_request_id,
-      {
+        oldItem.stock_request_id,
+        {
+          material_id: selectedMaterial.id,
+          task_title: this.newSubTask.title,
+          requested_qty: shortage,
+          available_qty: available,
+          project_id: this.projectId
+        }
+      ).subscribe({
+        next: () => {
+          this.toast.success('Stock request updated');
+        },
+        error: () => {
+          this.toast.error('Failed to update stock request');
+        }
+      });
+
+    }
+
+    // ================= CREATE =================
+
+    else {
+
+      this.projectService.requestAdditionalStock({
         material_id: selectedMaterial.id,
         task_title: this.newSubTask.title,
         requested_qty: shortage,
         available_qty: available,
         project_id: this.projectId
-      }
-    ).subscribe({
-      next: () => {
-        this.toast.success('Stock request updated');
-      },
-      error: () => {
-        this.toast.error('Failed to update stock request');
-      }
-    });
+      }).subscribe({
 
+        next: (res: any) => {
+
+          this.checklist.push({
+            ...payload,
+            stock_request_id: res.data.id
+          });
+
+          this.toast.success(`Request sent for ${shortage} items`);
+        },
+
+        error: () => {
+          this.toast.error('Failed to send stock request');
+        }
+
+      });
+
+    }
+
+    this.showStockDialog = false;
+    this.stockDialogData = null;
+    this.resetSubTaskForm();
   }
 
-  // ================= CREATE =================
-
-  else {
-
-    this.projectService.requestAdditionalStock({
-      material_id: selectedMaterial.id,
-      task_title: this.newSubTask.title,
-      requested_qty: shortage,
-      available_qty: available,
-      project_id: this.projectId
-    }).subscribe({
-
-      next: (res:any) => {
-
-        this.checklist.push({
-          ...payload,
-          stock_request_id: res.data.id
-        });
-
-        this.toast.success(`Request sent for ${shortage} items`);
-      },
-
-      error: () => {
-        this.toast.error('Failed to send stock request');
-      }
-
-    });
-
+  cancelStockRequest() {
+    this.showStockDialog = false;
+    this.stockDialogData = null;
+    // Don't reset form — let user change qty
   }
-
-  this.showStockDialog = false;
-  this.stockDialogData = null;
-  this.resetSubTaskForm();
-}
-
-cancelStockRequest() {
-  this.showStockDialog = false;
-  this.stockDialogData = null;
-  // Don't reset form — let user change qty
-}
 
   removeSubTask(index: number) {
     this.checklist.splice(index, 1);

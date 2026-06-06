@@ -56,7 +56,7 @@
                     <!-- Header -->
                     <div class="flex items-center justify-between">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
-                            Sub-tasks Checklist
+                            Sub-tasks
                         </label>
 
                         <button type="button" (click)="showSubTaskForm = !showSubTaskForm"
@@ -178,7 +178,8 @@
                                     Material
                                 </label>
                                 <!-- AFTER -->
-                                <select [(ngModel)]="newSubTask.materialId" [ngModelOptions]="{ standalone: true }"  class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                                <select [(ngModel)]="newSubTask.materialId" [ngModelOptions]="{ standalone: true }"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
                                     <option [ngValue]="null" disabled>Select Material</option>
                                     @for(material of materials; track material.id) {
                                     <option [ngValue]="material.id">{{ material.name }}</option>
@@ -213,10 +214,13 @@
 
                                     Equipment
                                 </label>
-
-                                <input type="text" [(ngModel)]="newSubTask.equipment"
-                                    [ngModelOptions]="{standalone: true}" placeholder="Machine / Tool"
-                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                                <select [(ngModel)]="newSubTask.equipment" [ngModelOptions]="{ standalone: true }"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                                    <option [ngValue]="null" disabled>Select Equipment</option>
+                                    @for(equipment of equipmentList; track equipment.id) {
+                                    <option [ngValue]="equipment.id">{{ equipment.name }}</option>
+                                    }
+                                </select>
 
                             </div>
 
