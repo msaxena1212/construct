@@ -100,7 +100,7 @@ const updateInvoiceStatus = async (req, res) => {
 
     const updatePayload = { status };
 
-    if (status === 'Paid') {
+    if (status === 'Paid' || status === 'Partially Paid') {
       if (!amount || parseFloat(amount) <= 0)
         return res.status(400).json({ success: false, message: 'Valid amount is required for payment' });
       if (!mode)
@@ -108,7 +108,11 @@ const updateInvoiceStatus = async (req, res) => {
       if (mode === 'Cheque' && !clearance_date)
         return res.status(400).json({ success: false, message: 'Cheque clearance date is required' });
 
-      updatePayload.paid_amount = parseFloat(amount);
+      const paidAmt = parseFloat(amount);
+      const grandTotal = parseFloat(invoice.grand_total);
+
+      updatePayload.status = paidAmt >= grandTotal ? 'Paid' : 'Partially Paid';
+      updatePayload.paid_amount = paidAmt;
       updatePayload.payment_mode = mode;
       updatePayload.payment_reference = reference || null;
       updatePayload.cheque_clearance_date = clearance_date || null;
