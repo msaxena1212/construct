@@ -1046,6 +1046,7 @@ export class Vendors implements OnInit {
       this.selectedMilestoneIds.splice(idx, 1);
     }
     this.onMilestoneMultiSelect();
+    this.milestoneDropdownOpen = false;
   }
 
   toggleSubMilestoneSelection(id: number): void {
@@ -1056,6 +1057,7 @@ export class Vendors implements OnInit {
       this.selectedSubMilestoneIds.splice(idx, 1);
     }
     this.onSubMilestoneMultiSelect();
+    this.subMilestoneDropdownOpen = false;
   }
 
   toggleTaskSelection(id: number): void {
@@ -1066,6 +1068,7 @@ export class Vendors implements OnInit {
       this.selectedTaskIds.splice(idx, 1);
     }
     this.onTaskMultiSelect();
+    this.taskDropdownOpen = false;
   }
   viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;

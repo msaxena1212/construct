@@ -455,7 +455,7 @@
                 <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
                   [class.bg-blue-50]="selectedMilestoneIds.includes(+m.id)">
                   <input type="checkbox" [checked]="selectedMilestoneIds.includes(+m.id)"
-                    (change)="toggleMilestoneSelection(+m.id)"
+                    (change)="toggleMilestoneSelection(+m.id); milestoneDropdownOpen=false"
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0">
                   <span class="text-xs font-semibold text-slate-700 flex-1 truncate">{{ m.name ?? m.title }}</span>
                   @if (m.progress != null) {
@@ -494,7 +494,7 @@
                 <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
                   [class.bg-blue-50]="selectedSubMilestoneIds.includes(+sm.id)">
                   <input type="checkbox" [checked]="selectedSubMilestoneIds.includes(+sm.id)"
-                    (change)="toggleSubMilestoneSelection(+sm.id)"
+                    (change)="toggleSubMilestoneSelection(+sm.id); subMilestoneDropdownOpen=false"
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0">
                   <span class="text-xs font-semibold text-slate-700 flex-1 truncate">{{ sm.name ?? sm.title }}</span>
                   @if (sm.progress != null) {
@@ -531,7 +531,7 @@
                 <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
                   [class.bg-blue-50]="selectedTaskIds.includes(+task.id)">
                   <input type="checkbox" [checked]="selectedTaskIds.includes(+task.id)"
-                    (change)="toggleTaskSelection(+task.id)"
+                    (change)="toggleTaskSelection(+task.id); taskDropdownOpen=false"
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0">
                   <span class="text-xs font-semibold text-slate-700 flex-1 truncate">{{ task.title }}</span>
                   <span class="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
