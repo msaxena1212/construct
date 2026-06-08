@@ -103,6 +103,7 @@ export interface IProjectTask {
   sub_tasks?: IProjectSubTask[];
   dependencies?: IProjectTaskDependency[];
   createdAt?: string;
+  parent_id?: number | null;
 
   // UI helper fields
   priorityClass?: string;
@@ -196,9 +197,12 @@ export interface ITimelineItem {
   milestoneTitle?: string;
   status?: string;
   assignee?: string;
+  parent_id?: number | null;
+
 }
 
 export interface ITimelinePhase {
   title: string;
   tasks: ITimelineItem[];
+  parent_id?: number | null;
 }

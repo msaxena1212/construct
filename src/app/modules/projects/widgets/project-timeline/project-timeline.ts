@@ -1,6 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProjectService } from '../../services/project-service';
-import { IProject, IProjectTask, IMilestone, ITimelinePhase, ITimelineItem } from '../../../../shared/interfaces/project.interface';
+import {
+  IProject,
+  IProjectTask,
+  IMilestone,
+  ITimelinePhase,
+  ITimelineItem,
+} from '../../../../shared/interfaces/project.interface';
 
 @Component({
   selector: 'app-project-timeline',
@@ -36,25 +42,52 @@ export class ProjectTimeline implements OnInit {
     if (this.projectId) {
       this.fetchTimelineData();
     }
+
+    setTimeout(() => {
+
+
+      console.log(this.filteredPhases, 'console.log(this.filteredPhases) ')
+    }, 500)
   }
+
+  // initTimelineRange() {
+  //   const today = new Date();
+  //   this.startDate = new Date(today);
+
+  //   if (this.viewType === 'day') {
+  //     this.startDate.setDate(today.getDate() - 3);
+  //     this.totalDurationDays = 14;
+  //   } else if (this.viewType === 'week') {
+  //     this.startDate.setDate(today.getDate() - 21);
+  //     this.totalDurationDays = 70; // ~10 weeks
+  //   } else {
+  //     this.startDate.setDate(today.getDate() - 60);
+  //     this.totalDurationDays = 180; // ~6 months
+  //   }
+
+  //   this.generateTimelineHeaders();
+  // }
 
   initTimelineRange() {
-    const today = new Date();
-    this.startDate = new Date(today);
+  const today = new Date();
 
-    if (this.viewType === 'day') {
-      this.startDate.setDate(today.getDate() - 3);
-      this.totalDurationDays = 14;
-    } else if (this.viewType === 'week') {
-      this.startDate.setDate(today.getDate() - 21);
-      this.totalDurationDays = 70; // ~10 weeks
-    } else {
-      this.startDate.setDate(today.getDate() - 60);
-      this.totalDurationDays = 180; // ~6 months
-    }
+  // Current date se start
+  this.startDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
 
-    this.generateTimelineHeaders();
+  if (this.viewType === 'day') {
+    this.totalDurationDays = 14;
+  } else if (this.viewType === 'week') {
+    this.totalDurationDays = 70;
+  } else {
+    this.totalDurationDays = 180;
   }
+
+  this.generateTimelineHeaders();
+}
 
   generateTimelineHeaders() {
     this.timelineHeaders = [];
@@ -64,7 +97,7 @@ export class ProjectTimeline implements OnInit {
       for (let i = 0; i < 14; i++) {
         this.timelineHeaders.push({
           label: tempDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
-          isToday: tempDate.toDateString() === new Date().toDateString()
+          isToday: tempDate.toDateString() === new Date().toDateString(),
         });
         tempDate.setDate(tempDate.getDate() + 1);
       }
@@ -72,7 +105,9 @@ export class ProjectTimeline implements OnInit {
       for (let i = 0; i < 10; i++) {
         this.timelineHeaders.push({
           label: tempDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
-          isCurrent: tempDate <= new Date() && new Date() < new Date(tempDate.getTime() + 7 * 24 * 60 * 60 * 1000)
+          isCurrent:
+            tempDate <= new Date() &&
+            new Date() < new Date(tempDate.getTime() + 7 * 24 * 60 * 60 * 1000),
         });
         tempDate.setDate(tempDate.getDate() + 7);
       }
@@ -80,7 +115,9 @@ export class ProjectTimeline implements OnInit {
       for (let i = 0; i < 6; i++) {
         this.timelineHeaders.push({
           label: tempDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-          isCurrent: tempDate.getMonth() === new Date().getMonth() && tempDate.getFullYear() === new Date().getFullYear()
+          isCurrent:
+            tempDate.getMonth() === new Date().getMonth() &&
+            tempDate.getFullYear() === new Date().getFullYear(),
         });
         tempDate.setMonth(tempDate.getMonth() + 1);
       }
@@ -97,12 +134,13 @@ export class ProjectTimeline implements OnInit {
 
         if (project.team_members) {
           this.team = [{ name: 'All Members', avatar: '' }, ...project.team_members];
-          this.resources = project.team_members.map(m => ({
+          console.log('Project Team Members:', project.team_members);
+          this.resources = project.team_members.map((m) => ({
             name: m.firstname + ' ' + m.lastname,
             role: m.project_team?.role || 'Site Team',
             utilization: Math.floor(Math.random() * 40) + 60,
             avatar: m.avatar,
-            overAllocated: Math.random() > 0.8
+            overAllocated: Math.random() > 0.8,
           }));
         }
 
@@ -111,36 +149,71 @@ export class ProjectTimeline implements OnInit {
       },
       error: () => {
         this.loading = false;
-      }
+      },
     });
   }
 
   mapDataToPhases(project: IProject) {
     const today = new Date();
-    const milestones: ITimelineItem[] = (project.milestones || []).map(m => ({
-      id: `m-${m.id}`,
+    const milestones: ITimelineItem[] = (project.milestones || []).map((m) => ({
+      id: `${m.id}`,
+      parent_id: m.parent_id,
       name: m.name,
       color: 'bg-secondary',
       isMilestone: true,
       milestoneTitle: m.name,
-      left: this.calculatePosition(new Date(m.createdAt || today))
+      left: this.calculatePosition(new Date(m.startDate || m.createdAt || today)),
     }));
 
-    const tasks: ITimelineItem[] = (project.tasks || []).map(t => ({
-      id: `t-${t.id}`,
+    const tasks: ITimelineItem[] = (project.tasks || []).map((t) => ({
+      id: `${t.id}`,
       name: t.title,
-      color: t.status === 'Completed' ? 'bg-green-500' : (t.priority === 'High Priority' ? 'bg-error' : 'bg-primary'),
-      completion: t.status === 'Completed' ? 100 : (t.status === 'In Progress' ? 45 : 0),
+      parent_id: t.parent_id,
+
+      // Child task check
+      isChild: !!t.parent_id,
+
+      // Child milestone check
+      isMilestone:
+        !!t.parent_id &&
+        t.status === 'Completed', // apni condition laga lo
+
+      milestoneTitle: t.title,
+
+      color:
+        t.status === 'Completed'
+          ? 'bg-green-500'
+          : t.priority === 'High Priority'
+            ? 'bg-error'
+            : 'bg-primary',
+
+      completion:
+        t.progress ??
+        (t.status === 'Completed'
+          ? 100
+          : t.status === 'In Progress'
+            ? 45
+            : 0),
+
       status: t.status,
-      left: this.calculatePosition(new Date(t.createdAt || today)),
-      width: this.calculateWidth(new Date(t.createdAt || today), new Date(t.due_date || today)),
+
+      left: this.calculatePosition(
+        new Date(t.createdAt || today)
+      ),
+
+      width: this.calculateWidth(
+        new Date(t.createdAt || today),
+        new Date(t.due_date || today)
+      ),
+
       assignee: t.assignees?.[0]?.avatar,
-      critical: t.priority === 'High Priority'
+
+      critical: t.priority === 'High Priority',
     }));
 
     this.phases = [
       { title: 'PROJECT MILESTONES', tasks: milestones },
-      { title: 'CONSTRUCTION TASKS', tasks: tasks }
+      { title: 'CONSTRUCTION TASKS', tasks: tasks },
     ];
   }
 
@@ -163,13 +236,32 @@ export class ProjectTimeline implements OnInit {
   }
 
   get filteredPhases(): ITimelinePhase[] {
-    if (this.selectedMember === 'All Members') return this.phases;
-    const member = this.team.find(m => (m.firstname + ' ' + m.lastname) === this.selectedMember || m.name === this.selectedMember);
-    return this.phases.map(p => ({
-      ...p,
-      tasks: p.tasks.filter(t => t.assignee === member?.avatar || t.isMilestone)
-    })).filter(p => p.tasks.length > 0);
+    if (this.selectedMember === 'All Members') {
+      return this.phases;
+    }
+
+    const member = this.team.find(
+      (m) =>
+        `${m.firstname} ${m.lastname}` === this.selectedMember ||
+        m.name === this.selectedMember
+    );
+
+    return this.phases
+      .map((p) => ({
+        ...p,
+        tasks: p.tasks.filter(
+          (t) =>
+            t.parent_id ||
+            t.assignee === member?.avatar ||
+            t.isMilestone
+        ),
+      }))
+      .filter((p) => p.tasks.length > 0);
   }
+
+
+
+
 
   setViewType(type: 'day' | 'week' | 'month') {
     this.viewType = type;
@@ -192,8 +284,15 @@ export class ProjectTimeline implements OnInit {
     if (this.projectId) this.fetchTimelineData();
   }
 
+  // getCurrentDateLabel(): string {
+  //   return this.startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  // }
+
   getCurrentDateLabel(): string {
-    return this.startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return this.startDate.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
   }
 
   getTodayPosition(): string {
@@ -208,5 +307,10 @@ export class ProjectTimeline implements OnInit {
   resetToToday() {
     this.initTimelineRange();
     if (this.projectId) this.fetchTimelineData();
+  }
+
+  getMemberLabel(member: any): string {
+    if (member?.name) return member.name;
+    return [member?.firstname, member?.lastname].filter(Boolean).join(' ') || 'Unnamed Member';
   }
 }
