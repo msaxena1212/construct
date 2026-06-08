@@ -41,7 +41,9 @@
             "styles": [
               "src/tailwind-entry.css",
               "src/styles.scss",
-              "public/assets/styles/custom-style.css"
+              "public/assets/styles/custom-style.css",
+              "node_modules/frappe-gantt/dist/frappe-gantt.css"
+
             ],
             "allowedCommonJsDependencies": [
               "sweetalert2"

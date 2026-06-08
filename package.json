@@ -32,6 +32,8 @@
     "@angular/material": "^21.2.6",
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
+    "@worktile/gantt": "^21.0.0",
+    "frappe-gantt": "^1.2.2",
     "ngx-toastr": "^20.0.5",
     "postcss": "^8.5.9",
     "prettier": "^3.8.3",
@@ -46,6 +48,7 @@
     "@angular/cli": "^21.1.0",
     "@angular/compiler-cli": "^21.1.0",
     "@tailwindcss/postcss": "^4.2.4",
+    "@types/frappe-gantt": "^0.9.0",
     "jsdom": "^27.1.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
