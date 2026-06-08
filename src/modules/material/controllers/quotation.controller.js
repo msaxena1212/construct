@@ -988,7 +988,7 @@ class QuotationController {
 
     // quatation_company
 
-        async getall_material_quotation_company(req, res) {
+    async getall_material_quotation_company(req, res) {
         try {
 
             const company_id = req.user.company_id;
