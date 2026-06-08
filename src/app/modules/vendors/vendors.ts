@@ -40,7 +40,9 @@ export class Vendors implements OnInit {
 
   allTasks: IProjectTask[] = [];
   skillOptions: { value: string; label: string }[] = [];
-
+  milestoneDropdownOpen = false;
+  subMilestoneDropdownOpen = false;
+  taskDropdownOpen = false;
   selectedInvoice: VendorInvoice | null = null;
   showSettlementCards = false;
   selectedSettlementType: 'work_poc' | 'milestone' | 'lumpsum' = 'work_poc';
@@ -310,12 +312,26 @@ export class Vendors implements OnInit {
   }
 
   get availableTaskOptions(): IProjectTask[] {
-    if (this.selectedSubMilestoneIds.length === 0) return [];
-    return (this.allTasks ?? []).filter((t: any) =>
-      this.selectedSubMilestoneIds.includes(Number(t.milestone_id))
+
+    if (!this.selectedSubMilestoneIds.length) {
+      return [];
+    }
+
+    const selectedParents =
+      this.availableSubMilestones
+        .filter(sm =>
+          this.selectedSubMilestoneIds.includes(
+            Number(sm.id)
+          )
+        )
+        .map(sm => Number(sm.parent_id));
+
+    return this.allTasks.filter(task =>
+      selectedParents.includes(
+        Number(task.milestone_id)
+      )
     );
   }
-
   get isSettlementCompletionEditable(): boolean {
     return this.selectedSettlementType === 'work_poc';
   }
@@ -414,7 +430,24 @@ export class Vendors implements OnInit {
   }
 
   onSubMilestoneMultiSelect(): void {
-    this.selectedSubMilestoneIds = this.selectedSubMilestoneIds.map(id => Number(id));
+
+    console.log(
+      'Selected Sub Milestones =>',
+      this.selectedSubMilestoneIds
+    );
+
+    console.log(
+      'All Tasks =>',
+      this.allTasks.map(t => ({
+        id: t.id,
+        title: t.title,
+        milestone_id: t.milestone_id
+      }))
+    );
+
+    this.selectedSubMilestoneIds =
+      this.selectedSubMilestoneIds.map(id => Number(id));
+
     this.syncSelectedTasksWithOptions();
     this.updateSettlementCompletionFromSelection();
   }
@@ -462,6 +495,10 @@ export class Vendors implements OnInit {
     this.selectedTaskIds = [];
     this.subMilestones = [];
     this.milestoneTasks = [];
+    // ✅ close all dropdowns on type change
+    this.milestoneDropdownOpen = false;
+    this.subMilestoneDropdownOpen = false;
+    this.taskDropdownOpen = false;
     this.updateSettlementCompletionFromProject();
     if (type === 'lumpsum') {
       this.paymentForm.amount = null;
@@ -899,6 +936,10 @@ export class Vendors implements OnInit {
     this.subMilestones = [];
     this.milestoneTasks = [];
     this.projectdata = null;
+    // ✅ close dropdowns
+    this.milestoneDropdownOpen = false;
+    this.subMilestoneDropdownOpen = false;
+    this.taskDropdownOpen = false;
   }
 
   onPaymentModeChange(mode: string): void {
@@ -931,9 +972,14 @@ export class Vendors implements OnInit {
 
     this.isProcessingPayment = true;
 
+    // ✅ Status auto-determine from amount
+    const paidAmt = Number(this.paymentForm.amount);
+    const grandTotal = Number(this.selectedInvoice.grand_total);
+    const resolvedStatus = paidAmt >= grandTotal ? 'Paid' : 'Partially Paid';
+
     const payload: any = {
-      status: 'Paid',
-      amount: this.paymentForm.amount,
+      status: resolvedStatus,
+      amount: paidAmt,
       mode: this.paymentForm.mode,
       reference: this.paymentForm.reference || null,
       clearance_date: this.paymentForm.clearance_date || null,
@@ -992,7 +1038,38 @@ export class Vendors implements OnInit {
       },
     });
   }
+  toggleMilestoneSelection(id: number): void {
+    const idx = this.selectedMilestoneIds.indexOf(id);
+    if (idx === -1) {
+      this.selectedMilestoneIds.push(id);
+    } else {
+      this.selectedMilestoneIds.splice(idx, 1);
+    }
+    this.onMilestoneMultiSelect();
+    this.milestoneDropdownOpen = false;
+  }
 
+  toggleSubMilestoneSelection(id: number): void {
+    const idx = this.selectedSubMilestoneIds.indexOf(id);
+    if (idx === -1) {
+      this.selectedSubMilestoneIds.push(id);
+    } else {
+      this.selectedSubMilestoneIds.splice(idx, 1);
+    }
+    this.onSubMilestoneMultiSelect();
+    this.subMilestoneDropdownOpen = false;
+  }
+
+  toggleTaskSelection(id: number): void {
+    const idx = this.selectedTaskIds.indexOf(id);
+    if (idx === -1) {
+      this.selectedTaskIds.push(id);
+    } else {
+      this.selectedTaskIds.splice(idx, 1);
+    }
+    this.onTaskMultiSelect();
+    this.taskDropdownOpen = false;
+  }
   viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;
 
@@ -1314,14 +1391,17 @@ export class Vendors implements OnInit {
     return colors[skill] ?? 'bg-slate-400';
   }
 
-  getTaskStatusColor(status: string): string {
+  getTaskStatusColor(status: unknown): string {
+    const normalizedStatus = String(status ?? '').toLowerCase().replace(/\s+/g, '_');
     const map: Record<string, string> = {
       'completed': 'bg-green-100 text-green-700',
       'in_progress': 'bg-blue-100 text-blue-700',
+      'review': 'bg-purple-100 text-purple-700',
+      'to_do': 'bg-amber-100 text-amber-700',
       'pending': 'bg-amber-100 text-amber-700',
       'on_hold': 'bg-slate-100 text-slate-500',
     };
-    return map[status?.toLowerCase()] ?? 'bg-slate-100 text-slate-500';
+    return map[normalizedStatus] ?? 'bg-slate-100 text-slate-500';
   }
 
   sanitizePhone(event: Event, field: 'spoc' | 'official'): void {
