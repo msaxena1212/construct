@@ -274,6 +274,8 @@ db.vendors_invoice.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor'
 db.company.hasMany(db.vendors_invoice, { foreignKey: 'company_id', as: 'vendors_invoices' });
 db.vendors_invoice.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
 
+db.project.hasMany(db.vendors_invoice, { foreignKey: "project_id", as: "vendors_invoices" });
+db.vendors_invoice.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
 // Vendor ↔ Audit
 db.vendors.hasMany(db.vendors_audit, { foreignKey: 'vendor_id', as: 'audits' });
 db.vendors_audit.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' });

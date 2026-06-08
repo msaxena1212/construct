@@ -238,11 +238,38 @@ const updateVendor = async (req, res) => {
         : String(req.body.skill).trim();
     }
 
+    if (req.files && req.files.length > 0) {
+      const newFiles = req.files.map(f => `/uploads/contracts/${f.filename}`);
+
+      let existingFiles = [];
+      if (vendor.contract_file) {
+        try {
+          const parsed = JSON.parse(vendor.contract_file);
+          existingFiles = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          existingFiles = [vendor.contract_file];
+        }
+      }
+
+      req.body.contract_file = JSON.stringify([...existingFiles, ...newFiles]);
+    }
+
     delete req.body.company_id;
 
     const hasGst = !!(req.body.gst_no ?? vendor.gst_no);
     const hasPan = !!(req.body.pan_card_no ?? vendor.pan_card_no);
-    const hasFile = !!(vendor.contract_file);
+
+    let contractFileRaw = req.body.contract_file ?? vendor.contract_file;
+    let hasFile = false;
+    if (contractFileRaw) {
+      try {
+        const parsed = JSON.parse(contractFileRaw);
+        hasFile = Array.isArray(parsed) ? parsed.length > 0 : !!parsed;
+      } catch {
+        hasFile = !!contractFileRaw;
+      }
+    }
+
     const budget = parseFloat(req.body.budget_allocation ?? vendor.budget_allocation) || 0;
     const skill = (req.body.skill ?? vendor.skill ?? '').toString().trim();
 
