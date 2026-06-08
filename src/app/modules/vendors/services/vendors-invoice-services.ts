@@ -15,6 +15,14 @@ export interface InvoiceItem {
   total: number;
 }
 
+export interface PaymentHistoryEntry {
+  amount: number;
+  mode: string;
+  reference: string | null;
+  clearance_date: string | null;
+  paid_at: string;
+}
+
 export interface VendorInvoice {
   id: number;
   project_id?: number;
@@ -38,6 +46,7 @@ export interface VendorInvoice {
   cheque_clearance_date?: string | null;
   paid_amount?: number | null;
   paid_at?: string | null;
+  payment_history?: PaymentHistoryEntry[];
   createdAt: string;
 }
 
@@ -134,7 +143,7 @@ export class VendorInvoiceService {
         tap((res) => {
           if (res.success) {
             const list = this.invoicesSubject.value.map((inv) =>
-              inv.id === invoiceId ? { ...inv, ...payload, status: payload.status } : inv
+              inv.id === invoiceId ? { ...inv, ...res.data } : inv
             );
             this.invoicesSubject.next(list);
           }

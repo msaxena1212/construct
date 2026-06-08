@@ -205,29 +205,42 @@
             @for (task of (allTasks || []); track task.id) {
             <div
               class="flex items-center gap-6 p-4 bg-surface-container-low rounded-2xl border border-transparent hover:border-primary/20 transition-all group">
+
               <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                <span class="material-symbols-outlined text-primary">{{ selectedVendor.icon }}</span>
+                <span class="material-symbols-outlined text-primary">
+                  {{ selectedVendor.icon }}
+                </span>
               </div>
+
               <div class="flex-1">
-                <p class="font-bold text-on-surface">{{ task.title }}</p>
-                <p class="text-xs text-outline">{{ task.due_date | date:'dd/MMM/yyyy' }}</p>
+                <div class="flex items-center gap-1 mb-1">
+                  <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    Project :
+                  </span>
+                  <span class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    {{ projectdata?.name || 'Project not linked' }}
+                  </span>
+                </div>
+
+                <p class="font-bold text-on-surface">
+                  {{ task.title }}
+                </p>
+
+                <p class="text-xs text-outline">
+                  {{ task.due_date | date:'dd/MMM/yyyy' }}
+                </p>
               </div>
-              <select [value]="task.status" (change)="updateTaskStatus(task, $any($event.target).value)"
-                class="text-[10px] font-black bg-surface-container-low border-none rounded-lg px-2 py-1 outline-none cursor-pointer appearance-none"
-                (click)="$event.stopPropagation()">
-                <option value="To Do">To Do</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Review">Review</option>
-                <option value="Completed">Completed</option>
-              </select>
+
               <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest"
                 [ngClass]="getTaskStatusColor(task.status)">
                 {{ task.status }}
               </span>
+
               <button (click)="deleteTask(task.id)"
                 class="p-1.5 text-slate-300 hover:text-error transition-colors rounded-lg hover:bg-red-50 cursor-pointer">
                 <span class="material-symbols-outlined text-base">delete</span>
               </button>
+
             </div>
             } @empty {
             <p class="text-center py-12 text-outline font-bold italic">No active tasks detected.</p>
@@ -355,6 +368,14 @@
             <p class="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">
               ₹{{ (+(selectedInvoice?.grand_total || 0)).toLocaleString('en-IN') }}
             </p>
+            @if (selectedInvoice?.paid_amount && +(selectedInvoice?.paid_amount ?? 0) > 0) {
+            <p class="mt-1 text-[10px] font-semibold text-slate-500">
+              Already Paid: ₹{{ (+(selectedInvoice?.paid_amount || 0)).toLocaleString('en-IN') }}
+            </p>
+            <p class="text-[10px] font-semibold text-amber-600">
+              Remaining: ₹{{ (remainingAmount).toLocaleString('en-IN') }}
+            </p>
+            }
           </div>
         </div>
 
@@ -379,11 +400,14 @@
       <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
 
         <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Project</p>
-            <p class="mt-1 text-sm font-black text-slate-800 dark:text-slate-100">
+          <div class="flex items-center text-sm">
+            <span class="font-black text-slate-500 uppercase mr-2">
+              Project :
+            </span>
+
+            <span class="font-black text-slate-800 dark:text-slate-100">
               {{ projectdata?.name || 'Project not linked' }}
-            </p>
+            </span>
           </div>
           @if (showSettlementCards) {
           <span
@@ -394,8 +418,7 @@
         </div>
 
         @if (showSettlementCards) {
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div (click)="onSettlementTypeChange('work_poc')"
             [ngClass]="selectedSettlementType==='work_poc' ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-slate-50 text-slate-600 hover:border-blue-200 hover:bg-blue-50/70 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-blue-500/10'"
             class="cursor-pointer rounded-2xl border p-4 flex flex-col items-center justify-center gap-1 transition-all">
@@ -425,15 +448,15 @@
           </div>
         </div>
 
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <div class="relative">
             <label
               class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Milestone</label>
             <div class="relative">
               <button type="button" (click)="milestoneDropdownOpen = !milestoneDropdownOpen; $event.stopPropagation()"
-                class="w-full flex items-center justify-between border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
-                <span class="truncate text-slate-600">
+                class="w-full flex items-center justify-between border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer dark:bg-slate-950 dark:border-slate-700">
+                <span class="truncate text-slate-600 dark:text-slate-300">
                   {{ selectedMilestoneIds.length === 0 ? 'Select milestones' : selectedMilestoneIds.length + '
                   milestone(s) selected' }}
                 </span>
@@ -442,7 +465,7 @@
               </button>
               @if (milestoneDropdownOpen) {
               <div
-                class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"
+                class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto dark:bg-slate-950 dark:border-slate-700"
                 (click)="$event.stopPropagation()">
                 @if (isLoadingMilestones) {
                 <div class="flex items-center gap-2 text-slate-400 text-xs p-3">
@@ -452,12 +475,14 @@
                 <p class="text-xs text-slate-400 italic p-3">No milestones found.</p>
                 } @else {
                 @for (m of milestones; track m.id) {
-                <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
+                <label
+                  class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors dark:hover:bg-blue-500/10"
                   [class.bg-blue-50]="selectedMilestoneIds.includes(+m.id)">
                   <input type="checkbox" [checked]="selectedMilestoneIds.includes(+m.id)"
-                    (change)="toggleMilestoneSelection(+m.id); milestoneDropdownOpen=false"
+                    (change)="toggleMilestoneSelection(+m.id)"
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0">
-                  <span class="text-xs font-semibold text-slate-700 flex-1 truncate">{{ m.name ?? m.title }}</span>
+                  <span class="text-xs font-semibold text-slate-700 flex-1 truncate dark:text-slate-300">{{ m.name ??
+                    m.title }}</span>
                   @if (m.progress != null) {
                   <span class="text-[9px] font-black shrink-0"
                     [ngClass]="m.progress >= 100 ? 'text-green-600' : 'text-amber-500'">{{ m.progress }}%</span>
@@ -478,93 +503,122 @@
               <button type="button"
                 (click)="subMilestoneDropdownOpen = !subMilestoneDropdownOpen; $event.stopPropagation()"
                 [disabled]="availableSubMilestones.length === 0"
-                class="w-full flex items-center justify-between border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                <span class="truncate text-slate-600">
+                class="w-full flex items-center justify-between border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-slate-950 dark:border-slate-700">
+                <span class="truncate text-slate-600 dark:text-slate-300">
                   {{ selectedSubMilestoneIds.length === 0 ? (availableSubMilestones.length === 0 ? 'Select milestone
                   first' : 'Select sub-milestones') : selectedSubMilestoneIds.length + ' sub-milestone(s) selected' }}
                 </span>
                 <span class="material-symbols-outlined text-slate-400 text-sm ml-1">{{ subMilestoneDropdownOpen ?
                   'expand_less' : 'expand_more' }}</span>
               </button>
-              @if (subMilestoneDropdownOpen && availableSubMilestones.length > 0) {
+              @if (subMilestoneDropdownOpen && selectedMilestoneIds.length > 0) {
               <div
-                class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"
+                class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto dark:bg-slate-950 dark:border-slate-700"
                 (click)="$event.stopPropagation()">
+                @if (availableSubMilestones.length === 0) {
+                <div class="px-3 py-2.5 text-xs text-slate-400 italic">
+                  No sub-milestones found for selected milestones.
+                </div>
+                } @else {
                 @for (sm of availableSubMilestones; track sm.id) {
-                <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
+                <label
+                  class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors dark:hover:bg-blue-500/10"
                   [class.bg-blue-50]="selectedSubMilestoneIds.includes(+sm.id)">
                   <input type="checkbox" [checked]="selectedSubMilestoneIds.includes(+sm.id)"
-                    (change)="toggleSubMilestoneSelection(+sm.id); subMilestoneDropdownOpen=false"
+                    (change)="toggleSubMilestoneSelection(+sm.id)"
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0">
-                  <span class="text-xs font-semibold text-slate-700 flex-1 truncate">{{ sm.name ?? sm.title }}</span>
+                  <span class="text-xs font-semibold text-slate-700 flex-1 truncate dark:text-slate-300">{{ sm.name ??
+                    sm.title }}</span>
                   @if (sm.progress != null) {
                   <span class="text-[9px] font-black shrink-0"
                     [ngClass]="sm.progress >= 100 ? 'text-green-600' : 'text-amber-500'">{{ sm.progress }}%</span>
                   }
                 </label>
                 }
+                }
               </div>
               }
             </div>
+            @if (selectedMilestoneIds.length > 0 && availableSubMilestones.length === 0) {
+            <p class="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">info</span>
+              Selected milestones has no sub-milestones.
+            </p>
+            } @else {
             <p class="text-[10px] text-slate-400 mt-1">{{ selectedSubMilestoneIds.length }} selected</p>
+            }
           </div>
 
-          <!-- ── Task Dropdown ── -->
+          <!-- Task Dropdown -->
           <div class="relative">
             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Task</label>
             <div class="relative">
               <button type="button" (click)="taskDropdownOpen = !taskDropdownOpen; $event.stopPropagation()"
                 [disabled]="availableTaskOptions.length === 0"
-                class="w-full flex items-center justify-between border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                <span class="truncate text-slate-600">
+                class="w-full flex items-center justify-between border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold bg-white outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-slate-950 dark:border-slate-700">
+                <span class="truncate text-slate-600 dark:text-slate-300">
                   {{ selectedTaskIds.length === 0 ? (availableTaskOptions.length === 0 ? 'Select sub-milestone first' :
                   'Select tasks') : selectedTaskIds.length + ' task(s) selected' }}
                 </span>
                 <span class="material-symbols-outlined text-slate-400 text-sm ml-1">{{ taskDropdownOpen ? 'expand_less'
                   : 'expand_more' }}</span>
               </button>
-              @if (taskDropdownOpen && availableTaskOptions.length > 0) {
+              @if (taskDropdownOpen && selectedSubMilestoneIds.length > 0) {
               <div
-                class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"
+                class="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto dark:bg-slate-950 dark:border-slate-700"
                 (click)="$event.stopPropagation()">
+                @if (availableTaskOptions.length === 0) {
+                <div class="px-3 py-2.5 text-xs text-slate-400 italic">
+                  No tasks found for selected sub-milestones.
+                </div>
+                } @else {
                 @for (task of availableTaskOptions; track task.id) {
-                <label class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors"
+                <label
+                  class="flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors dark:hover:bg-blue-500/10"
                   [class.bg-blue-50]="selectedTaskIds.includes(+task.id)">
                   <input type="checkbox" [checked]="selectedTaskIds.includes(+task.id)"
-                    (change)="toggleTaskSelection(+task.id); taskDropdownOpen=false"
+                    (change)="toggleTaskSelection(+task.id)"
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0">
-                  <span class="text-xs font-semibold text-slate-700 flex-1 truncate">{{ task.title }}</span>
+                  <span class="text-xs font-semibold text-slate-700 flex-1 truncate dark:text-slate-300">{{ task.title
+                    }}</span>
                   <span class="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
                     [ngClass]="getTaskStatusColor(task.status)">
                     {{ task.status }}
                   </span>
                 </label>
                 }
+                }
               </div>
               }
             </div>
+            @if (selectedSubMilestoneIds.length > 0 && availableTaskOptions.length === 0) {
+            <p class="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">info</span>
+              Selected sub-milestones has no tasks.
+            </p>
+            } @else {
             <p class="text-[10px] text-slate-400 mt-1">{{ selectedTaskIds.length }} selected</p>
+            }
           </div>
 
-          <!-- ── Settlement Completion ── -->
+          <!-- Settlement Completion -->
           <div>
             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
               {{ settlementCompletionLabel }}
             </label>
             <input [(ngModel)]="settlementCompletion" type="number" min="0" max="100"
               [readonly]="!isSettlementCompletionEditable"
-              [ngClass]="isSettlementCompletionEditable ? 'bg-white' : 'bg-slate-100 text-slate-500 cursor-not-allowed'"
-              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20">
+              [ngClass]="isSettlementCompletionEditable ? 'bg-white' : 'bg-slate-100 text-slate-500 cursor-not-allowed dark:bg-slate-800 dark:text-slate-400'"
+              class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-slate-950 dark:border-slate-700">
             <p class="text-[10px] text-slate-400 mt-1">
               {{ isSettlementCompletionEditable ? 'Auto-filled from selection, editable.' : 'Auto-filled from selection,
               read-only.' }}
             </p>
           </div>
-
         </div>
         }
-
       </div>
+
       <!-- Payment Fields -->
       <div
         class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
@@ -579,20 +633,42 @@
           </div>
         </div>
 
+        <!-- Payment Amount and Mode -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
               Amount to Pay <span class="text-red-500">*</span>
             </label>
+
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">₹</span>
-              <input [(ngModel)]="paymentForm.amount" type="number" min="0" [max]="selectedInvoice?.grand_total ?? null"
-                [placeholder]="(+(selectedInvoice?.grand_total || 0)).toString()"
+
+              <input [(ngModel)]="paymentForm.amount" type="number" min="0" [max]="remainingAmount"
+                placeholder="Enter Amount"
                 class="w-full pl-8 pr-3 py-3 border border-slate-200 rounded-xl bg-white text-sm font-black text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+
             </div>
-            <p class="text-[10px] text-slate-400 mt-1">
-              Grand total: ₹{{ (+(selectedInvoice?.grand_total || 0)).toLocaleString('en-IN') }}
+
+            <!-- Amount Validation Error -->
+            @if (paymentForm.amount && paymentForm.amount > remainingAmount) {
+            <p class="mt-1 text-[10px] font-semibold text-red-600">
+              Payment amount cannot exceed the remaining invoice balance.
             </p>
+            }
+
+            @if (selectedSettlementType === 'lumpsum' && paymentForm.amount && paymentForm.amount > 0) {
+            <p class="text-[10px] text-emerald-600 mt-1 font-bold flex items-center justify-between">
+              <span>Lumpsum Payment: ₹{{ paymentForm.amount | number:'1.0-0' }}</span>
+              <span>of ₹{{ (+(selectedInvoice?.grand_total || 0)).toLocaleString('en-IN') }}</span>
+            </p>
+            }
+
+            @if (paymentForm.amount && paymentForm.amount > 0 && selectedInvoice) {
+            <p class="text-[10px] text-amber-600 mt-1 font-semibold">
+              Remaining after this:
+              ₹{{ Math.max(0, remainingAmount - paymentForm.amount).toLocaleString('en-IN') }}
+            </p>
+            }
           </div>
 
           <div>
@@ -616,28 +692,33 @@
           </div>
         </div>
 
-        @if (paymentForm.mode === 'Cheque') {
-        <div class="mt-4">
-          <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-            Cheque Clearance Date <span class="text-red-500">*</span>
-          </label>
-          <input [(ngModel)]="paymentForm.clearance_date" type="date"
-            class="w-full px-3 py-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 cursor-pointer dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
-        </div>
-        }
+        <!-- Cheque Clearance Date & Reference -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          @if (paymentForm.mode === 'Cheque') {
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+              Cheque Clearance Date <span class="text-red-500">*</span>
+            </label>
+            <input [(ngModel)]="paymentForm.clearance_date" type="date" [min]="threeMonthsAgoDate" [max]="todayDate"
+              (click)="$event.stopPropagation()"
+              class="w-full px-3 py-3 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-800 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 cursor-pointer dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+          </div>
+          }
 
-        @if (paymentForm.mode !== 'Cash') {
-        <div class="mt-4">
-          <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-            Reference / Transaction No.
-            <span class="normal-case font-normal tracking-normal text-slate-400 ml-1">(Optional)</span>
-          </label>
-          <input [(ngModel)]="paymentForm.reference" type="text" placeholder="e.g. UTR123456789"
-            class="w-full border border-slate-200 rounded-xl bg-white px-3 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+          @if (paymentForm.mode !== '' && paymentForm.mode !== 'Cash') {
+          <div [class.sm:col-start-2]="paymentForm.mode !== 'Cheque'">
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+              Reference / Transaction No.
+              <span class="normal-case font-normal tracking-normal text-slate-400 ml-1"></span>
+            </label>
+            <input [(ngModel)]="paymentForm.reference" type="text" placeholder="e.g. UTR123456789"
+              class="w-full border border-slate-200 rounded-xl bg-white px-3 py-3 text-sm font-bold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+          </div>
+          }
         </div>
-        }
       </div>
 
+      <!-- Payment Error -->
       @if (paymentError) {
       <div
         class="flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-3 rounded-xl dark:bg-red-500/10 dark:border-red-500/20">

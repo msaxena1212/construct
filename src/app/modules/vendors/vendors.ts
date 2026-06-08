@@ -66,7 +66,6 @@ export class Vendors implements OnInit {
   showBillingModal = false;
   showLaborModal = false;
   showAddLaborForm = false;
-
   currentStep = 1;
   stepError = '';
   fileError = '';
@@ -147,6 +146,7 @@ export class Vendors implements OnInit {
 
   readonly sumRate = (acc: number, w: LaborWorker): number =>
     acc + (Number(w.daily_rate) || 0) * (w.labor_count || 0);
+  Math: any;
 
 
   ngOnInit(): void {
@@ -312,7 +312,6 @@ export class Vendors implements OnInit {
   }
 
   get availableTaskOptions(): IProjectTask[] {
-
     if (!this.selectedSubMilestoneIds.length) {
       return [];
     }
@@ -332,14 +331,29 @@ export class Vendors implements OnInit {
       )
     );
   }
+
   get isSettlementCompletionEditable(): boolean {
     return this.selectedSettlementType === 'work_poc';
   }
 
   get settlementCompletionLabel(): string {
-    if (this.selectedSettlementType === 'work_poc') return 'Work POC % Complete';
-    if (this.selectedSettlementType === 'milestone') return 'Milestone % Complete';
-    return 'Lump Sum % Complete';
+    if (this.selectedSettlementType === 'work_poc') return '% Complete';
+    if (this.selectedSettlementType === 'milestone') return '% Complete';
+    return '% Complete';
+  }
+
+  get remainingAmount(): number {
+    if (!this.selectedInvoice) return 0;
+    const grandTotal = parseFloat(String(this.selectedInvoice.grand_total)) || 0;
+    const alreadyPaid = parseFloat(String(this.selectedInvoice.paid_amount)) || 0;
+    return Math.max(0, grandTotal - alreadyPaid);
+  }
+
+  get lumpsumPaidDisplay(): string {
+    if (!this.selectedInvoice) return '';
+    const entered = Number(this.paymentForm.amount) || 0;
+    const total = Number(this.selectedInvoice.grand_total) || 0;
+    return `₹${entered.toLocaleString('en-IN')} / ₹${total.toLocaleString('en-IN')}`;
   }
 
 
@@ -430,21 +444,6 @@ export class Vendors implements OnInit {
   }
 
   onSubMilestoneMultiSelect(): void {
-
-    console.log(
-      'Selected Sub Milestones =>',
-      this.selectedSubMilestoneIds
-    );
-
-    console.log(
-      'All Tasks =>',
-      this.allTasks.map(t => ({
-        id: t.id,
-        title: t.title,
-        milestone_id: t.milestone_id
-      }))
-    );
-
     this.selectedSubMilestoneIds =
       this.selectedSubMilestoneIds.map(id => Number(id));
 
@@ -495,14 +494,10 @@ export class Vendors implements OnInit {
     this.selectedTaskIds = [];
     this.subMilestones = [];
     this.milestoneTasks = [];
-    // ✅ close all dropdowns on type change
     this.milestoneDropdownOpen = false;
     this.subMilestoneDropdownOpen = false;
     this.taskDropdownOpen = false;
     this.updateSettlementCompletionFromProject();
-    if (type === 'lumpsum') {
-      this.paymentForm.amount = null;
-    }
   }
 
   openVendorDetail(vendor: Vendor): void {
@@ -894,7 +889,7 @@ export class Vendors implements OnInit {
     const selectedProjectId = inv.project_id ? Number(inv.project_id) : null;
 
     this.paymentForm = {
-      amount: Number(inv.grand_total) || null,
+      amount: null,
       project_id: selectedProjectId,
       mode: '',
       reference: '',
@@ -936,7 +931,6 @@ export class Vendors implements OnInit {
     this.subMilestones = [];
     this.milestoneTasks = [];
     this.projectdata = null;
-    // ✅ close dropdowns
     this.milestoneDropdownOpen = false;
     this.subMilestoneDropdownOpen = false;
     this.taskDropdownOpen = false;
@@ -953,6 +947,15 @@ export class Vendors implements OnInit {
     }
   }
 
+  get todayDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  get threeMonthsAgoDate(): string {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    return date.toISOString().split('T')[0];
+  }
   confirmPayment(): void {
     if (!this.selectedInvoice || this.isProcessingPayment) return;
     this.paymentError = '';
@@ -965,21 +968,42 @@ export class Vendors implements OnInit {
       this.paymentError = 'Please select a payment mode.';
       return;
     }
-    if (this.paymentForm.mode === 'Cheque' && !this.paymentForm.clearance_date) {
-      this.paymentError = 'Please select cheque clearance date.';
-      return;
-    }
+    if (this.paymentForm.mode === 'Cheque') {
+      if (!this.paymentForm.clearance_date) {
+        this.paymentError = 'Please select cheque clearance date.';
+        return;
+      }
 
+      const selectedDate = new Date(this.paymentForm.clearance_date);
+      const today = new Date();
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+      selectedDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      threeMonthsAgo.setHours(0, 0, 0, 0);
+
+      if (selectedDate < threeMonthsAgo) {
+        this.paymentError = 'Cheque clearance date cannot be more than 3 months in the past.';
+        return;
+      }
+
+      if (selectedDate > today) {
+        this.paymentError = 'Cheque clearance date cannot be in the future.';
+        return;
+      }
+    }
     this.isProcessingPayment = true;
 
-    // ✅ Status auto-determine from amount
-    const paidAmt = Number(this.paymentForm.amount);
+    const paidNow = Number(this.paymentForm.amount);
+    const alreadyPaid = Number(this.selectedInvoice.paid_amount) || 0;
     const grandTotal = Number(this.selectedInvoice.grand_total);
-    const resolvedStatus = paidAmt >= grandTotal ? 'Paid' : 'Partially Paid';
+    const totalAfterThis = alreadyPaid + paidNow;
+    const resolvedStatus = totalAfterThis >= grandTotal ? 'Paid' : 'Partially Paid';
 
     const payload: any = {
       status: resolvedStatus,
-      amount: paidAmt,
+      amount: paidNow,
       mode: this.paymentForm.mode,
       reference: this.paymentForm.reference || null,
       clearance_date: this.paymentForm.clearance_date || null,
@@ -1038,6 +1062,7 @@ export class Vendors implements OnInit {
       },
     });
   }
+
   toggleMilestoneSelection(id: number): void {
     const idx = this.selectedMilestoneIds.indexOf(id);
     if (idx === -1) {
@@ -1070,6 +1095,7 @@ export class Vendors implements OnInit {
     this.onTaskMultiSelect();
     this.taskDropdownOpen = false;
   }
+
   viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;
 
@@ -1111,6 +1137,34 @@ export class Vendors implements OnInit {
         <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700;">₹${Number(item.total || 0).toLocaleString('en-IN')}</td>
       </tr>`;
     }).join('');
+
+    const paymentHistory: any[] = Array.isArray(inv.payment_history) ? inv.payment_history : [];
+    const paymentHistoryRows = paymentHistory.length > 0 ? `
+      <div style="margin-top:32px;">
+        <h3 style="font-size:15px;font-weight:900;margin-bottom:12px;color:#1e293b;">Payment History</h3>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f1f5f9;">
+              <th style="padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">#</th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Date</th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Mode</th>
+              <th style="padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Reference</th>
+              <th style="padding:8px 12px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${paymentHistory.map((p: any, i: number) => `
+              <tr>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;">${i + 1}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;">${new Date(p.paid_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;">${p.mode || '—'}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:12px;">${p.reference || '—'}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-weight:700;text-align:right;">₹${Number(p.amount).toLocaleString('en-IN')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` : '';
 
     const html = `<!DOCTYPE html>
 <html>
@@ -1175,7 +1229,17 @@ export class Vendors implements OnInit {
       <span style="font-weight:900;">Grand Total</span>
       <span style="color:#4f46e5;font-size:18px;font-weight:900;">₹${Number(inv.grand_total).toLocaleString('en-IN')}</span>
     </div>
+    ${Number(inv.paid_amount) > 0 ? `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid #e5e7eb;">
+      <span style="color:#16a34a;font-weight:700;">Paid Amount</span>
+      <span style="color:#16a34a;font-weight:900;">₹${Number(inv.paid_amount).toLocaleString('en-IN')}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+      <span style="color:#dc2626;font-weight:700;">Remaining</span>
+      <span style="color:#dc2626;font-weight:900;">₹${Math.max(0, Number(inv.grand_total) - Number(inv.paid_amount)).toLocaleString('en-IN')}</span>
+    </div>` : ''}
   </div>
+  ${paymentHistoryRows}
   <div style="margin-top:32px;text-align:center;">
     <button onclick="window.print()"
       style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">
