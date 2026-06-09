@@ -116,10 +116,24 @@ module.exports = (sequelize, Sequelize) => {
     paid_amount: {
       type: Sequelize.DECIMAL(15, 2),
       allowNull: true,
+      defaultValue: 0,
     },
     paid_at: {
       type: Sequelize.DATE,
       allowNull: true,
+    },
+
+    payment_history: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: 'JSON array of all payment transactions for this invoice',
+      get() {
+        const raw = this.getDataValue('payment_history');
+        try { return raw ? JSON.parse(raw) : []; } catch { return []; }
+      },
+      set(value) {
+        this.setDataValue('payment_history', value ? JSON.stringify(value) : null);
+      },
     },
   }, {
     freezeTableName: true,
