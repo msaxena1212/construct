@@ -554,6 +554,138 @@ class ProjectController {
   }
 
 
+  //Budgets total spent
+  async getBudget_total_spent_ProjectById(req, res) {
+    try {
+      const { id } = req.params;
+      const company_id = req.user.company_id;
+
+      const project = await db.project.findOne({
+        where: { id, company_id },
+        include: [
+          {
+            model: db.milestone,
+            as: 'milestones'
+          },
+          {
+            model: db.project_document,
+            as: 'documents'
+          },
+          {
+            model: db.user,
+            as: 'team_members',
+            attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
+            through: { attributes: ['role'] }
+          }
+        ]
+      });
+
+      const vendor_invoice = await db.vendors_invoice.findOne({
+        where: { project_id: id, company_id }
+      });
+
+      if (!project) {
+        return res.status(404).json({
+          message: "Project not found or unauthorized."
+        });
+      }
+
+      const projectData = project.toJSON();
+      const milestones = projectData.milestones || [];
+
+      projectData.milestones_with_child = milestones
+        .filter(m => m.parent_id === null)
+        .map(parent => ({
+          ...parent,
+          children: milestones.filter(child => child.parent_id === parent.id)
+        }));
+
+      // Attach vendor invoice info
+      projectData.vendor_invoice = vendor_invoice ? vendor_invoice.toJSON() : null;
+
+      // If you only want paid_amount
+      projectData.total_spent = vendor_invoice ? vendor_invoice.paid_amount : 0;
+
+      return res.status(200).json({
+        data: projectData
+      });
+
+    } catch (error) {
+      return res.status(500).json({
+        message: "Error fetching project details.",
+        error: error.message
+      });
+    }
+  }
+
+
+  
+
+  //Budgets total ALL spent
+  async getBudget_total_spent_ProjectALL(req, res) {
+    try {
+      const { id } = req.params;
+      const company_id = req.user.company_id;
+
+      const project = await db.project.findOne({
+        where: { id, company_id },
+        include: [
+          {
+            model: db.milestone,
+            as: 'milestones'
+          },
+          {
+            model: db.project_document,
+            as: 'documents'
+          },
+          {
+            model: db.user,
+            as: 'team_members',
+            attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
+            through: { attributes: ['role'] }
+          }
+        ]
+      });
+
+      const vendor_invoice = await db.vendors_invoice.findOne({
+        where: { project_id: id, company_id }
+      });
+
+      if (!project) {
+        return res.status(404).json({
+          message: "Project not found or unauthorized."
+        });
+      }
+
+      const projectData = project.toJSON();
+      const milestones = projectData.milestones || [];
+
+      projectData.milestones_with_child = milestones
+        .filter(m => m.parent_id === null)
+        .map(parent => ({
+          ...parent,
+          children: milestones.filter(child => child.parent_id === parent.id)
+        }));
+
+      // Attach vendor invoice info
+      projectData.vendor_invoice = vendor_invoice ? vendor_invoice.toJSON() : null;
+
+      // If you only want paid_amount
+      projectData.total_spent = vendor_invoice ? vendor_invoice.paid_amount : 0;
+
+      return res.status(200).json({
+        data: projectData
+      });
+
+    } catch (error) {
+      return res.status(500).json({
+        message: "Error fetching project details.",
+        error: error.message
+      });
+    }
+  }
+
+
 }
 
 module.exports = new ProjectController();
