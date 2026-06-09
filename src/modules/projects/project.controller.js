@@ -619,7 +619,7 @@ class ProjectController {
   }
 
 
-  
+
 
   //Budgets total ALL spent
   async getBudget_total_spent_ProjectALL(req, res) {
