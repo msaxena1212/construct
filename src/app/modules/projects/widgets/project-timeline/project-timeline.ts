@@ -1,316 +1,199 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ProjectService } from '../../services/project-service';
 import {
-  IProject,
-  IProjectTask,
-  IMilestone,
-  ITimelinePhase,
-  ITimelineItem,
-} from '../../../../shared/interfaces/project.interface';
+  AfterViewInit,
+  Component,
+  ElementRef,
+  ViewChild,
+  Input
+} from '@angular/core';
+
+import Gantt from 'frappe-gantt';
+import { ProjectService } from '../../services/project-service';
 
 @Component({
   selector: 'app-project-timeline',
   standalone: false,
   templateUrl: './project-timeline.html',
-  styleUrl: './project-timeline.scss',
+  styleUrls: ['./project-timeline.scss']
 })
-export class ProjectTimeline implements OnInit {
-  @Input() projectId: string | number = '';
-  @Input() selectedMember = 'All Members';
+export class ProjectTimeline implements AfterViewInit {
 
-  loading = true;
-  viewType: 'day' | 'week' | 'month' = 'week';
-  showCriticalPath = false;
-  showTeamView = false;
+  @Input() projectId!: number;
+  @Input() selectedMember: any;
 
-  // Dynamic Timeline Logic
-  timelineHeaders: any[] = [];
-  startDate: Date = new Date();
-  totalDurationDays = 90; // Default view window
+  @ViewChild('gantt', { static: true })
+  ganttContainer!: ElementRef;
 
-  selectedProject = '';
-  projects: string[] = [];
+  gantt: any;
 
-  team: any[] = [{ name: 'All Members', avatar: '' }];
-  phases: ITimelinePhase[] = [];
-  resources: any[] = [];
+  currentView: 'Day' | 'Week' | 'Month' = 'Week';
+
+  phasesData: any[] = [];
+  loading = false;
 
   constructor(private projectService: ProjectService) { }
 
-  ngOnInit(): void {
-    this.initTimelineRange();
-    if (this.projectId) {
-      this.fetchTimelineData();
+
+  ngAfterViewInit(): void {
+    this.fetchTimelineData();
+  }
+
+  // -----------------------------
+  // API CALL (DYNAMIC DATA)
+  // -----------------------------
+
+fetchTimelineData() {
+
+  this.projectService.getProjectTimeline(this.projectId).subscribe({
+    next: (res) => {
+
+      // your EXACT data
+      this.phasesData = res.data.milestones_with_child || [];
+
+      console.log('RAW API:', this.phasesData);
+
+      setTimeout(() => {
+        this.renderGantt();
+      }, 0);
     }
+  });
 
-    setTimeout(() => {
-
-
-      console.log(this.filteredPhases, 'console.log(this.filteredPhases) ')
-    }, 500)
-  }
-
-  // initTimelineRange() {
-  //   const today = new Date();
-  //   this.startDate = new Date(today);
-
-  //   if (this.viewType === 'day') {
-  //     this.startDate.setDate(today.getDate() - 3);
-  //     this.totalDurationDays = 14;
-  //   } else if (this.viewType === 'week') {
-  //     this.startDate.setDate(today.getDate() - 21);
-  //     this.totalDurationDays = 70; // ~10 weeks
-  //   } else {
-  //     this.startDate.setDate(today.getDate() - 60);
-  //     this.totalDurationDays = 180; // ~6 months
-  //   }
-
-  //   this.generateTimelineHeaders();
-  // }
-
-  initTimelineRange() {
-  const today = new Date();
-
-  // Current date se start
-  this.startDate = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-
-  if (this.viewType === 'day') {
-    this.totalDurationDays = 14;
-  } else if (this.viewType === 'week') {
-    this.totalDurationDays = 70;
-  } else {
-    this.totalDurationDays = 180;
-  }
-
-  this.generateTimelineHeaders();
 }
 
-  generateTimelineHeaders() {
-    this.timelineHeaders = [];
-    const tempDate = new Date(this.startDate);
+  // -----------------------------
+  // FLATTEN API DATA → GANTT FORMAT
+  // -----------------------------
+buildGanttTasks(data: any[]): any[] {
 
-    if (this.viewType === 'day') {
-      for (let i = 0; i < 14; i++) {
-        this.timelineHeaders.push({
-          label: tempDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
-          isToday: tempDate.toDateString() === new Date().toDateString(),
+  const tasks: any[] = [];
+
+  data.forEach((phase) => {
+
+    let minStart: string | null = null;
+    let maxEnd: string | null = null;
+
+    // ---------------------------
+    // CHILDREN
+    // ---------------------------
+    phase.children?.forEach((child: any) => {
+
+      if (child.startDate && child.endDate) {
+
+        const start = child.startDate;
+        const end = child.endDate;
+
+        tasks.push({
+          id: `child-${child.id}`,   // 🔥 IMPORTANT FIX
+          name: child.name,
+          start,
+          end,
+          progress: child.progress ?? 0
         });
-        tempDate.setDate(tempDate.getDate() + 1);
-      }
-    } else if (this.viewType === 'week') {
-      for (let i = 0; i < 10; i++) {
-        this.timelineHeaders.push({
-          label: tempDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
-          isCurrent:
-            tempDate <= new Date() &&
-            new Date() < new Date(tempDate.getTime() + 7 * 24 * 60 * 60 * 1000),
-        });
-        tempDate.setDate(tempDate.getDate() + 7);
-      }
-    } else {
-      for (let i = 0; i < 6; i++) {
-        this.timelineHeaders.push({
-          label: tempDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-          isCurrent:
-            tempDate.getMonth() === new Date().getMonth() &&
-            tempDate.getFullYear() === new Date().getFullYear(),
-        });
-        tempDate.setMonth(tempDate.getMonth() + 1);
-      }
-    }
-  }
 
-  fetchTimelineData() {
-    this.loading = true;
-    this.projectService.getProjectTimeline(this.projectId).subscribe({
-      next: (res) => {
-        const project: IProject = res.data;
-        this.selectedProject = project.name;
-        this.projects = [project.name];
+        // for parent auto range
+        if (!minStart || start < minStart) minStart = start;
+        if (!maxEnd || end > maxEnd) maxEnd = end;
+      }
 
-        if (project.team_members) {
-          this.team = [{ name: 'All Members', avatar: '' }, ...project.team_members];
-          console.log('Project Team Members:', project.team_members);
-          this.resources = project.team_members.map((m) => ({
-            name: m.firstname + ' ' + m.lastname,
-            role: m.project_team?.role || 'Site Team',
-            utilization: Math.floor(Math.random() * 40) + 60,
-            avatar: m.avatar,
-            overAllocated: Math.random() > 0.8,
-          }));
-        }
-
-        this.mapDataToPhases(project);
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-      },
     });
+
+    // ---------------------------
+    // PARENT (ALWAYS SHOW)
+    // ---------------------------
+    const start = phase.startDate || minStart;
+    const end = phase.endDate || maxEnd;
+
+    tasks.push({
+      id: `${phase.id}`,   // 🔥 IMPORTANT FIX
+      name: phase.name,
+      start: start,
+      end: end,
+      progress: phase.progress ?? 0
+    });
+
+  });
+
+  return tasks;
+}
+
+  // -----------------------------
+  // RENDER GANTT
+  // -----------------------------
+ renderGantt(): void {
+
+  const ganttTasks = this.buildGanttTasks(this.phasesData);
+
+  console.log('FINAL GANTT TASKS:', ganttTasks);
+
+  const container = this.ganttContainer.nativeElement;
+
+  container.innerHTML = '';
+
+this.gantt = new Gantt(container, ganttTasks, {
+  view_mode: this.currentView
+} as any);
+
+// 👇 YAHAN LAGANA HAI
+setTimeout(() => {
+  const svg = this.ganttContainer.nativeElement.querySelector('svg');
+  if (svg) {
+    svg.style.minHeight = '600px';
+    svg.style.height = '100%';
+  }
+}, 0);
+
+  setTimeout(() => {
+    this.applyColors();
+  }, 0);
+}
+
+  // -----------------------------
+  // VIEW CHANGE (BUTTON ONLY)
+  // -----------------------------
+  changeView(mode: 'Day' | 'Week' | 'Month'): void {
+
+    this.currentView = mode;
+
+    if (!this.gantt) return;
+
+    this.gantt.change_view_mode(mode);
+
+    setTimeout(() => {
+      this.applyColors();
+    }, 0);
   }
 
-  mapDataToPhases(project: IProject) {
-    const today = new Date();
-    const milestones: ITimelineItem[] = (project.milestones || []).map((m) => ({
-      id: `${m.id}`,
-      parent_id: m.parent_id,
-      name: m.name,
-      color: 'bg-secondary',
-      isMilestone: true,
-      milestoneTitle: m.name,
-      left: this.calculatePosition(new Date(m.startDate || m.createdAt || today)),
-    }));
+  // -----------------------------
+  // COLORS (NO SCROLL ISSUE)
+  // -----------------------------
+  applyColors(): void {
 
-    const tasks: ITimelineItem[] = (project.tasks || []).map((t) => ({
-      id: `${t.id}`,
-      name: t.title,
-      parent_id: t.parent_id,
-
-      // Child task check
-      isChild: !!t.parent_id,
-
-      // Child milestone check
-      isMilestone:
-        !!t.parent_id &&
-        t.status === 'Completed', // apni condition laga lo
-
-      milestoneTitle: t.title,
-
-      color:
-        t.status === 'Completed'
-          ? 'bg-green-500'
-          : t.priority === 'High Priority'
-            ? 'bg-error'
-            : 'bg-primary',
-
-      completion:
-        t.progress ??
-        (t.status === 'Completed'
-          ? 100
-          : t.status === 'In Progress'
-            ? 45
-            : 0),
-
-      status: t.status,
-
-      left: this.calculatePosition(
-        new Date(t.createdAt || today)
-      ),
-
-      width: this.calculateWidth(
-        new Date(t.createdAt || today),
-        new Date(t.due_date || today)
-      ),
-
-      assignee: t.assignees?.[0]?.avatar,
-
-      critical: t.priority === 'High Priority',
-    }));
-
-    this.phases = [
-      { title: 'PROJECT MILESTONES', tasks: milestones },
-      { title: 'CONSTRUCTION TASKS', tasks: tasks },
+    const colors = [
+      '#3b82f6',
+      '#f59e0b',
+      '#10b981',
+      '#8b5cf6',
+      '#ef4444',
+      '#06b6d4',
+      '#ec4899',
+      '#84cc16'
     ];
-  }
 
-  calculatePosition(date: Date): string {
-    const diffTime = date.getTime() - this.startDate.getTime();
-    const diffDays = diffTime / (1000 * 3600 * 24);
-    let pos = (diffDays / this.totalDurationDays) * 100;
-    if (pos < 0) pos = 0;
-    if (pos > 98) pos = 98;
-    return pos + '%';
-  }
+    const container = this.ganttContainer.nativeElement;
 
-  calculateWidth(start: Date, end: Date): string {
-    const diffTime = end.getTime() - start.getTime();
-    let diffDays = diffTime / (1000 * 3600 * 24);
-    if (diffDays < 2) diffDays = 2;
-    let width = (diffDays / this.totalDurationDays) * 100;
-    if (width > 40) width = 40;
-    return width + '%';
-  }
+    const bars = container.querySelectorAll('.bar');
+    const progressBars = container.querySelectorAll('.bar-progress');
 
-  get filteredPhases(): ITimelinePhase[] {
-    if (this.selectedMember === 'All Members') {
-      return this.phases;
-    }
-
-    const member = this.team.find(
-      (m) =>
-        `${m.firstname} ${m.lastname}` === this.selectedMember ||
-        m.name === this.selectedMember
-    );
-
-    return this.phases
-      .map((p) => ({
-        ...p,
-        tasks: p.tasks.filter(
-          (t) =>
-            t.parent_id ||
-            t.assignee === member?.avatar ||
-            t.isMilestone
-        ),
-      }))
-      .filter((p) => p.tasks.length > 0);
-  }
-
-
-
-
-
-  setViewType(type: 'day' | 'week' | 'month') {
-    this.viewType = type;
-    this.initTimelineRange();
-    if (this.projectId) this.fetchTimelineData();
-  }
-
-  toggleCriticalPath() {
-    this.showCriticalPath = !this.showCriticalPath;
-  }
-
-  toggleTeamView() {
-    this.showTeamView = !this.showTeamView;
-  }
-
-  navigate(direction: 'next' | 'prev') {
-    const days = direction === 'next' ? 7 : -7;
-    this.startDate.setDate(this.startDate.getDate() + days);
-    this.generateTimelineHeaders();
-    if (this.projectId) this.fetchTimelineData();
-  }
-
-  // getCurrentDateLabel(): string {
-  //   return this.startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  // }
-
-  getCurrentDateLabel(): string {
-    return this.startDate.toLocaleDateString('en-US', {
-      month: 'long',
-      year: 'numeric'
+    bars.forEach((bar: any, index: number) => {
+      const color = colors[index % colors.length];
+      bar.setAttribute('fill', color);
+      bar.style.fill = color;
     });
-  }
 
-  getTodayPosition(): string {
-    const today = new Date();
-    const diffTime = today.getTime() - this.startDate.getTime();
-    const diffDays = diffTime / (1000 * 3600 * 24);
-    let pos = (diffDays / this.totalDurationDays) * 100;
-    if (pos < 0 || pos > 100) return '-100%';
-    return pos + '%';
-  }
-
-  resetToToday() {
-    this.initTimelineRange();
-    if (this.projectId) this.fetchTimelineData();
-  }
-
-  getMemberLabel(member: any): string {
-    if (member?.name) return member.name;
-    return [member?.firstname, member?.lastname].filter(Boolean).join(' ') || 'Unnamed Member';
+    progressBars.forEach((bar: any, index: number) => {
+      const color = colors[index % colors.length];
+      bar.setAttribute('fill', color);
+      bar.style.fill = color;
+      bar.style.opacity = '0.75';
+    });
   }
 }
