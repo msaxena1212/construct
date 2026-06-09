@@ -520,6 +520,9 @@ export class Vendors implements OnInit {
     this.isEditMode = false;
     this.editingVendorId = null;
     this.newVendor = this.defaultVendor();
+    if (this.projectId) {
+      this.newVendor.project_id = Number(this.projectId);
+    }
     this.contractFiles = [];
     this.stepError = '';
     this.fileError = '';
@@ -567,6 +570,7 @@ export class Vendors implements OnInit {
       address: { street: v.address?.street ?? '', pincode: v.address?.pincode ?? '' },
       budget: String(v.budget_allocation ?? ''),
       skill: normalizedSkills,
+      project_id: v.project_id ? Number(v.project_id) : null,
     };
 
     this.showVendorDetailModal = false;
@@ -624,6 +628,7 @@ export class Vendors implements OnInit {
   }
 
   private createVendorData(): void {
+    debugger
     const fd = new FormData();
     fd.append('vendorLegalName', this.newVendor.name);
     fd.append('spocName', this.newVendor.spoc.name);
@@ -638,7 +643,11 @@ export class Vendors implements OnInit {
     fd.append('skill', Array.isArray(this.newVendor.skill)
       ? this.newVendor.skill.join(', ')
       : this.newVendor.skill);
-    if (this.projectId) fd.append('project_id', String(this.projectId));
+    const resolvedProjectId = this.newVendor.project_id || this.projectId || null;
+    if (resolvedProjectId) {
+      fd.append('project_id', String(resolvedProjectId));
+    }
+
     this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
     this.isSaving = true;
@@ -675,6 +684,11 @@ export class Vendors implements OnInit {
     fd.append('skill', Array.isArray(this.newVendor.skill)
       ? this.newVendor.skill.join(', ')
       : this.newVendor.skill);
+    const resolvedProjectId = this.newVendor.project_id || this.projectId || null;
+    if (resolvedProjectId) {
+      fd.append('project_id', String(resolvedProjectId));
+    }
+
     this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
     this.isSaving = true;
@@ -1487,6 +1501,7 @@ export class Vendors implements OnInit {
       address: { street: '', pincode: '' },
       budget: '',
       skill: [] as string[],
+      project_id: null as number | null,
     };
   }
 

@@ -1345,7 +1345,28 @@
         </div>
         <p class="text-[9px] text-outline/70 mt-1">Enter budget in INR (e.g. 500000)</p>
       </div>
-
+      <div>
+        <label class="text-[9px] font-black uppercase tracking-widest text-outline mb-1.5 block">
+          Project
+          <span class="normal-case font-normal tracking-normal text-outline/60 ml-1"></span>
+        </label>
+        <select [(ngModel)]="newVendor.project_id" [disabled]="!!newVendor.project_id && !!projectId"
+          [class.opacity-60]="!!newVendor.project_id && !!projectId"
+          [class.cursor-not-allowed]="!!newVendor.project_id && !!projectId"
+          [class.cursor-pointer]="!(!!newVendor.project_id && !!projectId)"
+          class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest">
+          <option [ngValue]="null" disabled>Select Project</option>
+          @for (p of projects; track p.id) {
+          <option [ngValue]="p.id">{{ p.name }}</option>
+          }
+        </select>
+        @if (!!newVendor.project_id && !!projectId) {
+        <p class="text-[9px] text-outline/60 mt-1 flex items-center gap-1">
+          <span class="material-symbols-outlined text-[11px]">lock</span>
+          Project context se auto-linked — change nahi kar sakte.
+        </p>
+        }
+      </div>
       <div>
         <label class="text-[9px] font-black uppercase tracking-widest text-outline mb-1.5 block">
           Skill / Services Offered <span class="text-error">*</span>
