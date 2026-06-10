@@ -686,6 +686,127 @@ class ProjectController {
   }
 
 
+    //Budgets
+  async getBudget_vendorProjectById(req, res) {
+    try {
+
+      const { id } = req.params;
+
+      const company_id = req.user.company_id;
+
+      const project = await db.project.findOne({
+        where: { id, company_id },
+        include: [
+          {
+            model: db.milestone,
+            as: 'milestones'
+          },
+          {
+            model: db.project_document,
+            as: 'documents'
+          },
+          {
+            model: db.user,
+            as: 'team_members',
+            attributes: [
+              'id',
+              'firstname',
+              'lastname',
+              'email',
+              'avatar'
+            ],
+            through: { attributes: ['role'] }
+          }
+        ]
+      });
+
+      if (!project) {
+        return res.status(404).json({
+          message: "Project not found or unauthorized."
+        });
+      }
+
+      const projectData = project.toJSON();
+
+      const milestones = projectData.milestones || [];
+
+      projectData.milestones_with_child = milestones
+
+        .filter(m => m.parent_id === null)
+
+        .map(parent => ({
+
+          ...parent,
+          children: milestones.filter(
+            child => child.parent_id === parent.id
+
+          )
+        }));
+
+
+      // const company_id = getCompanyId(req);
+      // const { vendorId } = req.params;
+
+      // const vendor = await db.vendors.findOne({ where: { id: vendorId, company_id } });
+      // if (!vendor)
+      //   return res.status(404).json({ success: false, message: 'Vendor not found' });
+
+      const invoices = await db.vendors_invoice.findAll({
+        where: {
+          project_id: id,
+          company_id,
+          //  status: "Partially Paid"
+        },
+        order: [['createdAt', 'DESC']],
+      });
+
+      console.log("datatatat", invoices)
+
+
+      const totalSpend = invoices.reduce((sum, invoice) => {
+
+        return sum + parseFloat(invoice.paid_amount || 0);
+
+      }, 0);
+
+      console.log("Total Spend:", totalSpend);
+
+      const grand_total = invoices.reduce((sum, invoice) => {
+
+        return sum + parseFloat(invoice.grand_total || 0);
+
+      }, 0);
+
+      console.log("Total Spend:", grand_total);
+
+
+      const on_hold = (grand_total - totalSpend);
+
+      console.log("on_hold", on_hold)
+
+      const remaining_budget = (projectData.budget_total - grand_total);
+
+      console.log("remaining_budget", remaining_budget);
+
+
+      return res.status(200).json({
+        data: {
+          ...projectData,
+          invoice: invoices,
+          totalSpend,
+          grand_total,
+          on_hold,
+          remaining_budget
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Error fetching project details.",
+        error: error.message
+      });
+    }
+  }
+
 }
 
 module.exports = new ProjectController();
