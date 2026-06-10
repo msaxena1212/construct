@@ -1,419 +1,617 @@
 <div
-  class="min-h-screen bg-gradient-to-br from-slate-100 via-white to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-6">
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
+  class="min-h-screen bg-gradient-to-br from-slate-100 via-white to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 lg:p-6">
 
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
     <div>
-      <h1 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
-        Construction Calendar
-      </h1>
-
-      <p class="text-slate-500 dark:text-slate-400 mt-1">
-        Project schedule, labor planning & site activities
-      </p>
+      <h1 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">Construction Calendar</h1>
+      <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Project schedules, milestones &amp; team meetings</p>
     </div>
-
     <div class="flex flex-wrap gap-3">
-
-      <button (click)="openAddActivity()"
-        class="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-lg shadow-orange-500/30 transition-all duration-300 hover:-translate-y-1">
-        + Add Activity
+      <button (click)="goToToday()"
+        class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 transition-all duration-200">
+        Today
       </button>
-
+      <button (click)="openAddMeeting()"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-lg shadow-orange-500/30 transition-all duration-300 hover:-translate-y-0.5 text-sm">
+        <span class="material-symbols-outlined text-[18px]">video_call</span>
+        Schedule Meeting
+      </button>
     </div>
-
   </div>
+
 
   <div
-    class="bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl rounded-[32px] border border-white/40 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
+    class="bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl rounded-[28px] border border-white/40 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
 
     <div
-      class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 p-6 border-b border-slate-200 dark:border-slate-800">
-
-      <div class="flex items-center gap-4">
+      class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-5 border-b border-slate-200 dark:border-slate-800">
+      <div class="flex items-center gap-3">
         <button type="button" (click)="previousMonth()"
-          class="h-12 w-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-orange-50 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105">
-
-          <span class="material-symbols-outlined text-[22px] text-slate-700 dark:text-white">
-            chevron_left
-          </span>
-
+          class="h-10 w-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-orange-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105">
+          <span class="material-symbols-outlined text-[20px] text-slate-700 dark:text-white">chevron_left</span>
         </button>
-
-        <div class="min-w-[170px]">
-
-          <h2 class="text-2xl font-black text-slate-800 dark:text-white">
-
-            {{ months[currentMonth] }} {{ currentYear }}
-
+        <div class="min-w-[160px]">
+          <h2 class="text-xl font-black text-slate-800 dark:text-white">{{ months[currentMonth] }} {{ currentYear }}
           </h2>
-
-          <p class="text-sm text-slate-500 dark:text-slate-400">
-            Site Work Timeline
-          </p>
-
+          <p class="text-xs text-slate-400">{{ projects.length }} projects · {{ meetings.length }} meetings</p>
         </div>
-
         <button type="button" (click)="nextMonth()"
-          class="h-12 w-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-orange-50 dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105">
-
-          <span class="material-symbols-outlined text-[22px] text-slate-700 dark:text-white">
-            chevron_right
-          </span>
-
+          class="h-10 w-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-orange-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105">
+          <span class="material-symbols-outlined text-[20px] text-slate-700 dark:text-white">chevron_right</span>
         </button>
-
       </div>
 
-      <div class="flex flex-wrap items-center gap-4">
-
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-green-600"></div>
-          <span class="text-sm text-slate-600 dark:text-slate-300">
-            Project Start
-          </span>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div class="flex items-center gap-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald-600"></div>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Project Start</span>
         </div>
-
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-red-600"></div>
-          <span class="text-sm text-slate-600 dark:text-slate-300">
-            Project Completion
-          </span>
+        <div class="flex items-center gap-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Project End</span>
         </div>
-
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-blue-600"></div>
-          <span class="text-sm text-slate-600 dark:text-slate-300">
-            Milestone Start
-          </span>
+        <div class="flex items-center gap-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Milestone Start</span>
         </div>
-
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full bg-amber-600"></div>
-          <span class="text-sm text-slate-600 dark:text-slate-300">
-            Milestone End
-          </span>
+        <div class="flex items-center gap-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Milestone End</span>
         </div>
-
+        <div class="flex items-center gap-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-violet-600"></div>
+          <span class="text-xs text-slate-500 dark:text-slate-400">Meeting</span>
+        </div>
       </div>
-
     </div>
 
-    <div class="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800">
 
-      <div class="bg-slate-50 dark:bg-slate-900 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
-        Sun
+    <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
+      <div *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']"
+        class="bg-slate-50 dark:bg-slate-900 py-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+        {{ d }}
       </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
-        Mon
-      </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
-        Tue
-      </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
-        Wed
-      </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
-        Thu
-      </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
-        Fri
-      </div>
-
-      <div class="bg-slate-50 dark:bg-slate-900 py-4 text-center text-sm font-bold text-slate-500 dark:text-slate-400">
-        Sat
-      </div>
-
     </div>
 
-    <div class="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800">
 
-      <div *ngFor="let day of calendarDays" [class.opacity-40]="!day.date"
-        class="min-h-[170px] bg-white dark:bg-slate-900 p-3 hover:bg-orange-50/40 dark:hover:bg-slate-800 transition-all duration-300 relative">
+    <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
+      <div *ngFor="let day of calendarDays; trackBy: trackByDate" [class.opacity-0]="!day.date"
+        [class.pointer-events-none]="!day.date" [class.ring-2]="day.today" [class.ring-orange-400]="day.today"
+        [class.ring-inset]="day.today"
+        class="min-h-[140px] bg-white dark:bg-slate-900 p-2.5 hover:bg-orange-50/30 dark:hover:bg-slate-800/60 transition-all duration-200 relative group cursor-pointer"
+        (click)="openDayEvents(day, $event)">
 
-        <div class="flex items-center justify-between mb-3">
-
-          <span class="text-sm font-bold text-slate-700 dark:text-slate-200">
+        <div class="flex items-start justify-between mb-2">
+          <span [class.bg-orange-500]="day.today" [class.text-white]="day.today" [class.rounded-full]="day.today"
+            [class.w-7]="day.today" [class.h-7]="day.today" [class.flex]="day.today" [class.items-center]="day.today"
+            [class.justify-center]="day.today" class="text-sm font-bold text-slate-700 dark:text-slate-200">
             {{ day.date }}
           </span>
-
-          <span *ngIf="day.today" class="px-2 py-1 text-[10px] rounded-full bg-orange-500 text-white font-bold">
-            Today
-          </span>
-
+          <button *ngIf="day.date" (click)="openAddMeeting(day.fullDate); $event.stopPropagation()"
+            class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-6 h-6 rounded-md bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center hover:bg-orange-200">
+            <span class="material-symbols-outlined text-[14px] text-orange-600">add</span>
+          </button>
         </div>
 
-        <div class="space-y-2">
-
-          <div *ngFor="let event of day.events" (click)="openProjectDetails(event.project)" class="cursor-pointer">
-
-            <div class="rounded-lg p-2 text-white text-[11px] font-semibold shadow-sm" [ngClass]="{
-          'bg-green-600': event.type === 'project-start',
-          'bg-red-600': event.type === 'project-end',
-          'bg-blue-600': event.type === 'milestone-start',
-          'bg-amber-600': event.type === 'milestone-end'
-        }">
-
-              <div class="font-bold truncate">
-                {{ event.project?.name }}
+        <div class="space-y-1">
+          <ng-container *ngFor="let event of day.events; let i = index">
+            <div *ngIf="i < 3"
+              (click)="event.type !== 'meeting' ? openProjectDetails(event.project) : null; $event.stopPropagation()"
+              class="rounded-md px-2 py-1 text-white text-[10px] font-semibold leading-tight shadow-sm cursor-pointer hover:brightness-110 transition-all"
+              [ngClass]="{
+                'bg-emerald-600': event.type === 'project-start',
+                'bg-red-500':     event.type === 'project-end',
+                'bg-blue-600':    event.type === 'milestone-start',
+                'bg-amber-500':   event.type === 'milestone-end',
+                'bg-violet-600':  event.type === 'meeting'
+              }">
+              <div class="flex items-center gap-1">
+                <span class="material-symbols-outlined text-[11px]">
+                  <ng-container [ngSwitch]="event.type">
+                    <ng-container *ngSwitchCase="'project-start'">rocket_launch</ng-container>
+                    <ng-container *ngSwitchCase="'project-end'">flag</ng-container>
+                    <ng-container *ngSwitchCase="'milestone-start'">outlined_flag</ng-container>
+                    <ng-container *ngSwitchCase="'milestone-end'">flag_circle</ng-container>
+                    <ng-container *ngSwitchCase="'meeting'">video_call</ng-container>
+                  </ng-container>
+                </span>
+                <span class="truncate">
+                  {{ event.type === 'meeting' ? event.meeting?.title : event.project?.name }}
+                </span>
               </div>
-
-              <div class="text-[10px] opacity-90 truncate">
+              <div class="text-[9px] opacity-80 truncate pl-3.5">
                 {{ event.title }}
+                <ng-container *ngIf="event.type === 'meeting'"> · {{ event.meeting?.time }}</ng-container>
               </div>
-
             </div>
-
+          </ng-container>
+          <div *ngIf="day.events.length > 3"
+            class="text-[10px] font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md text-center">
+            +{{ day.events.length - 3 }} more
           </div>
-
         </div>
-
       </div>
-
     </div>
-
   </div>
-  @if(showProjectDetails){
 
-  <div class="fixed inset-0 z-50 bg-black/50 flex justify-end">
 
-    <div class="w-full max-w-xl bg-white dark:bg-slate-900 h-full overflow-y-auto p-6 shadow-2xl">
-      <div class="flex justify-between items-center mb-6">
-
-        <h2 class="text-2xl font-black text-slate-800 dark:text-white">
-
-          {{ selectedProject?.name }}
-
-        </h2>
-
-        <button (click)="closeProjectDetails()" class="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800">
-
-          ✕
-
-        </button>
-
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-
+  @if(showProjectDetails) {
+  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-end" (click)="closeProjectDetails()">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 h-full overflow-y-auto shadow-2xl"
+      (click)="$event.stopPropagation()">
+      <div
+        class="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between z-10">
         <div>
-          <p class="text-xs text-slate-500">Type</p>
-          <p class="font-semibold">
+          <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mb-0.5">Project Details</p>
+          <h2 class="text-lg font-black text-slate-800 dark:text-white leading-tight">{{ selectedProject?.name }}</h2>
+        </div>
+        <div class="flex items-center gap-2">
+
+          <button (click)="navigateToProject(selectedProject?.id)"
+            class="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition-colors flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+            Open Project
+          </button>
+          <button (click)="closeProjectDetails()"
+            class="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 transition-colors">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      </div>
+      <div class="p-6 space-y-6">
+        <div class="flex flex-wrap gap-2">
+          <span class="px-3 py-1 rounded-full text-xs font-bold"
+            [class]="getStatusBadge(selectedProject?.status || '')">{{ selectedProject?.status }}</span>
+          <span *ngIf="selectedProject?.type"
+            class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {{ selectedProject?.type }}
-          </p>
+          </span>
         </div>
-
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+            <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">calendar_today</span> Start
+            </p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ selectedProject?.start_date | date:'dd MMM
+              yyyy' }}</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+            <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">event_available</span> Completion
+            </p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ selectedProject?.completion_date | date:'dd
+              MMM yyyy' }}</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+            <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">payments</span> Budget
+            </p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ formatCurrency(selectedProject?.budget_total)
+              }}</p>
+          </div>
+          <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
+            <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span> Used
+            </p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ formatCurrency(selectedProject?.budget_used)
+              }}</p>
+          </div>
+        </div>
+        <div *ngIf="selectedProject?.address"
+          class="flex items-start gap-2 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+          <span class="material-symbols-outlined text-[18px] text-orange-500 mt-0.5">location_on</span>
+          <p class="text-sm text-slate-700 dark:text-slate-300">{{ selectedProject?.address }}</p>
+        </div>
         <div>
-          <p class="text-xs text-slate-500">Status</p>
-          <p class="font-semibold">
-            {{ selectedProject?.status }}
-          </p>
+          <div class="flex justify-between mb-2">
+            <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Overall Progress</span>
+            <span class="text-sm font-black text-orange-500">{{ selectedProject?.progress || 0 }}%</span>
+          </div>
+          <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-2.5 rounded-full transition-all duration-700" [style.width.%]="selectedProject?.progress || 0"
+              [class]="getProgressColor(selectedProject?.progress || 0)"></div>
+          </div>
+          <div class="flex justify-between mt-3 mb-1">
+            <span class="text-xs text-slate-400">Budget Used</span>
+            <span class="text-xs font-bold text-slate-500">{{ getTotalBudgetPercent(selectedProject!) }}%</span>
+          </div>
+          <div class="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div class="h-1.5 rounded-full bg-blue-500 transition-all duration-700"
+              [style.width.%]="getTotalBudgetPercent(selectedProject!)"></div>
+          </div>
         </div>
-
         <div>
-          <p class="text-xs text-slate-500">Progress</p>
-          <p class="font-semibold">
-            {{ selectedProject?.progress || 0 }}%
-          </p>
+          <h3 class="text-sm font-black text-slate-700 dark:text-slate-200 mb-3">
+            Team Members ({{ selectedProject?.team_members?.length || 0 }})
+          </h3>
+          <div class="flex flex-wrap gap-2">
+            <div *ngFor="let member of selectedProject?.team_members"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
+              <img *ngIf="member.avatar" [src]="member.avatar" class="w-5 h-5 rounded-full object-cover" alt="">
+              <div *ngIf="!member.avatar"
+                class="w-5 h-5 rounded-full bg-orange-200 dark:bg-orange-900/60 flex items-center justify-center text-[10px] font-bold text-orange-700">
+                {{ member.firstname?.charAt(0) }}
+              </div>
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {{ member.firstname }} {{ member.lastname }}
+              </span>
+            </div>
+          </div>
         </div>
-
         <div>
-          <p class="text-xs text-slate-500">Completion</p>
-          <p class="font-semibold">
-            {{ selectedProject?.completion_date | date:'dd MMM yyyy' }}
-          </p>
+          <h3 class="text-sm font-black text-slate-700 dark:text-slate-200 mb-3">
+            Milestones ({{ selectedProject?.milestones?.length || 0 }})
+          </h3>
+          <div *ngFor="let ms of selectedProject?.milestones"
+            class="border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-2.5 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-slate-800 dark:text-white text-sm truncate">{{ ms.name }}</p>
+                <p class="text-xs text-slate-400 mt-0.5" *ngIf="ms.phase">{{ ms.phase }}</p>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0"
+                [class]="getStatusBadge(ms.status)">{{ ms.status }}</span>
+            </div>
+            <div class="flex items-center gap-2 mt-2.5 text-xs text-slate-400">
+              <span class="material-symbols-outlined text-[13px]">date_range</span>
+              {{ ms.startDate | date:'dd MMM' }} → {{ ms.endDate | date:'dd MMM yyyy' }}
+            </div>
+            <div class="mt-2">
+              <div class="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div class="h-1.5 rounded-full bg-orange-400 transition-all duration-500"
+                  [style.width.%]="ms.progress || 0"></div>
+              </div>
+            </div>
+          </div>
         </div>
+        <button (click)="openAddMeeting()"
+          class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 font-bold text-sm hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all duration-200">
+          <span class="material-symbols-outlined text-[18px]">video_call</span>
+          Schedule a Meeting for this Project
+        </button>
+      </div>
+    </div>
+  </div>
+  }
 
+
+  @if(showDayEventsPanel) {
+  <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end lg:items-center justify-center p-4"
+    (click)="closeDayEventsPanel()">
+    <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+      style="max-height: 80vh;" (click)="$event.stopPropagation()">
+
+      <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
         <div>
-          <p class="text-xs text-slate-500">Budget</p>
-          <p class="font-semibold">
-            ₹{{ selectedProject?.budget_total || 0 }}
-          </p>
-        </div>
+          <p class="text-xs font-bold text-orange-500 uppercase tracking-widest">All Events</p>
 
-        <div>
-          <p class="text-xs text-slate-500">Used Budget</p>
-          <p class="font-semibold">
-            ₹{{ selectedProject?.budget_used || 0 }}
-          </p>
+          <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ selectedDayLabel }}</h3>
         </div>
-
+        <button (click)="closeDayEventsPanel()"
+          class="h-8 w-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
       </div>
 
-      <div class="mt-6">
-
-        <div class="flex justify-between mb-2">
-
-          <span class="text-sm font-medium">
-            Project Progress
-          </span>
-
-          <span class="text-sm font-bold">
-            {{ selectedProject?.progress || 0 }}%
-          </span>
-
-        </div>
-
-        <div class="h-3 bg-slate-200 rounded-full">
-
-          <div class="h-3 rounded-full transition-all duration-500" [style.width.%]="selectedProject?.progress || 0"
-            [ngClass]="{
-            'bg-red-500': (selectedProject?.progress || 0) < 30,
-            'bg-amber-500': (selectedProject?.progress || 0) >= 30 && (selectedProject?.progress || 0) < 70,
-            'bg-green-500': (selectedProject?.progress || 0) >= 70
+      <div class="overflow-y-auto p-6 space-y-3">
+        <div *ngFor="let event of selectedDayEvents" class="rounded-2xl p-4 transition-all duration-200 hover:shadow-md"
+          [ngClass]="{
+            'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800': event.type === 'project-start',
+            'bg-red-50    dark:bg-red-900/20     border border-red-200     dark:border-red-800':     event.type === 'project-end',
+            'bg-blue-50   dark:bg-blue-900/20    border border-blue-200    dark:border-blue-800':    event.type === 'milestone-start',
+            'bg-amber-50  dark:bg-amber-900/20   border border-amber-200   dark:border-amber-800':   event.type === 'milestone-end',
+            'bg-violet-50 dark:bg-violet-900/20  border border-violet-200  dark:border-violet-800':  event.type === 'meeting'
           }">
 
-          </div>
+          <ng-container *ngIf="event.type !== 'meeting'">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0 cursor-pointer" (click)="openProjectDetails(event.project)">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-2 h-2 rounded-full shrink-0" [ngClass]="{
+                    'bg-emerald-600': event.type === 'project-start',
+                    'bg-red-500':     event.type === 'project-end',
+                    'bg-blue-600':    event.type === 'milestone-start',
+                    'bg-amber-500':   event.type === 'milestone-end'
+                  }"></div>
+                  <span class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ event.title }}</span>
+                </div>
+                <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.project?.name }}</p>
+                <div class="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                  <span>{{ event.project?.type }}</span>
+                  <span class="px-2 py-0.5 rounded-full font-bold"
+                    [class]="getStatusBadge(event.project?.status || '')">{{ event.project?.status }}</span>
+                  <span class="ml-auto font-bold text-orange-500">{{ event.project?.progress || 0 }}%</span>
+                </div>
+              </div>
 
+              <button (click)="navigateToProject(event.project?.id); closeDayEventsPanel()"
+                class="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-500 text-white text-[11px] font-bold hover:bg-orange-600 transition-colors whitespace-nowrap">
+                <span class="material-symbols-outlined text-[13px]">open_in_new</span>
+                Open
+              </button>
+            </div>
+          </ng-container>
+
+
+          <ng-container *ngIf="event.type === 'meeting'">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="material-symbols-outlined text-[16px] text-violet-600">video_call</span>
+                  <span class="text-xs font-bold text-violet-600 uppercase tracking-wide">
+                    Meeting · {{ event.meeting?.time }}
+                    <span *ngIf="event.meeting?.duration" class="font-normal normal-case text-violet-400">
+                      ({{ event.meeting?.duration }} min)
+                    </span>
+                  </span>
+                </div>
+                <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.meeting?.title }}</p>
+                <p *ngIf="event.meeting?.project?.name" class="text-xs text-slate-400 mt-0.5">
+                  📁 {{ event.meeting?.project?.name }}
+                </p>
+                <p *ngIf="event.meeting?.vendor?.name" class="text-xs text-slate-400 mt-0.5">
+                  🏢 {{ event.meeting?.vendor?.name }}
+                </p>
+                <p *ngIf="event.meeting?.description" class="text-xs text-slate-500 mt-1 leading-relaxed">
+                  {{ event.meeting?.description }}
+                </p>
+                <!-- Attendees chips -->
+                <div *ngIf="event.meeting?.attendees?.length" class="flex flex-wrap gap-1 mt-2">
+                  <span *ngFor="let a of event.meeting?.attendees"
+                    class="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] font-semibold">
+                    {{ a }}
+                  </span>
+                </div>
+              </div>
+
+
+              <div class="flex flex-col gap-1.5 shrink-0">
+
+                <button *ngIf="event.meeting?.meet_link" (click)="openMeetLink(event.meeting?.meet_link, $event)"
+                  class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-600 text-white text-[11px] font-bold hover:bg-violet-700 transition-colors whitespace-nowrap">
+                  <span class="material-symbols-outlined text-[13px]">video_call</span>
+                  Join
+                </button>
+
+                <button (click)="openEditMeeting(event.meeting!, $event)"
+                  class="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 text-[11px] font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
+                  <span class="material-symbols-outlined text-[13px]">edit</span>
+                  Edit
+                </button>
+
+                <button (click)="deleteMeeting(event.meeting!, $event)"
+                  class="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 text-[11px] font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                  <span class="material-symbols-outlined text-[13px]">delete</span>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </ng-container>
         </div>
 
+        <div *ngIf="!selectedDayEvents.length" class="text-center py-8 text-slate-400 text-sm">No events for this day.
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+
+  @if(showMeetingModal) {
+  <div class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end lg:items-center justify-center p-4"
+    (click)="closeMeetingModal()">
+    <div
+      class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl h-[80vh] flex flex-col overflow-hidden"
+      (click)="$event.stopPropagation()">
+
+      <div
+        class="sticky top-0 bg-white dark:bg-slate-900 rounded-t-3xl border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between z-10 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px] text-violet-600">video_call</span>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-violet-500 uppercase tracking-widest">
+              {{ editingMeeting ? 'Edit' : 'New' }} Meeting
+            </p>
+            <h3 class="text-lg font-black text-slate-800 dark:text-white leading-tight">
+              {{ editingMeeting ? 'Update Meeting' : 'Schedule Meeting' }}
+            </h3>
+          </div>
+        </div>
+        <button (click)="closeMeetingModal()"
+          class="h-9 w-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
       </div>
 
-      <div class="mt-8">
 
-        <h3 class="font-bold mb-3">
-          Team Members
-        </h3>
+      <div class="flex-1 overflow-y-auto p-6 space-y-5">
 
-        <div class="flex flex-wrap gap-2">
-
-          <span *ngFor="let member of selectedProject?.team_members"
-            class="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs">
-
-            {{ member.firstname }}
-            {{ member.lastname }}
-
-          </span>
-
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Meeting Title *</label>
+          <input [(ngModel)]="meetingForm.title" type="text"
+            class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
+            placeholder="e.g. Site progress review">
         </div>
 
-      </div>
 
-      <div class="mt-8">
-
-        <h3 class="font-bold mb-4">
-          Milestones
-        </h3>
-
-        <div *ngFor="let milestone of selectedProject?.milestones"
-          class="border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-3">
-
-          <div class="font-bold">
-            {{ milestone.name }}
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Date *</label>
+            <input [(ngModel)]="meetingForm.dateInput" type="date"
+              class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all">
           </div>
-
-          <div class="text-sm text-slate-500 mt-1">
-
-            {{ milestone.startDate | date:'dd MMM yyyy' }}
-            →
-            {{ milestone.endDate | date:'dd MMM yyyy' }}
-
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Time</label>
+            <input #timeInput [(ngModel)]="meetingForm.timeInput" type="time" (input)="closeTimePicker(timeInput)"
+              class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all">
           </div>
+        </div>
 
-          <div class="mt-2">
 
-            <span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Duration</label>
+            <select [(ngModel)]="meetingForm.duration"
+              class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all">
+              <option [value]="15">15 min</option>
+              <option [value]="30">30 min</option>
+              <option [value]="45">45 min</option>
+              <option [value]="60">1 hour</option>
+              <option [value]="90">1.5 hours</option>
+              <option [value]="120">2 hours</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Project</label>
+            <select [(ngModel)]="meetingForm.project_id"
+              class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all">
+              <option [value]="undefined" disabled>Select Project</option>
+              <option *ngFor="let p of projects" [value]="p.id">{{ p.name }}</option>
+            </select>
+          </div>
+        </div>
 
-              {{ milestone.status }}
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Vendors</label>
 
+          <div *ngIf="(meetingForm.selectedVendorIds || []).length > 0" class="flex flex-wrap gap-1.5 mb-2">
+            <span *ngFor="let vid of meetingForm.selectedVendorIds"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-xs font-semibold">
+              {{ getVendorName(vid) }}
+              <button type="button" (click)="removeVendor(vid); $event.stopPropagation()"
+                class="hover:text-violet-900 dark:hover:text-violet-100 leading-none">
+                <span class="material-symbols-outlined text-[13px]">close</span>
+              </button>
             </span>
-
           </div>
 
+          <div class="relative">
+            <button type="button" (click)="toggleVendorDropdown($event)"
+              class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all hover:border-violet-400">
+              <span [class.text-slate-400]="!(meetingForm.selectedVendorIds || []).length">
+                {{ (meetingForm.selectedVendorIds || []).length ? getSelectedVendorNames() : 'Select Vendors' }}
+              </span>
+              <span class="material-symbols-outlined text-[18px] text-slate-400 transition-transform duration-200"
+                [class.rotate-180]="showVendorDropdown">expand_more</span>
+            </button>
+
+            <div *ngIf="showVendorDropdown" (click)="$event.stopPropagation()"
+              class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-52 overflow-y-auto">
+              <div *ngIf="!vendors.length" class="px-4 py-3 text-sm text-slate-400 text-center">No vendors available
+              </div>
+              <div *ngFor="let v of vendors" (click)="toggleVendor(v.id, $event)"
+                class="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 cursor-pointer transition-colors select-none">
+                <span
+                  class="flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all pointer-events-none"
+                  [ngClass]="isVendorSelected(v.id)
+                    ? 'bg-violet-600 border-violet-600'
+                    : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'">
+                  <span *ngIf="isVendorSelected(v.id)" class="material-symbols-outlined text-white pointer-events-none"
+                    style="font-size:11px;font-variation-settings:'wght' 700">check</span>
+                </span>
+                <div class="flex-1 min-w-0 pointer-events-none">
+                  <p class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ v.name }}</p>
+                  <p *ngIf="v.email" class="text-xs text-slate-400 truncate">{{ v.email }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Description</label>
+          <textarea [(ngModel)]="meetingForm.description" rows="2"
+            class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all resize-none"
+            placeholder="Agenda, location notes..."></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+            Meeting Attendees
+            <span class="font-normal text-slate-400 ml-1">— Email invitations will be sent automatically</span>
+          </label>
+
+          <div *ngIf="selectedAttendees.length > 0"
+            class="flex flex-wrap gap-1.5 mb-2 p-2 border border-slate-100 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+            <span *ngFor="let a of selectedAttendees"
+              class="inline-flex items-center gap-1.5 pl-1 pr-1.5 py-0.5 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm">
+              <span
+                class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/60 flex items-center justify-center text-[10px] font-bold text-violet-700 dark:text-violet-300 shrink-0">
+                {{ a.name ? a.name.charAt(0).toUpperCase() : a.email.charAt(0).toUpperCase() }}
+              </span>
+              <span class="text-xs text-slate-700 dark:text-slate-200 font-medium leading-none">
+                {{ a.name && a.name !== a.email ? a.name : a.email }}
+              </span>
+              <span *ngIf="a.name && a.name !== a.email" class="text-[10px] text-slate-400">{{ a.email }}</span>
+              <button type="button" (click)="removeAttendee(a.email)"
+                class="ml-0.5 text-slate-400 hover:text-red-500 transition-colors">
+                <span class="material-symbols-outlined text-[13px]">close</span>
+              </button>
+            </span>
+          </div>
+
+          <div class="relative">
+            <div
+              class="flex items-center border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 focus-within:ring-2 focus-within:ring-violet-400 transition-all overflow-hidden">
+              <span class="material-symbols-outlined text-[18px] text-slate-400 ml-3 shrink-0">person_add</span>
+              <input type="text" [value]="attendeeSearchText" (input)="onAttendeeSearch($any($event.target).value)"
+                (keydown)="onAttendeeKeydown($event)" (click)="$event.stopPropagation()"
+                class="flex-1 px-3 py-3 text-sm bg-transparent text-slate-800 dark:text-white focus:outline-none"
+                placeholder="Search name or email, press Enter or comma to add...">
+            </div>
+
+            <div *ngIf="showAttendeeSuggestions" (click)="$event.stopPropagation()"
+              class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+              <div *ngFor="let opt of filteredAttendeeOptions" (click)="selectAttendee(opt, $event)"
+                class="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 cursor-pointer transition-colors">
+                <div
+                  class="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-violet-100 dark:bg-violet-900/60 flex items-center justify-center">
+                  <img *ngIf="opt.avatar" [src]="opt.avatar" class="w-full h-full object-cover" alt="">
+                  <span *ngIf="!opt.avatar" class="text-sm font-bold text-violet-700 dark:text-violet-300">
+                    {{ opt.name.charAt(0).toUpperCase() }}
+                  </span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ opt.name }}</p>
+                  <p class="text-xs text-slate-400 truncate">{{ opt.email }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="mt-1.5 text-[11px] text-slate-400">
+            📧 Each attendee will receive an email invitation with meeting details and join link
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 p-4">
+          <p class="text-xs font-bold text-violet-700 dark:text-violet-300 mb-3 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[15px]">video_call</span>
+            Add Meeting Link
+          </p>
+          <input [(ngModel)]="meetingForm.meet_link" type="url"
+            class="w-full border border-violet-200 dark:border-violet-700 rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
+            placeholder="https://meet.google.com/xxx-xxxx-xxx">
+          <p class="mt-1.5 text-[11px] text-violet-500">This link will be included in the email invitation</p>
+        </div>
+
+        <div class="flex gap-3 pt-1">
+          <button (click)="closeMeetingModal()"
+            class="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+            Cancel
+          </button>
+          <button (click)="saveMeeting()" [disabled]="!meetingForm.title || !meetingForm.dateInput || isSavingMeeting"
+            class="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold text-sm shadow-lg shadow-violet-500/30 transition-all duration-200 flex items-center justify-center gap-2">
+            <span *ngIf="isSavingMeeting"
+              class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+            {{ isSavingMeeting ? 'Saving...' : (editingMeeting ? 'Update Meeting' : 'Save Meeting') }}
+          </button>
         </div>
 
       </div>
-
     </div>
-
   </div>
-
   }
-  @if(showAddActivityModal){
 
-  <div class="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
-
-    <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl">
-
-      <div class="flex items-center justify-between mb-6">
-
-        <h2 class="text-xl font-black">
-          Add Calendar Activity
-        </h2>
-
-        <button (click)="closeAddActivity()" class="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800">
-          ✕
-        </button>
-
-      </div>
-      <div class="mb-4">
-
-        <label class="block text-xs font-bold mb-2">
-          Project
-        </label>
-
-        <select [(ngModel)]="activityForm.projectId" class="w-full border rounded-xl px-4 py-3">
-
-          <option value="" disabled>
-            Select Project
-          </option>
-
-          <option *ngFor="let project of projects" [value]="project.id">
-
-            {{ project.name }}
-
-          </option>
-
-        </select>
-
-      </div>
-
-      <div class="mb-4">
-
-        <label class="block text-xs font-bold mb-2">
-          Activity Title
-        </label>
-
-        <input [(ngModel)]="activityForm.title" type="text" class="w-full border rounded-xl px-4 py-3"
-          placeholder="Enter activity title">
-
-      </div>
-      <div class="mb-4">
-
-        <label class="block text-xs font-bold mb-2">
-          Activity Date
-        </label>
-
-        <input [(ngModel)]="activityForm.date" type="date" class="w-full border rounded-xl px-4 py-3">
-
-      </div>
-      <div class="mb-6">
-
-        <label class="block text-xs font-bold mb-2">
-          Description
-        </label>
-
-        <textarea [(ngModel)]="activityForm.description" rows="3" class="w-full border rounded-xl px-4 py-3"></textarea>
-
-      </div>
-      <div class="flex justify-end gap-3">
-
-        <button (click)="closeAddActivity()" class="px-5 py-3 rounded-xl border">
-          Cancel
-        </button>
-
-        <button (click)="saveActivity()" class="px-5 py-3 rounded-xl bg-orange-500 text-white">
-          Save Activity
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-  }
 </div>
