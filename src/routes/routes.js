@@ -50,6 +50,8 @@ class Routes {
       "/api/v1/skill",
       require("../modules/skill/routes/skill_routes")
     );
+    app.use("/api/v1/meetings", require("../modules/meeting/routes/meeting.routes"));
+
   }
 }
 

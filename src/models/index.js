@@ -76,7 +76,7 @@ db.equipment_project_stock = require("../modules/equipment/models/equipment_proj
 db.equipment_history = require("../modules/equipment/models/equipment_history.model.js")(sequelize, Sequelize);
 
 db.category = require("../modules/category/model/category_model.js")(sequelize, Sequelize);
-
+db.meeting = require("../modules/meeting/model/meeting.model.js")(sequelize, Sequelize);
 
 // Associations
 db.company.hasMany(db.project, { foreignKey: "company_id", as: "projects" });
@@ -290,6 +290,18 @@ db.skill.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
 db.company.hasMany(db.category, { foreignKey: "company_id", as: "category" });
 db.category.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
+// Calendar Meeting----->
+db.company.hasMany(db.meeting, { foreignKey: "company_id", as: "meetings" });
+db.meeting.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.project.hasMany(db.meeting, { foreignKey: "project_id", as: "meetings" });
+db.meeting.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.vendors.hasMany(db.meeting, { foreignKey: "vendor_id", as: "meetings" });
+db.meeting.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor" });
+
+db.user.hasMany(db.meeting, { foreignKey: "created_by", as: "created_meetings" });
+db.meeting.belongsTo(db.user, { foreignKey: "created_by", as: "creator" });
 
 // PROJECT MANAGEMENT END
 // ── LABOR associations ──────────────────────────────────────
