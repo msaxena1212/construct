@@ -21,6 +21,8 @@ const getInvoicesByVendor = async (req, res) => {
       order: [['createdAt', 'DESC']],
     });
 
+    console.log ("datatatat" , invoices)
+
     return res.status(200).json({ success: true, count: invoices.length, data: invoices });
   } catch (err) {
     console.error('[getInvoicesByVendor]', err);
@@ -65,6 +67,8 @@ const createInvoice = async (req, res) => {
       tax_rate: parseFloat(tax_rate) || 0,
       tax_amount: parseFloat(tax_amount) || 0,
       grand_total: parseFloat(grand_total) || 0,
+      paid_amount: 0,
+      payment_history: [],
       status: 'Pending',
     });
 
@@ -108,15 +112,28 @@ const updateInvoiceStatus = async (req, res) => {
       if (mode === 'Cheque' && !clearance_date)
         return res.status(400).json({ success: false, message: 'Cheque clearance date is required' });
 
-      const paidAmt = parseFloat(amount);
+      const paidNow = parseFloat(amount);
       const grandTotal = parseFloat(invoice.grand_total);
 
-      updatePayload.status = paidAmt >= grandTotal ? 'Paid' : 'Partially Paid';
-      updatePayload.paid_amount = paidAmt;
+      const previouslyPaid = parseFloat(invoice.paid_amount) || 0;
+      const totalPaidSoFar = previouslyPaid + paidNow;
+
+      updatePayload.status = totalPaidSoFar >= grandTotal ? 'Paid' : 'Partially Paid';
+      updatePayload.paid_amount = totalPaidSoFar;
       updatePayload.payment_mode = mode;
       updatePayload.payment_reference = reference || null;
       updatePayload.cheque_clearance_date = clearance_date || null;
       updatePayload.paid_at = new Date();
+
+      const existingHistory = Array.isArray(invoice.payment_history) ? invoice.payment_history : [];
+      const newEntry = {
+        amount: paidNow,
+        mode,
+        reference: reference || null,
+        clearance_date: clearance_date || null,
+        paid_at: new Date().toISOString(),
+      };
+      updatePayload.payment_history = [...existingHistory, newEntry];
 
       if (settlement_type) {
         updatePayload.settlement_type = settlement_type;
