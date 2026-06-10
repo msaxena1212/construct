@@ -70,7 +70,6 @@ export class TaskManagement implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['milestones'] && this.milestones && this.milestones.length > 0 && !this.selectedMilestoneId) {
-      // Default to first milestone if none selected
       this.selectedMilestoneId = this.milestones[0].id;
       this.filterTasks();
     }
