@@ -72,4 +72,15 @@ module.exports = (router) => {
   router.post("/tasks/:taskId/subtasks", taskCtrl.createSubTask);
   router.put("/subtasks/:subTaskId", taskCtrl.updateSubTask);
   router.delete("/subtasks/:subTaskId", taskCtrl.deleteSubTask);
+
+
+
+  router.get("/getBudget_ProjectById/:id", projectCtrl.getBudget_ProjectById);
+
+
+  router.get("/getBudget_total_spent_ProjectById/:id", projectCtrl.getBudget_total_spent_ProjectById);
+
+  router.get("/getBudget_total_spent_ProjectALL/:id", projectCtrl.getBudget_total_spent_ProjectALL);
+
+
 };
