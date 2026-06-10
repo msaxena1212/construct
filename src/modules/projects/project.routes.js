@@ -83,4 +83,8 @@ module.exports = (router) => {
   router.get("/getBudget_total_spent_ProjectALL/:id", projectCtrl.getBudget_total_spent_ProjectALL);
 
 
+  router.get("/getBudget_vendorProjectById/:id", projectCtrl.getBudget_vendorProjectById);
+
+
+
 };
