@@ -75,6 +75,96 @@ export class AddTask implements OnInit {
     { id: 'SF', name: 'Start-to-Finish (SF)', desc: 'Predecessor must start before Successor can finish' }
   ];
 
+  milestones = [
+  {
+    id: 1,
+    name: 'Site Preparation & Foundations'
+  },
+  {
+    id: 2,
+    name: 'Structural Framing'
+  },
+  {
+    id: 3,
+    name: 'Roofing Work'
+  },
+  {
+    id: 4,
+    name: 'Electrical & Plumbing'
+  },
+  {
+    id: 5,
+    name: 'Finishing & Handover'
+  }
+];
+
+subMilestones = [
+  {
+    id: 101,
+    milestoneId: 1,
+    name: 'Site Layout & Marking'
+  },
+  {
+    id: 102,
+    milestoneId: 1,
+    name: 'Excavation Work'
+  },
+  {
+    id: 103,
+    milestoneId: 1,
+    name: 'Foundation Concrete'
+  },
+
+  {
+    id: 201,
+    milestoneId: 2,
+    name: 'Column Reinforcement'
+  },
+  {
+    id: 202,
+    milestoneId: 2,
+    name: 'Beam Casting'
+  },
+  {
+    id: 203,
+    milestoneId: 2,
+    name: 'Slab Concrete'
+  },
+
+  {
+    id: 301,
+    milestoneId: 3,
+    name: 'Roof Structure'
+  },
+  {
+    id: 302,
+    milestoneId: 3,
+    name: 'Roof Waterproofing'
+  },
+
+  {
+    id: 401,
+    milestoneId: 4,
+    name: 'Electrical Conduits'
+  },
+  {
+    id: 402,
+    milestoneId: 4,
+    name: 'Water Supply Lines'
+  },
+
+  {
+    id: 501,
+    milestoneId: 5,
+    name: 'Painting Work'
+  },
+  {
+    id: 502,
+    milestoneId: 5,
+    name: 'Final Inspection'
+  }
+];
+
   teamMembers: IUser[] = [];
   vendors: any[] = [];
   materials: any[] = [];
@@ -84,6 +174,8 @@ export class AddTask implements OnInit {
     this.initForm();
     this.projectService.getProjectTasks(this.projectId).subscribe((res: any) => {
       this.allTasks = res.data;
+      console.log(this.allTasks,'test');
+      
     });
     if (this.projectId) {
       this.fetchTeamMembers();

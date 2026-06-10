@@ -18,10 +18,59 @@
         </div> -->
 
         <!-- Scrollable Form Content -->
-        <div class="flex-1 overflow-y-auto p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
+
+
+        <div class="flex-1 overflow-y-auto p-6 lg:p-8">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- Milestone -->
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
+                        Milestone
+                    </label>
+
+                    <select formControlName="milestoneId"
+                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+
+                        <option value="">Select Milestone</option>
+
+                        @for(milestone of milestones; track milestone.id){
+                        <option [value]="milestone.id">
+                            {{ milestone.name }}
+                        </option>
+                        }
+
+                    </select>
+                </div>
+
+                <!-- Sub Milestone -->
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
+                        Sub Milestone
+                    </label>
+
+                    <select formControlName="subMilestoneId"
+                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+
+                        <option value="">Select Sub Milestone</option>
+
+                        @for(sub of subMilestones; track sub.id){
+                        <option [value]="sub.id">
+                            {{ sub.name }}
+                        </option>
+                        }
+
+                    </select>
+                </div>
+
+            </div>
+
             <!-- Left Column: Core Info & Checklist -->
-            <div class="space-y-8">
+            <div class="space-y-6 mt-2">
                 <!-- Title & Description -->
+
+
                 <section class="space-y-4">
                     <div class="space-y-2">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Task
@@ -276,7 +325,7 @@
             </div>
 
             <!-- Right Column: Scheduling & Relationships -->
-            <div class="space-y-8">
+            <div class="space-y-6">
                 <!-- Settings Grid -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">

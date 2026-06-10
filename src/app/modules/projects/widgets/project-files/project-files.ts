@@ -15,7 +15,7 @@ export class ProjectFiles implements OnInit, OnChanges {
   apiUrl = environment.serverUrl;
   searchQuery = '';
   selectedCategory = 'All';
-  
+
   categories = [
     { name: 'All', icon: 'grid_view', count: 0, color: 'text-primary' },
     { name: 'Drawings', icon: 'architecture', count: 0, color: 'text-secondary' },
@@ -71,14 +71,14 @@ export class ProjectFiles implements OnInit, OnChanges {
 
   applyFilters(all?: any[]) {
     const source = all || this.documents.map(doc => ({
-        ...doc,
-        fullUrl: doc.url.startsWith('http') ? doc.url : `${this.apiUrl}${doc.url}`,
-        type: this.getFileType(doc.name, doc.mimetype),
-        icon: this.getFileIcon(doc.mimetype),
-        color: this.getFileColor(doc.mimetype),
-        category: this.getFileCategory(doc.name, doc.mimetype),
-        dateLabel: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        author: 'System Admin'
+      ...doc,
+      fullUrl: doc.url.startsWith('http') ? doc.url : `${this.apiUrl}${doc.url}`,
+      type: this.getFileType(doc.name, doc.mimetype),
+      icon: this.getFileIcon(doc.mimetype),
+      color: this.getFileColor(doc.mimetype),
+      category: this.getFileCategory(doc.name, doc.mimetype),
+      dateLabel: new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      author: 'System Admin'
     }));
 
     this.filteredFiles = source.filter(f => {
@@ -88,9 +88,9 @@ export class ProjectFiles implements OnInit, OnChanges {
     });
 
     if (this.selectedFile && !this.filteredFiles.find(f => f.id === this.selectedFile.id)) {
-        this.selectedFile = this.filteredFiles[0] || null;
+      this.selectedFile = this.filteredFiles[0] || null;
     } else if (!this.selectedFile && this.filteredFiles.length > 0) {
-        this.selectedFile = this.filteredFiles[0];
+      this.selectedFile = this.filteredFiles[0];
     }
   }
 
@@ -148,8 +148,8 @@ export class ProjectFiles implements OnInit, OnChanges {
 
   deleteFile(file: any) {
     if (confirm(`Delete ${file.name}?`)) {
-        // Implementation for delete would go through service
-        alert('Delete functionality to be implemented');
+      // Implementation for delete would go through service
+      alert('Delete functionality to be implemented');
     }
     this.showDropdownForFile = null;
   }

@@ -1,7 +1,7 @@
 <div class="timeline-card">
 
+  <!-- Toolbar -->
   <div class="timeline-toolbar">
-
     <button
       class="view-btn"
       [class.active]="currentView === 'Day'"
@@ -22,46 +22,146 @@
       (click)="changeView('Month')">
       Month
     </button>
-
   </div>
 
-<div class="timeline-page">
+  <!-- Main Layout -->
+  <div
+    class="timeline-layout"
+    style="
+      display:flex;
+      height:calc(100vh - 120px);
+      overflow:hidden;
+      background:#f8fafc;
+      align-items:stretch;
+    ">
 
-  <!-- 🟦 LEFT SIDEBAR -->
-  <div class="sidebar">
+    <!-- Sidebar -->
+    <div
+      style="
+        width:340px;
+        min-width:340px;
+        height:calc(100% - 24px);
+        margin:12px;
+        margin-right:0;
+        border-radius:20px;
+        background:linear-gradient(180deg,#0f172a,#1e293b);
+        color:white;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+        box-shadow:0 15px 35px rgba(0,0,0,.12);
+      ">
 
-    <div class="sidebar-header">
-      <h2>Milestones</h2>
-      <span class="count">{{ phasesData.length }} Items</span>
-    </div>
+      <!-- Header -->
+      <div
+        style="
+          padding:20px;
+          border-bottom:1px solid rgba(255,255,255,.08);
+        ">
 
-    <div class="sidebar-list">
-
-      <div class="phase-card" *ngFor="let phase of phasesData">
-
-        <div class="phase-title">
-          {{ phase.name }}
+        <div
+          style="
+            font-size:11px;
+            letter-spacing:1px;
+            text-transform:uppercase;
+            color:#94a3b8;
+          ">
+          Project Timeline
         </div>
 
-        <div class="child-list">
-          <div class="child-item" *ngFor="let child of phase.children">
-            • {{ child.name }}
+        <h2
+          style="
+            margin:8px 0 0;
+            font-size:22px;
+            font-weight:700;
+          ">
+          📋 Milestones
+        </h2>
+
+        <div
+          style="
+            margin-top:12px;
+            display:inline-block;
+            padding:6px 12px;
+            background:#2563eb;
+            border-radius:999px;
+            font-size:12px;
+          ">
+          {{ phasesData.length }} Items
+        </div>
+
+      </div>
+
+      <!-- Milestones List -->
+      <div
+        style="
+          flex:1;
+          overflow-y:auto;
+          padding:14px;
+        ">
+
+        <div
+          *ngFor="let phase of phasesData"
+          style="
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:16px;
+            padding:14px;
+            margin-bottom:12px;
+          ">
+
+          <div
+            style="
+              font-size:15px;
+              font-weight:700;
+              color:#38bdf8;
+              margin-bottom:10px;
+            ">
+            {{ phase.name }}
           </div>
+
+          <div
+            *ngFor="let child of phase.children"
+            style="
+              padding:8px 10px;
+              margin-top:6px;
+              border-radius:10px;
+              background:rgba(255,255,255,.05);
+              color:#e2e8f0;
+              font-size:13px;
+            ">
+            {{ child.name }}
+          </div>
+
         </div>
 
       </div>
 
     </div>
-  </div>
 
-  <!-- 🟩 RIGHT GANTT -->
-  <div class="gantt-section">
-    <div class="gantt-wrapper">
-      <div #gantt id="gantt" class="gantt-container"></div>
-    </div>
+    <!-- Gantt Section -->
+  <div
+  style="
+    flex:1;
+    height:calc(100vh - 180px);
+    margin:12px;
+    background:#ffffff;
+    border-radius:20px;
+    overflow:auto;
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+  ">
 
+  <div
+    #gantt
+    id="gantt"
+     style="
+    min-width:1800px;
+    min-height:1500px;
+  ">
   </div>
 
 </div>
+
+  </div>
 
 </div>
