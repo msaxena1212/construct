@@ -73,7 +73,7 @@ export class Projects implements OnInit {
   getThumbnailUrl(thumbnail: string | null | undefined): string {
     if (!thumbnail) return 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=800&auto=format&fit=crop';
     if (thumbnail.startsWith('http')) return thumbnail;
-    
+
     const baseUrl = this.serverUrl.endsWith('/') ? this.serverUrl.slice(0, -1) : this.serverUrl;
     const thumbPath = thumbnail.startsWith('/') ? thumbnail : `/${thumbnail}`;
     return `${baseUrl}${thumbPath}`;
