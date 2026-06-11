@@ -56,7 +56,9 @@ class ProjectTaskController {
     let t;
     try {
       const { projectId } = req.params;
-      const { title, description, priority, status, due_date, assignees, parent_id, milestone_id, vendorId } = req.body;
+
+      const { title, description, priority, status, due_date, assignees, parent_id, milestone_id, submilestone_id, vendorId } = req.body;
+
       const user_id = req.user.id;
 
       t = await db.sequelize.transaction();
@@ -64,6 +66,7 @@ class ProjectTaskController {
       const task = await db.project_task.create({
         project_id: projectId,
         milestone_id: milestone_id || null,
+        submilestone_id: submilestone_id || null,
         title,
         description,
         priority,
@@ -71,40 +74,57 @@ class ProjectTaskController {
         due_date,
         vendorId,
         created_by: user_id,
-      }, { transaction: t });
+
+      },
+        { transaction: t });
 
       if (assignees && assignees.length > 0) {
+
         await task.setAssignees(assignees, { transaction: t });
+
       }
 
       // Handle Sub-tasks
       if (req.body.sub_tasks && req.body.sub_tasks.length > 0) {
+
         const subTasksData = req.body.sub_tasks.map(st => ({
+
           task_id: task.id,
           title: st.title,
           completed: st.completed || false
+
         }));
+
         await db.project_sub_task.bulkCreate(subTasksData, { transaction: t });
+
       }
 
       // Handle Dependencies
       if (req.body.dependencies && req.body.dependencies.length > 0) {
+
         const depsData = req.body.dependencies.map(d => ({
+
           task_id: task.id,
           predecessor_id: d.predecessor_id,
           type: d.type || 'FS',
           lag: d.lag || 0
+
         }));
         await db.project_task_dependency.bulkCreate(depsData, { transaction: t });
       }
 
       // Handle Initial Comment
       if (req.body.initialComment) {
+
         await db.task_comment.create({
+
           task_id: task.id,
           user_id,
           content: req.body.initialComment
-        }, { transaction: t });
+
+        },
+          { transaction: t }
+        );
       }
 
       // Log activity
