@@ -230,7 +230,7 @@
               <img *ngIf="member.avatar" [src]="member.avatar" class="w-5 h-5 rounded-full object-cover" alt="">
               <div *ngIf="!member.avatar"
                 class="w-5 h-5 rounded-full bg-orange-200 dark:bg-orange-900/60 flex items-center justify-center text-[10px] font-bold text-orange-700">
-                {{ member.firstname?.charAt(0) }}
+               {{ member.firstname ? member.firstname.charAt(0) : '' }}
               </div>
               <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {{ member.firstname }} {{ member.lastname }}
