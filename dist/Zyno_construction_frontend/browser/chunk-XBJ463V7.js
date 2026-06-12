@@ -1,1 +1,0 @@
-import{a}from"./chunk-IJ27PKLH.js";import"./chunk-XOXBZSVK.js";import"./chunk-MKP5PH6U.js";import"./chunk-G7EOHGL2.js";import"./chunk-PIJSNBFI.js";import"./chunk-2P7ASCGR.js";import"./chunk-BHXU4COV.js";import"./chunk-SDKWLJNE.js";export{a as StockApprovalModule};
