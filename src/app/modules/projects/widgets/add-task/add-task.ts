@@ -75,107 +75,21 @@ export class AddTask implements OnInit {
     { id: 'SF', name: 'Start-to-Finish (SF)', desc: 'Predecessor must start before Successor can finish' }
   ];
 
-  milestones = [
-  {
-    id: 1,
-    name: 'Site Preparation & Foundations'
-  },
-  {
-    id: 2,
-    name: 'Structural Framing'
-  },
-  {
-    id: 3,
-    name: 'Roofing Work'
-  },
-  {
-    id: 4,
-    name: 'Electrical & Plumbing'
-  },
-  {
-    id: 5,
-    name: 'Finishing & Handover'
-  }
-];
+  milestones: any[] = [];
 
-subMilestones = [
-  {
-    id: 101,
-    milestoneId: 1,
-    name: 'Site Layout & Marking'
-  },
-  {
-    id: 102,
-    milestoneId: 1,
-    name: 'Excavation Work'
-  },
-  {
-    id: 103,
-    milestoneId: 1,
-    name: 'Foundation Concrete'
-  },
-
-  {
-    id: 201,
-    milestoneId: 2,
-    name: 'Column Reinforcement'
-  },
-  {
-    id: 202,
-    milestoneId: 2,
-    name: 'Beam Casting'
-  },
-  {
-    id: 203,
-    milestoneId: 2,
-    name: 'Slab Concrete'
-  },
-
-  {
-    id: 301,
-    milestoneId: 3,
-    name: 'Roof Structure'
-  },
-  {
-    id: 302,
-    milestoneId: 3,
-    name: 'Roof Waterproofing'
-  },
-
-  {
-    id: 401,
-    milestoneId: 4,
-    name: 'Electrical Conduits'
-  },
-  {
-    id: 402,
-    milestoneId: 4,
-    name: 'Water Supply Lines'
-  },
-
-  {
-    id: 501,
-    milestoneId: 5,
-    name: 'Painting Work'
-  },
-  {
-    id: 502,
-    milestoneId: 5,
-    name: 'Final Inspection'
-  }
-];
+  subMilestones: any[] = [];
 
   teamMembers: IUser[] = [];
   vendors: any[] = [];
   materials: any[] = [];
-  equipmentList: any[]= [];
+  equipmentList: any[] = [];
 
   ngOnInit() {
     this.initForm();
     this.projectService.getProjectTasks(this.projectId).subscribe((res: any) => {
       this.allTasks = res.data;
-      console.log(this.allTasks,'test');
-      
+      console.log(this.allTasks, 'test');
+
     });
     if (this.projectId) {
       this.fetchTeamMembers();
@@ -200,14 +114,46 @@ subMilestones = [
       duration: [5],
       assigneeId: [''],
       vendorId: [''],
-      initialComment: ['']
+      initialComment: [''],
+      milestone_id:[''],
+      submilestone_id:[''],
     });
   }
 
+  onMilestoneChange(event: any) {
+  const milestoneId = event.target.value;
+
+  const milestone = this.milestones.find(
+    (m: any) => m.id == milestoneId
+  );
+
+  this.subMilestones = milestone?.children || [];
+}
+
   fetchTeamMembers() {
     this.projectService.getProjectById(this.projectId).subscribe({
-      next: (res) => {
+      next: (res: any) => {
+
         this.teamMembers = res.data.team_members || [];
+        this.milestones = res.data.milestones_with_child || [];
+
+        // Milestone change listener
+        this.taskForm.get('milestone_id')?.valueChanges.subscribe((milestoneId) => {
+
+          const selectedMilestone = this.milestones.find(
+            (m: any) => m.id == milestoneId
+          );
+
+          this.subMilestones = selectedMilestone?.children || [];
+
+          // Reset sub milestone
+          this.taskForm.patchValue({
+            subMilestoneId: ''
+          });
+
+        });
+
+        console.log(res, 'res');
       }
     });
   }
@@ -223,6 +169,8 @@ subMilestones = [
   fetchMaterials() {
     this.projectService.getMaterialByprojectId(this.projectId).subscribe({
       next: (res) => {
+
+        console.log(res, 'res1');
         // Handle both array and wrapped response
         this.materials = Array.isArray(res.data) ? res.data : [res.data];
         console.log('Materials loaded:', this.materials);
@@ -262,9 +210,9 @@ subMilestones = [
       // }
 
       // VALIDATE STOCK
-      if (this.newSubTask.qty > selectedMaterial.stockIn) {
+      if (this.newSubTask.qty > selectedMaterial.stockUsed) {
 
-        if (selectedMaterial.stockIn === 0) {
+        if (selectedMaterial.stockIn === 0 && selectedMaterial.stockUsed === 0) {
           // Zero stock — directly show dialog with full qty as shortage
           this.stockDialogData = {
             available: 0,
@@ -277,8 +225,8 @@ subMilestones = [
 
         // Partial stock — show dialog
         this.stockDialogData = {
-          available: selectedMaterial.stockIn,
-          shortage: this.newSubTask.qty - selectedMaterial.stockIn,
+          available: selectedMaterial.stockUsed,
+          shortage: this.newSubTask.qty - selectedMaterial.stockUsed,
           selectedMaterial
         };
         this.showStockDialog = true;
