@@ -686,7 +686,7 @@ class ProjectController {
   }
 
 
-    //Budgets
+  //Budgets
   async getBudget_vendorProjectById(req, res) {
     try {
 
@@ -760,8 +760,30 @@ class ProjectController {
         order: [['createdAt', 'DESC']],
       });
 
-      console.log("datatatat", invoices)
+      // console.log("datatatat", invoices)
 
+      let total_material = 0;
+      let total_equipment = 0;
+      let total_labor = 0;
+
+      invoices.forEach(invoice => {
+        (invoice.items || []).forEach(item => {
+          const total = parseFloat(item.total || 0);
+
+          if (item.type === "material") {
+            total_material += total;
+          } else if (item.type === "equipment") {
+            total_equipment += total;
+          } else if (item.type === "labor") {
+            total_labor += total;
+          }
+
+        });
+      });
+
+      // console.log("total_material", total_material);
+      // console.log("total_equipment", total_equipment);
+      // console.log("total_labor", total_labor);
 
       const totalSpend = invoices.reduce((sum, invoice) => {
 
@@ -769,7 +791,7 @@ class ProjectController {
 
       }, 0);
 
-      console.log("Total Spend:", totalSpend);
+      // console.log("Total Spend:", totalSpend);
 
       const grand_total = invoices.reduce((sum, invoice) => {
 
@@ -777,28 +799,35 @@ class ProjectController {
 
       }, 0);
 
-      console.log("Total Spend:", grand_total);
+      // console.log("budget used:", grand_total);
 
 
       const on_hold = (grand_total - totalSpend);
 
-      console.log("on_hold", on_hold)
+      // console.log("on_hold", on_hold)
 
       const remaining_budget = (projectData.budget_total - grand_total);
 
-      console.log("remaining_budget", remaining_budget);
+      // console.log("remaining_budget", remaining_budget);
 
 
       return res.status(200).json({
+
         data: {
           ...projectData,
           invoice: invoices,
-          totalSpend,
-          grand_total,
-          on_hold,
-          remaining_budget
+          totalSpend: totalSpend.toFixed(2),
+          grand_total: grand_total.toFixed(2),
+          on_hold: on_hold.toFixed(2),
+          remaining_budget: remaining_budget.toFixed(2),
+          total_material: total_material.toFixed(2),
+          total_equipment: total_equipment.toFixed(2),
+          total_labor: total_labor.toFixed(2),
         }
+
       });
+
+
     } catch (error) {
       return res.status(500).json({
         message: "Error fetching project details.",

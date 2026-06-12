@@ -100,6 +100,10 @@ db.project_task.belongsTo(db.project, { foreignKey: "project_id" });
 db.milestone.hasMany(db.project_task, { foreignKey: "milestone_id", as: "tasks", onDelete: 'CASCADE' });
 db.project_task.belongsTo(db.milestone, { foreignKey: "milestone_id", as: "milestone" });
 
+db.milestone.hasMany(db.project_task, { foreignKey: "submilestone_id", as: "tasks_submilestone", onDelete: 'CASCADE' });
+db.project_task.belongsTo(db.milestone, { foreignKey: "submilestone_id", as: "submilestone" });
+
+
 db.project_task.belongsToMany(db.user, { through: db.project_task_assignee, foreignKey: "task_id", as: "assignees" });
 db.user.belongsToMany(db.project_task, { through: db.project_task_assignee, foreignKey: "user_id", as: "assigned_tasks" });
 
