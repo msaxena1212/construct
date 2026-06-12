@@ -76,56 +76,65 @@ export class ProjectTimeline implements AfterViewInit {
   // -----------------------------
   buildGanttTasks(data: any[]): any[] {
 
-    const tasks: any[] = [];
+  const tasks: any[] = [];
 
-    data.forEach((phase) => {
+  data.forEach((phase) => {
 
-      let minStart: string | null = null;
-      let maxEnd: string | null = null;
+    let minStart: string | null = null;
+    let maxEnd: string | null = null;
 
-      // ---------------------------
-      // CHILDREN
-      // ---------------------------
-      phase.children?.forEach((child: any) => {
+    // Child range calculate
+    phase.children?.forEach((child: any) => {
 
-        if (child.startDate && child.endDate) {
+      if (child.startDate && child.endDate) {
 
-          const start = child.startDate;
-          const end = child.endDate;
-
-          tasks.push({
-            id: `child-${child.id}`,   // 🔥 IMPORTANT FIX
-            name: child.name,
-            start,
-            end,
-            progress: child.progress ?? 0
-          });
-
-          // for parent auto range
-          if (!minStart || start < minStart) minStart = start;
-          if (!maxEnd || end > maxEnd) maxEnd = end;
+        if (!minStart || child.startDate < minStart) {
+          minStart = child.startDate;
         }
 
-      });
+        if (!maxEnd || child.endDate > maxEnd) {
+          maxEnd = child.endDate;
+        }
+      }
+    });
 
-      // ---------------------------
-      // PARENT (ALWAYS SHOW)
-      // ---------------------------
-      const start = phase.startDate || minStart;
-      const end = phase.endDate || maxEnd;
+    // ---------------------------
+    // PARENT FIRST
+    // ---------------------------
+    tasks.push({
+      id: `${phase.id}`,
+      name: phase.name,
+      start: phase.startDate || minStart,
+      end: phase.endDate || maxEnd,
+      progress: phase.progress ?? 0,
+      isParent: true
+    });
 
-      tasks.push({
-        id: `${phase.id}`,   // 🔥 IMPORTANT FIX
-        name: phase.name,
-        start: start,
-        end: end,
-        progress: phase.progress ?? 0
-      });
+    // ---------------------------
+    // CHILDREN AFTER PARENT
+    // ---------------------------
+    phase.children?.forEach((child: any) => {
+
+      if (child.startDate && child.endDate) {
+
+        tasks.push({
+          id: `child-${child.id}`,
+          name: `↳ ${child.name}`,
+          start: child.startDate,
+          end: child.endDate,
+          progress: child.progress ?? 0,
+          parentId: phase.id,
+          isChild: true
+        });
+
+      }
 
     });
 
-    return tasks;
-  }
+  });
+
+  return tasks;
+}
 
   // -----------------------------
   // RENDER GANTT

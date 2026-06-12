@@ -153,5 +153,11 @@ rejectStockRequest(id: number) {
     {}
   );
 }
+
+projectByesBudget(id: number) {
+  return this.http.get(
+    `${this.apiUrl}/getBudget_vendorProjectById/${id}`,
+  );
+}
 }
 
