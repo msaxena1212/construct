@@ -19,7 +19,6 @@
     </div>
   </div>
 
-
   <div
     class="bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl rounded-[28px] border border-white/40 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
 
@@ -65,14 +64,12 @@
       </div>
     </div>
 
-
     <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
       <div *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']"
         class="bg-slate-50 dark:bg-slate-900 py-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
         {{ d }}
       </div>
     </div>
-
 
     <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
       <div *ngFor="let day of calendarDays; trackBy: trackByDate" [class.opacity-0]="!day.date"
@@ -84,7 +81,7 @@
         <div class="flex items-start justify-between mb-2">
           <span [class.bg-orange-500]="day.today" [class.text-white]="day.today" [class.rounded-full]="day.today"
             [class.w-7]="day.today" [class.h-7]="day.today" [class.flex]="day.today" [class.items-center]="day.today"
-            [class.justify-center]="day.today" class="text-sm font-bold text-slate-700 dark:text-slate-200">
+            [class.justify-center]="day.today" class="text-[13px] font-black text-slate-600 dark:text-slate-300">
             {{ day.date }}
           </span>
           <button *ngIf="day.date" (click)="openAddMeeting(day.fullDate); $event.stopPropagation()"
@@ -93,40 +90,60 @@
           </button>
         </div>
 
-        <div class="space-y-1">
+        <div class="space-y-[4px]">
           <ng-container *ngFor="let event of day.events; let i = index">
             <div *ngIf="i < 3"
               (click)="event.type !== 'meeting' ? openProjectDetails(event.project) : null; $event.stopPropagation()"
-              class="rounded-md px-2 py-1 text-white text-[10px] font-semibold leading-tight shadow-sm cursor-pointer hover:brightness-110 transition-all"
-              [ngClass]="{
-                'bg-emerald-600': event.type === 'project-start',
-                'bg-red-500':     event.type === 'project-end',
-                'bg-blue-600':    event.type === 'milestone-start',
-                'bg-amber-500':   event.type === 'milestone-end',
-                'bg-violet-600':  event.type === 'meeting'
-              }">
-              <div class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-[11px]">
-                  <ng-container [ngSwitch]="event.type">
-                    <ng-container *ngSwitchCase="'project-start'">rocket_launch</ng-container>
-                    <ng-container *ngSwitchCase="'project-end'">flag</ng-container>
-                    <ng-container *ngSwitchCase="'milestone-start'">outlined_flag</ng-container>
-                    <ng-container *ngSwitchCase="'milestone-end'">flag_circle</ng-container>
-                    <ng-container *ngSwitchCase="'meeting'">video_call</ng-container>
-                  </ng-container>
-                </span>
-                <span class="truncate">
+              class="cursor-pointer hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] transition-all duration-150 w-full overflow-hidden flex items-center gap-2"
+              style="padding: 6px 8px; border-radius: 9px; box-shadow: 0 2px 6px rgba(0,0,0,0.20);" [ngClass]="{
+        'bg-emerald-600': event.type === 'project-start',
+        'bg-red-500':     event.type === 'project-end',
+        'bg-blue-600':    event.type === 'milestone-start',
+        'bg-amber-500':   event.type === 'milestone-end',
+        'bg-violet-600':  event.type === 'meeting'
+      }">
+
+              <span class="material-symbols-outlined text-white shrink-0"
+                style="font-size:13px; line-height:1; opacity:1; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.2));">
+                <ng-container [ngSwitch]="event.type">
+                  <ng-container *ngSwitchCase="'project-start'">rocket_launch</ng-container>
+                  <ng-container *ngSwitchCase="'project-end'">flag</ng-container>
+                  <ng-container *ngSwitchCase="'milestone-start'">outlined_flag</ng-container>
+                  <ng-container *ngSwitchCase="'milestone-end'">flag_circle</ng-container>
+                  <ng-container *ngSwitchCase="'meeting'">video_call</ng-container>
+                </ng-container>
+              </span>
+
+              <div style="min-width:0; flex:1; overflow:hidden;">
+
+                <div class="text-white truncate" style="font-size:12px; font-weight:800; line-height:1.4;
+                 letter-spacing:0.025em;
+                 text-shadow:0 1px 3px rgba(0,0,0,0.25);">
                   {{ event.type === 'meeting' ? event.meeting?.title : event.project?.name }}
-                </span>
+                </div>
+
+                <div class="truncate" style="font-size:10.5px; font-weight:600; line-height:1.3;
+                 color:rgba(255,255,255,0.88);
+                 letter-spacing:0.015em;
+                 text-shadow:0 1px 2px rgba(0,0,0,0.15);">
+                  <ng-container *ngIf="event.type === 'meeting'">
+                    <ng-container *ngIf="event.meeting?.time">⏰ {{ event.meeting?.time }}</ng-container>
+                    <ng-container *ngIf="!event.meeting?.time">Meeting</ng-container>
+                  </ng-container>
+                  <ng-container *ngIf="event.type !== 'meeting'">{{ event.title }}</ng-container>
+                </div>
+
               </div>
-              <div class="text-[9px] opacity-80 truncate pl-3.5">
-                {{ event.title }}
-                <ng-container *ngIf="event.type === 'meeting'"> · {{ event.meeting?.time }}</ng-container>
-              </div>
+
             </div>
           </ng-container>
-          <div *ngIf="day.events.length > 3"
-            class="text-[10px] font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md text-center">
+
+          <div *ngIf="day.events.length > 3" class="text-center font-bold cursor-pointer transition-all duration-150
+           hover:bg-slate-200 dark:hover:bg-slate-700" style="font-size:10px; padding: 3px 6px;
+           color:#94a3b8;
+           background:rgba(148,163,184,0.15);
+           border-radius:6px;
+           letter-spacing:0.02em;">
             +{{ day.events.length - 3 }} more
           </div>
         </div>
@@ -146,7 +163,6 @@
           <h2 class="text-lg font-black text-slate-800 dark:text-white leading-tight">{{ selectedProject?.name }}</h2>
         </div>
         <div class="flex items-center gap-2">
-
           <button (click)="navigateToProject(selectedProject?.id)"
             class="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition-colors flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px]">open_in_new</span>
@@ -158,50 +174,63 @@
           </button>
         </div>
       </div>
+
       <div class="p-6 space-y-6">
         <div class="flex flex-wrap gap-2">
           <span class="px-3 py-1 rounded-full text-xs font-bold"
-            [class]="getStatusBadge(selectedProject?.status || '')">{{ selectedProject?.status }}</span>
-          <span *ngIf="selectedProject?.type"
+            [class]="getStatusBadge(selectedProject?.status || '')">
+            {{ selectedProject?.status || '—' }}
+          </span>
+
+          <span
+            *ngIf="selectedProject?.type && selectedProject?.type !== 'null' && selectedProject?.type !== 'undefined'"
             class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {{ selectedProject?.type }}
           </span>
         </div>
+
         <div class="grid grid-cols-2 gap-3">
           <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
             <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
               <span class="material-symbols-outlined text-[14px]">calendar_today</span> Start
             </p>
-            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ selectedProject?.start_date | date:'dd MMM
-              yyyy' }}</p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">
+              {{ selectedProject?.start_date ? (selectedProject?.start_date | date:'dd MMM yyyy') : '—' }}
+            </p>
           </div>
           <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
             <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
               <span class="material-symbols-outlined text-[14px]">event_available</span> Completion
             </p>
-            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ selectedProject?.completion_date | date:'dd
-              MMM yyyy' }}</p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">
+              {{ selectedProject?.completion_date ? (selectedProject?.completion_date | date:'dd MMM yyyy') : '—' }}
+            </p>
           </div>
           <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
             <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
               <span class="material-symbols-outlined text-[14px]">payments</span> Budget
             </p>
-            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ formatCurrency(selectedProject?.budget_total)
-              }}</p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">
+              {{ formatCurrency(selectedProject?.budget_total) }}
+            </p>
           </div>
           <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
             <p class="text-xs text-slate-400 mb-1 flex items-center gap-1">
               <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span> Used
             </p>
-            <p class="font-bold text-slate-800 dark:text-white text-sm">{{ formatCurrency(selectedProject?.budget_used)
-              }}</p>
+            <p class="font-bold text-slate-800 dark:text-white text-sm">
+              {{ formatCurrency(selectedProject?.budget_used) }}
+            </p>
           </div>
         </div>
-        <div *ngIf="selectedProject?.address"
+
+
+        <div *ngIf="selectedProject?.address && selectedProject?.address !== 'null'"
           class="flex items-start gap-2 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800">
           <span class="material-symbols-outlined text-[18px] text-orange-500 mt-0.5">location_on</span>
           <p class="text-sm text-slate-700 dark:text-slate-300">{{ selectedProject?.address }}</p>
         </div>
+
         <div>
           <div class="flex justify-between mb-2">
             <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Overall Progress</span>
@@ -220,6 +249,7 @@
               [style.width.%]="getTotalBudgetPercent(selectedProject!)"></div>
           </div>
         </div>
+
         <div>
           <h3 class="text-sm font-black text-slate-700 dark:text-slate-200 mb-3">
             Team Members ({{ selectedProject?.team_members?.length || 0 }})
@@ -230,14 +260,15 @@
               <img *ngIf="member.avatar" [src]="member.avatar" class="w-5 h-5 rounded-full object-cover" alt="">
               <div *ngIf="!member.avatar"
                 class="w-5 h-5 rounded-full bg-orange-200 dark:bg-orange-900/60 flex items-center justify-center text-[10px] font-bold text-orange-700">
-               {{ member.firstname ? member.firstname.charAt(0) : '' }}
+                {{ member.firstname ? member.firstname.charAt(0) : '?' }}
               </div>
               <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                {{ member.firstname }} {{ member.lastname }}
+                {{ member.firstname || '' }} {{ member.lastname || '' }}
               </span>
             </div>
           </div>
         </div>
+
         <div>
           <h3 class="text-sm font-black text-slate-700 dark:text-slate-200 mb-3">
             Milestones ({{ selectedProject?.milestones?.length || 0 }})
@@ -246,15 +277,20 @@
             class="border border-slate-200 dark:border-slate-700 rounded-2xl p-4 mb-2.5 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
             <div class="flex items-start justify-between gap-2">
               <div class="flex-1 min-w-0">
-                <p class="font-bold text-slate-800 dark:text-white text-sm truncate">{{ ms.name }}</p>
-                <p class="text-xs text-slate-400 mt-0.5" *ngIf="ms.phase">{{ ms.phase }}</p>
+                <p class="font-bold text-slate-800 dark:text-white text-sm truncate">{{ ms.name || '—' }}</p>
+
+                <p *ngIf="ms.phase && ms.phase !== 'null'" class="text-xs text-slate-400 mt-0.5">{{ ms.phase }}</p>
               </div>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0"
-                [class]="getStatusBadge(ms.status)">{{ ms.status }}</span>
+                [class]="getStatusBadge(ms.status)">{{ ms.status || '—' }}</span>
             </div>
             <div class="flex items-center gap-2 mt-2.5 text-xs text-slate-400">
               <span class="material-symbols-outlined text-[13px]">date_range</span>
-              {{ ms.startDate | date:'dd MMM' }} → {{ ms.endDate | date:'dd MMM yyyy' }}
+
+              <ng-container *ngIf="ms.startDate && ms.endDate">
+                {{ ms.startDate | date:'dd MMM' }} → {{ ms.endDate | date:'dd MMM yyyy' }}
+              </ng-container>
+              <ng-container *ngIf="!ms.startDate || !ms.endDate">—</ng-container>
             </div>
             <div class="mt-2">
               <div class="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -264,6 +300,7 @@
             </div>
           </div>
         </div>
+
         <button (click)="openAddMeeting()"
           class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 font-bold text-sm hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all duration-200">
           <span class="material-symbols-outlined text-[18px]">video_call</span>
@@ -284,7 +321,6 @@
       <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
         <div>
           <p class="text-xs font-bold text-orange-500 uppercase tracking-widest">All Events</p>
-
           <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ selectedDayLabel }}</h3>
         </div>
         <button (click)="closeDayEventsPanel()"
@@ -303,6 +339,7 @@
             'bg-violet-50 dark:bg-violet-900/20  border border-violet-200  dark:border-violet-800':  event.type === 'meeting'
           }">
 
+
           <ng-container *ngIf="event.type !== 'meeting'">
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1 min-w-0 cursor-pointer" (click)="openProjectDetails(event.project)">
@@ -315,15 +352,17 @@
                   }"></div>
                   <span class="text-xs font-bold uppercase tracking-wide text-slate-400">{{ event.title }}</span>
                 </div>
-                <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.project?.name }}</p>
+                <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.project?.name || '—' }}</p>
                 <div class="flex items-center gap-3 mt-2 text-xs text-slate-500">
-                  <span>{{ event.project?.type }}</span>
+
+                  <span *ngIf="event.project?.type">{{ event.project?.type }}</span>
                   <span class="px-2 py-0.5 rounded-full font-bold"
-                    [class]="getStatusBadge(event.project?.status || '')">{{ event.project?.status }}</span>
+                    [class]="getStatusBadge(event.project?.status || '')">
+                    {{ event.project?.status || '—' }}
+                  </span>
                   <span class="ml-auto font-bold text-orange-500">{{ event.project?.progress || 0 }}%</span>
                 </div>
               </div>
-
               <button (click)="navigateToProject(event.project?.id); closeDayEventsPanel()"
                 class="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-500 text-white text-[11px] font-bold hover:bg-orange-600 transition-colors whitespace-nowrap">
                 <span class="material-symbols-outlined text-[13px]">open_in_new</span>
@@ -339,35 +378,48 @@
                 <div class="flex items-center gap-2 mb-1">
                   <span class="material-symbols-outlined text-[16px] text-violet-600">video_call</span>
                   <span class="text-xs font-bold text-violet-600 uppercase tracking-wide">
-                    Meeting · {{ event.meeting?.time }}
-                    <span *ngIf="event.meeting?.duration" class="font-normal normal-case text-violet-400">
+                    Meeting<ng-container *ngIf="event.meeting?.time"> · {{ event.meeting?.time }}</ng-container>
+
+                    <span *ngIf="event.meeting?.duration && event.meeting!.duration! > 0"
+                      class="font-normal normal-case text-violet-400">
                       ({{ event.meeting?.duration }} min)
                     </span>
                   </span>
                 </div>
-                <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.meeting?.title }}</p>
+
+                <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.meeting?.title || '—' }}</p>
+
+
                 <p *ngIf="event.meeting?.project?.name" class="text-xs text-slate-400 mt-0.5">
                   📁 {{ event.meeting?.project?.name }}
                 </p>
+
+
                 <p *ngIf="event.meeting?.vendor?.name" class="text-xs text-slate-400 mt-0.5">
                   🏢 {{ event.meeting?.vendor?.name }}
                 </p>
-                <p *ngIf="event.meeting?.description" class="text-xs text-slate-500 mt-1 leading-relaxed">
+
+
+                <p *ngIf="event.meeting?.description && event.meeting!.description!.trim() !== ''"
+                  class="text-xs text-slate-500 mt-1 leading-relaxed">
                   {{ event.meeting?.description }}
                 </p>
-                <!-- Attendees chips -->
-                <div *ngIf="event.meeting?.attendees?.length" class="flex flex-wrap gap-1 mt-2">
-                  <span *ngFor="let a of event.meeting?.attendees"
-                    class="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] font-semibold">
-                    {{ a }}
-                  </span>
-                </div>
-              </div>
 
+
+                <ng-container *ngIf="event.meeting?.attendees && event.meeting!.attendees!.length > 0">
+                  <div class="flex flex-wrap gap-1 mt-2">
+                    <span *ngFor="let a of event.meeting?.attendees"
+                      class="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] font-semibold">
+                      {{ a }}
+                    </span>
+                  </div>
+                </ng-container>
+              </div>
 
               <div class="flex flex-col gap-1.5 shrink-0">
 
-                <button *ngIf="event.meeting?.meet_link" (click)="openMeetLink(event.meeting?.meet_link, $event)"
+                <button *ngIf="event.meeting?.meet_link && event.meeting!.meet_link!.trim() !== ''"
+                  (click)="openMeetLink(event.meeting?.meet_link, $event)"
                   class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-600 text-white text-[11px] font-bold hover:bg-violet-700 transition-colors whitespace-nowrap">
                   <span class="material-symbols-outlined text-[13px]">video_call</span>
                   Join
@@ -389,7 +441,8 @@
           </ng-container>
         </div>
 
-        <div *ngIf="!selectedDayEvents.length" class="text-center py-8 text-slate-400 text-sm">No events for this day.
+        <div *ngIf="!selectedDayEvents.length" class="text-center py-8 text-slate-400 text-sm">
+          No events for this day.
         </div>
       </div>
     </div>
@@ -425,7 +478,6 @@
         </button>
       </div>
 
-
       <div class="flex-1 overflow-y-auto p-6 space-y-5">
 
         <div>
@@ -434,7 +486,6 @@
             class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
             placeholder="e.g. Site progress review">
         </div>
-
 
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -449,33 +500,31 @@
           </div>
         </div>
 
-
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Duration</label>
             <select [(ngModel)]="meetingForm.duration"
               class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all">
-              <option [value]="15">15 min</option>
-              <option [value]="30">30 min</option>
-              <option [value]="45">45 min</option>
-              <option [value]="60">1 hour</option>
-              <option [value]="90">1.5 hours</option>
-              <option [value]="120">2 hours</option>
+              <option [ngValue]="15">15 min</option>
+              <option [ngValue]="30">30 min</option>
+              <option [ngValue]="45">45 min</option>
+              <option [ngValue]="60">1 hour</option>
+              <option [ngValue]="90">1.5 hours</option>
+              <option [ngValue]="120">2 hours</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Project</label>
             <select [(ngModel)]="meetingForm.project_id"
               class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all">
-              <option [value]="undefined" disabled>Select Project</option>
-              <option *ngFor="let p of projects" [value]="p.id">{{ p.name }}</option>
+              <option [ngValue]="undefined" disabled>Select Project</option>
+              <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
             </select>
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Vendors</label>
-
           <div *ngIf="(meetingForm.selectedVendorIds || []).length > 0" class="flex flex-wrap gap-1.5 mb-2">
             <span *ngFor="let vid of meetingForm.selectedVendorIds"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-xs font-semibold">
@@ -486,7 +535,6 @@
               </button>
             </span>
           </div>
-
           <div class="relative">
             <button type="button" (click)="toggleVendorDropdown($event)"
               class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all hover:border-violet-400">
@@ -496,7 +544,6 @@
               <span class="material-symbols-outlined text-[18px] text-slate-400 transition-transform duration-200"
                 [class.rotate-180]="showVendorDropdown">expand_more</span>
             </button>
-
             <div *ngIf="showVendorDropdown" (click)="$event.stopPropagation()"
               class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-52 overflow-y-auto">
               <div *ngIf="!vendors.length" class="px-4 py-3 text-sm text-slate-400 text-center">No vendors available
@@ -505,9 +552,7 @@
                 class="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 cursor-pointer transition-colors select-none">
                 <span
                   class="flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all pointer-events-none"
-                  [ngClass]="isVendorSelected(v.id)
-                    ? 'bg-violet-600 border-violet-600'
-                    : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'">
+                  [ngClass]="isVendorSelected(v.id) ? 'bg-violet-600 border-violet-600' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'">
                   <span *ngIf="isVendorSelected(v.id)" class="material-symbols-outlined text-white pointer-events-none"
                     style="font-size:11px;font-variation-settings:'wght' 700">check</span>
                 </span>
@@ -534,22 +579,37 @@
           </label>
 
           <div *ngIf="selectedAttendees.length > 0"
-            class="flex flex-wrap gap-1.5 mb-2 p-2 border border-slate-100 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-            <span *ngFor="let a of selectedAttendees"
-              class="inline-flex items-center gap-1.5 pl-1 pr-1.5 py-0.5 rounded-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 shadow-sm">
-              <span
-                class="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-900/60 flex items-center justify-center text-[10px] font-bold text-violet-700 dark:text-violet-300 shrink-0">
-                {{ a.name ? a.name.charAt(0).toUpperCase() : a.email.charAt(0).toUpperCase() }}
+            class="flex flex-wrap gap-2 mb-3 p-2 border border-slate-100 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+            <div *ngFor="let a of selectedAttendees"
+              class="inline-flex items-center gap-2 px-2 py-1 rounded-full border shadow-sm" [ngClass]="a.isExisting
+                ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700'
+                : 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700'">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                [ngClass]="a.isExisting
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300'
+                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300'">
+                {{ (a.name || a.email).charAt(0).toUpperCase() }}
+              </div>
+              <div class="flex flex-col leading-tight min-w-0">
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                  {{ a.name || a.email }}
+                </span>
+                <span *ngIf="a.name && a.name !== a.email" class="text-[10px] text-slate-400 truncate">{{ a.email
+                  }}</span>
+              </div>
+              <span *ngIf="a.isExisting"
+                class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[9px] font-bold whitespace-nowrap">
+                Existing
               </span>
-              <span class="text-xs text-slate-700 dark:text-slate-200 font-medium leading-none">
-                {{ a.name && a.name !== a.email ? a.name : a.email }}
+              <span *ngIf="!a.isExisting"
+                class="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[9px] font-bold whitespace-nowrap">
+                External
               </span>
-              <span *ngIf="a.name && a.name !== a.email" class="text-[10px] text-slate-400">{{ a.email }}</span>
               <button type="button" (click)="removeAttendee(a.email)"
-                class="ml-0.5 text-slate-400 hover:text-red-500 transition-colors">
-                <span class="material-symbols-outlined text-[13px]">close</span>
+                class="text-slate-400 hover:text-red-500 transition-colors">
+                <span class="material-symbols-outlined text-[14px]">close</span>
               </button>
-            </span>
+            </div>
           </div>
 
           <div class="relative">
@@ -561,7 +621,6 @@
                 class="flex-1 px-3 py-3 text-sm bg-transparent text-slate-800 dark:text-white focus:outline-none"
                 placeholder="Search name or email, press Enter or comma to add...">
             </div>
-
             <div *ngIf="showAttendeeSuggestions" (click)="$event.stopPropagation()"
               class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
               <div *ngFor="let opt of filteredAttendeeOptions" (click)="selectAttendee(opt, $event)"
@@ -570,12 +629,20 @@
                   class="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-violet-100 dark:bg-violet-900/60 flex items-center justify-center">
                   <img *ngIf="opt.avatar" [src]="opt.avatar" class="w-full h-full object-cover" alt="">
                   <span *ngIf="!opt.avatar" class="text-sm font-bold text-violet-700 dark:text-violet-300">
-                    {{ opt.name.charAt(0).toUpperCase() }}
+                    {{ (opt.name || opt.email || '?').charAt(0).toUpperCase() }}
                   </span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ opt.name }}</p>
-                  <p class="text-xs text-slate-400 truncate">{{ opt.email }}</p>
+                  <p class="text-sm font-semibold text-slate-800 dark:text-white truncate">
+                    {{ opt.name || opt.email }}
+                  </p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {{ opt.email }}
+                  </p>
+                  <span
+                    class="inline-block mt-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[9px] font-bold">
+                    Existing User
+                  </span>
                 </div>
               </div>
             </div>

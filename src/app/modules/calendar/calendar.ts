@@ -17,6 +17,7 @@ export interface IAttendeeOption {
   name: string;
   email: string;
   avatar?: string;
+  isExisting?: boolean;
 }
 
 @Component({
@@ -82,6 +83,14 @@ export class Calendar implements OnInit {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
 
+  private parseJsonArray(value: any): any[] {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+      try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }
+      catch { return []; }
+    }
+    return [];
+  }
 
   loadProjects(): void {
     this.projectService.getProjects().subscribe({
@@ -105,6 +114,37 @@ export class Calendar implements OnInit {
   }
 
   loadAttendeeOptions(): void {
+    this.projectService.getTeamMembers().subscribe({
+      next: (res) => {
+        const users = res.data || [];
+        const seen = new Set<string>();
+        const options: IAttendeeOption[] = [];
+
+        users.forEach((member: any) => {
+          const email = (member.email || '').trim();
+          const key = email || `id-${member.id}`;
+          if (!seen.has(key) && email) {
+            seen.add(key);
+            options.push({
+              id: member.id,
+              name: `${member.firstname || ''} ${member.lastname || ''}`.trim(),
+              email: email,
+              avatar: member.avatar || null,
+              isExisting: true
+            });
+          }
+        });
+
+        this.allAttendeeOptions = options;
+      },
+      error: (err) => {
+        console.error('getTeamMembers failed, falling back:', err);
+        this.loadAttendeeOptionsFromProjects();
+      },
+    });
+  }
+
+  private loadAttendeeOptionsFromProjects(): void {
     this.projectService.getProjects().subscribe({
       next: (res) => {
         const seen = new Set<string>();
@@ -119,17 +159,16 @@ export class Calendar implements OnInit {
                 name: `${member.firstname || ''} ${member.lastname || ''}`.trim(),
                 email: member.email || '',
                 avatar: member.avatar,
+                isExisting: true
               });
             }
           });
         });
         this.allAttendeeOptions = options;
       },
-      error: (err) => console.error('loadAttendeeOptions:', err),
+      error: (err) => console.error('loadAttendeeOptionsFromProjects:', err),
     });
   }
-
-
   generateCalendar(): void {
     this.calendarDays = [];
     const firstDay = new Date(this.currentYear, this.currentMonth, 1);
@@ -191,7 +230,6 @@ export class Calendar implements OnInit {
     this.generateCalendar();
   }
 
-
   openProjectDetails(project?: IProject): void {
     if (!project) return;
     this.selectedProject = project;
@@ -211,7 +249,6 @@ export class Calendar implements OnInit {
     this.router.navigate(['/projects', id]);
   }
 
-
   openDayEvents(day: any, $event: Event): void {
     $event.stopPropagation();
     if (!day.date || !day.events.length) return;
@@ -223,7 +260,6 @@ export class Calendar implements OnInit {
   }
 
   closeDayEventsPanel(): void { this.showDayEventsPanel = false; }
-
 
   blankForm(): Partial<IMeeting> & { dateInput: string; timeInput: string; selectedVendorIds: number[] } {
     return {
@@ -244,42 +280,52 @@ export class Calendar implements OnInit {
     this.showMeetingModal = true;
   }
 
-
   openEditMeeting(meeting: IMeeting, $event: Event): void {
     $event.stopPropagation();
     $event.preventDefault();
 
-    this.showDayEventsPanel = false;
+    const snap: IMeeting = { ...meeting };
 
-    this.editingMeeting = meeting;
-
-    this.selectedAttendees = (meeting.attendees || []).map(entry => {
+    const rawAttendees: string[] = this.parseJsonArray(snap.attendees);
+    const parsedAttendees: IAttendeeOption[] = rawAttendees.map(entry => {
       const match = entry.match(/^(.*?)\s*<(.+)>$/);
-      return match
-        ? { id: 0, name: match[1].trim(), email: match[2].trim() }
-        : { id: 0, name: entry, email: entry };
+      if (match) {
+        const email = match[2].trim();
+        const found = this.allAttendeeOptions.find(x => x.email.toLowerCase() === email.toLowerCase());
+        return { id: found?.id || 0, name: match[1].trim(), email, isExisting: !!found };
+      }
+      const found = this.allAttendeeOptions.find(x => x.email.toLowerCase() === entry.toLowerCase());
+      return { id: found?.id || 0, name: entry, email: entry, isExisting: !!found };
     });
 
     const vendorIds: number[] = [];
-    if (meeting.vendor_id) vendorIds.push(meeting.vendor_id);
-    if (meeting.vendor_ids?.length) {
-      meeting.vendor_ids.forEach(id => { if (!vendorIds.includes(id)) vendorIds.push(id); });
-    }
+    if (snap.vendor_id) vendorIds.push(Number(snap.vendor_id));
+    this.parseJsonArray(snap.vendor_ids).forEach((id: any) => {
+      const n = Number(id);
+      if (!isNaN(n) && !vendorIds.includes(n)) vendorIds.push(n);
+    });
+
+    this.editingMeeting = snap;
 
     this.meetingForm = {
-      title: meeting.title,
-      description: meeting.description || '',
-      attendees: meeting.attendees || [],
-      duration: meeting.duration || 30,
-      project_id: meeting.project_id,
-      vendor_id: meeting.vendor_id,
-      vendor_ids: vendorIds,
-      meet_link: meeting.meet_link || '',
-      dateInput: meeting.date,
-      timeInput: meeting.time || '10:00',
-      selectedVendorIds: vendorIds,
+      title: snap.title,
+      description: snap.description || '',
+      attendees: [...rawAttendees],
+      duration: Number(snap.duration) || 30,
+      project_id: snap.project_id ? Number(snap.project_id) : undefined,
+      vendor_id: snap.vendor_id ? Number(snap.vendor_id) : undefined,
+      vendor_ids: [...vendorIds],
+      meet_link: snap.meet_link || '',
+      dateInput: snap.date,
+      timeInput: snap.time || '10:00',
+      selectedVendorIds: [...vendorIds],
     };
+
+    this.selectedAttendees = parsedAttendees;
     this.attendeeSearchText = '';
+    this.showVendorDropdown = false;
+
+    this.showDayEventsPanel = false;
     this.showMeetingModal = true;
   }
 
@@ -295,7 +341,6 @@ export class Calendar implements OnInit {
   closeTimePicker(input: HTMLInputElement): void {
     setTimeout(() => { input.blur(); }, 2000);
   }
-
 
   toggleVendorDropdown($event: Event): void {
     $event.stopPropagation();
@@ -336,22 +381,34 @@ export class Calendar implements OnInit {
     this.showAttendeeSuggestions = false;
   }
 
-
   onAttendeeSearch(value: string): void {
     this.attendeeSearchText = value;
-    if (!value.trim()) { this.showAttendeeSuggestions = false; return; }
-    const q = value.toLowerCase();
+    const q = value.trim().toLowerCase();
+
+    if (q.length < 3) {
+      this.filteredAttendeeOptions = [];
+      this.showAttendeeSuggestions = false;
+      return;
+    }
+
+    const isEmailSearch = q.includes('@');
+
     this.filteredAttendeeOptions = this.allAttendeeOptions.filter(opt =>
       !this.selectedAttendees.some(a => a.email === opt.email) &&
-      (opt.name.toLowerCase().includes(q) || opt.email.toLowerCase().includes(q))
+      (
+        isEmailSearch
+          ? (opt.email || '').toLowerCase().includes(q)
+          : (opt.name || '').toLowerCase().includes(q)
+      )
     );
+
     this.showAttendeeSuggestions = this.filteredAttendeeOptions.length > 0;
   }
 
   selectAttendee(opt: IAttendeeOption, $event: Event): void {
     $event.stopPropagation();
     if (!this.selectedAttendees.some(a => a.email === opt.email)) {
-      this.selectedAttendees = [...this.selectedAttendees, opt];
+      this.selectedAttendees = [...this.selectedAttendees, { ...opt, isExisting: true }];
     }
     this.attendeeSearchText = '';
     this.showAttendeeSuggestions = false;
@@ -365,14 +422,37 @@ export class Calendar implements OnInit {
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault();
       const raw = this.attendeeSearchText.trim().replace(/,$/, '');
-      if (raw && !this.selectedAttendees.some(a => a.email === raw)) {
-        this.selectedAttendees = [...this.selectedAttendees, { id: 0, name: raw, email: raw }];
+      if (!raw) return;
+
+      // Name ya email dono se existing user dhundo
+      const existing = this.allAttendeeOptions.find(
+        x => x.email.toLowerCase() === raw.toLowerCase() ||
+          x.name.toLowerCase() === raw.toLowerCase()
+      );
+
+      if (existing) {
+        if (!this.selectedAttendees.some(a => a.email === existing.email)) {
+          this.selectedAttendees = [...this.selectedAttendees, existing];
+        }
+      } else {
+        // Email format check — agar valid email hai
+        const isEmail = raw.includes('@');
+        if (!this.selectedAttendees.some(a => a.email === raw)) {
+          this.selectedAttendees = [
+            ...this.selectedAttendees,
+            {
+              id: 0,
+              name: isEmail ? raw.split('@')[0] : raw,  // email se name nikalo
+              email: isEmail ? raw : raw,
+              isExisting: false
+            }
+          ];
+        }
       }
       this.attendeeSearchText = '';
       this.showAttendeeSuggestions = false;
     }
   }
-
 
   saveMeeting(): void {
     if (!this.meetingForm.title || !this.meetingForm.dateInput || this.isSavingMeeting) return;
@@ -439,7 +519,6 @@ export class Calendar implements OnInit {
     $event.stopPropagation();
     if (url) window.open(url, '_blank');
   }
-
 
   getProgressColor(p: number): string {
     return p >= 70 ? 'bg-emerald-500' : p >= 30 ? 'bg-amber-500' : 'bg-red-500';

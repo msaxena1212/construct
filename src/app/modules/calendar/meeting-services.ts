@@ -8,7 +8,13 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
 }
-
+export interface IAttendeeOption {
+  id: number;
+  name: string;
+  email: string;
+  avatar?: string;
+  isExisting?: boolean;
+}
 export interface IMeeting {
   id?: number;
   title: string;
@@ -20,7 +26,7 @@ export interface IMeeting {
   meet_link?: string;
   project_id?: number;
   vendor_id?: number;
-  vendor_ids?: number[]; 
+  vendor_ids?: number[];
   company_id?: number;
   created_by?: number;
   project?: { id: number; name: string; type: string; status: string };
@@ -42,13 +48,13 @@ export interface IMeetingFilters {
 export class MeetingServices {
   private apiUrl = environment.serverUrl + '/api/v1/meetings';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getMeetings(filters?: IMeetingFilters): Observable<ApiResponse<IMeeting[]>> {
     let params = new HttpParams();
     if (filters?.project_id) params = params.set('project_id', filters.project_id);
-    if (filters?.vendor_id)  params = params.set('vendor_id', filters.vendor_id);
-    if (filters?.date)       params = params.set('date', filters.date);
+    if (filters?.vendor_id) params = params.set('vendor_id', filters.vendor_id);
+    if (filters?.date) params = params.set('date', filters.date);
     return this.http.get<ApiResponse<IMeeting[]>>(this.apiUrl, { params });
   }
 
