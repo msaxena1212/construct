@@ -17,7 +17,7 @@
 
     <!-- Add Button -->
     <button (click)="openAddModal()"
-      class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
+      class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff] cursor-pointer">
 
       <div
         class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -221,8 +221,8 @@
               <div class="flex items-center justify-center gap-3">
 
                 <!-- Edit -->
-                <button (click)="openEditModal(item)"
-                  class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                <button (click)="openEditModal(item)" title="Edit Category"
+                  class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
 
                   <span class="material-symbols-outlined text-[18px]">
                     edit
@@ -231,8 +231,8 @@
                 </button>
 
                 <!-- Delete -->
-                <button (click)="deleteCategory(item)"
-                  class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                <button (click)="deleteCategory(item)" title="Delete Category"
+                  class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
 
                   <span class="material-symbols-outlined text-[18px]">
                     delete
@@ -308,7 +308,7 @@
 
         <!-- Prev -->
         <button (click)="prevPage()"
-          class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
 
           <span class="material-symbols-outlined text-[18px]">
             chevron_left
@@ -321,9 +321,9 @@
 
         <button (click)="goToPage($index + 1)"
           [class]="page === ($index + 1)
-                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                    ? 'bg-primary text-white shadow-lg shadow-primary/20 cursor-pointer'
                     : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'"
-          class="w-9 h-9 rounded-xl text-sm font-bold transition-all">
+          class="w-9 h-9 rounded-xl text-sm font-bold transition-all cursor-pointer">
 
           {{ $index + 1 }}
 
@@ -333,7 +333,7 @@
 
         <!-- Next -->
         <button (click)="nextPage()"
-          class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+          class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
 
           <span class="material-symbols-outlined text-[18px]">
             chevron_right

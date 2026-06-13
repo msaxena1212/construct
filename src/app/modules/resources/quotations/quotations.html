@@ -31,52 +31,177 @@
   </div>
 
   <!-- Stats Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-          <span class="material-symbols-outlined">request_quote</span>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Quotes</p>
-          <h3 class="text-2xl font-bold text-slate-900">{{quotes.length}}</h3>
-        </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+
+  <!-- Total Quotes -->
+  <div
+    class="group relative overflow-hidden rounded-3xl p-5
+           bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500
+           text-white shadow-lg hover:shadow-xl
+           hover:-translate-y-1 transition-all duration-300">
+
+    <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+    <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+
+    <div class="flex items-center justify-between relative z-10">
+
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+          Total Quotes
+        </p>
+
+        <h3 class="text-3xl font-black tracking-tight mt-2">
+          {{ quotes.length }}
+        </h3>
+
+        <p class="text-xs text-white/70 mt-1">
+          All quotations
+        </p>
       </div>
-    </div>
-    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
-          <span class="material-symbols-outlined">drafts</span>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Drafts</p>
-          <h3 class="text-2xl font-bold text-slate-900">{{draftQuotesCount}}</h3>
-        </div>
+
+      <div
+        class="w-14 h-14 rounded-2xl
+               bg-white/20 backdrop-blur-md
+               border border-white/20
+               flex items-center justify-center">
+
+        <span class="material-symbols-outlined text-[30px]">
+          request_quote
+        </span>
+
       </div>
+
     </div>
-    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
-          <span class="material-symbols-outlined">verified</span>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Approved</p>
-          <h3 class="text-2xl font-bold text-slate-900">{{approvedQuotesCount}}</h3>
-        </div>
-      </div>
-    </div>
-    <div class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm">
-      <div class="flex items-center gap-4 mb-4">
-        <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-600">
-          <span class="material-symbols-outlined">payments</span>
-        </div>
-        <div>
-          <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Value</p>
-          <h3 class="text-2xl font-bold text-slate-900">₹{{totalValue.toLocaleString()}}</h3>
-        </div>
-      </div>
-    </div>
+
   </div>
+
+  <!-- Draft Quotes -->
+  <div
+    class="group relative overflow-hidden rounded-3xl p-5
+           bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500
+           text-white shadow-lg hover:shadow-xl
+           hover:-translate-y-1 transition-all duration-300">
+
+    <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+    <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+
+    <div class="flex items-center justify-between relative z-10">
+
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+          Drafts
+        </p>
+
+        <h3 class="text-3xl font-black tracking-tight mt-2">
+          {{ draftQuotesCount }}
+        </h3>
+
+        <p class="text-xs text-white/70 mt-1">
+          Pending review
+        </p>
+      </div>
+
+      <div
+        class="w-14 h-14 rounded-2xl
+               bg-white/20 backdrop-blur-md
+               border border-white/20
+               flex items-center justify-center">
+
+        <span class="material-symbols-outlined text-[30px]">
+          drafts
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Approved -->
+  <div
+    class="group relative overflow-hidden rounded-3xl p-5
+           bg-gradient-to-br from-emerald-400 via-green-400 to-teal-500
+           text-white shadow-lg hover:shadow-xl
+           hover:-translate-y-1 transition-all duration-300">
+
+    <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+    <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+
+    <div class="flex items-center justify-between relative z-10">
+
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+          Approved
+        </p>
+
+        <h3 class="text-3xl font-black tracking-tight mt-2">
+          {{ approvedQuotesCount }}
+        </h3>
+
+        <p class="text-xs text-white/70 mt-1">
+          Successfully approved
+        </p>
+      </div>
+
+      <div
+        class="w-14 h-14 rounded-2xl
+               bg-white/20 backdrop-blur-md
+               border border-white/20
+               flex items-center justify-center">
+
+        <span class="material-symbols-outlined text-[30px]">
+          verified
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Total Value -->
+  <div
+    class="group relative overflow-hidden rounded-3xl p-5
+           bg-gradient-to-br from-slate-500 via-slate-600 to-slate-700
+           text-white shadow-lg hover:shadow-xl
+           hover:-translate-y-1 transition-all duration-300">
+
+    <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+    <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+
+    <div class="flex items-center justify-between relative z-10">
+
+      <div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+          Total Value
+        </p>
+
+        <h3 class="text-2xl font-black tracking-tight mt-2">
+          ₹{{ totalValue.toLocaleString() }}
+        </h3>
+
+        <p class="text-xs text-white/70 mt-1">
+          Quote worth
+        </p>
+      </div>
+
+      <div
+        class="w-14 h-14 rounded-2xl
+               bg-white/20 backdrop-blur-md
+               border border-white/20
+               flex items-center justify-center">
+
+        <span class="material-symbols-outlined text-[30px]">
+          payments
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
   <!-- Search and Filters -->
   <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm mb-6 p-4">

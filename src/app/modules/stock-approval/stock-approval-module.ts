@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { CommonDialogComponent } from '../../shared/components/common-dialog/common-dialog';
 
 @NgModule({
   declarations: [StockApproval],
@@ -19,7 +20,7 @@ import { MatButtonModule } from '@angular/material/button';
     MatFormFieldModule,
     FormsModule,
     MatCardModule,
-    MatButtonModule
+    MatButtonModule,CommonDialogComponent
   ],
 })
 export class StockApprovalModule{ }
