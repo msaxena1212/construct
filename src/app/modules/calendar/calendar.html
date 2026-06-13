@@ -183,7 +183,7 @@
           </span>
 
           <span
-            *ngIf="selectedProject?.type && selectedProject?.type !== 'null' && selectedProject?.type !== 'undefined'"
+            *ngIf="selectedProject!.type && selectedProject?.type !== 'null' && selectedProject?.type !== 'undefined'"
             class="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             {{ selectedProject?.type }}
           </span>
@@ -195,7 +195,7 @@
               <span class="material-symbols-outlined text-[14px]">calendar_today</span> Start
             </p>
             <p class="font-bold text-slate-800 dark:text-white text-sm">
-              {{ selectedProject?.start_date ? (selectedProject?.start_date | date:'dd MMM yyyy') : '—' }}
+              {{ selectedProject!.start_date ? (selectedProject?.start_date | date:'dd MMM yyyy') : '—' }}
             </p>
           </div>
           <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
@@ -203,7 +203,7 @@
               <span class="material-symbols-outlined text-[14px]">event_available</span> Completion
             </p>
             <p class="font-bold text-slate-800 dark:text-white text-sm">
-              {{ selectedProject?.completion_date ? (selectedProject?.completion_date | date:'dd MMM yyyy') : '—' }}
+              {{ selectedProject!.completion_date ? (selectedProject?.completion_date | date:'dd MMM yyyy') : '—' }}
             </p>
           </div>
           <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
@@ -225,7 +225,7 @@
         </div>
 
 
-        <div *ngIf="selectedProject?.address && selectedProject?.address !== 'null'"
+        <div *ngIf="selectedProject!.address && selectedProject?.address !== 'null'"
           class="flex items-start gap-2 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800">
           <span class="material-symbols-outlined text-[18px] text-orange-500 mt-0.5">location_on</span>
           <p class="text-sm text-slate-700 dark:text-slate-300">{{ selectedProject?.address }}</p>
@@ -355,7 +355,7 @@
                 <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.project?.name || '—' }}</p>
                 <div class="flex items-center gap-3 mt-2 text-xs text-slate-500">
 
-                  <span *ngIf="event.project?.type">{{ event.project?.type }}</span>
+                  <span *ngIf="event.project!.type">{{ event.project?.type }}</span>
                   <span class="px-2 py-0.5 rounded-full font-bold"
                     [class]="getStatusBadge(event.project?.status || '')">
                     {{ event.project?.status || '—' }}
@@ -378,9 +378,9 @@
                 <div class="flex items-center gap-2 mb-1">
                   <span class="material-symbols-outlined text-[16px] text-violet-600">video_call</span>
                   <span class="text-xs font-bold text-violet-600 uppercase tracking-wide">
-                    Meeting<ng-container *ngIf="event.meeting?.time"> · {{ event.meeting?.time }}</ng-container>
+                    Meeting<ng-container *ngIf="event.meeting!.time"> · {{ event.meeting?.time }}</ng-container>
 
-                    <span *ngIf="event.meeting?.duration && event.meeting!.duration! > 0"
+                    <span *ngIf="event.meeting!.duration && event.meeting!.duration! > 0"
                       class="font-normal normal-case text-violet-400">
                       ({{ event.meeting?.duration }} min)
                     </span>
@@ -390,17 +390,17 @@
                 <p class="font-bold text-slate-800 dark:text-white text-sm">{{ event.meeting?.title || '—' }}</p>
 
 
-                <p *ngIf="event.meeting?.project?.name" class="text-xs text-slate-400 mt-0.5">
+                <p *ngIf="event.meeting!.project?.name" class="text-xs text-slate-400 mt-0.5">
                   📁 {{ event.meeting?.project?.name }}
                 </p>
 
 
-                <p *ngIf="event.meeting?.vendor?.name" class="text-xs text-slate-400 mt-0.5">
+                <p *ngIf="event.meeting!.vendor?.name" class="text-xs text-slate-400 mt-0.5">
                   🏢 {{ event.meeting?.vendor?.name }}
                 </p>
 
 
-                <p *ngIf="event.meeting?.description && event.meeting!.description!.trim() !== ''"
+                <p *ngIf="event.meeting!.description && event.meeting!.description!.trim() !== ''"
                   class="text-xs text-slate-500 mt-1 leading-relaxed">
                   {{ event.meeting?.description }}
                 </p>
@@ -408,7 +408,7 @@
 
                 <ng-container *ngIf="event.meeting?.attendees && event.meeting!.attendees!.length > 0">
                   <div class="flex flex-wrap gap-1 mt-2">
-                    <span *ngFor="let a of event.meeting?.attendees"
+                    <span *ngFor="let a of event.meeting!.attendees"
                       class="px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-[10px] font-semibold">
                       {{ a }}
                     </span>
@@ -419,7 +419,7 @@
               <div class="flex flex-col gap-1.5 shrink-0">
 
                 <button *ngIf="event.meeting?.meet_link && event.meeting!.meet_link!.trim() !== ''"
-                  (click)="openMeetLink(event.meeting?.meet_link, $event)"
+                  (click)="openMeetLink(event.meeting!.meet_link, $event)"
                   class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-600 text-white text-[11px] font-bold hover:bg-violet-700 transition-colors whitespace-nowrap">
                   <span class="material-symbols-outlined text-[13px]">video_call</span>
                   Join
@@ -514,12 +514,47 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Project</label>
-            <select [(ngModel)]="meetingForm.project_id"
-              class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all">
-              <option [ngValue]="undefined" disabled>Select Project</option>
-              <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
-            </select>
+            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+              Project
+            </label>
+
+            <div class="relative">
+              <button type="button" (click)="showProjectDropdown = !showProjectDropdown" class="w-full flex items-center justify-between
+             border border-slate-200 dark:border-slate-700
+             rounded-xl px-4 py-3 text-sm
+             bg-white dark:bg-slate-800
+             text-slate-800 dark:text-white
+             hover:border-violet-400
+             focus:ring-2 focus:ring-violet-400
+             transition-all">
+
+                <span [class.text-slate-400]="!meetingForm.project_id">
+                  {{ getSelectedProjectName() || 'Select Project' }}
+                </span>
+
+                <span class="material-symbols-outlined text-[18px] text-slate-400"
+                  [class.rotate-180]="showProjectDropdown">
+                  expand_more
+                </span>
+              </button>
+
+              <div *ngIf="showProjectDropdown" class="absolute z-50 top-full left-0 right-0 mt-1
+             bg-white dark:bg-slate-800
+             border border-slate-200 dark:border-slate-700
+             rounded-xl shadow-xl overflow-hidden">
+
+                <div *ngFor="let p of projects" (click)="selectProject(p)" class="px-4 py-3 cursor-pointer
+               hover:bg-violet-50
+               dark:hover:bg-violet-900/20
+               transition-colors">
+
+                  <p class="text-sm font-medium text-slate-800 dark:text-white">
+                    {{ p.name }}
+                  </p>
+                </div>
+
+              </div>
+            </div>
           </div>
         </div>
 
@@ -627,8 +662,10 @@
                 class="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 cursor-pointer transition-colors">
                 <div
                   class="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-violet-100 dark:bg-violet-900/60 flex items-center justify-center">
-                  <img *ngIf="opt.avatar" [src]="opt.avatar" class="w-full h-full object-cover" alt="">
-                  <span *ngIf="!opt.avatar" class="text-sm font-bold text-violet-700 dark:text-violet-300">
+                  <img *ngIf="opt.avatar && !failedAvatars.has(opt.avatar)" [src]="getAvatarUrl(opt.avatar)"
+                    class="w-full h-full object-cover rounded-full" alt="" (error)="onAvatarError(opt.avatar)">
+                  <span *ngIf="!opt.avatar || failedAvatars.has(opt.avatar)"
+                    class="text-sm font-bold text-violet-700 dark:text-violet-300">
                     {{ (opt.name || opt.email || '?').charAt(0).toUpperCase() }}
                   </span>
                 </div>

@@ -3,7 +3,7 @@ import { ProjectService } from '../projects/services/project-service';
 import { IProject, IMilestone } from '../../shared/interfaces/project.interface';
 import { Router } from '@angular/router';
 import { MeetingServices, IMeeting } from '../calendar/meeting-services';
-
+import { environment } from '../../../environments/environment';
 export interface CalendarEvent {
   title: string;
   type: 'project-start' | 'project-end' | 'milestone-start' | 'milestone-end' | 'meeting';
@@ -27,7 +27,7 @@ export interface IAttendeeOption {
   styleUrl: './calendar.scss',
 })
 export class Calendar implements OnInit {
-
+  serverUrl = environment.serverUrl;
   months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
@@ -58,7 +58,7 @@ export class Calendar implements OnInit {
   selectedDayEvents: CalendarEvent[] = [];
   selectedDayLabel = '';
   selectedDayFullDate = '';
-
+  showProjectDropdown = false;
   showVendorDropdown = false;
   allAttendeeOptions: IAttendeeOption[] = [];
   filteredAttendeeOptions: IAttendeeOption[] = [];
@@ -90,6 +90,16 @@ export class Calendar implements OnInit {
       catch { return []; }
     }
     return [];
+  }
+  failedAvatars = new Set<string>();
+
+  onAvatarError(avatar: string): void {
+    this.failedAvatars.add(avatar);
+  }
+  getAvatarUrl(avatar: string | undefined): string {
+    if (!avatar) return '';
+    if (avatar.startsWith('http')) return avatar;
+    return this.serverUrl + avatar;
   }
 
   loadProjects(): void {
@@ -338,6 +348,19 @@ export class Calendar implements OnInit {
     this.showVendorDropdown = false;
   }
 
+
+  selectProject(project: any) {
+    this.meetingForm.project_id = project.id;
+    this.showProjectDropdown = false;
+  }
+
+  getSelectedProjectName(): string {
+    const project = this.projects.find(
+      p => p.id === this.meetingForm.project_id
+    );
+
+    return project?.name || '';
+  }
   closeTimePicker(input: HTMLInputElement): void {
     setTimeout(() => { input.blur(); }, 2000);
   }
