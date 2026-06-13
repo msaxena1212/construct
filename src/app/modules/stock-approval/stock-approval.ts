@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ProjectService } from '../projects/services/project-service';
+import { CommonDialogComponent } from '../../shared/components/common-dialog/common-dialog';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-stock-approval',
@@ -78,5 +80,53 @@ rejectRequest(id: number) {
       console.log(err);
     }
   });
+}
+
+showRequestDialog = false;
+
+dialogData = {
+  title: '',
+  subtitle: '',
+  action: '',
+  requestId: null as number | null
+};
+
+openApproveDialog(id: number) {
+  this.dialogData = {
+    title: 'Approve Request',
+    subtitle: 'Are you sure you want to approve this request?',
+    action: 'approve',
+    requestId: id
+  };
+
+  this.showRequestDialog = true;
+}
+
+openRejectDialog(id: number) {
+  this.dialogData = {
+    title: 'Reject Request',
+    subtitle: 'Are you sure you want to reject this request?',
+    action: 'reject',
+    requestId: id
+  };
+
+  this.showRequestDialog = true;
+}
+
+confirmAction() {
+
+  if (this.dialogData.action === 'approve') {
+    this.approveRequest(this.dialogData.requestId!);
+  }
+
+  if (this.dialogData.action === 'reject') {
+    this.rejectRequest(this.dialogData.requestId!);
+  }
+
+  this.closeDialog();
+}
+
+closeDialog() {
+  this.showRequestDialog = false;
 }
 }

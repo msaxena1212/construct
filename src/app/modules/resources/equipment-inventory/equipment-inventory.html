@@ -26,44 +26,77 @@
         </div> -->
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
 
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+    <!-- Total SKU -->
+    <div
+        class="group relative overflow-hidden rounded-3xl p-5
+               bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500
+               text-white shadow-lg hover:shadow-xl
+               hover:-translate-y-1 transition-all duration-300">
 
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">
-                Total SKU
-            </span>
+        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-            <div class="flex items-baseline gap-2">
+        <div class="flex items-center justify-between relative z-10">
 
-                <span class="text-3xl font-black">
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                    Total SKU
+                </p>
+
+                <h3 class="text-3xl font-black tracking-tight mt-2">
                     {{ materials.length }}
-                </span>
+                </h3>
 
-                <span class="text-xs font-bold text-green-600">
-                    Active
+                <p class="text-xs text-white/70 mt-1">
+                    Active Materials
+                </p>
+            </div>
+
+            <div
+                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+
+                <span class="material-symbols-outlined text-[30px]">
+                    inventory_2
                 </span>
 
             </div>
 
         </div>
 
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32 border-l-4 border-l-secondary-container">
+    </div>
 
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">
-                Assigned Items
-            </span>
+    <!-- Assigned Items -->
+    <div
+        class="group relative overflow-hidden rounded-3xl p-5
+               bg-gradient-to-br from-emerald-400 via-green-400 to-teal-500
+               text-white shadow-lg hover:shadow-xl
+               hover:-translate-y-1 transition-all duration-300">
 
-            <div class="flex items-baseline gap-2">
+        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-                <span class="text-3xl font-black text-secondary">
+        <div class="flex items-center justify-between relative z-10">
+
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                    Assigned Items
+                </p>
+
+                <h3 class="text-3xl font-black tracking-tight mt-2">
                     {{ noOfProjectsAssigned }}
-                </span>
+                </h3>
 
-                <span class="material-symbols-outlined text-secondary-container"
-                    style="font-variation-settings: 'FILL' 1;">
+                <p class="text-xs text-white/70 mt-1">
+                    Project Allocated
+                </p>
+            </div>
+
+            <div
+                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+
+                <span class="material-symbols-outlined text-[30px]">
                     assignment_turned_in
                 </span>
 
@@ -71,38 +104,77 @@
 
         </div>
 
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+    </div>
 
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">
-                Inventory Value
-            </span>
+    <!-- Inventory Value -->
+    <div
+        class="group relative overflow-hidden rounded-3xl p-5
+               bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500
+               text-white shadow-lg hover:shadow-xl
+               hover:-translate-y-1 transition-all duration-300">
 
-            <div class="flex items-baseline gap-2">
+        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-                <span class="text-3xl font-black text-primary">
-                    ₹{{getInventoryValue() | number:'1.0-0'
-                    }}
+        <div class="flex items-center justify-between relative z-10">
+
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                    Inventory Value
+                </p>
+
+                <h3 class="text-2xl font-black tracking-tight mt-2">
+                    ₹{{ getInventoryValue() | number:'1.0-0' }}
+                </h3>
+
+                <p class="text-xs text-white/70 mt-1">
+                    Total Stock Worth
+                </p>
+            </div>
+
+            <div
+                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+
+                <span class="material-symbols-outlined text-[30px]">
+                    account_balance_wallet
                 </span>
 
             </div>
 
         </div>
 
-        <div
-            class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+    </div>
 
-            <span class="text-xs font-bold uppercase tracking-widest text-outline">
-                Not Assigned
-            </span>
+    <!-- Not Assigned -->
+    <div
+        class="group relative overflow-hidden rounded-3xl p-5
+               bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800
+               text-white shadow-lg hover:shadow-xl
+               hover:-translate-y-1 transition-all duration-300">
 
-            <div class="flex items-baseline gap-2">
+        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-                <span class="text-3xl font-black">
-                    {{noOfProjectsNotAssigned }}
-                </span>
+        <div class="flex items-center justify-between relative z-10">
 
-                <span class="material-symbols-outlined text-outline">
+            <div>
+                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                    Not Assigned
+                </p>
+
+                <h3 class="text-3xl font-black tracking-tight mt-2">
+                    {{ noOfProjectsNotAssigned }}
+                </h3>
+
+                <p class="text-xs text-white/70 mt-1">
+                    Pending Allocation
+                </p>
+            </div>
+
+            <div
+                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+
+                <span class="material-symbols-outlined text-[30px]">
                     pending_actions
                 </span>
 
@@ -111,6 +183,8 @@
         </div>
 
     </div>
+
+</div>
 
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
