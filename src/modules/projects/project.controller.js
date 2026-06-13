@@ -743,6 +743,135 @@ class ProjectController {
           )
         }));
 
+      const invoices = await db.vendors_invoice.findAll({
+        where: {
+          project_id: id,
+          company_id,
+         
+        },
+        order: [['createdAt', 'DESC']],
+      });
+
+
+      let total_material = 0;
+      let total_equipment = 0;
+      let total_labor = 0;
+
+      invoices.forEach(invoice => {
+        (invoice.items || []).forEach(item => {
+          const total = parseFloat(item.total || 0);
+
+          if (item.type === "material") {
+            total_material += total;
+          } else if (item.type === "equipment") {
+            total_equipment += total;
+          } else if (item.type === "labor") {
+            total_labor += total;
+          }
+
+        });
+      });
+
+      const totalSpend = invoices.reduce((sum, invoice) => {
+
+        return sum + parseFloat(invoice.paid_amount || 0);
+
+      }, 0);
+
+      const grand_total = invoices.reduce((sum, invoice) => {
+
+        return sum + parseFloat(invoice.grand_total || 0);
+
+      }, 0);
+
+
+      const on_hold = (grand_total - totalSpend);
+
+      const remaining_budget = (projectData.budget_total - grand_total);
+
+      return res.status(200).json({
+
+        data: {
+          ...projectData,
+          invoice: invoices,
+          totalSpend: totalSpend.toFixed(2),
+          grand_total: grand_total.toFixed(2),
+          on_hold: on_hold.toFixed(2),
+          remaining_budget: remaining_budget.toFixed(2),
+          total_material: total_material.toFixed(2),
+          total_equipment: total_equipment.toFixed(2),
+          total_labor: total_labor.toFixed(2),
+        }
+
+      });
+
+
+    } catch (error) {
+      return res.status(500).json({
+        message: "Error fetching project details.",
+        error: error.message
+      });
+    }
+  }
+
+
+  //Budgetsall
+  async getBudgetall_vendorProjectById(req, res) {
+    try {
+
+      const { id } = req.params;
+
+      const company_id = req.user.company_id;
+
+      const project = await db.project.findOne({
+        where: { id, company_id },
+        include: [
+          {
+            model: db.milestone,
+            as: 'milestones'
+          },
+          {
+            model: db.project_document,
+            as: 'documents'
+          },
+          {
+            model: db.user,
+            as: 'team_members',
+            attributes: [
+              'id',
+              'firstname',
+              'lastname',
+              'email',
+              'avatar'
+            ],
+            through: { attributes: ['role'] }
+          }
+        ]
+      });
+
+      if (!project) {
+        return res.status(404).json({
+          message: "Project not found or unauthorized."
+        });
+      }
+
+      const projectData = project.toJSON();
+
+      const milestones = projectData.milestones || [];
+
+      projectData.milestones_with_child = milestones
+
+        .filter(m => m.parent_id === null)
+
+        .map(parent => ({
+
+          ...parent,
+          children: milestones.filter(
+            child => child.parent_id === parent.id
+
+          )
+        }));
+
 
       // const company_id = getCompanyId(req);
       // const { vendorId } = req.params;
@@ -835,6 +964,8 @@ class ProjectController {
       });
     }
   }
+
+
 
 }
 
