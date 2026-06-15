@@ -1,229 +1,50 @@
-<div class="timeline-card">
-
-  <!-- Toolbar -->
+﻿<div class="timeline-card">
   <div class="timeline-toolbar">
-    <button class="view-btn" [class.active]="currentView === 'Day'" (click)="changeView('Day')">
-      Day
-    </button>
-
-    <button class="view-btn" [class.active]="currentView === 'Week'" (click)="changeView('Week')">
-      Week
-    </button>
-
-    <button class="view-btn" [class.active]="currentView === 'Month'" (click)="changeView('Month')">
-      Month
-    </button>
-  </div>
-
-  <!-- Main Layout -->
-  <div class="timeline-layout" style="
-      display:flex;
-      height:calc(100vh - 120px);
-      overflow:hidden;
-      background:#f8fafc;
-      align-items:stretch;
-    ">
-
-    <!-- Sidebar -->
-    <div style="
-        width:340px;
-        min-width:340px;
-        height:calc(100% - 24px);
-        margin:12px;
-        margin-right:0;
-        border-radius:20px;
-        background:linear-gradient(180deg,#0f172a,#1e293b);
-        color:white;
-        overflow:hidden;
-        display:flex;
-        flex-direction:column;
-        box-shadow:0 15px 35px rgba(0,0,0,.12);
-      ">
-
-      <!-- Header -->
-      <div style="
-    padding:18px 20px;
-    border-bottom:1px solid rgba(255,255,255,.08);
-    background:linear-gradient(
-      135deg,
-      rgba(37,99,235,.12),
-      rgba(59,130,246,.04)
-    );
-  ">
-
-        <div style="
-      font-size:10px;
-      font-weight:600;
-      letter-spacing:2px;
-      text-transform:uppercase;
-      color:#94a3b8;
-    ">
-          Project Timeline
-        </div>
-
-        <div style="
-      margin-top:8px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    ">
-
-          <div>
-
-            <h2 style="
-          margin:0;
-          font-size:20px;
-          font-weight:700;
-          color:#f8fafc;
-          display:flex;
-          align-items:center;
-          gap:8px;
-        ">
-              <span style="font-size:22px;">📋</span>
-              Milestones
-            </h2>
-
-            <div style="
-          margin-top:4px;
-          font-size:12px;
-          color:#94a3b8;
-        ">
-              Parent & Child Milestone Structure
-            </div>
-
-          </div>
-
-          <div style="
-        min-width:70px;
-        text-align:center;
-        padding:8px 12px;
-        background:rgba(37,99,235,.15);
-        border:1px solid rgba(59,130,246,.25);
-        color:#60a5fa;
-        border-radius:12px;
-      ">
-
-            <div style="
-          font-size:18px;
-          font-weight:700;
-          line-height:1;
-        ">
-              {{ phasesData.length }}
-            </div>
-
-            <div style="
-          font-size:9px;
-          letter-spacing:1px;
-          text-transform:uppercase;
-          margin-top:3px;
-        ">
-              Items
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- Milestones List -->
-      <div class="flex-1 overflow-y-auto p-3 space-y-3">
-
-        @for (phase of phasesData; track phase.id) {
-
-        <div class="rounded-xl border border-slate-700/40 bg-slate-900/40 overflow-hidden">
-
-          <!-- Parent -->
-          <div class="flex items-center justify-between px-3 py-2.5 bg-sky-500/5">
-
-            <div class="flex items-center gap-2.5">
-
-              <div class="w-7 h-7 rounded-lg bg-sky-500/15 flex items-center justify-center text-sky-400">
-
-                <span class="material-symbols-outlined text-[15px]">
-                  account_tree
-                </span>
-
-              </div>
-
-              <div>
-                <p class="text-sm font-semibold text-white leading-none">
-                  {{ phase.name }}
-                </p>
-
-                <p class="text-[10px] text-slate-400 mt-1">
-                  {{ phase.children?.length || 0 }} Sub Milestones
-                </p>
-              </div>
-
-            </div>
-
-            <span class="text-[10px] px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 font-medium">
-              Parent
-            </span>
-
-          </div>
-
-          <!-- Children -->
-          @if(phase.children?.length){
-
-          <div class="p-2 space-y-1.5">
-
-            @for(child of phase.children; track child.id){
-
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-sky-500/5 transition">
-
-              <div class="w-2 h-2 rounded-full bg-sky-400"></div>
-
-              <span class="flex-1 text-xs text-slate-200 truncate">
-                {{ child.name }}
-              </span>
-
-              <!-- <span class="material-symbols-outlined text-[14px] text-slate-500">
-                chevron_right
-              </span> -->
-
-            </div>
-
-            }
-
-          </div>
-
-          } @else {
-
-          <div class="px-3 py-2 text-[11px] text-slate-500 italic">
-            No sub milestones
-          </div>
-
-          }
-
-        </div>
-
-        }
-
-      </div>
+    <div class="toolbar-left">
+      <div class="toolbar-caption">Timeline view</div>
+      <button class="view-btn" [class.active]="currentView === 'Day'" (click)="changeView('Day')">Day</button>
+      <button class="view-btn" [class.active]="currentView === 'Week'" (click)="changeView('Week')">Week</button>
+      <button class="view-btn" [class.active]="currentView === 'Month'" (click)="changeView('Month')">Month</button>
     </div>
 
-    <!-- Gantt Section -->
-    <div style="
-    flex:1;
-    height:calc(100vh - 180px);
-    margin:12px;
-    background:#ffffff;
-    border-radius:20px;
-    overflow:auto;
-    box-shadow:0 15px 35px rgba(0,0,0,.08);
-  ">
-
-      <div #gantt id="gantt" style="
-    min-width:1800px;
-    min-height:1500px;
-  ">
+    <div class="toolbar-right">
+      <div class="summary-pill">
+        <span>Tasks</span>
+        <strong>{{ ganttRows.length || 0 }}</strong>
       </div>
-
     </div>
-
   </div>
 
+  <div class="timeline-table">
+    <div class="timeline-table-header" [style.gridTemplateColumns]="gridTemplate">
+      <div class="timeline-header-cell timeline-sidebar-header">Task</div>
+      <div *ngFor="let column of timelineColumns" class="timeline-header-cell">{{ column.label }}</div>
+    </div>
+
+    <div class="timeline-table-body">
+      <div *ngFor="let row of ganttRows; trackBy: trackByRow" class="timeline-table-row" [class.child-row]="row.isChild" [style.gridTemplateColumns]="gridTemplate">
+        <div class="timeline-sidebar-cell">
+          <div class="row-content">
+            <div class="row-header">
+              <span class="row-color-indicator" [style.background]="row.color"></span>
+              <div class="row-label">{{ row.name }}</div>
+            </div>
+            <div class="row-meta">{{ row.startDate }} • {{ row.endDate }}</div>
+          </div>
+          <div class="row-progress-bar">
+            <div class="progress-fill" [style.width.%]="row.progress"></div>
+          </div>
+        </div>
+
+        <div *ngFor="let column of timelineColumns" class="timeline-cell"></div>
+
+        <div class="timeline-bar"
+          [style.gridColumnStart]="row.startIndex + 2"
+          [style.gridColumnEnd]="'span ' + row.span"
+          [style.background]="row.color">
+          <span>{{ row.name }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
