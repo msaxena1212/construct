@@ -182,34 +182,192 @@ class ProjectController {
   /**
    * Get all projects for the current company
    */
-  async getAllProjects(req, res) {
-    try {
-      const company_id = req.user.company_id;
-      if (!company_id) {
-        return res.status(401).json({ message: "Unauthorized. Company context missing." });
+//   async getAllProjects(req, res) {
+//     try {
+//       const company_id = req.user.company_id;
+//       if (!company_id) {
+//         return res.status(401).json({ message: "Unauthorized. Company context missing." });
+//       }
+
+//       // const projects = await db.project.findAll({
+//       //   where: { company_id },
+//       //   include: [
+//       //     { model: db.milestone, as: 'milestones' },
+//       //     { model: db.project_document, as: 'documents' },
+//       //     {
+//       //       model: db.user,
+//       //       as: 'team_members',
+//       //       attributes: ['id', 'firstname', 'lastname', 'avatar'],
+//       //       through: { attributes: ['role'] }
+//       //     }
+//       //   ],
+//       //   order: [['createdAt', 'DESC']]
+//       // });
+
+//       // res.status(200).json({ data: projects });
+
+// const projects = await db.project.findAll({
+//   where: { company_id },
+//   include: [
+//     { model: db.milestone, as: 'milestones' },
+//     { model: db.project_document, as: 'documents' },
+//     {
+//       model: db.user,
+//       as: 'team_members',
+//       attributes: ['id', 'firstname', 'lastname', 'avatar'],
+//       through: { attributes: ['role'] }
+//     }
+//   ],
+//   order: [['createdAt', 'DESC']]
+// });
+
+// const allTasks = await db.project_task.findAll({
+//   raw: true
+// });
+
+// const taskMap = allTasks.reduce((acc, task) => {
+//   if (!acc[task.submilestone_id]) {
+//     acc[task.submilestone_id] = [];
+//   }
+
+//   acc[task.submilestone_id].push(task);
+
+//   return acc;
+// }, {});
+
+
+// const formattedProjects = projects.map(project => {
+//   const projectData = project.toJSON();
+
+//   projectData.milestone_with_sub = projectData.milestones
+//     .filter(milestone => !milestone.parent_id)
+//     .map(parentMilestone => ({
+//       ...parentMilestone,
+//       subMilestones: projectData.milestones
+//         .filter(subMilestone => subMilestone.parent_id === parentMilestone.id)
+//         .map(subMilestone => ({
+//           ...subMilestone,
+//           tasks: taskMap[subMilestone.id] || []
+//         }))
+//     }));
+
+//   return projectData;
+// });
+
+// return res.status(200).json({
+//   data: formattedProjects
+// });
+
+//     } catch (error) {
+//       console.error("[GET_ALL_PROJECTS_ERROR]", error);
+//       res.status(500).json({ message: "Error fetching projects.", error: error.message });
+//     }
+//   }
+
+async getAllProjects(req, res) {
+  try {
+    const company_id = req.user.company_id;
+
+    if (!company_id) {
+      return res.status(401).json({
+        message: "Unauthorized. Company context missing."
+      });
+    }
+
+    const projects = await db.project.findAll({
+      where: { company_id },
+      include: [
+        {
+          model: db.milestone,
+          as: "milestones"
+        },
+        {
+          model: db.project_document,
+          as: "documents"
+        },
+        {
+          model: db.user,
+          as: "team_members",
+          attributes: ["id", "firstname", "lastname", "avatar"],
+          through: {
+            attributes: ["role"]
+          }
+        }
+      ],
+      order: [["createdAt", "DESC"]]
+    });
+
+    const projectIds = projects.map(project => project.id);
+
+    const allTasks = await db.project_task.findAll({
+      where: {
+        project_id: projectIds
+      },
+            include: [
+        {
+          model: db.project_sub_task,
+          as: "sub_tasks"
+        },
+      ],
+      order: [["createdAt", "DESC"]]
+    });
+
+    // Group tasks by submilestone_id
+    const taskMap = Object.create(null);
+
+    for (const task of allTasks) {
+      if (!taskMap[task.submilestone_id]) {
+        taskMap[task.submilestone_id] = [];
       }
 
-      const projects = await db.project.findAll({
-        where: { company_id },
-        include: [
-          { model: db.milestone, as: 'milestones' },
-          { model: db.project_document, as: 'documents' },
-          {
-            model: db.user,
-            as: 'team_members',
-            attributes: ['id', 'firstname', 'lastname', 'avatar'],
-            through: { attributes: ['role'] }
-          }
-        ],
-        order: [['createdAt', 'DESC']]
-      });
-
-      res.status(200).json({ data: projects });
-    } catch (error) {
-      console.error("[GET_ALL_PROJECTS_ERROR]", error);
-      res.status(500).json({ message: "Error fetching projects.", error: error.message });
+      taskMap[task.submilestone_id].push(task);
     }
+
+    const formattedProjects = projects.map(project => {
+      const projectData = project.toJSON();
+
+      const parentMilestones = [];
+      const subMilestoneMap = Object.create(null);
+
+      for (const milestone of projectData.milestones) {
+        if (!milestone.parent_id) {
+          parentMilestones.push(milestone);
+        } else {
+          if (!subMilestoneMap[milestone.parent_id]) {
+            subMilestoneMap[milestone.parent_id] = [];
+          }
+
+          subMilestoneMap[milestone.parent_id].push({
+            ...milestone,
+            tasks: taskMap[milestone.id] || []
+          });
+        }
+      }
+
+      projectData.milestone_with_sub = parentMilestones.map(parent => ({
+        ...parent,
+        subMilestones: subMilestoneMap[parent.id] || []
+      }));
+
+      return projectData;
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: formattedProjects.length,
+      data: formattedProjects
+    });
+
+  } catch (error) {
+    console.error("[GET_ALL_PROJECTS_ERROR]", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching projects.",
+      error: error.message
+    });
   }
+}
 
   /**
    * Get project details by ID
