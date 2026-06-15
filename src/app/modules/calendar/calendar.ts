@@ -4,6 +4,7 @@ import { IProject, IMilestone } from '../../shared/interfaces/project.interface'
 import { Router } from '@angular/router';
 import { MeetingServices, IMeeting } from '../calendar/meeting-services';
 import { environment } from '../../../environments/environment';
+
 export interface CalendarEvent {
   title: string;
   type: 'project-start' | 'project-end' | 'milestone-start' | 'milestone-end' | 'meeting';
@@ -41,10 +42,15 @@ export class Calendar implements OnInit {
   vendors: any[] = [];
   meetings: IMeeting[] = [];
   calendarDays: any[] = [];
-
+  currentView: 'Day' | 'Week' | 'Month' = 'Month';
   selectedProject: IProject | null = null;
+  selectedMilestone: IMilestone | null = null;
   showProjectDetails = false;
 
+  selectedDate = new Date();
+
+  weekStart!: Date;
+  weekEnd!: Date;
   showMeetingModal = false;
   isSavingMeeting = false;
   editingMeeting: IMeeting | null = null;
@@ -73,6 +79,7 @@ export class Calendar implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.calculateWeekRange();
     this.loadVendors();
     this.loadMeetings();
     this.loadProjects();
@@ -91,11 +98,13 @@ export class Calendar implements OnInit {
     }
     return [];
   }
+
   failedAvatars = new Set<string>();
 
   onAvatarError(avatar: string): void {
     this.failedAvatars.add(avatar);
   }
+
   getAvatarUrl(avatar: string | undefined): string {
     if (!avatar) return '';
     if (avatar.startsWith('http')) return avatar;
@@ -111,7 +120,7 @@ export class Calendar implements OnInit {
 
   loadVendors(): void {
     this.projectService.getVendors().subscribe({
-      next: (res) => { this.vendors = res.data || []; },
+      next: (res) => { this.vendors = res.data || []; this.generateCalendar(); },
       error: (err) => console.error('loadVendors:', err),
     });
   }
@@ -129,7 +138,6 @@ export class Calendar implements OnInit {
         const users = res.data || [];
         const seen = new Set<string>();
         const options: IAttendeeOption[] = [];
-
         users.forEach((member: any) => {
           const email = (member.email || '').trim();
           const key = email || `id-${member.id}`;
@@ -138,13 +146,12 @@ export class Calendar implements OnInit {
             options.push({
               id: member.id,
               name: `${member.firstname || ''} ${member.lastname || ''}`.trim(),
-              email: email,
+              email,
               avatar: member.avatar || null,
               isExisting: true
             });
           }
         });
-
         this.allAttendeeOptions = options;
       },
       error: (err) => {
@@ -179,10 +186,92 @@ export class Calendar implements OnInit {
       error: (err) => console.error('loadAttendeeOptionsFromProjects:', err),
     });
   }
+
+  private getEventsForDate(fullDate: string): CalendarEvent[] {
+    const events: CalendarEvent[] = [];
+
+    this.projects.forEach(project => {
+      const startDate = project.start_date?.split('T')[0];
+      const completionDate = project.completion_date?.split('T')[0];
+
+      if (startDate === fullDate) {
+        events.push({ title: 'Project Started', type: 'project-start', project });
+      }
+      if (completionDate === fullDate) {
+        events.push({ title: 'Project Completion', type: 'project-end', project });
+      }
+
+      project.milestones?.forEach(ms => {
+        const msStart = ms.startDate?.split('T')[0];
+        const msEnd = ms.endDate?.split('T')[0];
+        if (msStart === fullDate) {
+          events.push({ title: ms.name, type: 'milestone-start', project, milestone: ms });
+        }
+        if (msEnd === fullDate) {
+          events.push({ title: ms.name, type: 'milestone-end', project, milestone: ms });
+        }
+      });
+    });
+
+    this.meetings
+      .filter(m => m.date?.split('T')[0] === fullDate)
+      .forEach(meeting => {
+        const project = this.projects.find(p => Number(p.id) === Number(meeting.project_id));
+        const vendor = this.vendors.find(v => Number(v.id) === Number(meeting.vendor_id));
+        events.push({
+          title: meeting.title,
+          type: 'meeting',
+          meeting: { ...meeting, project, vendor } as any
+        });
+      });
+
+    return events;
+  }
+
   generateCalendar(): void {
+    switch (this.currentView) {
+      case 'Day': this.generateDayView(); break;
+      case 'Week': this.generateWeekView(); break;
+      default: this.generateMonthView(); break;
+    }
+  }
+
+  generateDayView(): void {
+    this.calendarDays = [];
+    const d = this.selectedDate;
+    const fullDate = this.toLocalDateString(d.getFullYear(), d.getMonth(), d.getDate());
+    const todayStr = this.toLocalDateString(
+      this.currentDate.getFullYear(), this.currentDate.getMonth(), this.currentDate.getDate()
+    );
+    this.calendarDays.push({
+      date: d.getDate(), fullDate, today: fullDate === todayStr,
+      events: this.getEventsForDate(fullDate)
+    });
+  }
+
+  generateWeekView(): void {
+    this.calendarDays = [];
+    const todayStr = this.toLocalDateString(
+      this.currentDate.getFullYear(), this.currentDate.getMonth(), this.currentDate.getDate()
+    );
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(this.weekStart);
+      current.setDate(this.weekStart.getDate() + i);
+      const fullDate = this.toLocalDateString(current.getFullYear(), current.getMonth(), current.getDate());
+      this.calendarDays.push({
+        date: current.getDate(), fullDate, today: fullDate === todayStr,
+        events: this.getEventsForDate(fullDate)
+      });
+    }
+  }
+
+  generateMonthView(): void {
     this.calendarDays = [];
     const firstDay = new Date(this.currentYear, this.currentMonth, 1);
     const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+    const todayStr = this.toLocalDateString(
+      this.currentDate.getFullYear(), this.currentDate.getMonth(), this.currentDate.getDate()
+    );
 
     for (let i = 0; i < firstDay.getDay(); i++) {
       this.calendarDays.push({ date: '', fullDate: '', today: false, events: [] });
@@ -190,65 +279,94 @@ export class Calendar implements OnInit {
 
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const fullDate = this.toLocalDateString(this.currentYear, this.currentMonth, day);
-      const events: CalendarEvent[] = [];
-
-      this.projects.forEach(project => {
-        const startDate = project.start_date?.split('T')[0];
-        const completionDate = project.completion_date?.split('T')[0];
-        if (startDate === fullDate)
-          events.push({ title: 'Project Started', type: 'project-start', project });
-        if (completionDate === fullDate)
-          events.push({ title: 'Project Completion', type: 'project-end', project });
-
-        project.milestones?.forEach(ms => {
-          const msStart = ms.startDate?.split('T')[0];
-          const msEnd = ms.endDate?.split('T')[0];
-          if (msStart === fullDate)
-            events.push({ title: ms.name, type: 'milestone-start', project, milestone: ms });
-          if (msEnd === fullDate)
-            events.push({ title: ms.name, type: 'milestone-end', project, milestone: ms });
-        });
+      this.calendarDays.push({
+        date: day, fullDate, events: this.getEventsForDate(fullDate), today: fullDate === todayStr
       });
-
-      this.meetings
-        .filter(m => m.date === fullDate)
-        .forEach(meeting => events.push({ title: meeting.title, type: 'meeting', meeting }));
-
-      const today = new Date();
-      const todayStr = this.toLocalDateString(today.getFullYear(), today.getMonth(), today.getDate());
-
-      this.calendarDays.push({ date: day, fullDate, events, today: fullDate === todayStr });
     }
 
     if (this.showDayEventsPanel && this.selectedDayFullDate) {
       const refreshed = this.calendarDays.find(d => d.fullDate === this.selectedDayFullDate);
-      if (refreshed) this.selectedDayEvents = refreshed.events;
+      if (refreshed) this.selectedDayEvents = [...refreshed.events];
     }
   }
 
   previousMonth(): void {
-    if (--this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
-    this.generateCalendar();
+    if (this.currentView === 'Day') {
+      this.selectedDate = new Date(this.selectedDate);
+      this.selectedDate.setDate(this.selectedDate.getDate() - 1);
+      this.generateCalendar();
+    } else if (this.currentView === 'Week') {
+      this.selectedDate = new Date(this.selectedDate);
+      this.selectedDate.setDate(this.selectedDate.getDate() - 7);
+      this.calculateWeekRange();
+      this.generateCalendar();
+    } else {
+      this.currentMonth--;
+      if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+      this.generateCalendar();
+    }
   }
+
   nextMonth(): void {
-    if (++this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
-    this.generateCalendar();
+    if (this.currentView === 'Day') {
+      this.selectedDate = new Date(this.selectedDate);
+      this.selectedDate.setDate(this.selectedDate.getDate() + 1);
+      this.generateCalendar();
+    } else if (this.currentView === 'Week') {
+      this.selectedDate = new Date(this.selectedDate);
+      this.selectedDate.setDate(this.selectedDate.getDate() + 7);
+      this.calculateWeekRange();
+      this.generateCalendar();
+    } else {
+      this.currentMonth++;
+      if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+      this.generateCalendar();
+    }
   }
+
   goToToday(): void {
+    this.selectedDate = new Date();
     this.currentMonth = this.currentDate.getMonth();
     this.currentYear = this.currentDate.getFullYear();
+    this.calculateWeekRange();
     this.generateCalendar();
   }
 
-  openProjectDetails(project?: IProject): void {
+  changeView(view: 'Day' | 'Week' | 'Month'): void {
+    this.currentView = view;
+    if (view === 'Week') this.calculateWeekRange();
+    this.generateCalendar();
+  }
+
+  calculateWeekRange(): void {
+    const date = new Date(this.selectedDate);
+    const day = date.getDay();
+    this.weekStart = new Date(date);
+    this.weekStart.setDate(date.getDate() - day);
+    this.weekStart.setHours(0, 0, 0, 0);
+    this.weekEnd = new Date(this.weekStart);
+    this.weekEnd.setDate(this.weekStart.getDate() + 6);
+    this.weekEnd.setHours(23, 59, 59, 999);
+  }
+
+  openProjectDetails(project?: IProject, milestone?: IMilestone): void {
     if (!project) return;
     this.selectedProject = project;
+    this.selectedMilestone = milestone || null;
     this.showProjectDetails = true;
   }
 
   closeProjectDetails(): void {
     this.showProjectDetails = false;
     this.selectedProject = null;
+    this.selectedMilestone = null;
+  }
+
+  get displayedMilestones(): IMilestone[] {
+    if (this.selectedMilestone) {
+      return [this.selectedMilestone];
+    }
+    return this.selectedProject?.milestones || [];
   }
 
   navigateToProject(id?: number): void {
@@ -256,13 +374,21 @@ export class Calendar implements OnInit {
     this.showProjectDetails = false;
     this.showDayEventsPanel = false;
     this.selectedProject = null;
-    this.router.navigate(['/projects', id]);
+    this.selectedMilestone = null;
+    this.router.navigate(['master/projects', id]);
+  }
+
+  navigateToProjectDetails(project: any): void {
+    if (!project) return;
+    this.selectedProject = project;
+    this.selectedMilestone = null;
+    this.showProjectDetails = true;
   }
 
   openDayEvents(day: any, $event: Event): void {
     $event.stopPropagation();
     if (!day.date || !day.events.length) return;
-    this.selectedDayEvents = day.events;
+    this.selectedDayEvents = [...day.events];
     this.selectedDayFullDate = day.fullDate;
     const [y, m, d] = day.fullDate.split('-').map(Number);
     this.selectedDayLabel = `${d} ${this.months[m - 1]} ${y}`;
@@ -293,9 +419,7 @@ export class Calendar implements OnInit {
   openEditMeeting(meeting: IMeeting, $event: Event): void {
     $event.stopPropagation();
     $event.preventDefault();
-
     const snap: IMeeting = { ...meeting };
-
     const rawAttendees: string[] = this.parseJsonArray(snap.attendees);
     const parsedAttendees: IAttendeeOption[] = rawAttendees.map(entry => {
       const match = entry.match(/^(.*?)\s*<(.+)>$/);
@@ -307,34 +431,25 @@ export class Calendar implements OnInit {
       const found = this.allAttendeeOptions.find(x => x.email.toLowerCase() === entry.toLowerCase());
       return { id: found?.id || 0, name: entry, email: entry, isExisting: !!found };
     });
-
     const vendorIds: number[] = [];
     if (snap.vendor_id) vendorIds.push(Number(snap.vendor_id));
     this.parseJsonArray(snap.vendor_ids).forEach((id: any) => {
       const n = Number(id);
       if (!isNaN(n) && !vendorIds.includes(n)) vendorIds.push(n);
     });
-
     this.editingMeeting = snap;
-
     this.meetingForm = {
-      title: snap.title,
-      description: snap.description || '',
-      attendees: [...rawAttendees],
-      duration: Number(snap.duration) || 30,
+      title: snap.title, description: snap.description || '',
+      attendees: [...rawAttendees], duration: Number(snap.duration) || 30,
       project_id: snap.project_id ? Number(snap.project_id) : undefined,
       vendor_id: snap.vendor_id ? Number(snap.vendor_id) : undefined,
-      vendor_ids: [...vendorIds],
-      meet_link: snap.meet_link || '',
-      dateInput: snap.date,
-      timeInput: snap.time || '10:00',
+      vendor_ids: [...vendorIds], meet_link: snap.meet_link || '',
+      dateInput: snap.date, timeInput: snap.time || '10:00',
       selectedVendorIds: [...vendorIds],
     };
-
     this.selectedAttendees = parsedAttendees;
     this.attendeeSearchText = '';
     this.showVendorDropdown = false;
-
     this.showDayEventsPanel = false;
     this.showMeetingModal = true;
   }
@@ -348,19 +463,16 @@ export class Calendar implements OnInit {
     this.showVendorDropdown = false;
   }
 
-
-  selectProject(project: any) {
+  selectProject(project: any): void {
     this.meetingForm.project_id = project.id;
     this.showProjectDropdown = false;
   }
 
   getSelectedProjectName(): string {
-    const project = this.projects.find(
-      p => p.id === this.meetingForm.project_id
-    );
-
+    const project = this.projects.find(p => p.id === this.meetingForm.project_id);
     return project?.name || '';
   }
+
   closeTimePicker(input: HTMLInputElement): void {
     setTimeout(() => { input.blur(); }, 2000);
   }
@@ -407,24 +519,12 @@ export class Calendar implements OnInit {
   onAttendeeSearch(value: string): void {
     this.attendeeSearchText = value;
     const q = value.trim().toLowerCase();
-
-    if (q.length < 3) {
-      this.filteredAttendeeOptions = [];
-      this.showAttendeeSuggestions = false;
-      return;
-    }
-
+    if (q.length < 3) { this.filteredAttendeeOptions = []; this.showAttendeeSuggestions = false; return; }
     const isEmailSearch = q.includes('@');
-
     this.filteredAttendeeOptions = this.allAttendeeOptions.filter(opt =>
       !this.selectedAttendees.some(a => a.email === opt.email) &&
-      (
-        isEmailSearch
-          ? (opt.email || '').toLowerCase().includes(q)
-          : (opt.name || '').toLowerCase().includes(q)
-      )
+      (isEmailSearch ? (opt.email || '').toLowerCase().includes(q) : (opt.name || '').toLowerCase().includes(q))
     );
-
     this.showAttendeeSuggestions = this.filteredAttendeeOptions.length > 0;
   }
 
@@ -446,31 +546,17 @@ export class Calendar implements OnInit {
       event.preventDefault();
       const raw = this.attendeeSearchText.trim().replace(/,$/, '');
       if (!raw) return;
-
-      // Name ya email dono se existing user dhundo
       const existing = this.allAttendeeOptions.find(
-        x => x.email.toLowerCase() === raw.toLowerCase() ||
-          x.name.toLowerCase() === raw.toLowerCase()
+        x => x.email.toLowerCase() === raw.toLowerCase() || x.name.toLowerCase() === raw.toLowerCase()
       );
-
       if (existing) {
-        if (!this.selectedAttendees.some(a => a.email === existing.email)) {
+        if (!this.selectedAttendees.some(a => a.email === existing.email))
           this.selectedAttendees = [...this.selectedAttendees, existing];
-        }
       } else {
-        // Email format check — agar valid email hai
         const isEmail = raw.includes('@');
-        if (!this.selectedAttendees.some(a => a.email === raw)) {
-          this.selectedAttendees = [
-            ...this.selectedAttendees,
-            {
-              id: 0,
-              name: isEmail ? raw.split('@')[0] : raw,  // email se name nikalo
-              email: isEmail ? raw : raw,
-              isExisting: false
-            }
-          ];
-        }
+        if (!this.selectedAttendees.some(a => a.email === raw))
+          this.selectedAttendees = [...this.selectedAttendees,
+          { id: 0, name: isEmail ? raw.split('@')[0] : raw, email: raw, isExisting: false }];
       }
       this.attendeeSearchText = '';
       this.showAttendeeSuggestions = false;
@@ -479,11 +565,9 @@ export class Calendar implements OnInit {
 
   saveMeeting(): void {
     if (!this.meetingForm.title || !this.meetingForm.dateInput || this.isSavingMeeting) return;
-
     const attendeeStrings = this.selectedAttendees.map(a =>
       a.name && a.name !== a.email ? `${a.name} <${a.email}>` : a.email
     );
-
     const payload: IMeeting = {
       title: this.meetingForm.title!,
       description: this.meetingForm.description,
@@ -496,25 +580,15 @@ export class Calendar implements OnInit {
       vendor_id: this.meetingForm.vendor_id ? Number(this.meetingForm.vendor_id) : undefined,
       vendor_ids: this.meetingForm.selectedVendorIds,
     };
-
     this.isSavingMeeting = true;
-
     if (this.editingMeeting?.id) {
       this.meetingService.updateMeeting(this.editingMeeting.id, payload).subscribe({
-        next: () => {
-          this.loadMeetings();
-          this.closeMeetingModal();
-          this.isSavingMeeting = false;
-        },
+        next: () => { this.loadMeetings(); this.closeMeetingModal(); this.isSavingMeeting = false; },
         error: (err) => { console.error(err); this.isSavingMeeting = false; },
       });
     } else {
       this.meetingService.createMeeting(payload).subscribe({
-        next: () => {
-          this.loadMeetings();
-          this.closeMeetingModal();
-          this.isSavingMeeting = false;
-        },
+        next: () => { this.loadMeetings(); this.closeMeetingModal(); this.isSavingMeeting = false; },
         error: (err) => { console.error(err); this.isSavingMeeting = false; },
       });
     }
