@@ -248,70 +248,31 @@
 
   </div>
 
-  <app-common-dialog [open]="showRequestDialog" [title]="dialogData.title" [subtitle]="dialogData.subtitle"
-    icon="warning" [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" primaryLabel="Confirm"
-    (closed)="closeDialog()" (primary)="confirmAction()">
+<app-common-dialog
+  [open]="showRequestDialog"
+  maxWidth="max-w-xl"
+  [title]="dialogData.title"
+  [subtitle]="dialogData.subtitle"
+  icon="warning"
+  [showCloseButton]="true"
+  [showFooter]="true"
+  cancelLabel="Cancel"
+  primaryLabel="Confirm"
+  (closed)="closeDialog()"
+  (primary)="confirmAction()">
 
-    <div class="px-8 py-6">
+  <div class="p-8 text-center">
+    <p class="text-outline text-sm font-medium">
+      {{ dialogData.subtitle }}
+    </p>
 
-      <!-- Icon -->
-      <div class="flex justify-center mb-5">
+    <p class="text-amber-700 text-xs mt-3">
+      This action will update the request status immediately and cannot be undone later.
+    </p>
+  </div>
+  
 
-        <div class="w-20 h-20 rounded-full
-               bg-gradient-to-br from-amber-400 to-orange-500
-               flex items-center justify-center
-               shadow-[0_12px_30px_rgba(249,115,22,0.35)]">
-
-          <span class="material-symbols-outlined text-white text-4xl">
-            warning
-          </span>
-
-        </div>
-
-      </div>
-
-      <!-- Content -->
-      <div class="text-center">
-
-        <h3 class="text-xl font-black text-slate-800 mb-2">
-          {{ dialogData.title }}
-        </h3>
-
-        <p class="text-sm text-slate-500 leading-relaxed">
-          {{ dialogData.subtitle }}
-        </p>
-
-        <div class="mt-5 p-4 rounded-2xl
-               bg-amber-50 border border-amber-200">
-
-          <div class="flex items-start gap-3">
-
-            <span class="material-symbols-outlined text-amber-600 text-xl">
-              info
-            </span>
-
-            <div class="text-left">
-
-              <p class="text-sm font-bold text-amber-800">
-                Important Notice
-              </p>
-
-              <p class="text-xs text-amber-700 mt-1 leading-relaxed">
-                This action will update the request status immediately and
-                cannot be undone later.
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </app-common-dialog>
+</app-common-dialog>
 
 
 </section>
