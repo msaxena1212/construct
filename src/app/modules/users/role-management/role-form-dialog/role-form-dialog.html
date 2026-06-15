@@ -1,4 +1,4 @@
-<app-common-dialog [showBackdrop]="false" panelClass="rounded-2xl shadow-none">
+<!-- <app-common-dialog [showBackdrop]="false" panelClass="rounded-2xl shadow-none">
 <div class="flex justify-between items-center p-2 border-b dark:border-slate-800">
     <h3 mat-dialog-title class="m-0 text-lg font-bold text-slate-800 dark:text-slate-100">
         {{ isEditMode ? 'Edit' : 'Create' }} Company Role
@@ -18,19 +18,6 @@
             <div class="text-red-500 text-[10px] mt-1 ml-1 font-medium italic">Role name is required</div>
             }
         </div>
-
-        <!-- <div>
-            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Role Type</label>
-            <div class="relative">
-                <select formControlName="type"
-                    class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 pr-8 text-sm text-slate-900 dark:text-slate-50 font-bold focus:ring-2 focus:ring-blue-500/20 transition-all outline-none appearance-none cursor-pointer">
-                    <option value="CUSTOM">Custom Entity Role</option>
-                    <option value="STATIC" disabled>Static Core System Role</option>
-                </select>
-                <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-lg">expand_more</span>
-            </div>
-            <p class="text-[9px] text-slate-400 mt-2 ml-1 italic font-medium">Static roles are system-protected and cannot be modified.</p>
-        </div> -->
     </div>
 
     <div
@@ -46,4 +33,72 @@
         </button>
     </div>
 </form>
-</app-common-dialog>
+</app-common-dialog> -->
+
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center px-6 py-5 border-b border-slate-200 dark:border-slate-800">
+    <h3 class="m-0 text-xl font-bold text-slate-800 dark:text-slate-100">
+      {{ isEditMode ? 'Edit' : 'Create' }} Company Role
+    </h3>
+
+    <button
+      type="button"
+      (click)="dialogRef.close()"
+      class="material-symbols-outlined text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center w-9 h-9 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+      close
+    </button>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="roleForm" (ngSubmit)="onSubmit()">
+
+    <div class="p-6 bg-white dark:bg-slate-900">
+
+      <label class="block mb-2 text-[11px] font-black uppercase tracking-widest text-slate-500">
+        Role Name
+      </label>
+
+      <input
+        type="text"
+        formControlName="name"
+        placeholder="e.g. Site Engineer"
+        class="w-full h-12 px-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+      @if(roleForm.get('name')?.invalid && roleForm.get('name')?.touched){
+        <div class="text-red-500 text-xs mt-2">
+          Role name is required
+        </div>
+      }
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-end gap-3">
+
+      <button
+        type="button"
+        (click)="dialogRef.close()"
+        class="px-5 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 bg-transparent border-none cursor-pointer">
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        [disabled]="roleForm.invalid"
+        class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 border-none cursor-pointer">
+
+        <mat-icon class="text-sm">
+          {{ isEditMode ? 'save' : 'add_circle' }}
+        </mat-icon>
+
+        {{ isEditMode ? 'Save Changes' : 'Create Role' }}
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
