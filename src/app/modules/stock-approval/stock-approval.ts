@@ -12,10 +12,12 @@ import { MatDialog } from '@angular/material/dialog';
 export class StockApproval implements OnInit {
   stockRequests: any[] = [];
   selectedRequest: any = null;
+  selectedFilter: string = 'all';
+  filteredRequests: any[] = [];
 
   loading = false;
 
-  constructor(private projectService: ProjectService) {}
+  constructor(private projectService: ProjectService) { }
 
   ngOnInit(): void {
     this.getAllRequests();
@@ -26,9 +28,14 @@ export class StockApproval implements OnInit {
     this.loading = true;
 
     this.projectService.getAllStockRequests().subscribe({
+      // next: (res: any) => {
+      //   this.stockRequests = res.data || [];
+      //   console.log("ddkjdkkdjkkdjf",res.data)
+      //   this.loading = false;
+      // },
       next: (res: any) => {
         this.stockRequests = res.data || [];
-        console.log("ddkjdkkdjkkdjf",res.data)
+        this.filterRequests(this.selectedFilter);
         this.loading = false;
       },
       error: (err) => {
@@ -39,94 +46,108 @@ export class StockApproval implements OnInit {
   }
 
   // Approve Request
-approveRequest(id: number) {
+  approveRequest(id: number) {
 
-  this.projectService.approveStockRequest(id).subscribe({
-    next: (res: any) => {
+    this.projectService.approveStockRequest(id).subscribe({
+      next: (res: any) => {
 
-      console.log('Approved Successfully');
+        console.log('Approved Successfully');
 
-      // UI Update
-      const request = this.stockRequests.find(r => r.id === id);
+        // UI Update
+        const request = this.stockRequests.find(r => r.id === id);
 
-      if (request) {
-        request.status = 'approved';
+        if (request) {
+          request.status = 'approved';
+        }
+        this.filterRequests(this.selectedFilter);
+      },
+      error: (err) => {
+        console.log(err);
       }
-
-    },
-    error: (err) => {
-      console.log(err);
-    }
-  });
-}
+    });
+  }
 
   // Reject Request
-rejectRequest(id: number) {
+  rejectRequest(id: number) {
 
-  this.projectService.rejectStockRequest(id).subscribe({
-    next: (res: any) => {
+    this.projectService.rejectStockRequest(id).subscribe({
+      next: (res: any) => {
 
-      console.log('Rejected Successfully');
+        console.log('Rejected Successfully');
 
-      // UI Update
-      const request = this.stockRequests.find(r => r.id === id);
+        // UI Update
+        const request = this.stockRequests.find(r => r.id === id);
 
-      if (request) {
-        request.status = 'rejected';
+        if (request) {
+          request.status = 'rejected';
+        }
+        this.filterRequests(this.selectedFilter);
+      },
+      error: (err) => {
+        console.log(err);
       }
+    });
+  }
 
-    },
-    error: (err) => {
-      console.log(err);
+  showRequestDialog = false;
+
+  dialogData = {
+    title: '',
+    subtitle: '',
+    action: '',
+    requestId: null as number | null
+  };
+
+  openApproveDialog(id: number) {
+    this.dialogData = {
+      title: 'Approve Request',
+      subtitle: 'Are you sure you want to approve this request?',
+      action: 'approve',
+      requestId: id
+    };
+
+    this.showRequestDialog = true;
+  }
+
+  openRejectDialog(id: number) {
+    this.dialogData = {
+      title: 'Reject Request',
+      subtitle: 'Are you sure you want to reject this request?',
+      action: 'reject',
+      requestId: id
+    };
+
+    this.showRequestDialog = true;
+  }
+
+  confirmAction() {
+
+    if (this.dialogData.action === 'approve') {
+      this.approveRequest(this.dialogData.requestId!);
     }
-  });
-}
 
-showRequestDialog = false;
+    if (this.dialogData.action === 'reject') {
+      this.rejectRequest(this.dialogData.requestId!);
+    }
 
-dialogData = {
-  title: '',
-  subtitle: '',
-  action: '',
-  requestId: null as number | null
-};
-
-openApproveDialog(id: number) {
-  this.dialogData = {
-    title: 'Approve Request',
-    subtitle: 'Are you sure you want to approve this request?',
-    action: 'approve',
-    requestId: id
-  };
-
-  this.showRequestDialog = true;
-}
-
-openRejectDialog(id: number) {
-  this.dialogData = {
-    title: 'Reject Request',
-    subtitle: 'Are you sure you want to reject this request?',
-    action: 'reject',
-    requestId: id
-  };
-
-  this.showRequestDialog = true;
-}
-
-confirmAction() {
-
-  if (this.dialogData.action === 'approve') {
-    this.approveRequest(this.dialogData.requestId!);
+    this.closeDialog();
   }
 
-  if (this.dialogData.action === 'reject') {
-    this.rejectRequest(this.dialogData.requestId!);
+  closeDialog() {
+    this.showRequestDialog = false;
   }
 
-  this.closeDialog();
-}
+  filterRequests(status: string) {
 
-closeDialog() {
-  this.showRequestDialog = false;
-}
+    this.selectedFilter = status;
+
+    if (status === 'all') {
+      this.filteredRequests = [...this.stockRequests];
+      return;
+    }
+
+    this.filteredRequests = this.stockRequests.filter(
+      request => request.status?.toLowerCase() === status
+    );
+  }
 }
