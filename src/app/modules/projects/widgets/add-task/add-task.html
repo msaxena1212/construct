@@ -228,55 +228,78 @@
 
                             <!-- Qty + Material -->
                             <!-- Material -->
-                            <div class="space-y-2">
-                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                    Material
-                                </label>
-                                <!-- AFTER -->
-                                <select [(ngModel)]="newSubTask.materialId" [ngModelOptions]="{ standalone: true }"
-                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                    <option [ngValue]="null" disabled>Select Material</option>
-                                    @for(material of materials; track material.id) {
-                                    <option [ngValue]="material.id">{{ material.name }}</option>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                                <!-- Material -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                        Material
+                                    </label>
+
+                                    <select [(ngModel)]="newSubTask.materialId" [ngModelOptions]="{ standalone: true }"
+                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+
+                                        <option [ngValue]="null" disabled>Select Material</option>
+
+                                        @for(material of materials; track material.id) {
+                                        <option [ngValue]="material.id">{{ material.name }}</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <!-- Material Qty -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                        Material Quantity
+                                    </label>
+
+                                    <input type="number" [(ngModel)]="newSubTask.qty"
+                                        [ngModelOptions]="{standalone: true}" min="1"
+                                        [max]="materials.find(m => m.id == newSubTask.materialId)?.stockUsed"
+                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+
+                                    @if(newSubTask.materialId){
+                                    <p class="text-[10px] text-primary font-bold px-1">
+                                        Available Stock:
+                                        {{ materials.find(m => m.id == newSubTask.materialId)?.stockUsed }}
+                                    </p>
                                     }
-                                </select>
-                            </div>
+                                </div>
 
-                            <!-- Qty -->
-                            <div class="space-y-2">
+                                <!-- Equipment -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                        Equipment
+                                    </label>
 
-                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                    Quantity
-                                </label>
+                                    <select [(ngModel)]="newSubTask.equipment" [ngModelOptions]="{ standalone: true }"
+                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
 
-                                <input type="number" [(ngModel)]="newSubTask.qty" [ngModelOptions]="{standalone: true}"
-                                    min="1" [max]="materials.find(m => m.id == newSubTask.materialId)?.stockUsed"
-                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                                        <option [ngValue]="null" disabled>Select Equipment</option>
 
-                                @if(newSubTask.materialId){
-                                <p class="text-[10px] text-primary font-bold px-1">
-                                    Available Stock:
-                                    {{ materials.find(m => m.id == newSubTask.materialId)?.stockUsed }}
-                                </p>
-                                }
+                                        @for(equipment of equipmentList; track equipment.id) {
+                                        <option [ngValue]="equipment.id">{{ equipment.name }}</option>
+                                        }
+                                    </select>
+                                </div>
 
-                            </div>
+                                <!-- Equipment Qty -->
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                        Equipment Quantity
+                                    </label>
 
-                            <!-- Equipment -->
-                            <div class="space-y-2">
-
-                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-
-                                    Equipment
-                                </label>
-                                <select [(ngModel)]="newSubTask.equipment" [ngModelOptions]="{ standalone: true }"
-                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                    <option [ngValue]="null" disabled>Select Equipment</option>
-                                    @for(equipment of equipmentList; track equipment.id) {
-                                    <option [ngValue]="equipment.id">{{ equipment.name }}</option>
+                                    <input type="number" [(ngModel)]="newSubTask.equipmentQty"
+                                        [ngModelOptions]="{standalone: true}" min="1"
+                                        [max]="equipmentList.find(m => m.id == newSubTask.equipment)?.stockUsed"
+                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                                    @if(newSubTask.equipment){
+                                    <p class="text-[10px] text-primary font-bold px-1">
+                                        Available Stock:
+                                        {{ equipmentList.find(m => m.id == newSubTask.equipment)?.stockUsed }}
+                                    </p>
                                     }
-                                </select>
-
+                                </div>
                             </div>
 
                             <!-- Actions -->

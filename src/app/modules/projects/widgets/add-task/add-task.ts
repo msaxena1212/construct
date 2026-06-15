@@ -29,6 +29,7 @@ export class AddTask implements OnInit {
 
   taskForm!: FormGroup;
   checklist: {
+    equipmentQty: number;
     title: string;
     material_id: number;
     itemName: string;
@@ -51,7 +52,8 @@ export class AddTask implements OnInit {
     itemName: '',
     stockIn: 0,
     qty: 1,
-    equipment: ''
+    equipment: '',
+    equipmentQty: 1,
   };
 
   dependencies: any[] = [];
@@ -179,7 +181,7 @@ export class AddTask implements OnInit {
   }
 
   private resetSubTaskForm() {
-    this.newSubTask = { title: '', materialId: null, itemName: '', stockIn: 0, qty: 1, equipment: '' };
+    this.newSubTask = { title: '', materialId: null, itemName: '', stockIn: 0, qty: 1, equipment: '', equipmentQty: 1 };
     this.showSubTaskForm = false;
     this.editingIndex = null;
   }
@@ -240,6 +242,7 @@ export class AddTask implements OnInit {
         stockIn: selectedMaterial.stockIn,
         qty: this.newSubTask.qty,
         equipment: this.newSubTask.equipment,
+        equipmentQty: this.newSubTask.equipmentQty,
         completed: false
       };
 
@@ -263,7 +266,8 @@ export class AddTask implements OnInit {
         itemName: '',
         stockIn: 0,
         qty: 1,
-        equipment: ''
+        equipment: '',
+        equipmentQty: 1
       };
 
       this.showSubTaskForm = false;
@@ -280,7 +284,8 @@ export class AddTask implements OnInit {
       itemName: item.itemName,
       stockIn: item.stockIn,
       qty: item.requestedQty ?? item.qty,
-      equipment: item.equipment
+      equipment: item.equipment,
+      equipmentQty: item.equipmentQty
     };
 
     this.editingIndex = index;
@@ -303,6 +308,7 @@ export class AddTask implements OnInit {
       shortage,
       pendingRequest: true,
       equipment: this.newSubTask.equipment,
+      equipmentQty: this.newSubTask.equipmentQty,
       completed: false
     };
 

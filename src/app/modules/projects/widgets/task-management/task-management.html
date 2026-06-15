@@ -1,4 +1,6 @@
-<div class="mb-10 mt-4 flex flex-col md:flex-row md:items-end justify-between gap-4 p-4">
+<div class="col-span-12 lg:col-span-12 bg-surface-container-lowest rounded-xl p-2 shadow-[0_12_32px_rgba(15,23,42,0.06)] relative overflow-hidden group border border-outline-variant/10">
+
+<div class="mb-10 mt-2 flex flex-col md:flex-row md:items-end justify-between gap-4 p-2">
     <div>
         <span class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary mb-2 block">Project</span>
         <div class="flex items-center gap-1">
@@ -6,6 +8,8 @@
         </div>
     </div>
 </div>
+
+
 
 @if (!selectedMilestoneId) {
 <div
@@ -119,14 +123,14 @@
                 </div>
             </div>
 
-            @if (column.tasks.length > 2) {
+            <!-- @if (column.tasks.length > 2) {
             <div class="scroll-hint flex items-center justify-center gap-1.5 pt-1">
                 <span class="material-symbols-outlined text-slate-300 text-base">keyboard_double_arrow_down</span>
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                     {{ column.tasks.length - 2 }} more
                 </span>
             </div>
-            }
+            } -->
 
         </div>
         }
@@ -147,3 +151,5 @@
 <app-add-task [projectId]="projectId" [milestoneId]="selectedMilestoneId" [initialStatus]="targetStep"
     (close)="showAddTaskModal = false" (save)="addNewTask($event)"></app-add-task>
 }
+
+</div>
