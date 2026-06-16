@@ -11,6 +11,7 @@ module.exports = (router) => {
       { name: 'thumbnail', maxCount: 1 },
       { name: 'blueprints', maxCount: 10 }
     ]),
+    checkPermission("projects", "can_create"),
     projectCtrl.createProject
   );
 
@@ -25,13 +26,13 @@ module.exports = (router) => {
   router.get("/projects/:projectId/timeline",checkPermission("projects", "can_read"), projectCtrl.getProjectTimeline);
 
   // --- Milestone Routes ---
-  router.post("/projects/:projectId/milestones",checkPermission("stock-approval", "can_create"), projectCtrl.createMilestone);
-  router.put("/projects/:projectId/milestones/:milestoneId", checkPermission("stock-approval", "can_update"), projectCtrl.updateMilestone);
+  router.post("/projects/:projectId/milestones",checkPermission("projects", "can_create"), projectCtrl.createMilestone);
+  router.put("/projects/:projectId/milestones/:milestoneId", checkPermission("projects", "can_update"), projectCtrl.updateMilestone);
 
   // Upload project documents/media
   router.post(
     "/projects/:id/documents",
-    upload.array("files", 10), checkPermission("stock-approval", "can_create"),
+    upload.array("files", 10), checkPermission("projects", "can_create"),
     projectCtrl.uploadDocuments
   );
 
@@ -42,7 +43,7 @@ module.exports = (router) => {
       { name: 'thumbnail', maxCount: 1 },
       { name: 'blueprints', maxCount: 10 }
     ]),
-    checkPermission("stock-approval", "can_update"),
+    checkPermission("projects", "can_update"),
     projectCtrl.updateProject
   );
 
@@ -50,31 +51,31 @@ module.exports = (router) => {
   const taskCtrl = require("./task.controller");
 
   // Get project tasks
-  router.get("/projects/:projectId/tasks", taskCtrl.getTasksByProject);
+  router.get("/projects/:projectId/tasks",   checkPermission("tasks", "can_read"), taskCtrl.getTasksByProject);
 
   // Create task
-  router.post("/projects/:projectId/tasks", checkPermission("stock-approval", "can_create"),taskCtrl.createTask);
+  router.post("/projects/:projectId/tasks", checkPermission("tasks", "can_create"),taskCtrl.createTask);
 
   // Update task (details or status)
-  router.put("/tasks/:taskId", checkPermission("stock-approval", "can_update"), taskCtrl.updateTask);
+  router.put("/tasks/:taskId", checkPermission("tasks", "can_update"), taskCtrl.updateTask);
 
   // Delete task
-  router.delete("/tasks/:taskId", checkPermission("stock-approval", "can_delete"), taskCtrl.deleteTask);
+  router.delete("/tasks/:taskId", checkPermission("tasks", "can_delete"), taskCtrl.deleteTask);
 
   // Comments
-  router.post("/tasks/:taskId/comments",checkPermission("stock-approval", "can_create"), taskCtrl.addComment);
+  router.post("/tasks/:taskId/comments",checkPermission("tasks", "can_create"), taskCtrl.addComment);
 
   // Attachments
   router.post(
     "/tasks/:taskId/attachments",
-    upload.array("attachments", 10),checkPermission("stock-approval", "can_create"),
+    upload.array("attachments", 10),checkPermission("tasks", "can_create"),
     taskCtrl.uploadAttachment
   );
 
   // Sub-tasks
-  router.post("/tasks/:taskId/subtasks", checkPermission("stock-approval", "can_create"), taskCtrl.createSubTask);
-  router.put("/subtasks/:subTaskId", checkPermission("stock-approval", "can_update"), taskCtrl.updateSubTask);
-  router.delete("/subtasks/:subTaskId", checkPermission("stock-approval", "can_delete"), taskCtrl.deleteSubTask);
+  router.post("/tasks/:taskId/subtasks", checkPermission("tasks", "can_create"), taskCtrl.createSubTask);
+  router.put("/subtasks/:subTaskId", checkPermission("tasks", "can_update"), taskCtrl.updateSubTask);
+  router.delete("/subtasks/:subTaskId", checkPermission("tasks", "can_delete"), taskCtrl.deleteSubTask);
 
 
 
