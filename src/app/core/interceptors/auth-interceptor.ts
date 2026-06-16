@@ -18,15 +18,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     });
   }
 
-  // return next(modifyReq).pipe(
-  //   catchError((error: HttpErrorResponse) => {
-  //     if (error.status === 401 || error.status === 403) {
-  //       toast.error('Your session has expired or access is denied. Please log in again.', 'Unauthorized');
-  //       authService.logout();
-  //     }
-  //     return throwError(() => error);
-  //   })
-  // );
   return next(modifyReq).pipe(
   catchError((error: HttpErrorResponse) => {
 
