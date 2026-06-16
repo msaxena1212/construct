@@ -107,11 +107,11 @@
           <div>
             <div class="flex justify-between items-end mb-2.5">
               <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress</span>
-              <span class="text-sm font-black text-slate-900 dark:text-slate-50">{{ project.progress || 0 }}%</span>
+              <span class="text-sm font-black text-slate-900 dark:text-slate-50">{{ project.project_progress || 0 }}%</span>
             </div>
             <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
               <div class="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-md shadow-blue-500/20"
-                [style.width.%]="project.progress || 0"></div>
+                [style.width.%]="project.project_progress || 0"></div>
             </div>
           </div>
 

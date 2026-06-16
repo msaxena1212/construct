@@ -101,37 +101,37 @@ export class ProjectService {
     return this.http.put<ApiResponse<any>>(`${this.apiUrl}/projects/${projectId}/milestones/${milestoneId}`, data);
   }
 
-    // Vendors
+  // Vendors
   getVendors(): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/vendors`);
   }
   // materials
   getMaterialByprojectId(projectId: string | number): Observable<ApiResponse<any[]>> {
-  return this.http.get<ApiResponse<any[]>>(
-    `${this.apiUrl}/getMaterialByprojectId/${projectId}`
-  );
-  
-  
-  
-}
-requestAdditionalStock(payload: {
-  material_id: number;
-  task_title: string;
-  requested_qty: number;
-  available_qty: number;
-  project_id: string | number;
-}): Observable<ApiResponse<any>> {
-  return this.http.post<ApiResponse<any>>(`${this.apiUrl}/stock-request`, payload);
-}
+    return this.http.get<ApiResponse<any[]>>(
+      `${this.apiUrl}/getMaterialByprojectId/${projectId}`
+    );
 
-updateAdditionalStockRequest(id: number, payload: any) {
-  return this.http.put(
-    `${this.apiUrl}/stock-request/${id}`,
-    payload
-  );
-}
 
-// side manger
+
+  }
+  requestAdditionalStock(payload: {
+    material_id: number;
+    task_title: string;
+    requested_qty: number;
+    available_qty: number;
+    project_id: string | number;
+  }): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/stock-request`, payload);
+  }
+
+  updateAdditionalStockRequest(id: number, payload: any) {
+    return this.http.put(
+      `${this.apiUrl}/stock-request/${id}`,
+      payload
+    );
+  }
+
+  // side manger
   getAllStockRequests(): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/stock-request`);
   }
@@ -141,23 +141,29 @@ updateAdditionalStockRequest(id: number, payload: any) {
   }
 
   approveStockRequest(id: number) {
-  return this.http.put(
-    `${this.apiUrl}/stock-request/${id}/approve`,
-    {}
-  );
-}
+    return this.http.put(
+      `${this.apiUrl}/stock-request/${id}/approve`,
+      {}
+    );
+  }
 
-rejectStockRequest(id: number) {
-  return this.http.put(
-    `${this.apiUrl}/stock-request/${id}/reject`,
-    {}
-  );
-}
+  rejectStockRequest(id: number) {
+    return this.http.put(
+      `${this.apiUrl}/stock-request/${id}/reject`,
+      {}
+    );
+  }
 
-projectByesBudget(id: number) {
-  return this.http.get(
-    `${this.apiUrl}/getBudget_vendorProjectById/${id}`,
-  );
-}
+  projectByesBudget(id: number) {
+    return this.http.get(
+      `${this.apiUrl}/getBudget_vendorProjectById/${id}`,
+    );
+  }
+
+  getLaborByVendor(id: number) {
+    return this.http.get(
+      `${this.apiUrl}/vendors_labor/vendor/${id}`,
+    );
+  }
 }
 

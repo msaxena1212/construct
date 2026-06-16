@@ -88,6 +88,7 @@ export interface IProjectTask {
   id: number;
   project_id: string | number;
   milestone_id?: string | number | null;
+  submilestone_id?: string | number | null;
   title: string;
   description?: string;
   priority: 'High Priority' | 'Medium Priority' | 'Low Priority';
@@ -107,6 +108,8 @@ export interface IProjectTask {
 
   // UI helper fields
   priorityClass?: string;
+  submilestone_name?: string;
+  milestone_name?: string;
 }
 
 export enum MilestoneStatus {
@@ -129,6 +132,8 @@ export interface IMilestone {
   project_id: number;
   parent_id: number;
   subMilestones?: IMilestone[];
+  milestone_progress?: number;
+submilestone_progress?: number;
 }
 
 export interface IProjectDocument {
@@ -167,6 +172,7 @@ export interface IProject {
   company_id: number;
   status: string;
   progress?: number;
+  project_progress?: number;
   start_date?: string;
   end_date?: string;
   completion_date?: string;
@@ -179,6 +185,7 @@ export interface IProject {
   team_members?: IUser[];
   team?: { name: string; role: string; avatar: string }[]; // Mapped field
   milestones?: IMilestone[];
+  milestone_with_sub?: IMilestone[];
   tasks?: IProjectTask[];
   documents?: IProjectDocument[];
   thumbnail?: string;
