@@ -37,7 +37,7 @@ export class Calendar implements OnInit {
   currentDate = new Date();
   currentMonth = this.currentDate.getMonth();
   currentYear = this.currentDate.getFullYear();
-
+  hours = Array.from({ length: 24 }, (_, i) => i);
   projects: IProject[] = [];
   vendors: any[] = [];
   meetings: IMeeting[] = [];
@@ -47,8 +47,11 @@ export class Calendar implements OnInit {
   selectedMilestone: IMilestone | null = null;
   showProjectDetails = false;
 
-  selectedDate = new Date();
+  prefilledProjectId: number | undefined = undefined;
 
+  showMilestonesInPanel = true;
+
+  selectedDate = new Date();
   weekStart!: Date;
   weekEnd!: Date;
   showMeetingModal = false;
@@ -191,7 +194,7 @@ export class Calendar implements OnInit {
     const events: CalendarEvent[] = [];
 
     this.projects.forEach(project => {
-      const startDate = project.start_date?.split('T')[0];
+      const startDate = project.createdAt?.split('T')[0];
       const completionDate = project.completion_date?.split('T')[0];
 
       if (startDate === fullDate) {
@@ -234,6 +237,52 @@ export class Calendar implements OnInit {
       case 'Week': this.generateWeekView(); break;
       default: this.generateMonthView(); break;
     }
+  }
+
+  formatHour(hour: number): string {
+    if (hour === 0) return '12 AM';
+    if (hour < 12) return `${hour} AM`;
+    if (hour === 12) return '12 PM';
+    return `${hour - 12} PM`;
+  }
+
+  getDayOfWeek(fullDate: string): number {
+    if (!fullDate) return 0;
+    return new Date(fullDate).getDay();
+  }
+
+  getEventTop(time: string | undefined): number {
+    if (!time) return 0;
+    const [h, m] = time.split(':').map(Number);
+    return (h * 60 + (m || 0)) * (64 / 60);
+  }
+
+  getEventHeight(duration: number | undefined): number {
+    return Math.max((duration || 30) * (64 / 60), 24);
+  }
+
+  getAllDayEventTop(event: CalendarEvent, day: any): number {
+    const nonMeetingEvents = day.events.filter((e: CalendarEvent) => e.type !== 'meeting');
+    const idx = nonMeetingEvents.indexOf(event);
+    return idx * 32;
+  }
+
+  currentTimeVisible(): boolean {
+    return this.calendarDays.some((d: any) => d.today);
+  }
+
+  getCurrentTimeTop(): number {
+    const now = new Date();
+    return (now.getHours() * 60 + now.getMinutes()) * (64 / 60);
+  }
+
+  openDayEventsForEvent(event: CalendarEvent, day: any, $event: Event): void {
+    $event.stopPropagation();
+    this.selectedDayEvents = [...day.events];
+    this.selectedDayFullDate = day.fullDate;
+    const [y, m, d] = day.fullDate.split('-').map(Number);
+    this.selectedDayLabel = `${d} ${this.months[m - 1]} ${y}`;
+    this.showDayEventsPanel = true;
   }
 
   generateDayView(): void {
@@ -349,10 +398,11 @@ export class Calendar implements OnInit {
     this.weekEnd.setHours(23, 59, 59, 999);
   }
 
-  openProjectDetails(project?: IProject, milestone?: IMilestone): void {
+  openProjectDetails(project?: IProject, milestone?: IMilestone, showMilestones: boolean = true): void {
     if (!project) return;
     this.selectedProject = project;
     this.selectedMilestone = milestone || null;
+    this.showMilestonesInPanel = showMilestones;
     this.showProjectDetails = true;
   }
 
@@ -360,6 +410,7 @@ export class Calendar implements OnInit {
     this.showProjectDetails = false;
     this.selectedProject = null;
     this.selectedMilestone = null;
+    this.showMilestonesInPanel = true;
   }
 
   get displayedMilestones(): IMilestone[] {
@@ -378,10 +429,10 @@ export class Calendar implements OnInit {
     this.router.navigate(['master/projects', id]);
   }
 
-  navigateToProjectDetails(project: any): void {
+  navigateToProjectDetails(project: any, milestone?: IMilestone): void {
     if (!project) return;
     this.selectedProject = project;
-    this.selectedMilestone = null;
+    this.selectedMilestone = milestone || null;
     this.showProjectDetails = true;
   }
 
@@ -412,7 +463,19 @@ export class Calendar implements OnInit {
     this.meetingForm = this.blankForm();
     this.selectedAttendees = [];
     this.attendeeSearchText = '';
+    this.prefilledProjectId = undefined;
     if (prefillDate) this.meetingForm.dateInput = prefillDate;
+    this.showMeetingModal = true;
+  }
+
+  openAddMeetingForProject(project: IProject | null): void {
+    if (!project?.id) return;
+    this.editingMeeting = null;
+    this.meetingForm = this.blankForm();
+    this.selectedAttendees = [];
+    this.attendeeSearchText = '';
+    this.prefilledProjectId = Number(project.id);
+    this.meetingForm.project_id = Number(project.id);
     this.showMeetingModal = true;
   }
 
@@ -438,6 +501,7 @@ export class Calendar implements OnInit {
       if (!isNaN(n) && !vendorIds.includes(n)) vendorIds.push(n);
     });
     this.editingMeeting = snap;
+    this.prefilledProjectId = undefined;
     this.meetingForm = {
       title: snap.title, description: snap.description || '',
       attendees: [...rawAttendees], duration: Number(snap.duration) || 30,
@@ -461,6 +525,7 @@ export class Calendar implements OnInit {
     this.selectedAttendees = [];
     this.attendeeSearchText = '';
     this.showVendorDropdown = false;
+    this.prefilledProjectId = undefined;
   }
 
   selectProject(project: any): void {
@@ -469,7 +534,7 @@ export class Calendar implements OnInit {
   }
 
   getSelectedProjectName(): string {
-    const project = this.projects.find(p => p.id === this.meetingForm.project_id);
+    const project = this.projects.find(p => Number(p.id) === Number(this.meetingForm.project_id));
     return project?.name || '';
   }
 
@@ -495,7 +560,7 @@ export class Calendar implements OnInit {
     this.meetingForm.selectedVendorIds = ids;
     this.meetingForm.vendor_id = ids[0] ?? undefined;
     this.meetingForm.vendor_ids = ids;
-    this.showVendorDropdown = false;
+
   }
 
   removeVendor(vendorId: number): void {
@@ -513,6 +578,7 @@ export class Calendar implements OnInit {
   @HostListener('document:click')
   onDocumentClick(): void {
     this.showVendorDropdown = false;
+    this.showProjectDropdown = false;
     this.showAttendeeSuggestions = false;
   }
 

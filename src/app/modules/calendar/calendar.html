@@ -11,6 +11,7 @@
         class="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 transition-all duration-200">
         Today
       </button>
+
       <button (click)="openAddMeeting()"
         class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold shadow-lg shadow-orange-500/30 transition-all duration-300 hover:-translate-y-0.5 text-sm">
         <span class="material-symbols-outlined text-[18px]">video_call</span>
@@ -20,7 +21,7 @@
   </div>
 
   <div
-    class="bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl rounded-[28px] border border-white/40 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
+    class="bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl rounded-[28px] overflow-hidden border border-white/40 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
     <div
       class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-5 border-b border-slate-200 dark:border-slate-800">
       <div class="flex items-center gap-3">
@@ -78,81 +79,159 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
+    <div *ngIf="currentView === 'Day' || currentView === 'Week'"
+      class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
+
       <div *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']"
-        class="bg-slate-50 dark:bg-slate-900 py-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+        class="bg-slate-50 dark:bg-slate-900 py-3 text-center text-xs font-bold text-slate-400 uppercase">
         {{ d }}
       </div>
+
     </div>
 
-    <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
-      <div *ngFor="let day of calendarDays; trackBy: trackByDate" [class.opacity-0]="!day.date"
-        [class.pointer-events-none]="!day.date" [class.ring-2]="day.today" [class.ring-orange-400]="day.today"
-        [class.ring-inset]="day.today"
-        class="min-h-[140px] bg-white dark:bg-slate-900 p-2.5 hover:bg-orange-50/30 dark:hover:bg-slate-800/60 transition-all duration-200 relative group cursor-pointer"
-        (click)="openDayEvents(day, $event)">
-
-        <div class="flex items-start justify-between mb-2">
-          <span [class.bg-orange-500]="day.today" [class.text-white]="day.today" [class.rounded-full]="day.today"
-            [class.w-7]="day.today" [class.h-7]="day.today" [class.flex]="day.today" [class.items-center]="day.today"
-            [class.justify-center]="day.today" class="text-[13px] font-black text-slate-600 dark:text-slate-300">
-            {{ day.date }}
-          </span>
-          <button *ngIf="day.date" (click)="openAddMeeting(day.fullDate); $event.stopPropagation()"
-            class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-6 h-6 rounded-md bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center hover:bg-orange-200">
-            <span class="material-symbols-outlined text-[14px] text-orange-600">add</span>
-          </button>
-        </div>
-
-        <div class="space-y-[4px]">
-          <ng-container *ngFor="let event of day.events; let i = index">
-            <div *ngIf="i < 3"
-              (click)="event.type !== 'meeting' ? openProjectDetails(event.project, event.milestone) : openDayEvents(day,$event); $event.stopPropagation()"
-              class="cursor-pointer hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] transition-all duration-150 w-full overflow-hidden flex items-center gap-2"
-              style="padding: 6px 8px; border-radius: 9px; box-shadow: 0 2px 6px rgba(0,0,0,0.20);" [ngClass]="{
-                'bg-emerald-600': event.type === 'project-start',
-                'bg-red-500':     event.type === 'project-end',
-                'bg-blue-600':    event.type === 'milestone-start',
-                'bg-amber-500':   event.type === 'milestone-end',
-                'bg-violet-600':  event.type === 'meeting'
-              }">
-
-              <span class="material-symbols-outlined text-white shrink-0"
-                style="font-size:13px; line-height:1; opacity:1; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.2));">
-                <ng-container [ngSwitch]="event.type">
-                  <ng-container *ngSwitchCase="'project-start'">rocket_launch</ng-container>
-                  <ng-container *ngSwitchCase="'project-end'">flag</ng-container>
-                  <ng-container *ngSwitchCase="'milestone-start'">outlined_flag</ng-container>
-                  <ng-container *ngSwitchCase="'milestone-end'">flag_circle</ng-container>
-                  <ng-container *ngSwitchCase="'meeting'">video_call</ng-container>
-                </ng-container>
-              </span>
-
-              <div style="min-width:0; flex:1; overflow:hidden;">
-                <div class="text-white truncate"
-                  style="font-size:12px; font-weight:800; line-height:1.4; letter-spacing:0.025em; text-shadow:0 1px 3px rgba(0,0,0,0.25);">
-                  {{ event.type === 'meeting' ? event.meeting?.title : event.project?.name }}
-                </div>
-                <div class="truncate"
-                  style="font-size:10.5px; font-weight:600; line-height:1.3; color:rgba(255,255,255,0.88); letter-spacing:0.015em; text-shadow:0 1px 2px rgba(0,0,0,0.15);">
-                  <ng-container *ngIf="event.type === 'meeting'">
-                    <ng-container *ngIf="event.meeting?.time">⏰ {{ event.meeting?.time }}</ng-container>
-                    <ng-container *ngIf="!event.meeting?.time">Meeting</ng-container>
-                  </ng-container>
-                  <ng-container *ngIf="event.type !== 'meeting'">{{ event.title }}</ng-container>
-                </div>
-              </div>
+    <ng-container *ngIf="currentView === 'Day' || currentView === 'Week'">
+      <div class="flex border-b border-slate-200 dark:border-slate-800">
+        <div class="w-16 shrink-0"></div>
+        <div class="flex-1 grid"
+          [ngStyle]="{'grid-template-columns': currentView === 'Day' ? '1fr' : 'repeat(7, 1fr)'}">
+          <div *ngFor="let day of calendarDays"
+            class="py-3 text-center border-l border-slate-100 dark:border-slate-800 first:border-l-0">
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              {{ ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][getDayOfWeek(day.fullDate)] }}
             </div>
-          </ng-container>
-
-          <div *ngIf="day.events.length > 3"
-            class="text-center font-bold cursor-pointer transition-all duration-150 hover:bg-slate-200 dark:hover:bg-slate-700"
-            style="font-size:10px; padding: 3px 6px; color:#94a3b8; background:rgba(148,163,184,0.15); border-radius:6px; letter-spacing:0.02em;">
-            +{{ day.events.length - 3 }} more
+            <div class="mt-1 mx-auto w-8 h-8 flex items-center justify-center rounded-full text-sm font-black"
+              [class.bg-orange-500]="day.today" [class.text-white]="day.today" [class.text-slate-700]="!day.today"
+              [class.dark:text-slate-200]="!day.today">
+              {{ day.date }}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="flex overflow-y-auto" style="max-height: 600px;">
+
+        <div class="w-16 shrink-0 relative">
+          <div *ngFor="let hour of hours" class="h-16 relative">
+            <span class="absolute -top-2.5 right-2 text-[11px] text-slate-400 font-semibold">
+              {{ formatHour(hour) }}
+            </span>
+          </div>
+        </div>
+
+
+        <div class="flex-1 grid relative"
+          [ngStyle]="{'grid-template-columns': currentView === 'Day' ? '1fr' : 'repeat(7, 1fr)'}">
+
+          <div *ngIf="currentTimeVisible()" class="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+            [style.top.px]="getCurrentTimeTop()">
+            <div class="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1.5 shrink-0"></div>
+            <div class="flex-1 h-[1.5px] bg-red-500"></div>
+          </div>
+
+          <div *ngFor="let day of calendarDays; let colIdx = index"
+            class="relative border-l border-slate-100 dark:border-slate-800 first:border-l-0">
+
+            <div *ngFor="let hour of hours" class="h-16 border-t border-slate-100 dark:border-slate-800"></div>
+
+            <ng-container *ngFor="let event of day.events">
+              <div *ngIf="event.type === 'meeting' && event.meeting?.time"
+                class="absolute left-2 right-2 rounded-xl px-3 py-2 cursor-pointer hover:brightness-110 transition-all shadow-lg z-10"
+                [style.top.px]="getEventTop(event.meeting?.time)"
+                [style.height.px]="getEventHeight(event.meeting?.duration) + 20" [ngClass]="'bg-violet-600 text-white'"
+                (click)="openDayEventsForEvent(event, day, $event)">
+                <div class="text-[15px] font-bold truncate">{{ event.meeting?.title }}</div>
+                <div class="text-[13px] opacity-80 truncate">{{ event.meeting?.time }}</div>
+              </div>
+
+              <div *ngIf="event.type !== 'meeting'"
+                class="absolute left-1 right-1 rounded-lg px-2 py-1 cursor-pointer hover:brightness-110 transition-all shadow-sm z-10"
+                [style.top.px]="getAllDayEventTop(event, day)" style="height: 28px;" [ngClass]="{
+              'bg-emerald-600': event.type === 'project-start',
+              'bg-red-500': event.type === 'project-end',
+              'bg-blue-600': event.type === 'milestone-start',
+              'bg-amber-500': event.type === 'milestone-end'
+            }"
+                (click)="openProjectDetails(event.project, event.milestone, event.type !== 'project-end'); $event.stopPropagation()">
+                <div class="text-[10px] font-bold text-white truncate">{{ event.project?.name }}</div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="currentView === 'Month'">
+      <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
+        <div *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']"
+          class="bg-slate-50 dark:bg-slate-900 py-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+          {{ d }}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
+        <div *ngFor="let day of calendarDays; trackBy: trackByDate" [class.opacity-0]="!day.date"
+          [class.pointer-events-none]="!day.date" [class.ring-2]="day.today" [class.ring-orange-400]="day.today"
+          [class.ring-inset]="day.today"
+          class="min-h-[140px] bg-white dark:bg-slate-900 p-2.5 hover:bg-orange-50/30 dark:hover:bg-slate-800/60 transition-all duration-200 relative group cursor-pointer"
+          (click)="openDayEvents(day, $event)">
+
+          <div class="flex items-start justify-between mb-2">
+            <span [class.bg-orange-500]="day.today" [class.text-white]="day.today" [class.rounded-full]="day.today"
+              [class.w-7]="day.today" [class.h-7]="day.today" [class.flex]="day.today" [class.items-center]="day.today"
+              [class.justify-center]="day.today" class="text-[13px] font-black text-slate-600 dark:text-slate-300">
+              {{ day.date }}
+            </span>
+            <button *ngIf="day.date" (click)="openAddMeeting(day.fullDate); $event.stopPropagation()"
+              class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-6 h-6 rounded-md bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center hover:bg-orange-200">
+              <span class="material-symbols-outlined text-[14px] text-orange-600 cursor-pointer">add</span>
+            </button>
+          </div>
+
+          <div class="space-y-[4px]">
+            <ng-container *ngFor="let event of day.events; let i = index">
+              <div *ngIf="i < 3"
+                (click)="event.type !== 'meeting' ? openProjectDetails(event.project, event.milestone, event.type !== 'project-end') : openDayEvents(day,$event); $event.stopPropagation()"
+                class="cursor-pointer hover:scale-[1.02] hover:brightness-105 active:scale-[0.98] transition-all duration-150 w-full overflow-hidden flex items-center gap-2"
+                style="padding: 6px 8px; border-radius: 9px; box-shadow: 0 2px 6px rgba(0,0,0,0.20);" [ngClass]="{
+              'bg-emerald-600': event.type === 'project-start',
+              'bg-red-500':     event.type === 'project-end',
+              'bg-blue-600':    event.type === 'milestone-start',
+              'bg-amber-500':   event.type === 'milestone-end',
+              'bg-violet-600':  event.type === 'meeting'
+            }">
+                <span class="material-symbols-outlined text-white shrink-0" style="font-size:13px; line-height:1;">
+                  <ng-container [ngSwitch]="event.type">
+                    <ng-container *ngSwitchCase="'project-start'">rocket_launch</ng-container>
+                    <ng-container *ngSwitchCase="'project-end'">flag</ng-container>
+                    <ng-container *ngSwitchCase="'milestone-start'">outlined_flag</ng-container>
+                    <ng-container *ngSwitchCase="'milestone-end'">flag_circle</ng-container>
+                    <ng-container *ngSwitchCase="'meeting'">video_call</ng-container>
+                  </ng-container>
+                </span>
+                <div style="min-width:0; flex:1; overflow:hidden;">
+                  <div class="text-white truncate" style="font-size:12px; font-weight:800; line-height:1.4;">
+                    {{ event.type === 'meeting' ? event.meeting?.title : event.project?.name }}
+                  </div>
+                  <div class="truncate"
+                    style="font-size:10.5px; font-weight:600; line-height:1.3; color:rgba(255,255,255,0.88);">
+                    <ng-container *ngIf="event.type === 'meeting'">
+                      <ng-container *ngIf="event.meeting?.time">⏰ {{ event.meeting?.time }}</ng-container>
+                      <ng-container *ngIf="!event.meeting?.time">Meeting</ng-container>
+                    </ng-container>
+                    <ng-container *ngIf="event.type !== 'meeting'">{{ event.title }}</ng-container>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <div *ngIf="day.events.length > 3"
+              class="text-center font-bold cursor-pointer transition-all duration-150 hover:bg-slate-200 dark:hover:bg-slate-700"
+              style="font-size:10px; padding: 3px 6px; color:#94a3b8; background:rgba(148,163,184,0.15); border-radius:6px;">
+              +{{ day.events.length - 3 }} more
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
   </div>
 
 
@@ -167,11 +246,6 @@
           <h2 class="text-lg font-black text-slate-800 dark:text-white leading-tight">{{ selectedProject?.name }}</h2>
         </div>
         <div class="flex items-center gap-2">
-          <button *ngIf="selectedMilestone" (click)="selectedMilestone = null"
-            class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 transition-colors flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px]">list</span>
-            All Milestones
-          </button>
           <button (click)="navigateToProject(selectedProject?.id)"
             class="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-bold hover:bg-orange-600 transition-colors flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px]">open_in_new</span>
@@ -203,7 +277,7 @@
               <span class="material-symbols-outlined text-[14px]">calendar_today</span> Start
             </p>
             <p class="font-bold text-slate-800 dark:text-white text-sm">
-              {{ selectedProject!.start_date ? (selectedProject?.start_date | date:'dd MMM yyyy') : '—' }}
+              {{ selectedProject!.createdAt ? (selectedProject?.createdAt | date:'dd MMM yyyy') : '—' }}
             </p>
           </div>
           <div class="rounded-2xl bg-slate-50 dark:bg-slate-800 p-4">
@@ -264,7 +338,6 @@
               class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
               <img *ngIf="member.avatar && !failedAvatars.has(member.avatar)" [src]="getAvatarUrl(member.avatar)"
                 class="w-5 h-5 rounded-full object-cover" alt="" (error)="onAvatarError(member.avatar)">
-
               <div *ngIf="!member.avatar || failedAvatars.has(member.avatar)"
                 class="w-5 h-5 rounded-full bg-orange-200 dark:bg-orange-900/60 flex items-center justify-center text-[10px] font-bold text-orange-700">
                 {{ member.firstname ? member.firstname.charAt(0) : '?' }}
@@ -276,7 +349,7 @@
           </div>
         </div>
 
-        <div>
+        <div *ngIf="showMilestonesInPanel">
           <div class="flex items-center justify-between mb-3">
             <h3 class="text-sm font-black text-slate-700 dark:text-slate-200">
               Milestones
@@ -315,7 +388,7 @@
           </div>
         </div>
 
-        <button (click)="openAddMeeting()"
+        <button (click)="openAddMeetingForProject(selectedProject)"
           class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 font-bold text-sm hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-all duration-200">
           <span class="material-symbols-outlined text-[18px]">video_call</span>
           Schedule a Meeting for this Project
@@ -329,7 +402,7 @@
   @if(showDayEventsPanel) {
   <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end lg:items-center justify-center p-4"
     (click)="closeDayEventsPanel()">
-    <div class="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+    <div class="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
       style="max-height: 80vh;" (click)="$event.stopPropagation()">
       <div class="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
         <div>
@@ -354,7 +427,8 @@
 
           <ng-container *ngIf="event.type !== 'meeting'">
             <div class="flex items-start justify-between gap-3">
-              <div class="flex-1 min-w-0 cursor-pointer" (click)="openProjectDetails(event.project, event.milestone)">
+              <div class="flex-1 min-w-0 cursor-pointer"
+                (click)="openProjectDetails(event.project, event.milestone, event.type !== 'project-end')">
                 <div class="flex items-center gap-2 mb-1">
                   <div class="w-2 h-2 rounded-full shrink-0" [ngClass]="{
                     'bg-emerald-600': event.type === 'project-start',
@@ -374,7 +448,7 @@
                   <span class="ml-auto font-bold text-orange-500">{{ event.project?.progress || 0 }}%</span>
                 </div>
               </div>
-              <button (click)="navigateToProjectDetails(event.project); closeDayEventsPanel()"
+              <button (click)="navigateToProjectDetails(event.project, event.milestone); closeDayEventsPanel()"
                 class="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-500 text-white text-[11px] font-bold hover:bg-orange-600 transition-colors whitespace-nowrap">
                 <span class="material-symbols-outlined text-[13px]">open_in_new</span>
                 Open
@@ -510,27 +584,38 @@
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Project</label>
             <div class="relative">
-              <button type="button" (click)="showProjectDropdown = !showProjectDropdown"
-                class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:border-violet-400 focus:ring-2 focus:ring-violet-400 transition-all">
-                <span [class.text-slate-400]="!meetingForm.project_id">
-                  {{ getSelectedProjectName() || 'Select Project' }}
-                </span>
-                <span class="material-symbols-outlined text-[18px] text-slate-400"
-                  [class.rotate-180]="showProjectDropdown">expand_more</span>
-              </button>
-              <div *ngIf="showProjectDropdown"
-                class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
-                <div *ngFor="let p of projects" (click)="selectProject(p)"
-                  class="px-4 py-3 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
-                  <p class="text-sm font-medium text-slate-800 dark:text-white">{{ p.name }}</p>
+              <!-- ✅ FIX: If prefilled from project panel → show read-only, no chevron -->
+              <ng-container *ngIf="prefilledProjectId; else projectDropdown">
+                <div
+                  class="w-full flex items-center border border-violet-300 dark:border-violet-700 rounded-xl px-4 py-3 text-sm bg-violet-50 dark:bg-slate-800 text-slate-800 dark:text-white cursor-default">
+                  <span class="material-symbols-outlined text-[16px] text-violet-500 mr-2">folder</span>
+                  {{ getSelectedProjectName() }}
                 </div>
-              </div>
+              </ng-container>
+              <ng-template #projectDropdown>
+                <button type="button" (click)="showProjectDropdown = !showProjectDropdown"
+                  class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:border-violet-400 focus:ring-2 focus:ring-violet-400 transition-all">
+                  <span [class.text-slate-400]="!meetingForm.project_id">
+                    {{ getSelectedProjectName() || 'Select Project' }}
+                  </span>
+                  <span class="material-symbols-outlined text-[18px] text-slate-400"
+                    [class.rotate-180]="showProjectDropdown">expand_more</span>
+                </button>
+                <div *ngIf="showProjectDropdown"
+                  class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                  <div *ngFor="let p of projects" (click)="selectProject(p)"
+                    class="px-4 py-3 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
+                    <p class="text-sm font-medium text-slate-800 dark:text-white">{{ p.name }}</p>
+                  </div>
+                </div>
+              </ng-template>
             </div>
           </div>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Vendors</label>
+
           <div *ngIf="(meetingForm.selectedVendorIds || []).length > 0" class="flex flex-wrap gap-1.5 mb-2">
             <span *ngFor="let vid of meetingForm.selectedVendorIds"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 text-xs font-semibold">
@@ -551,21 +636,34 @@
                 [class.rotate-180]="showVendorDropdown">expand_more</span>
             </button>
             <div *ngIf="showVendorDropdown" (click)="$event.stopPropagation()"
-              class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-52 overflow-y-auto">
-              <div *ngIf="!vendors.length" class="px-4 py-3 text-sm text-slate-400 text-center">No vendors available
-              </div>
-              <div *ngFor="let v of vendors" (click)="toggleVendor(v.id, $event)"
-                class="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 cursor-pointer transition-colors select-none">
-                <span
-                  class="flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all pointer-events-none"
-                  [ngClass]="isVendorSelected(v.id) ? 'bg-violet-600 border-violet-600' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'">
-                  <span *ngIf="isVendorSelected(v.id)" class="material-symbols-outlined text-white pointer-events-none"
-                    style="font-size:11px;font-variation-settings:'wght' 700">check</span>
-                </span>
-                <div class="flex-1 min-w-0 pointer-events-none">
-                  <p class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ v.name }}</p>
-                  <p *ngIf="v.email" class="text-xs text-slate-400 truncate">{{ v.email }}</p>
+              class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl flex flex-col"
+              style="max-height: 220px;">
+
+              <div class="overflow-y-auto flex-1">
+                <div *ngIf="!vendors.length" class="px-4 py-3 text-sm text-slate-400 text-center">No vendors available
                 </div>
+                <div *ngFor="let v of vendors" (click)="toggleVendor(v.id, $event)"
+                  class="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 cursor-pointer transition-colors select-none">
+                  <span
+                    class="flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all pointer-events-none"
+                    [ngClass]="isVendorSelected(v.id) ? 'bg-violet-600 border-violet-600' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'">
+                    <span *ngIf="isVendorSelected(v.id)"
+                      class="material-symbols-outlined text-white pointer-events-none"
+                      style="font-size:11px;font-variation-settings:'wght' 700">check</span>
+                  </span>
+                  <div class="flex-1 min-w-0 pointer-events-none">
+                    <p class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ v.name }}</p>
+                    <p *ngIf="v.email" class="text-xs text-slate-400 truncate">{{ v.email }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="shrink-0 px-3 py-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-xl">
+                <button type="button" (click)="showVendorDropdown = false; $event.stopPropagation()"
+                  class="w-12 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">
+                  OK
+                </button>
               </div>
             </div>
           </div>

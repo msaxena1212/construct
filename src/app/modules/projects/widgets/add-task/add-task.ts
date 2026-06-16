@@ -33,14 +33,18 @@ export class AddTask implements OnInit {
     title: string;
     material_id: number;
     itemName: string;
-    qty: number;
+    materialQty: number;
     stockIn: number;
-    equipment: string;
+    equipment_id: string;
     completed: boolean;
     requestedQty?: number;
     shortage?: number;
     pendingRequest?: boolean;
     stock_request_id?: number;
+    startDate?: string;
+    endDate?: string;
+    labor_id?: string;
+    no_of_labor?: number;
   }[] = [];
 
   showSubTaskForm = false;
@@ -51,9 +55,13 @@ export class AddTask implements OnInit {
     materialId: null as number | null,
     itemName: '',
     stockIn: 0,
-    qty: 1,
-    equipment: '',
+    materialQty: 1,
+    equipment_id: '',
     equipmentQty: 1,
+    startDate: '',
+    endDate: '',
+    labor_id: '',
+    no_of_labor: 1,
   };
 
   dependencies: any[] = [];
@@ -106,6 +114,8 @@ export class AddTask implements OnInit {
     }
   }
 
+
+
   initForm() {
     this.taskForm = this.fb.group({
       title: ['', [Validators.required]],
@@ -117,20 +127,20 @@ export class AddTask implements OnInit {
       assigneeId: [''],
       vendorId: [''],
       initialComment: [''],
-      milestone_id:[''],
-      submilestone_id:[''],
+      milestone_id: [''],
+      submilestone_id: [''],
     });
   }
 
   onMilestoneChange(event: any) {
-  const milestoneId = event.target.value;
+    const milestoneId = event.target.value;
 
-  const milestone = this.milestones.find(
-    (m: any) => m.id == milestoneId
-  );
+    const milestone = this.milestones.find(
+      (m: any) => m.id == milestoneId
+    );
 
-  this.subMilestones = milestone?.children || [];
-}
+    this.subMilestones = milestone?.children || [];
+  }
 
   fetchTeamMembers() {
     this.projectService.getProjectById(this.projectId).subscribe({
@@ -181,7 +191,12 @@ export class AddTask implements OnInit {
   }
 
   private resetSubTaskForm() {
-    this.newSubTask = { title: '', materialId: null, itemName: '', stockIn: 0, qty: 1, equipment: '', equipmentQty: 1 };
+    this.newSubTask = {
+      title: '', materialId: null, itemName: '', stockIn: 0, materialQty: 1, equipment_id: '', equipmentQty: 1, startDate: '',
+      endDate: '',
+      labor_id: '',
+      no_of_labor: 1,
+    };
     this.showSubTaskForm = false;
     this.editingIndex = null;
   }
@@ -191,7 +206,8 @@ export class AddTask implements OnInit {
   stockDialogData: {
     available: number;
     shortage: number;
-    selectedMaterial: any;
+    selectedItem: any;
+    itemType: 'material' | 'equipment';
   } | null = null;
 
 
@@ -206,20 +222,22 @@ export class AddTask implements OnInit {
         m => m.id == this.newSubTask.materialId
       );
 
-      // if (!selectedMaterial) {
-      //   this.toast.error('Material not found');
-      //   return;
-      // }
+      // Check if material exists
+      if (!selectedMaterial) {
+        this.toast.error('Material not found');
+        return;
+      }
 
-      // VALIDATE STOCK
-      if (this.newSubTask.qty > selectedMaterial.stockUsed) {
+      // VALIDATE STOCK for material
+      if (this.newSubTask.materialQty > selectedMaterial.stockUsed) {
 
         if (selectedMaterial.stockIn === 0 && selectedMaterial.stockUsed === 0) {
           // Zero stock — directly show dialog with full qty as shortage
           this.stockDialogData = {
             available: 0,
-            shortage: this.newSubTask.qty,
-            selectedMaterial
+            shortage: this.newSubTask.materialQty,
+            selectedItem: selectedMaterial,
+            itemType: 'material'
           };
           this.showStockDialog = true;
           return;
@@ -228,11 +246,47 @@ export class AddTask implements OnInit {
         // Partial stock — show dialog
         this.stockDialogData = {
           available: selectedMaterial.stockUsed,
-          shortage: this.newSubTask.qty - selectedMaterial.stockUsed,
-          selectedMaterial
+          shortage: this.newSubTask.materialQty - selectedMaterial.stockUsed,
+          selectedItem: selectedMaterial,
+          itemType: 'material'
         };
         this.showStockDialog = true;
         return;  // ← don't save yet, wait for user confirmation
+      }
+
+      // VALIDATE STOCK for equipment (apply same dialog behavior)
+      if (this.newSubTask.equipment_id) {
+        const selectedEquipment = this.equipmentList.find(
+          (e: any) => e.id == this.newSubTask.equipment_id
+        );
+
+        if (!selectedEquipment) {
+          this.toast.error('Equipment not found');
+          return;
+        }
+
+        if (this.newSubTask.equipmentQty > selectedEquipment.stockUsed) {
+
+          if (selectedEquipment.stockIn === 0 && selectedEquipment.stockUsed === 0) {
+            this.stockDialogData = {
+              available: 0,
+              shortage: this.newSubTask.equipmentQty,
+              selectedItem: selectedEquipment,
+              itemType: 'equipment'
+            };
+            this.showStockDialog = true;
+            return;
+          }
+
+          this.stockDialogData = {
+            available: selectedEquipment.stockUsed,
+            shortage: this.newSubTask.equipmentQty - selectedEquipment.stockUsed,
+            selectedItem: selectedEquipment,
+            itemType: 'equipment'
+          };
+          this.showStockDialog = true;
+          return;
+        }
       }
 
       const payload = {
@@ -240,10 +294,14 @@ export class AddTask implements OnInit {
         material_id: selectedMaterial.id,
         itemName: selectedMaterial.name,
         stockIn: selectedMaterial.stockIn,
-        qty: this.newSubTask.qty,
-        equipment: this.newSubTask.equipment,
+        materialQty: this.newSubTask.materialQty,
+        equipment_id: this.newSubTask.equipment_id,
         equipmentQty: this.newSubTask.equipmentQty,
-        completed: false
+        completed: false,
+        startDate: this.newSubTask.startDate,
+        endDate: this.newSubTask.endDate,
+        labor_id: this.newSubTask.labor_id,
+        no_of_labor: this.newSubTask.no_of_labor,
       };
 
       // EDIT
@@ -265,9 +323,13 @@ export class AddTask implements OnInit {
         materialId: null,
         itemName: '',
         stockIn: 0,
-        qty: 1,
-        equipment: '',
-        equipmentQty: 1
+        materialQty: 1,
+        equipment_id: '',
+        equipmentQty: 1,
+        startDate: '',
+        endDate: '',
+        labor_id: '',
+        no_of_labor: 1,
       };
 
       this.showSubTaskForm = false;
@@ -283,9 +345,13 @@ export class AddTask implements OnInit {
       materialId: item.material_id,
       itemName: item.itemName,
       stockIn: item.stockIn,
-      qty: item.requestedQty ?? item.qty,
-      equipment: item.equipment,
-      equipmentQty: item.equipmentQty
+      materialQty: item.requestedQty ?? item.materialQty,
+      equipment_id: item.equipment_id,
+      equipmentQty: item.equipmentQty,
+      startDate: item.startDate ?? '',
+      endDate: item.endDate ?? '',
+      labor_id: item.labor_id ?? '',
+      no_of_labor: item.no_of_labor ?? 1,
     };
 
     this.editingIndex = index;
@@ -296,21 +362,42 @@ export class AddTask implements OnInit {
 
     if (!this.stockDialogData) return;
 
-    const { available, shortage, selectedMaterial } = this.stockDialogData;
+    const { available, shortage, selectedItem, itemType } = this.stockDialogData;
 
-    const payload = {
+    // build a payload that works for both material and equipment
+    const basePayload: any = {
       title: this.newSubTask.title,
-      material_id: selectedMaterial.id,
-      itemName: selectedMaterial.name,
       stockIn: available,
-      qty: available,
-      requestedQty: this.newSubTask.qty,
+      materialQty: available,
+      requestedQty: this.newSubTask.materialQty || this.newSubTask.equipmentQty,
       shortage,
       pendingRequest: true,
-      equipment: this.newSubTask.equipment,
-      equipmentQty: this.newSubTask.equipmentQty,
+      startDate: this.newSubTask.startDate,
+      endDate: this.newSubTask.endDate,
+      labor_id: this.newSubTask.labor_id,
+      no_of_labor: this.newSubTask.no_of_labor,
       completed: false
     };
+
+    let payload: any;
+
+    if (itemType === 'material') {
+      payload = {
+        ...basePayload,
+        material_id: selectedItem.id,
+        itemName: selectedItem.name,
+        equipment_id: this.newSubTask.equipment_id,
+        equipmentQty: this.newSubTask.equipmentQty,
+      };
+    } else {
+      // equipment
+      payload = {
+        ...basePayload,
+        equipment_id: selectedItem.id,
+        itemName: selectedItem.name,
+        equipmentQty: this.newSubTask.equipmentQty,
+      };
+    }
 
     // ================= EDIT =================
 
@@ -329,15 +416,24 @@ export class AddTask implements OnInit {
         this.toast.error('Stock request id not found');
         return;
       }
+
+      // send update payload depending on item type
+      const updatePayload: any = {
+        task_title: this.newSubTask.title,
+        requested_qty: shortage,
+        available_qty: available,
+        project_id: this.projectId
+      };
+
+      if (itemType === 'material') {
+        updatePayload.material_id = selectedItem.id;
+      } else {
+        updatePayload.equipment_id = selectedItem.id;
+      }
+
       this.projectService.updateAdditionalStockRequest(
         oldItem.stock_request_id,
-        {
-          material_id: selectedMaterial.id,
-          task_title: this.newSubTask.title,
-          requested_qty: shortage,
-          available_qty: available,
-          project_id: this.projectId
-        }
+        updatePayload
       ).subscribe({
         next: () => {
           this.toast.success('Stock request updated');
@@ -353,13 +449,20 @@ export class AddTask implements OnInit {
 
     else {
 
-      this.projectService.requestAdditionalStock({
-        material_id: selectedMaterial.id,
+      const reqPayload: any = {
         task_title: this.newSubTask.title,
         requested_qty: shortage,
         available_qty: available,
         project_id: this.projectId
-      }).subscribe({
+      };
+
+      if (itemType === 'material') {
+        reqPayload.material_id = selectedItem.id;
+      } else {
+        reqPayload.equipment_id = selectedItem.id;
+      }
+
+      this.projectService.requestAdditionalStock(reqPayload).subscribe({
 
         next: (res: any) => {
 
@@ -426,6 +529,17 @@ export class AddTask implements OnInit {
         size: (files[i].size / 1024).toFixed(1) + ' KB',
         icon: 'description',
         color: 'blue'
+      });
+    }
+  }
+
+  labors: any[] = [];
+
+  loadLabors(event: Event) {
+    const vendorId = (event.target as HTMLSelectElement)?.value;
+    if (vendorId) {
+      this.projectService.getLaborByVendor(Number(vendorId)).subscribe((res: any) => {
+        this.labors = res.data || [];
       });
     }
   }

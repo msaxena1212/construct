@@ -30,7 +30,7 @@
         <!-- Stats -->
         <div class="p-6">
 
-            <div class="grid grid-cols-2 xl:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
 
                 <!-- Total Budget -->
                 <div
@@ -63,7 +63,7 @@
                 </div>
 
                 <!-- Budget Used -->
-                <div
+                <!-- <div
                     class="group relative overflow-hidden rounded-2xl border border-violet-200/30 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 hover:-translate-y-1 transition-all duration-300">
 
                     <div class="absolute top-0 right-0 w-20 h-20 bg-violet-500/10 rounded-full blur-2xl">
@@ -93,7 +93,7 @@
                         {{ budgetUsedPercentage | number:'1.0-0' }}% Used
                     </div>
 
-                </div>
+                </div> -->
 
                 <!-- Total Spent -->
                 <div
@@ -350,46 +350,42 @@
         <h3 class="text-lg font-bold mb-8">Resource Distribution</h3>
         <div class="flex-grow flex flex-col justify-center items-center py-6">
 
-           <div class="relative w-56 h-56 mx-auto">
+            <div class="relative w-56 h-56 mx-auto">
 
-    <!-- Animated Donut -->
-    <div
-        class="w-full h-full rounded-full donut-chart animate-spin-once"
-        [style.background]="
+                <!-- Animated Donut -->
+                <div class="w-full h-full rounded-full donut-chart animate-spin-once" [style.background]="
         'conic-gradient(
             #2563eb 0% ' + laborPercent + '%,
             #a16207 ' + laborPercent + '% ' + (laborPercent + materialPercent) + '%,
             #f97316 ' + (laborPercent + materialPercent) + '% 100%
         )'">
 
-    </div>
+                </div>
 
-    <!-- Glow Ring -->
-    <div
-        class="absolute inset-0 rounded-full blur-xl opacity-20"
-        [style.background]="
+                <!-- Glow Ring -->
+                <div class="absolute inset-0 rounded-full blur-xl opacity-20" [style.background]="
         'conic-gradient(
             #2563eb 0% ' + laborPercent + '%,
             #a16207 ' + laborPercent + '% ' + (laborPercent + materialPercent) + '%,
             #f97316 ' + (laborPercent + materialPercent) + '% 100%
         )'">
-    </div>
+                </div>
 
-    <!-- Center Circle -->
-    <div
-        class="absolute inset-[22px] bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                <!-- Center Circle -->
+                <div
+                    class="absolute inset-[22px] bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
 
-        <p class="text-2xl font-black text-slate-800">
-            ₹ {{ budgetData.grand_total || 0 }}
-        </p>
+                    <p class="text-2xl font-black text-slate-800">
+                        ₹ {{ budgetData.grand_total || 0 }}
+                    </p>
 
-        <p class="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-semibold">
-            EXPENDITURE
-        </p>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-semibold">
+                        EXPENDITURE
+                    </p>
 
-    </div>
+                </div>
 
-</div>
+            </div>
             <!-- Details -->
             <div class="w-full space-y-3 p-2">
 

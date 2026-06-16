@@ -26,7 +26,7 @@ import { IProjectTask } from '../../shared/interfaces/project.interface';
 export class Vendors implements OnInit {
 
   @Input() projectId: string | number = '';
-
+  showPaymentModeDropdown = false;
   projectdata: any = null;
   private _pendingEditVendor: Vendor | null = null;
   private vendorService = inject(VendorsServices);
@@ -432,7 +432,19 @@ export class Vendors implements OnInit {
       this.updateSettlementCompletionFromProject();
     }
   }
+  applyMilestoneSelection(): void {
+    this.onMilestoneMultiSelect();
+    this.milestoneDropdownOpen = false;
+  }
+  applySubMilestoneSelection(): void {
+    this.onSubMilestoneMultiSelect();
+    this.subMilestoneDropdownOpen = false;
+  }
 
+  applyTaskSelection(): void {
+    this.onTaskMultiSelect();
+    this.taskDropdownOpen = false;
+  }
   onMilestoneMultiSelect(): void {
     this.selectedMilestoneIds = this.selectedMilestoneIds.map(id => Number(id));
     const allowedSubIds = this.availableSubMilestones.map((m: any) => Number(m.id));
@@ -809,6 +821,10 @@ export class Vendors implements OnInit {
       if (started && !loading) {
         this.invoiceForm = this.defaultInvoice();
         this.invoiceForm.project_id = Number(this.selectedVendor?.project_id) || null;
+
+        if (this.selectedVendor?.project_id) {
+          this.getProject(this.selectedVendor.project_id);
+        }
         this.showInvoiceModal = true;
         sub.unsubscribe();
       }
@@ -875,7 +891,7 @@ export class Vendors implements OnInit {
     this.isSavingInvoice = true;
 
     const payload = {
-      project_id: this.invoiceForm.project_id,
+      project_id: this.selectedVendor?.project_id,
       invoice_number: this.invoiceForm.number,
       invoice_date: this.invoiceForm.date,
       items: this.invoiceForm.items,
@@ -952,10 +968,13 @@ export class Vendors implements OnInit {
 
   onPaymentModeChange(mode: string): void {
     this.paymentForm.mode = mode;
+    this.showPaymentModeDropdown = false;
+
     if (mode === 'Cash') {
       this.paymentForm.reference = '';
       this.paymentForm.clearance_date = '';
     }
+
     if (mode !== 'Cheque') {
       this.paymentForm.clearance_date = '';
     }
@@ -973,6 +992,8 @@ export class Vendors implements OnInit {
   confirmPayment(): void {
     if (!this.selectedInvoice || this.isProcessingPayment) return;
     this.paymentError = '';
+
+    const referenceValue = String(this.paymentForm.reference ?? '').trim();
 
     if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
       this.paymentError = 'Please enter a valid amount.';
@@ -1001,12 +1022,12 @@ export class Vendors implements OnInit {
         this.paymentError = 'Cheque clearance date cannot be more than 3 months in the past.';
         return;
       }
-
       if (selectedDate > today) {
         this.paymentError = 'Cheque clearance date cannot be in the future.';
         return;
       }
     }
+
     this.isProcessingPayment = true;
 
     const paidNow = Number(this.paymentForm.amount);
@@ -1019,9 +1040,11 @@ export class Vendors implements OnInit {
       status: resolvedStatus,
       amount: paidNow,
       mode: this.paymentForm.mode,
-      reference: this.paymentForm.reference || null,
+      reference: referenceValue !== '' ? referenceValue : null,
       clearance_date: this.paymentForm.clearance_date || null,
     };
+
+    console.log('FINAL PAYLOAD:', JSON.stringify(payload, null, 2));
 
     if (this.showSettlementCards && this.paymentForm.project_id) {
       payload.settlement_type = this.selectedSettlementType;
@@ -1046,7 +1069,11 @@ export class Vendors implements OnInit {
       },
     });
   }
-
+  closeAllDropdowns(): void {
+    this.milestoneDropdownOpen = false;
+    this.subMilestoneDropdownOpen = false;
+    this.taskDropdownOpen = false;
+  }
   openCancelInvoiceDialog(inv: VendorInvoice): void {
     this.selectedInvoice = inv;
     this.showCancelInvoiceModal = true;
@@ -1085,7 +1112,6 @@ export class Vendors implements OnInit {
       this.selectedMilestoneIds.splice(idx, 1);
     }
     this.onMilestoneMultiSelect();
-    this.milestoneDropdownOpen = false;
   }
 
   toggleSubMilestoneSelection(id: number): void {
@@ -1096,7 +1122,6 @@ export class Vendors implements OnInit {
       this.selectedSubMilestoneIds.splice(idx, 1);
     }
     this.onSubMilestoneMultiSelect();
-    this.subMilestoneDropdownOpen = false;
   }
 
   toggleTaskSelection(id: number): void {
@@ -1107,7 +1132,6 @@ export class Vendors implements OnInit {
       this.selectedTaskIds.splice(idx, 1);
     }
     this.onTaskMultiSelect();
-    this.taskDropdownOpen = false;
   }
 
   viewInvoice(inv: VendorInvoice): void {
@@ -1440,15 +1464,6 @@ export class Vendors implements OnInit {
   updateTaskStatus(task: any, statusRaw: string): void {
     this.projectService.updateTask(task.id, { status: statusRaw }).subscribe();
   }
-
-  deleteTask(taskId: number): void {
-    if (!confirm('Remove this task?')) return;
-    this.projectService.deleteTask(taskId).subscribe({
-      error: (err: any) =>
-        alert('Delete failed: ' + (err?.error?.message ?? 'Server error')),
-    });
-  }
-
 
   getSkillBarWidth(count: number): number {
     const max = Math.max(...this.laborStats.skillComposition.map(s => s.count), 1);
