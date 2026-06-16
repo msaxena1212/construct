@@ -1,6 +1,8 @@
 const db = require("../../models");
 const { syncTaskProgress, syncProjectProgress, syncMilestoneProgress } = require("./project.utils");
 
+const { Sequelize } = require("sequelize");
+
 class ProjectTaskController {
   constructor() {
     this.getTasksByProject = this.getTasksByProject.bind(this);
@@ -20,25 +22,99 @@ class ProjectTaskController {
   async getTasksByProject(req, res) {
     try {
       const { projectId } = req.params;
+      // const tasks = await db.project_task.findAll({
+      //   where: { project_id: projectId }, // Only top-level tasks
+      //   include: [
+      //     { model: db.project_sub_task, as: 'sub_tasks' },
+      //     { model: db.project_task_dependency, as: 'dependencies', include: [{ model: db.project_task, as: 'predecessor', attributes: ['id', 'title'] }] },
+      //     { model: db.user, as: 'assignees', attributes: ['id', 'firstname', 'lastname', 'avatar'] },
+      //     { model: db.user, as: 'creator', attributes: ['id', 'firstname', 'lastname', 'avatar'] },
+      //     { model: db.task_attachment, as: 'attachments' },
+      //     { model: db.milestone, as: 'milestone' },
+      //     { model: db.milestone, as: 'submilestone' },
+      //     {
+      //       model: db.task_comment,
+      //       as: 'comments',
+      //       include: [{ model: db.user, as: 'user', attributes: ['id', 'firstname', 'lastname', 'avatar'] }]
+      //     },
+      //     {
+      //       model: db.task_activity,
+      //       as: 'activities',
+      //       include: [{ model: db.user, as: 'user', attributes: ['id', 'firstname', 'lastname', 'avatar'] }]
+      //     }
+      //   ],
+      //   order: [['priority', 'ASC'], ['createdAt', 'DESC']]
+      // });
       const tasks = await db.project_task.findAll({
-        where: { project_id: projectId }, // Only top-level tasks
+        where: { project_id: projectId },
+
+        attributes: {
+          include: [
+            [Sequelize.col('milestone.name'), 'milestone_name'],
+            [Sequelize.col('submilestone.name'), 'submilestone_name']
+          ]
+        },
+
         include: [
           { model: db.project_sub_task, as: 'sub_tasks' },
-          { model: db.project_task_dependency, as: 'dependencies', include: [{ model: db.project_task, as: 'predecessor', attributes: ['id', 'title'] }] },
-          { model: db.user, as: 'assignees', attributes: ['id', 'firstname', 'lastname', 'avatar'] },
-          { model: db.user, as: 'creator', attributes: ['id', 'firstname', 'lastname', 'avatar'] },
+          {
+            model: db.project_task_dependency,
+            as: 'dependencies',
+            include: [
+              {
+                model: db.project_task,
+                as: 'predecessor',
+                attributes: ['id', 'title']
+              }
+            ]
+          },
+          {
+            model: db.user,
+            as: 'assignees',
+            attributes: ['id', 'firstname', 'lastname', 'avatar']
+          },
+          {
+            model: db.user,
+            as: 'creator',
+            attributes: ['id', 'firstname', 'lastname', 'avatar']
+          },
           { model: db.task_attachment, as: 'attachments' },
+
+          {
+            model: db.milestone,
+            as: 'milestone',
+            attributes: []
+          },
+          {
+            model: db.milestone,
+            as: 'submilestone',
+            attributes: []
+          },
+
           {
             model: db.task_comment,
             as: 'comments',
-            include: [{ model: db.user, as: 'user', attributes: ['id', 'firstname', 'lastname', 'avatar'] }]
+            include: [
+              {
+                model: db.user,
+                as: 'user',
+                attributes: ['id', 'firstname', 'lastname', 'avatar']
+              }
+            ]
           },
           {
             model: db.task_activity,
             as: 'activities',
-            include: [{ model: db.user, as: 'user', attributes: ['id', 'firstname', 'lastname', 'avatar'] }]
+            include: [
+              {
+                model: db.user,
+                as: 'user',
+                attributes: ['id', 'firstname', 'lastname', 'avatar']
+              }
+            ]
           }
         ],
+
         order: [['priority', 'ASC'], ['createdAt', 'DESC']]
       });
       res.status(200).json({ data: tasks });
@@ -87,12 +163,25 @@ class ProjectTaskController {
       // Handle Sub-tasks
       if (req.body.sub_tasks && req.body.sub_tasks.length > 0) {
 
-        const subTasksData = req.body.sub_tasks.map(st => ({
-
+        const subTasksData = req.body.sub_tasks.map((st) => ({
           task_id: task.id,
           title: st.title,
-          completed: st.completed || false
 
+          material_id: st.material_id || null,
+          itemName: st.itemName || null,
+          stockIn: st.stockIn || 0,
+          materialQty: st.materialQty || 0,
+
+          equipment_id: st.equipment_id || null,
+          equipmentQty: st.equipmentQty || 0,
+
+          labor_id: st.labor_id || null,
+          no_of_labor: st.no_of_labor || 0,
+
+          startDate: st.startDate || null,
+          endDate: st.endDate || null,
+
+          completed: st.completed || false,
         }));
 
         await db.project_sub_task.bulkCreate(subTasksData, { transaction: t });
