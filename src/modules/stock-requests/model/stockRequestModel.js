@@ -13,6 +13,12 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
       },
 
+      equipment_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+
+
       task_title: {
         type: Sequelize.STRING,
         allowNull: false,
