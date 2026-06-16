@@ -22,7 +22,4 @@ module.exports = (router) => {
     router.delete("/deleteCategory/:id", checkPermission("category", "can_delete"), categoryCtrl.deleteCategory);
 
     router.get("/getCategoryandtypeById/:id", checkPermission("category", "can_read"), categoryCtrl.getCategoryandtypeById);
-
-
-
 };
