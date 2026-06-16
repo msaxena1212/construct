@@ -37,7 +37,7 @@ export class Calendar implements OnInit {
   currentDate = new Date();
   currentMonth = this.currentDate.getMonth();
   currentYear = this.currentDate.getFullYear();
-
+  hours = Array.from({ length: 24 }, (_, i) => i);
   projects: IProject[] = [];
   vendors: any[] = [];
   meetings: IMeeting[] = [];
@@ -46,6 +46,11 @@ export class Calendar implements OnInit {
   selectedProject: IProject | null = null;
   selectedMilestone: IMilestone | null = null;
   showProjectDetails = false;
+
+  // ✅ NEW FLAG: Controls whether Milestones section is visible in the right panel
+  // false  → project-end ("Project Completion") event click par milestones HIDE honge
+  // true   → project-start / milestone events click par milestones SHOW honge
+  showMilestonesInPanel = true;
 
   selectedDate = new Date();
 
@@ -236,6 +241,52 @@ export class Calendar implements OnInit {
     }
   }
 
+  formatHour(hour: number): string {
+    if (hour === 0) return '12 AM';
+    if (hour < 12) return `${hour} AM`;
+    if (hour === 12) return '12 PM';
+    return `${hour - 12} PM`;
+  }
+
+  getDayOfWeek(fullDate: string): number {
+    if (!fullDate) return 0;
+    return new Date(fullDate).getDay();
+  }
+
+  getEventTop(time: string | undefined): number {
+    if (!time) return 0;
+    const [h, m] = time.split(':').map(Number);
+    return (h * 60 + (m || 0)) * (64 / 60);
+  }
+
+  getEventHeight(duration: number | undefined): number {
+    return Math.max((duration || 30) * (64 / 60), 24);
+  }
+
+  getAllDayEventTop(event: CalendarEvent, day: any): number {
+    const nonMeetingEvents = day.events.filter((e: CalendarEvent) => e.type !== 'meeting');
+    const idx = nonMeetingEvents.indexOf(event);
+    return idx * 32;
+  }
+
+  currentTimeVisible(): boolean {
+    return this.calendarDays.some((d: any) => d.today);
+  }
+
+  getCurrentTimeTop(): number {
+    const now = new Date();
+    return (now.getHours() * 60 + now.getMinutes()) * (64 / 60);
+  }
+
+  openDayEventsForEvent(event: CalendarEvent, day: any, $event: Event): void {
+    $event.stopPropagation();
+    this.selectedDayEvents = [...day.events];
+    this.selectedDayFullDate = day.fullDate;
+    const [y, m, d] = day.fullDate.split('-').map(Number);
+    this.selectedDayLabel = `${d} ${this.months[m - 1]} ${y}`;
+    this.showDayEventsPanel = true;
+  }
+
   generateDayView(): void {
     this.calendarDays = [];
     const d = this.selectedDate;
@@ -349,10 +400,14 @@ export class Calendar implements OnInit {
     this.weekEnd.setHours(23, 59, 59, 999);
   }
 
-  openProjectDetails(project?: IProject, milestone?: IMilestone): void {
+  // ✅ FIX: showMilestones parameter added
+  // project-end event se aane par showMilestones = false pass hoga → milestones hide
+  // project-start / milestone events se aane par showMilestones = true → milestones show
+  openProjectDetails(project?: IProject, milestone?: IMilestone, showMilestones: boolean = true): void {
     if (!project) return;
     this.selectedProject = project;
     this.selectedMilestone = milestone || null;
+    this.showMilestonesInPanel = showMilestones;
     this.showProjectDetails = true;
   }
 
@@ -360,6 +415,7 @@ export class Calendar implements OnInit {
     this.showProjectDetails = false;
     this.selectedProject = null;
     this.selectedMilestone = null;
+    this.showMilestonesInPanel = true; // reset for next open
   }
 
   get displayedMilestones(): IMilestone[] {
@@ -378,10 +434,10 @@ export class Calendar implements OnInit {
     this.router.navigate(['master/projects', id]);
   }
 
-  navigateToProjectDetails(project: any): void {
+  navigateToProjectDetails(project: any, milestone?: IMilestone): void {
     if (!project) return;
     this.selectedProject = project;
-    this.selectedMilestone = null;
+    this.selectedMilestone = milestone || null;
     this.showProjectDetails = true;
   }
 
