@@ -129,7 +129,9 @@ const updateInvoiceStatus = async (req, res) => {
       const newEntry = {
         amount: paidNow,
         mode,
-        reference: reference || null,
+       reference: (reference && String(reference).trim() !== '') 
+    ? String(reference).trim() 
+    : null,
         clearance_date: clearance_date || null,
         paid_at: new Date().toISOString(),
       };
