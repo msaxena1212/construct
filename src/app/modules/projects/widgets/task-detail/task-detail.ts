@@ -46,6 +46,8 @@ export class TaskDetail implements OnInit {
 
   teamMembers: IUser[] = [];
   loggedInUser = { name: 'James Wilson' };
+  milestones: any;
+  subMilestones: any;
 
   constructor() { }
 
@@ -55,13 +57,29 @@ export class TaskDetail implements OnInit {
         this.allTasks = res.data;
       });
       this.fetchTeamMembers();
+
     }
+    
+  }
+
+  onMilestoneChange(event: any) {
+    const milestoneId = event.target.value || this.task.milestone_id;
+
+    console.log('Selected Milestone ID:', milestoneId);
+
+    const milestone = this.milestones.find(
+      (m: any) => m.id == milestoneId
+    );
+
+    this.subMilestones = milestone?.children || [];
   }
 
   fetchTeamMembers() {
     this.projectService.getProjectById(this.task.project_id.toString()).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.teamMembers = res.data.team_members || [];
+        this.milestones = res.data.milestones_with_child || [];
+        this.onMilestoneChange({ target: { value: this.task.milestone_id } });
       }
     });
   }
