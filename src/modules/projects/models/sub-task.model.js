@@ -13,6 +13,45 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.BOOLEAN,
       defaultValue: false,
     },
+
+
+      itemName: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+
+      stockIn: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+
+      materialQty: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+
+
+      equipmentQty: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+
+      no_of_labor: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+      },
+
+      startDate: {
+        type: Sequelize.DATEONLY,
+        allowNull: true,
+      },
+
+      endDate: {
+        type: Sequelize.DATEONLY,
+        allowNull: true,
+      },
+
+
   }, {
     freezeTableName: true,
   });

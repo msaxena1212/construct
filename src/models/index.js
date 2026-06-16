@@ -126,6 +126,18 @@ db.task_activity.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
 db.project_task.hasMany(db.project_sub_task, { foreignKey: "task_id", as: "sub_tasks", onDelete: 'CASCADE' });
 db.project_sub_task.belongsTo(db.project_task, { foreignKey: "task_id", as: "task" });
 
+
+db.material.hasMany(db.project_sub_task, { foreignKey: "material_id", as: "sub_tasks", onDelete: 'CASCADE' });
+db.project_sub_task.belongsTo(db.material, { foreignKey: "material_id", as: "material" });
+
+db.equipment.hasMany(db.project_sub_task, { foreignKey: "equipment_id", as: "sub_tasks", onDelete: 'CASCADE' });
+db.project_sub_task.belongsTo(db.equipment, { foreignKey: "equipment_id", as: "equipment" });
+
+db.vendors_labor.hasMany(db.project_sub_task, { foreignKey: "labor_id", as: "sub_tasks", onDelete: 'CASCADE' });
+db.project_sub_task.belongsTo(db.vendors_labor, { foreignKey: "labor_id", as: "vendors_labor" });
+
+
+
 db.project_task.hasMany(db.project_task_dependency, { foreignKey: "task_id", as: "dependencies", onDelete: 'CASCADE' });
 db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "task_id" });
 db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "predecessor_id", as: "predecessor" });
