@@ -83,12 +83,28 @@ export class ProjectTimeline implements AfterViewInit {
         const childCount = (item.sub_tasks?.length ?? item.tasks?.length ?? item.children?.length) || 0;
         const type = rowType ?? (indentLevel === 0 ? 'milestone' : indentLevel === 1 ? 'submilestone' : indentLevel === 2 ? 'task' : indentLevel >= 3 ? 'subtask' : 'item');
 
+        let progressValue = item.progress ?? 0;
+        if (type === 'milestone') {
+          progressValue = item.milestone_progress ?? item.progress ?? 0;
+        } else if (type === 'submilestone') {
+          progressValue = item.submilestone_progress ?? item.progress ?? 0;
+        } else if (type === 'task') {
+          progressValue = item.task_progress ?? item.progress ?? 0;
+        } else if (type === 'subtask') {
+          if (typeof item.completed === 'boolean') {
+            progressValue = item.completed ? 100 : 0;
+          } else {
+            progressValue = item.progress ?? 0;
+          }
+        }
+
         rows.push({
           id: item.id,
           name: displayName,
           startDate: this.formatDateOnly(rawStart),
           endDate: this.formatDateOnly(rawEnd),
-          progress: item.progress ?? 0,
+          progress: progressValue,
+          completed: item.completed ?? null,
           color: phaseColor,
           isParent: !isChild && !!item.children?.length,
           isChild,
