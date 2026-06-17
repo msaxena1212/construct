@@ -22,13 +22,26 @@
       </div> -->
 
       <!-- Search Input -->
-      <div class="relative group flex-1">
+      <!-- <div class="relative group flex-1">
         <span
           class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-all">search</span>
         <input
           class="w-full pl-14 pr-6 h-14 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 text-sm font-bold placeholder-slate-400 outline-none transition-all shadow-sm group-hover:border-blue-200 dark:group-hover:border-blue-900/30"
           placeholder="Search projects." type="text" />
-      </div>
+      </div> -->
+
+      <div class="relative group">
+  <input
+    [(ngModel)]="searchText"
+    (input)="filterProjects()"
+    class="w-full pl-14 pr-6 h-14 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 text-sm font-bold placeholder-slate-400 outline-none transition-all shadow-sm"
+    placeholder="Search projects..."
+    type="text" />
+
+  <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
+    search
+  </span>
+</div>
 
       <!-- Add Button -->
       <button routerLink="/master/projects/new-project"

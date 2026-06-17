@@ -62,13 +62,16 @@ export class ProjectTimeline implements AfterViewInit {
     this.phasesData.forEach((phase: any, phaseIndex: number) => {
       const phaseColor = this.taskColors[phaseIndex % this.taskColors.length];
 
-      const addRow = (item: any, isChild = false, parentId: number | null = null, indentLevel = 0) => {
-        if (!item.startDate || !item.endDate) {
+      const addRow = (item: any, isChild = false, parentId: number | null = null, indentLevel = 0, startOverride?: string, endOverride?: string, rowType?: string) => {
+        // Determine start/end values, prefer overrides then common fields
+        const rawStart = startOverride ?? item.startDate ?? item.start_date ?? item.due_date;
+        const rawEnd = endOverride ?? item.endDate ?? item.end_date ?? item.due_date;
+        if (!rawStart || !rawEnd) {
           return;
         }
 
-        const start = this.parseDate(item.startDate);
-        const end = this.parseDate(item.endDate);
+        const start = this.parseDate(rawStart);
+        const end = this.parseDate(rawEnd);
         if (!start || !end) {
           return;
         }
@@ -76,23 +79,57 @@ export class ProjectTimeline implements AfterViewInit {
         minDate = !minDate || start < minDate ? start : minDate;
         maxDate = !maxDate || end > maxDate ? end : maxDate;
 
+        const displayName = item.name ?? item.title ?? item.task_title ?? `#${item.id}`;
+        const childCount = (item.sub_tasks?.length ?? item.tasks?.length ?? item.children?.length) || 0;
+        const type = rowType ?? (indentLevel === 0 ? 'milestone' : indentLevel === 1 ? 'submilestone' : indentLevel === 2 ? 'task' : indentLevel >= 3 ? 'subtask' : 'item');
+
+        let progressValue = item.progress ?? 0;
+        if (type === 'milestone') {
+          progressValue = item.milestone_progress ?? item.progress ?? 0;
+        } else if (type === 'submilestone') {
+          progressValue = item.submilestone_progress ?? item.progress ?? 0;
+        } else if (type === 'task') {
+          progressValue = item.task_progress ?? item.progress ?? 0;
+        } else if (type === 'subtask') {
+          if (typeof item.completed === 'boolean') {
+            progressValue = item.completed ? 100 : 0;
+          } else {
+            progressValue = item.progress ?? 0;
+          }
+        }
+
         rows.push({
           id: item.id,
-          name: item.name,
-          startDate: this.formatDateOnly(item.startDate),
-          endDate: this.formatDateOnly(item.endDate),
-          progress: item.progress ?? 0,
+          name: displayName,
+          startDate: this.formatDateOnly(rawStart),
+          endDate: this.formatDateOnly(rawEnd),
+          progress: progressValue,
+          completed: item.completed ?? null,
           color: phaseColor,
           isParent: !isChild && !!item.children?.length,
           isChild,
           parentId,
-          indentLevel
+          indentLevel,
+          childCount,
+          hasChildren: childCount > 0,
+          type
         });
       };
 
-      addRow(phase, false, null, 0);
+      addRow(phase, false, null, 0, undefined, undefined, 'milestone');
       phase.children?.forEach((child: any) => {
-        addRow(child, true, phase.id, 1);
+        addRow(child, true, phase.id, 1, undefined, undefined, 'submilestone');
+
+        // Add tasks under the child (submilestone)
+        child.tasks?.forEach((task: any) => {
+          // Use `due_date` as a single-day task when no explicit start/end exist
+          addRow(task, true, child.id, 2, task.startDate ?? task.start_date ?? task.due_date, task.endDate ?? task.end_date ?? task.due_date, 'task');
+
+          // Add sub_tasks under the task (if they have start/end)
+          task.sub_tasks?.forEach((sub: any) => {
+            addRow(sub, true, task.id, 3, sub.startDate ?? sub.start_date, sub.endDate ?? sub.end_date ?? sub.endDate, 'subtask');
+          });
+        });
       });
     });
 
@@ -106,7 +143,7 @@ export class ProjectTimeline implements AfterViewInit {
 
     this.timelineColumns = this.getDateLabels(minDate, maxDate, this.currentView);
     const columnWidth = this.currentView === 'Day' ? 60 : this.currentView === 'Week' ? 100 : 140;
-    const sidebarWidth = 200; // reduced from 220 to tighten gap between sidebar and chart
+    const sidebarWidth = 300; // increased to provide a larger sidebar for titles/badges
     this.gridTemplate = `${sidebarWidth}px repeat(${this.timelineColumns.length}, ${columnWidth}px)`;
 
     this.ganttRows = rows.map((row) => {

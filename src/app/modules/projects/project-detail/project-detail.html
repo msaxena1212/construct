@@ -114,23 +114,23 @@
       </div>
 
       <div class="mt-auto space-y-6">
-        <div class="mt-auto w-full overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+        <div class="mt-auto w-full overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <table class="w-full table-fixed">
             <thead>
-              <tr>
-                <th class="w-[45%] px-6 py-4 text-left">Milestone</th>
-                <th class="w-[20%] px-6 py-4 text-center">Date</th>
-                <th class="w-[25%] px-6 py-4 text-center">Progress</th>
-                <th class="w-[10%] px-6 py-4 text-left">Action</th>
+              <tr class="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <th class="w-[45%] px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Milestone</th>
+                <th class="w-[20%] px-6 py-5 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Date</th>
+                <th class="w-[25%] px-6 py-5 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Progress</th>
+                <th class="w-[10%] px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Action</th>
               </tr>
             </thead>
 
-            <tbody class="bg-white dark:bg-transparent">
+            <tbody class="bg-white dark:bg-slate-950/40">
 
-              @for (ms of project.milestones; track ms.id) {
+              @for (ms of (project.milestones_with_child || project.milestones || []); track ms.id) {
 
               <!-- Parent -->
-              <tr class="border-b border-slate-100 hover:bg-slate-50">
+              <tr class="border-b border-slate-100 dark:border-slate-800 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-colors">
 
                 <!-- Milestone -->
 
@@ -168,7 +168,7 @@
 
                       <span class="text-[9px] font-bold text-slate-400 mt-0.5 block">
 
-                        {{ ms.subMilestones?.length || 0 }} Sub-milestones
+                        {{ (ms.subMilestones?.length || ms.children?.length || 0) }} Sub-milestones
 
                       </span>
 
@@ -228,9 +228,9 @@
 
               </tr>
 
-              @for (sm of ms.subMilestones; track sm.id) {
+              @for (sm of (ms.subMilestones || ms.children || []); track sm.id) {
 
-              <tr class="bg-slate-50/40 hover:bg-slate-100 ">
+              <tr class="bg-gradient-to-r from-indigo-50/60 to-transparent dark:from-indigo-950/20 dark:to-transparent hover:from-indigo-100/50 dark:hover:from-indigo-900/30 border-b border-slate-100 dark:border-slate-800 transition-colors">
 
                 <!-- Name -->
                 <td class="w-[45%] pl-16 pr-6 py-4">
@@ -289,16 +289,127 @@
 
               </tr>
 
-              }
+              @for (task of (sm.tasks || []); track task.id) {
+              <tr class="bg-gradient-to-r from-emerald-50/40 to-transparent dark:from-emerald-950/10 dark:to-transparent hover:from-emerald-100/30 dark:hover:from-emerald-900/20 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                <td class="w-[45%] pl-24 pr-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-slate-500">
+                      task_alt
+                    </span>
+                    <div>
+                      <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        {{ task.title }}
+                      </p>
+                      <p class="text-[9px] text-slate-400">
+                        {{ task.status }} • {{ (task.sub_tasks && task.sub_tasks.length) || 0 }} subtasks
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td class="w-[20%] px-6 py-4 text-center">
+                  <span class="text-xs font-medium">
+                    {{ task.due_date ? (task.due_date | date:'MMM d') : 'No date' }}
+                  </span>
+                </td>
+                <td class="w-[25%] px-6 py-4">
+                  <div class="max-w-[180px] mx-auto">
+                    <div class="flex justify-between mb-1">
+                      <span class="text-[10px] text-slate-400">Task Progress</span>
+                      <span class="text-[10px] font-bold">{{ getTaskProgress(task) }}%</span>
+                    </div>
+                    <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div [style.width]="getTaskProgress(task) + '%'" class="h-full bg-emerald-500 rounded-full"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="w-[10%] px-6 py-4 text-left">
+                  <button (click)="openTaskDetail(task)" title="View Task"
+                    class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 flex items-center justify-center cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px]">
+                      visibility
+                    </span>
+                  </button>
+                </td>
+              </tr>
+              @if (task.sub_tasks && task.sub_tasks.length) {
+              <tr class="bg-slate-50/20 dark:bg-slate-900/20 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                <td class="w-[45%] pl-32 pr-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-slate-400">
+                      checklist_rtl
+                    </span>
+                    <div>
+                      <p class="text-[12px] font-bold uppercase tracking-wide text-slate-500">
+                        Subtasks
+                      </p>
+                      <p class="text-[12px] text-slate-400">
+                        {{ (task.sub_tasks && task.sub_tasks.length) || 0 }} items • {{ (task.sub_tasks && task.sub_tasks.filter(sub => sub.completed).length) || 0 }} completed
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td class="w-[20%] px-6 py-4 text-center">
+                  <span class="text-xs text-slate-400">-</span>
+                </td>
+                <td class="w-[25%] px-6 py-4">
+                  <div class="max-w-[180px] mx-auto">
+                    <div class="flex justify-between mb-1">
+                      <span class="text-[10px] text-slate-400">Checklist</span>
+                      <span class="text-[10px] font-bold">{{ getTaskProgress(task) }}%</span>
+                    </div>
+                    <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div [style.width]="getTaskProgress(task) + '%'" class="h-full bg-cyan-500 rounded-full"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="w-[10%] px-6 py-4 text-left"></td>
+              </tr>
 
+              <!-- Render each subtask as its own table row for clarity -->
+              @for (s of task.sub_tasks; track s.id) {
+              <tr class="bg-gradient-to-r from-cyan-50/30 to-transparent dark:from-cyan-950/10 dark:to-transparent hover:from-cyan-100/40 dark:hover:from-cyan-900/20 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                <td class="w-[45%] pl-36 pr-6 py-2">
+                  <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-slate-400">
+                      subdirectory_arrow_right
+                    </span>
+                    <div>
+                      <p class="text-[12px] font-medium">{{ s.title }}</p>
+                      <p class="text-[12px] text-slate-600">{{ s.completed ? 'Completed' : 'Pending' }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="w-[20%] px-6 py-2 text-center">
+                  <span class="text-xs font-medium">-</span>
+                </td>
+                <td class="w-[25%] px-6 py-2">
+                  <div class="max-w-[180px] mx-auto">
+                    <div class="flex justify-between mb-1">
+                      <span class="text-[10px] text-slate-400">Progress</span>
+                      <span class="text-[10px] font-bold">{{ s.completed ? 100 : 0 }}%</span>
+                    </div>
+                    <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div [style.width]="(s.completed ? 100 : 0) + '%'" class="h-full bg-emerald-500 rounded-full"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="w-[10%] px-6 py-2 text-left"></td>
+              </tr>
               }
-
+              }
+              }
+              }
+              }
             </tbody>
           </table>
 
         </div>
       </div>
     </div>
+
+    @if (selectedTask) {
+    <app-task-detail [task]="selectedTask" (close)="closeTaskDetail()"></app-task-detail>
+    }
   </div>
 </div>
 } @else if (activeTab === 'Tasks') {
