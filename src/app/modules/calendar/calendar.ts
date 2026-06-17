@@ -46,7 +46,7 @@ export class Calendar implements OnInit {
   selectedProject: IProject | null = null;
   selectedMilestone: IMilestone | null = null;
   showProjectDetails = false;
-
+  isNavigationChanged = false;
   prefilledProjectId: number | undefined = undefined;
 
   showMilestonesInPanel = true;
@@ -354,6 +354,7 @@ export class Calendar implements OnInit {
       if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
       this.generateCalendar();
     }
+    this.isNavigationChanged = !this.isTodaySelected();
   }
 
   nextMonth(): void {
@@ -371,6 +372,7 @@ export class Calendar implements OnInit {
       if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
       this.generateCalendar();
     }
+    this.isNavigationChanged = !this.isTodaySelected();
   }
 
   goToToday(): void {
@@ -379,12 +381,34 @@ export class Calendar implements OnInit {
     this.currentYear = this.currentDate.getFullYear();
     this.calculateWeekRange();
     this.generateCalendar();
+    this.isNavigationChanged = false;
   }
 
   changeView(view: 'Day' | 'Week' | 'Month'): void {
     this.currentView = view;
+    this.isNavigationChanged = !this.isTodaySelected();
     if (view === 'Week') this.calculateWeekRange();
     this.generateCalendar();
+  }
+
+  private isTodaySelected(): boolean {
+    const todayStr = this.toLocalDateString(
+      this.currentDate.getFullYear(), this.currentDate.getMonth(), this.currentDate.getDate()
+    );
+    if (this.currentView === 'Day') {
+      const selStr = this.toLocalDateString(
+        this.selectedDate.getFullYear(), this.selectedDate.getMonth(), this.selectedDate.getDate()
+      );
+      return selStr === todayStr;
+    }
+    if (this.currentView === 'Week') {
+      const today = new Date(this.currentDate);
+      today.setHours(0, 0, 0, 0);
+      return today >= this.weekStart && today <= this.weekEnd;
+    }
+
+    return this.currentMonth === this.currentDate.getMonth() &&
+      this.currentYear === this.currentDate.getFullYear();
   }
 
   calculateWeekRange(): void {

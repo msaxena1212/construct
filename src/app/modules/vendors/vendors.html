@@ -10,7 +10,7 @@
       </p>
     </div>
     <button (click)="openAddModal()"
-      class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
+      class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff] cursor-pointer">
       <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
       <div
         class="relative z-10 w-6 h-6 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
@@ -21,7 +21,6 @@
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-    <!-- Total Active -->
     <div
       class="group relative overflow-hidden rounded-3xl p-5 bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500 text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
       <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8"></div>
@@ -159,7 +158,7 @@
   <div class="bg-surface-container-low rounded-3xl p-8 mt-4">
     <div class="flex items-center justify-between mb-8">
       <h3 class="text-xl font-black text-on-surface">Compliance & Billing Activity</h3>
-      <button class="cursor-pointer text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+      <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
         View All History
       </button>
     </div>
@@ -628,7 +627,7 @@
                 <div
                   class="shrink-0 px-3 py-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-b-xl">
                   <button type="button" (click)="applyMilestoneSelection(); $event.stopPropagation()"
-                    class="w-12 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">
+                    class="w-12 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors cursor-pointer">
                     OK
                   </button>
                 </div>
@@ -691,7 +690,7 @@
                 <div
                   class="shrink-0 px-3 py-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-b-xl">
                   <button type="button" (click)="applySubMilestoneSelection(); $event.stopPropagation()"
-                    class="w-12 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">
+                    class="w-12 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors cursor-pointer">
                     OK
                   </button>
                 </div>
@@ -759,7 +758,7 @@
                 <div
                   class="shrink-0 px-3 py-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-b-xl">
                   <button type="button" (click)="applyTaskSelection(); $event.stopPropagation()"
-                    class="w-12 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors">
+                    class="w-12 py-1 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors cursor-pointer">
                     OK
                   </button>
                 </div>
@@ -863,7 +862,7 @@
 
             <div class="relative">
               <button type="button" (click)="showPaymentModeDropdown = !showPaymentModeDropdown"
-                class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:border-emerald-400 focus:ring-2 focus:ring-emerald-400 transition-all">
+                class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:border-emerald-400 focus:ring-2 focus:ring-emerald-400 transition-all cursor-pointer">
 
                 <span [class.text-slate-400]="!paymentForm.mode">
                   {{ paymentForm.mode || 'Select mode' }}
@@ -955,103 +954,68 @@
 <app-common-dialog [open]="showLaborModal && !!selectedVendor" maxWidth="max-w-[798px]" backdropClass="bg-slate-900/50"
   panelClass="bg-white dark:bg-slate-900 rounded-[2rem] max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 my-4"
   (closed)="closeLaborModal()">
+
   <div
-    class="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 px-4 sm:px-6 py-4 text-white relative shrink-0 overflow-hidden">
+    class="sticky top-0 z-20 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 px-4 sm:px-6 py-4 text-white relative shrink-0 overflow-hidden">
     <div class="absolute top-0 right-0 p-4 opacity-5 select-none pointer-events-none">
       <span class="material-symbols-outlined text-[70px]">engineering</span>
     </div>
-
     <div class="flex justify-between items-start gap-4 relative z-10">
       <div class="min-w-0">
         <h3 class="text-2xl sm:text-xl font-black tracking-tight mt-1 truncate">Labor Details</h3>
-
-        <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5 break-words">
-          Manage Labor
-        </p>
+        <p class="text-[11px] sm:text-xs text-slate-400 font-medium mt-0.5 break-words">Manage Labor</p>
       </div>
-
       <button (click)="closeLaborModal()"
         class="p-2 hover:bg-white/10 rounded-lg transition-all cursor-pointer shrink-0">
         <span class="material-symbols-outlined text-lg">close</span>
       </button>
     </div>
-
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 relative z-10">
       <div class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 min-w-0">
         <p class="text-[9px] font-black uppercase tracking-widest text-white/50 truncate">Active</p>
-
         <p class="text-base sm:text-lg font-black mt-0.5 truncate">
-          @if (laborLoading) {
-          <span class="text-white/30">—</span>
-          } @else {
-          {{ laborStats.activePersonnel }}
-          }
+          @if (laborLoading) { <span class="text-white/30">—</span> } @else { {{ laborStats.activePersonnel }} }
         </p>
       </div>
-
       <div class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 min-w-0">
-        <p class="text-[9px] font-black uppercase tracking-widest text-white/50 truncate">
-          On Site
-        </p>
-
+        <p class="text-[9px] font-black uppercase tracking-widest text-white/50 truncate">On Site</p>
         <p class="text-base sm:text-lg font-black mt-0.5 text-green-400 truncate">
-          @if (laborLoading) {
-          <span class="text-white/30">—</span>
-          } @else {
-          {{ laborStats.onSite }}
-          }
+          @if (laborLoading) { <span class="text-white/30">—</span> } @else { {{ laborStats.onSite }} }
         </p>
       </div>
-
       <div class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 min-w-0">
-        <p class="text-[9px] font-black uppercase tracking-widest text-white/50 truncate">
-          Remaining
-        </p>
-
+        <p class="text-[9px] font-black uppercase tracking-widest text-white/50 truncate">Remaining</p>
         <p class="text-base sm:text-lg font-black mt-0.5 text-amber-400 truncate">
-          @if (laborLoading) {
-          <span class="text-white/30">—</span>
-          } @else {
-          {{ laborStats.remaining }}
-          }
+          @if (laborLoading) { <span class="text-white/30">—</span> } @else { {{ laborStats.remaining }} }
         </p>
       </div>
-
       <div class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 min-w-0">
-        <p class="text-[9px] font-black uppercase tracking-widest text-white/50 truncate">
-          Labors
-        </p>
-
+        <p class="text-[9px] font-black uppercase tracking-widest text-white/50 truncate">Labors</p>
         <p class="text-base sm:text-lg font-black mt-0.5 truncate">
-          @if (laborLoading) {
-          <span class="text-white/30">—</span>
-          } @else {
-          {{ laborStats.totalPersonnel }}
-          }
+          @if (laborLoading) { <span class="text-white/30">—</span> } @else { {{ laborStats.totalPersonnel }} }
         </p>
       </div>
     </div>
   </div>
 
-  <div class="flex-1 overflow-y-auto overflow-x-hidden p-1 sm:p-2 lg:p-2">
+  <div class="flex-1 overflow-y-auto p-1 sm:p-2 lg:p-2 pb-56">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
       <div class="lg:col-span-12 min-w-0 space-y-6">
         <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-1 sm:p-2">
-          <div class="border-2 border-dashed border-outline-variant/20 rounded-2xl overflow-hidden">
+          <div class="border-2 border-dashed border-outline-variant/20 rounded-2xl">
+
             <button (click)="toggleAddLaborForm()"
-              class="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left hover:bg-surface-container-low transition-colors cursor-pointer">
+              class="w-full flex items-center justify-between gap-3 px-4 sm:px-6 py-4 text-left hover:bg-surface-container-low transition-colors cursor-pointer rounded-t-2xl">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
                   <span class="material-symbols-outlined text-primary text-base">
                     {{ showAddLaborForm ? 'expand_less' : 'person_add' }}
                   </span>
                 </div>
-
                 <span class="text-sm font-black text-on-surface truncate">
                   {{ showAddLaborForm ? 'Cancel' : 'Add New Labor' }}
                 </span>
               </div>
-
               <span class="material-symbols-outlined text-outline shrink-0">
                 {{ showAddLaborForm ? 'close' : 'add' }}
               </span>
@@ -1062,83 +1026,139 @@
               @if (laborError) {
               <div
                 class="mt-4 flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 px-4 py-3 rounded-xl">
-                <span class="material-symbols-outlined text-error text-lg shrink-0">
-                  error
-                </span>
-
-                <p class="text-sm font-bold text-error break-words">
-                  {{ laborError }}
-                </p>
+                <span class="material-symbols-outlined text-error text-lg shrink-0">error</span>
+                <p class="text-sm font-bold text-error break-words">{{ laborError }}</p>
               </div>
               }
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div class="min-w-0">
-                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1 block">
-                    Skill *
-                  </label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" style="overflow:visible;">
 
-                  <select [(ngModel)]="newLabor.skill"
-                    class="w-full min-w-0 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest cursor-pointer">
-                    <option value="" disabled>Select skill</option>
-
-                    @for (s of skillOptions; track s.value) {
-                    <option [value]="s.value">{{ s.label }}</option>
+                <div class="min-w-0 relative">
+                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1.5 block">Skill *</label>
+                  <button type="button"
+                    (click)="showSkillDropdown = !showSkillDropdown; showStatusDropdown = false; showAssignDropdown = false; $event.stopPropagation()"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-on-surface transition-all cursor-pointer"
+                    [ngClass]="showSkillDropdown ? 'border-2 border-primary ring-2 ring-primary/15' : 'border border-slate-300 dark:border-slate-600 hover:border-primary/60'">
+                    <span [class.text-slate-400]="!newLabor.skill" class="truncate">
+                      {{ getSkillLabel(newLabor.skill) || 'Select skill' }}
+                    </span>
+                    <span
+                      class="material-symbols-outlined text-sm text-slate-400 shrink-0 transition-transform duration-200"
+                      [class.rotate-180]="showSkillDropdown">expand_more</span>
+                  </button>
+                  @if (showSkillDropdown) {
+                  <div (click)="$event.stopPropagation()"
+                    class="absolute z-[999] top-[calc(100%+4px)] left-0 right-0 bg-white dark:bg-slate-800 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 dark:border-slate-600 overflow-hidden"
+                    style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;">
+                    @for (s of skillOptions; track s.value; let last = $last) {
+                    <div (click)="newLabor.skill = s.value; showSkillDropdown = false"
+                      class="flex items-center gap-2 px-4 py-2.5 cursor-pointer transition-colors"
+                      [ngClass]="newLabor.skill === s.value ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200'"
+                      [class.border-b]="!last" [class.border-slate-100]="!last" [class.dark:border-slate-700]="!last">
+                      @if (newLabor.skill === s.value) {
+                      <span class="material-symbols-outlined text-primary text-[16px] shrink-0">check</span>
+                      } @else { <span class="w-4 shrink-0"></span> }
+                      <p class="text-xs font-semibold truncate">{{ s.label }}</p>
+                    </div>
                     }
-                  </select>
+                  </div>
+                  }
                 </div>
 
                 <div class="min-w-0">
-                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1 block">
-                    Daily Rate (₹)
-                  </label>
-
+                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1.5 block">Daily Rate
+                    (₹)</label>
                   <input [(ngModel)]="newLabor.daily_rate" type="number" min="0" placeholder="e.g. 800"
-                    class="w-full min-w-0 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest" />
+                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 bg-white dark:bg-slate-900 transition-all" />
+                </div>
+
+                <div class="min-w-0 relative">
+                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1.5 block">Initial
+                    Status</label>
+                  <button type="button"
+                    (click)="showStatusDropdown = !showStatusDropdown; showSkillDropdown = false; showAssignDropdown = false; $event.stopPropagation()"
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-on-surface transition-all cursor-pointer"
+                    [ngClass]="showStatusDropdown ? 'border-2 border-primary ring-2 ring-primary/15' : 'border border-slate-300 dark:border-slate-600 hover:border-primary/60'">
+                    <span class="truncate capitalize">{{ newLabor.status }}</span>
+                    <span
+                      class="material-symbols-outlined text-sm text-slate-400 shrink-0 transition-transform duration-200"
+                      [class.rotate-180]="showStatusDropdown">expand_more</span>
+                  </button>
+                  @if (showStatusDropdown) {
+                  <div (click)="$event.stopPropagation()"
+                    class="absolute z-[999] top-[calc(100%+4px)] left-0 right-0 bg-white dark:bg-slate-800 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 dark:border-slate-600 overflow-hidden">
+                    <div (click)="newLabor.status = 'active'; showStatusDropdown = false"
+                      class="flex items-center gap-2 px-4 py-3 cursor-pointer border-b border-slate-100 dark:border-slate-700 transition-colors"
+                      [ngClass]="newLabor.status === 'active' ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'">
+                      <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                      <p class="text-xs font-semibold">Active</p>
+                    </div>
+                    <div (click)="newLabor.status = 'inactive'; showStatusDropdown = false"
+                      class="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                      [ngClass]="newLabor.status === 'inactive' ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'">
+                      <span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                      <p class="text-xs font-semibold">Inactive</p>
+                    </div>
+                  </div>
+                  }
                 </div>
 
                 <div class="min-w-0">
-                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1 block">
-                    Initial Status
-                  </label>
-
-                  <select [(ngModel)]="newLabor.status"
-                    class="w-full min-w-0 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest cursor-pointer">
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-
-                <div class="min-w-0">
-                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1 block">
-                    Count (no. of labors) *
-                  </label>
-
+                  <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1.5 block">Count (no. of
+                    labors) *</label>
                   <input [(ngModel)]="newLabor.labor_count" type="number" min="1" placeholder="e.g. 5"
-                    class="w-full min-w-0 px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest" />
+                    class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 bg-white dark:bg-slate-900 transition-all" />
                 </div>
               </div>
 
-              <div class="min-w-0">
-                <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1 block">Assign To</label>
-                <select [(ngModel)]="newLabor.assign_worker"
-                  class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest cursor-pointer">
-                  <option value="">Unassigned</option>
-                  @for (m of team; track m.name) {
-                  <option [value]="m.name">{{ m.name }}</option>
+
+              <div class="min-w-0 relative">
+                <label class="text-[9px] font-black uppercase tracking-wide text-outline mb-1.5 block">Assign To</label>
+                <button type="button"
+                  (click)="showAssignDropdown = !showAssignDropdown; showSkillDropdown = false; showStatusDropdown = false; $event.stopPropagation()"
+                  class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 text-on-surface transition-all cursor-pointer"
+                  [ngClass]="showAssignDropdown ? 'border-2 border-primary ring-2 ring-primary/15' : 'border border-slate-300 dark:border-slate-600 hover:border-primary/60'">
+                  <span [class.text-slate-400]="!newLabor.assign_worker" class="truncate">
+                    {{ newLabor.assign_worker || 'Unassigned' }}
+                  </span>
+                  <span
+                    class="material-symbols-outlined text-sm text-slate-400 shrink-0 transition-transform duration-200"
+                    [class.rotate-180]="showAssignDropdown">expand_more</span>
+                </button>
+                @if (showAssignDropdown) {
+                <div (click)="$event.stopPropagation()"
+                  class="absolute z-[999] top-[calc(100%+4px)] left-0 right-0 bg-white dark:bg-slate-800 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 dark:border-slate-600 overflow-hidden"
+                  style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;">
+                  <div (click)="newLabor.assign_worker = ''; showAssignDropdown = false"
+                    class="flex items-center gap-2 px-4 py-2.5 cursor-pointer border-b border-slate-100 dark:border-slate-700 transition-colors"
+                    [ngClass]="!newLabor.assign_worker ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'">
+                    <span class="material-symbols-outlined text-[15px] text-slate-400">person_off</span>
+                    <p class="text-xs font-semibold text-slate-500">Unassigned</p>
+                  </div>
+                  @for (m of team; track m.name; let last = $last) {
+                  <div (click)="newLabor.assign_worker = m.name; showAssignDropdown = false"
+                    class="flex items-center gap-2 px-4 py-2.5 cursor-pointer transition-colors"
+                    [ngClass]="[newLabor.assign_worker === m.name ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200', !last ? 'border-b border-slate-100 dark:border-slate-700' : '']">
+                    <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span class="text-[9px] font-black text-primary">{{ m.name.charAt(0) }}</span>
+                    </div>
+                    <p class="text-xs font-semibold truncate">{{ m.name }}</p>
+                    @if (newLabor.assign_worker === m.name) {
+                    <span class="material-symbols-outlined text-primary text-[15px] ml-auto shrink-0">check</span>
+                    }
+                  </div>
                   }
-                </select>
+                </div>
+                }
               </div>
 
               <button (click)="submitLabor()" [disabled]="isSavingLabor"
-                class="w-full py-4 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer">
+                class="w-full py-4 rounded-2xl bg-primary text-white font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:brightness-110 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer mt-2">
                 @if (isSavingLabor) {
-                <span class="material-symbols-outlined animate-spin text-sm">
-                  progress_activity
-                </span>
+                <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                 Saving…
                 } @else {
-                <span class="material-symbols-outlined text-sm"> add_circle </span>
+                <span class="material-symbols-outlined text-sm">add_circle</span>
                 Confirm &amp; Add Labor
                 }
               </button>
@@ -1148,107 +1168,189 @@
 
           @if (laborLoading) {
           <div class="py-16 flex flex-col items-center gap-3 text-outline">
-            <span class="material-symbols-outlined text-4xl animate-spin">
-              progress_activity
-            </span>
-
+            <span class="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
             <p class="text-sm font-bold">Loading workforce data…</p>
           </div>
           } @else if (laborWorkers.length === 0) {
           <div class="py-16 flex flex-col items-center gap-3 text-outline text-center">
-            <span class="material-symbols-outlined text-5xl"> person_search </span>
-
+            <span class="material-symbols-outlined text-5xl">person_search</span>
             <p class="font-bold">No labors assigned yet.</p>
-
             <p class="text-sm">Click "Add Labor" above to onboard the first team member.</p>
           </div>
+
           } @else if (!showAddLaborForm) {
-          <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
-            <table class="w-full text-sm mt-5">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 mt-3">
+            <table class="w-full text-sm">
               <thead>
                 <tr class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                  <th class="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-outline">
-                    Skill
+                  <th class="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-outline">Skill
                   </th>
-                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">
-                    Labor Count
+                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">Labor
+                    Count</th>
+                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">Assign
                   </th>
-                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">
-                    Assign
+                  <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-outline">Rate
+                    (₹/day)</th>
+                  <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-outline">Daily
+                    Cost (₹)</th>
+                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">Status
                   </th>
-                  <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-outline">
-                    Rate (₹/day)
-                  </th>
-                  <th class="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest text-outline">
-                    Daily Cost (₹)
-                  </th>
-                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">
-                    Status
-                  </th>
-                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">
-                    Action
+                  <th class="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-outline">Action
                   </th>
                 </tr>
               </thead>
-
               <tbody>
                 @for (worker of laborWorkers; track worker.id) {
+
                 @if (editingLaborId === worker.id) {
                 <tr class="border-b border-slate-200 dark:border-slate-700 bg-primary/5 dark:bg-primary/10">
-                  <td colspan="7" class="px-4 py-4">
-                    <div class="space-y-4">
+                  <td colspan="7" class="px-3 py-4">
+                    <div class="space-y-3">
                       <p class="text-[10px] font-black uppercase tracking-widest text-primary">
                         Editing Labor #{{ worker.id }}
                       </p>
 
-                      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                        <div class="min-w-0">
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" style="overflow:visible;">
+
+                        <div class="relative col-span-2 sm:col-span-2">
                           <label class="text-[9px] font-bold text-outline uppercase block mb-1">Skill</label>
-                          <select [(ngModel)]="editLaborForm.skill"
-                            class="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none bg-surface-container-lowest cursor-pointer">
-                            @for (s of skillOptions; track s.value) {
-                            <option [value]="s.value">{{ s.label }}</option>
+                          <button type="button"
+                            (click)="showSkillDropdown = !showSkillDropdown; showStatusDropdown = false; showAssignDropdown = false; $event.stopPropagation()"
+                            class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-on-surface transition-all cursor-pointer"
+                            [ngClass]="showSkillDropdown ? 'border-2 border-primary ring-2 ring-primary/15' : 'border border-slate-300 dark:border-slate-600 hover:border-primary/60'">
+                            <span class="truncate text-[11px]">{{ getSkillLabel(editLaborForm.skill) || 'Select skill'
+                              }}</span>
+                            <span
+                              class="material-symbols-outlined text-sm text-slate-400 shrink-0 transition-transform duration-200 ml-1"
+                              [class.rotate-180]="showSkillDropdown">expand_more</span>
+                          </button>
+                          @if (showSkillDropdown) {
+
+                          <div (click)="$event.stopPropagation()"
+                            class="absolute z-[999] top-[calc(100%+4px)] left-0 bg-white dark:bg-slate-800 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.14)] border border-slate-200 dark:border-slate-600 overflow-hidden"
+                            style="min-width:200px;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;">
+                            @for (s of skillOptions; track s.value; let last = $last) {
+                            <div (click)="editLaborForm.skill = s.value; showSkillDropdown = false"
+                              class="flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors"
+                              [ngClass]="[editLaborForm.skill === s.value ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200', !last ? 'border-b border-slate-100 dark:border-slate-700' : '']">
+                              @if (editLaborForm.skill === s.value) {
+                              <span class="material-symbols-outlined text-primary text-[14px] shrink-0">check</span>
+                              } @else { <span class="w-3.5 shrink-0"></span> }
+                              <p class="text-xs font-semibold whitespace-nowrap">{{ s.label }}</p>
+                            </div>
                             }
-                          </select>
+                          </div>
+                          }
                         </div>
 
+
                         <div class="min-w-0">
-                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Labor Count</label>
+                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Count</label>
                           <input [(ngModel)]="editLaborForm.labor_count" type="number" min="1"
-                            class="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none bg-surface-container-lowest" />
+                            class="w-full px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 bg-white dark:bg-slate-900 transition-all" />
                         </div>
 
+
                         <div class="min-w-0">
-                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Daily Rate (₹)</label>
+                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Rate (₹)</label>
                           <input [(ngModel)]="editLaborForm.daily_rate" type="number" min="0"
-                            class="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none bg-surface-container-lowest" />
-                        </div>
-
-                        <div class="min-w-0">
-                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Status</label>
-                          <select [(ngModel)]="editLaborForm.status"
-                            class="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none bg-surface-container-lowest cursor-pointer">
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
-                        </div>
-
-                        <div class="min-w-0">
-                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Assign To</label>
-                          <select [(ngModel)]="editLaborForm.assign_worker"
-                            class="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none bg-surface-container-lowest cursor-pointer">
-                            <option value="">Unassigned</option>
-                            @for (m of team; track m.name) {
-                            <option [value]="m.name">{{ m.name }}</option>
-                            }
-                          </select>
+                            class="w-full px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 bg-white dark:bg-slate-900 transition-all" />
                         </div>
                       </div>
 
-                      <div class="flex flex-col sm:flex-row gap-2 pt-2">
+
+                      <div class="grid grid-cols-2 gap-2" style="overflow:visible;">
+
+                        <div class="relative">
+                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Status</label>
+                          <button type="button"
+                            (click)="showStatusDropdown = !showStatusDropdown; showSkillDropdown = false; showAssignDropdown = false; $event.stopPropagation()"
+                            class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-on-surface transition-all cursor-pointer"
+                            [ngClass]="showStatusDropdown ? 'border-2 border-primary ring-2 ring-primary/15' : 'border border-slate-300 dark:border-slate-600 hover:border-primary/60'">
+                            <div class="flex items-center gap-1.5 truncate">
+                              <span class="w-2 h-2 rounded-full shrink-0"
+                                [ngClass]="editLaborForm.status === 'active' ? 'bg-green-500' : 'bg-slate-400'"></span>
+                              <span class="capitalize text-[11px] truncate">{{ editLaborForm.status }}</span>
+                            </div>
+                            <span
+                              class="material-symbols-outlined text-sm text-slate-400 shrink-0 transition-transform duration-200 ml-1"
+                              [class.rotate-180]="showStatusDropdown">expand_more</span>
+                          </button>
+                          @if (showStatusDropdown) {
+                          <div (click)="$event.stopPropagation()"
+                            class="absolute z-[999] top-[calc(100%+4px)] left-0 right-0 bg-white dark:bg-slate-800 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 dark:border-slate-600 overflow-hidden">
+                            <div (click)="editLaborForm.status = 'active'; showStatusDropdown = false"
+                              class="flex items-center gap-2 px-3 py-2.5 cursor-pointer border-b border-slate-100 dark:border-slate-700 transition-colors"
+                              [ngClass]="editLaborForm.status === 'active' ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'">
+                              <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                              <p class="text-xs font-semibold">Active</p>
+                            </div>
+                            <div (click)="editLaborForm.status = 'inactive'; showStatusDropdown = false"
+                              class="flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors"
+                              [ngClass]="editLaborForm.status === 'inactive' ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'">
+                              <span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                              <p class="text-xs font-semibold">Inactive</p>
+                            </div>
+                          </div>
+                          }
+                        </div>
+
+                        <div class="relative">
+                          <label class="text-[9px] font-bold text-outline uppercase block mb-1">Assign To</label>
+                          <button type="button"
+                            (click)="showAssignDropdown = !showAssignDropdown; showSkillDropdown = false; showStatusDropdown = false; $event.stopPropagation()"
+                            class="w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-on-surface transition-all cursor-pointer"
+                            [ngClass]="showAssignDropdown ? 'border-2 border-primary ring-2 ring-primary/15' : 'border border-slate-300 dark:border-slate-600 hover:border-primary/60'">
+                            <div class="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                              @if (editLaborForm.assign_worker) {
+                              <div class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <span class="text-[8px] font-black text-primary">{{
+                                  editLaborForm.assign_worker.charAt(0) }}</span>
+                              </div>
+                              } @else {
+                              <span
+                                class="material-symbols-outlined text-[14px] text-slate-400 shrink-0">person_off</span>
+                              }
+                              <span class="text-[11px] truncate">{{ editLaborForm.assign_worker || 'Unassigned'
+                                }}</span>
+                            </div>
+                            <span
+                              class="material-symbols-outlined text-sm text-slate-400 shrink-0 transition-transform duration-200 ml-1"
+                              [class.rotate-180]="showAssignDropdown">expand_more</span>
+                          </button>
+                          @if (showAssignDropdown) {
+                          <div (click)="$event.stopPropagation()"
+                            class="absolute z-[999] top-[calc(100%+4px)] left-0 bg-white dark:bg-slate-800 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.14)] border border-slate-200 dark:border-slate-600 overflow-hidden"
+                            style="min-width:180px;max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;">
+                            <div (click)="editLaborForm.assign_worker = ''; showAssignDropdown = false"
+                              class="flex items-center gap-2 px-3 py-2.5 cursor-pointer border-b border-slate-100 dark:border-slate-700 transition-colors"
+                              [ngClass]="!editLaborForm.assign_worker ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'">
+                              <span class="material-symbols-outlined text-[14px] text-slate-400">person_off</span>
+                              <p class="text-xs font-semibold text-slate-500 whitespace-nowrap">Unassigned</p>
+                            </div>
+                            @for (m of team; track m.name; let last = $last) {
+                            <div (click)="editLaborForm.assign_worker = m.name; showAssignDropdown = false"
+                              class="flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors"
+                              [ngClass]="[editLaborForm.assign_worker === m.name ? 'bg-primary/8 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200', !last ? 'border-b border-slate-100 dark:border-slate-700' : '']">
+                              <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <span class="text-[9px] font-black text-primary">{{ m.name.charAt(0) }}</span>
+                              </div>
+                              <p class="text-xs font-semibold whitespace-nowrap">{{ m.name }}</p>
+                              @if (editLaborForm.assign_worker === m.name) {
+                              <span
+                                class="material-symbols-outlined text-primary text-[14px] ml-auto shrink-0">check</span>
+                              }
+                            </div>
+                            }
+                          </div>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="flex flex-col sm:flex-row gap-2 pt-1">
                         <button (click)="saveLaborEdit(worker.id)"
-                          class="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide cursor-pointer hover:scale-[1.01] transition-transform shadow-md shadow-primary/20">
-                          <span class="material-symbols-outlined text-sm align-middle mr-1">check_circle</span>
+                          class="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide cursor-pointer hover:brightness-110 transition-all shadow-md shadow-primary/20 flex items-center justify-center gap-1.5">
+                          <span class="material-symbols-outlined text-sm">check_circle</span>
                           Save Changes
                         </button>
                         <button (click)="cancelLaborEdit()"
@@ -1259,53 +1361,39 @@
                     </div>
                   </td>
                 </tr>
+
+
                 } @else {
                 <tr
                   class="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td class="px-4 py-3 text-sm font-bold text-on-surface">
-                    {{ worker.skill }}
-                  </td>
-
+                  <td class="px-4 py-3 text-sm font-bold text-on-surface">{{ worker.skill }}</td>
                   <td class="px-4 py-3 text-center">
-                    <span class="inline-block px-2.5 py-1 bg-primary/10 text-primary font-black text-xs rounded-lg">
-                      {{ worker.labor_count }}
-                    </span>
+                    <span class="inline-block px-2.5 py-1 bg-primary/10 text-primary font-black text-xs rounded-lg">{{
+                      worker.labor_count }}</span>
                   </td>
                   <td class="px-4 py-3 text-center">
-                    <span class="inline-block px-2.5 py-1 bg-primary/10 text-primary font-black text-xs rounded-lg">
-                      {{ worker.assign_worker }}
-                    </span>
+                    <span class="inline-block px-2.5 py-1 bg-primary/10 text-primary font-black text-xs rounded-lg">{{
+                      worker.assign_worker }}</span>
                   </td>
-
-                  <td class="px-4 py-3 text-right font-semibold text-on-surface">
-                    ₹{{ worker.daily_rate }}
-                  </td>
-
-                  <td class="px-4 py-3 text-right font-black text-lg text-primary">
-                    ₹{{ worker.daily_rate * worker.labor_count }}
-                  </td>
-
+                  <td class="px-4 py-3 text-right font-semibold text-on-surface">₹{{ worker.daily_rate }}</td>
+                  <td class="px-4 py-3 text-right font-black text-lg text-primary">₹{{ worker.daily_rate *
+                    worker.labor_count }}</td>
                   <td class="px-4 py-3 text-center">
                     <span class="inline-block px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg"
-                      [ngClass]="
-                              worker.status === 'active'
-                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-                            ">
+                      [ngClass]="worker.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'">
                       {{ worker.status }}
                     </span>
                   </td>
-
                   <td class="px-4 py-3 text-center">
                     <div class="flex items-center justify-center gap-2">
                       <button (click)="editLaborWorker(worker.id)"
-                        class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-primary/10 cursor-pointer"
-                        title="Edit worker">
+                        class="p-1.5 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-primary/10 cursor-pointer"
+                        title="Edit">
                         <span class="material-symbols-outlined text-lg">edit</span>
                       </button>
                       <button (click)="deleteLaborWorker(worker.id)"
-                        class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-error transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
-                        title="Delete worker">
+                        class="p-1.5 text-slate-400 hover:text-error transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
+                        title="Delete">
                         <span class="material-symbols-outlined text-lg">delete</span>
                       </button>
                     </div>
@@ -1325,7 +1413,7 @@
   <div
     class="shrink-0 px-4 sm:px-6 py-3 border-t border-surface-container bg-surface-container-lowest/50 flex justify-end">
     <button (click)="closeLaborModal()"
-      class="w-full sm:w-[90px] py-2 rounded-lg bg-on-surface text-white text-xs font-bold uppercase tracking-wide cursor-pointer shadow-md hover:scale-[1.02] transition-transform">
+      class="w-full sm:w-[90px] py-2 rounded-lg bg-on-surface text-white text-xs font-bold uppercase tracking-wide cursor-pointer shadow-md hover:opacity-90 hover:shadow-lg transition-all">
       Done
     </button>
   </div>
@@ -1666,23 +1754,23 @@
   <div dialog-footer class="flex gap-3 shrink-0">
     @if (currentStep > 1) {
     <button (click)="prevStep()" [disabled]="isSaving"
-      class="flex-1 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-black uppercase tracking-wide cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
+      class="flex-1 min-w-[140px] py-2.5 rounded-xl border border-outline-variant/20 text-xs font-black uppercase tracking-wide cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-1">
       <span class="material-symbols-outlined text-sm">arrow_back</span> Back
     </button>
     } @else {
     <button (click)="showAddModal = false"
-      class="flex-1 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-black uppercase tracking-wide cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+      class="flex-1 min-w-[100px] py-2.5 rounded-xl border border-outline-variant/20 text-xs font-black uppercase tracking-wide cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
       Cancel
     </button>
     }
 
     @if (currentStep < 4) { <button (click)="nextStep()"
-      class="flex-2 min-w-[140px] py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform flex items-center justify-center gap-1">
+      class="flex-2 min-w-[140px] py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide cursor-pointer shadow-lg shadow-primary/20 hover:opacity-90 hover:shadow-xl transition-all flex items-center justify-center gap-1">
       Next <span class="material-symbols-outlined text-sm">arrow_forward</span>
       </button>
       } @else {
       <button (click)="addVendor()" [disabled]="isSaving"
-        class="flex-2 min-w-[140px] py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2">
+        class="flex-2 min-w-[140px] py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide cursor-pointer shadow-lg shadow-primary/20 hover:opacity-90 hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
         @if (isSaving) {
         <span class="material-symbols-outlined animate-spin text-xs">progress_activity</span>
         Saving...
@@ -1699,7 +1787,9 @@
 <app-common-dialog [open]="showInvoiceModal" maxWidth="max-w-3xl" backdropClass="bg-slate-900/50"
   panelClass="bg-white dark:bg-slate-900 rounded-3xl max-h-[88vh] flex flex-col my-auto animate-in zoom-in-95 duration-300"
   (closed)="showInvoiceModal = false">
-  <div class="flex justify-between items-center px-6 pt-2 pb-4 border-b border-outline-variant/10 shrink-0">
+
+  <div
+    class="sticky top-0 z-10 flex justify-between items-center px-6 pt-2 pb-4 border-b border-outline-variant/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-t-3xl shrink-0">
     <h3 class="text-xl font-black tracking-tight">New Invoice Submission</h3>
 
     <button (click)="showInvoiceModal = false"
@@ -1794,20 +1884,30 @@
                 ? '130px 1fr 60px 70px 100px 80px 90px 32px'
                 : '130px 1fr 60px 100px 80px 90px 32px'
             ">
-          <div class="relative">
-            <select [(ngModel)]="item.type" (ngModelChange)="onTypeChange(item)"
-              class="w-full appearance-none px-2 py-2 pr-6 rounded-xl border border-outline-variant/20 bg-surface-container-lowest text-[11px] font-medium outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer">
-              <option value="" disabled>Select</option>
-              <option value="material">Material</option>
-              <option value="equipment">Equipment</option>
-              <option value="labor">Labor</option>
-              <option value="others">Others</option>
-            </select>
 
-            <span
-              class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-outline text-xs pointer-events-none">
-              expand_more
-            </span>
+          <div class="relative">
+            <button type="button" (click)="$event.stopPropagation(); toggleDropdown(item, 'type')" [class]="'w-full flex items-center justify-between gap-1 px-2 py-2 rounded-xl border bg-surface-container-lowest text-[11px] font-medium outline-none cursor-pointer transition-all ' +
+                       (item.typeOpen ? 'border-primary ring-2 ring-primary/20' : 'border-outline-variant/20')">
+              <span [class]="item.type ? 'text-on-surface' : 'text-outline'">
+                {{ getTypeLabel(item.type) }}
+              </span>
+              <span class="material-symbols-outlined text-outline text-xs transition-transform duration-200"
+                [class.rotate-180]="item.typeOpen">
+                expand_more
+              </span>
+            </button>
+
+            @if (item.typeOpen) {
+            <div (click)="$event.stopPropagation()"
+              class="absolute z-20 mt-1 w-full bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-lg overflow-hidden">
+              @for (opt of typeOptions; track opt.value) {
+              <div (click)="selectType(item, opt.value)" [class]="'px-3 py-2 text-[11px] font-medium cursor-pointer hover:bg-primary/10 ' +
+                         (item.type === opt.value ? 'text-primary bg-primary/5' : 'text-on-surface')">
+                {{ opt.label }}
+              </div>
+              }
+            </div>
+            }
           </div>
 
           <input [(ngModel)]="item.description" type="text" placeholder="Description"
@@ -1838,19 +1938,26 @@
           </div>
 
           <div class="relative">
-            <select [(ngModel)]="item.gst" (ngModelChange)="calculateInvoiceTotals()"
-              class="w-full appearance-none px-2 py-2 pr-5 rounded-xl border border-outline-variant/20 bg-surface-container-lowest text-[11px] font-bold outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer text-center">
-              <option [ngValue]="0">0%</option>
-              <option [ngValue]="5">5%</option>
-              <option [ngValue]="12">12%</option>
-              <option [ngValue]="18">18%</option>
-              <option [ngValue]="28">28%</option>
-            </select>
+            <button type="button" (click)="$event.stopPropagation(); toggleDropdown(item, 'gst')" [class]="'w-full flex items-center justify-between gap-1 px-2 py-2 rounded-xl border bg-surface-container-lowest text-[11px] font-bold outline-none cursor-pointer transition-all ' +
+                       (item.gstOpen ? 'border-primary ring-2 ring-primary/20' : 'border-outline-variant/20')">
+              <span class="text-on-surface">{{ item.gst }}%</span>
+              <span class="material-symbols-outlined text-outline text-xs transition-transform duration-200"
+                [class.rotate-180]="item.gstOpen">
+                expand_more
+              </span>
+            </button>
 
-            <span
-              class="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-outline text-xs pointer-events-none">
-              expand_more
-            </span>
+            @if (item.gstOpen) {
+            <div (click)="$event.stopPropagation()"
+              class="absolute z-20 mt-1 w-full bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-lg overflow-hidden">
+              @for (opt of gstOptions; track opt.value) {
+              <div (click)="selectGst(item, opt.value)" [class]="'px-3 py-2 text-[11px] font-bold cursor-pointer hover:bg-primary/10 text-center ' +
+                         (item.gst === opt.value ? 'text-primary bg-primary/5' : 'text-on-surface')">
+                {{ opt.label }}
+              </div>
+              }
+            </div>
+            }
           </div>
 
           <div class="text-right">
@@ -1922,14 +2029,12 @@
     </button>
 
     <button (click)="submitInvoice()" [disabled]="isSavingInvoice"
-      class="flex-1 py-3 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest cursor-pointer shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+      class="flex-1 py-3 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest cursor-pointer shadow-lg shadow-primary/20 hover:brightness-110 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
       @if (isSavingInvoice) {
-      <span class="material-symbols-outlined animate-spin text-sm"> progress_activity </span>
-
+      <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
       Saving...
       } @else {
-      <span class="material-symbols-outlined text-sm"> send </span>
-
+      <span class="material-symbols-outlined text-sm">send</span>
       Submit Invoice
       }
     </button>
@@ -2025,7 +2130,7 @@
 
   <div class="px-5 pb-4 pt-2 flex justify-center">
     <button (click)="showVendorDetailModal = false"
-      class="w-[110px] h-[34px] rounded-lg bg-slate-200 dark:bg-slate-700 text-[11px] font-bold uppercase">
+      class="w-[110px] h-[34px] rounded-lg bg-slate-200 dark:bg-slate-700 text-[11px] font-bold uppercase cursor-pointer">
       Close
     </button>
   </div>
@@ -2088,7 +2193,7 @@
       Cancel
     </button>
     <button (click)="submitAudit()" [disabled]="isSavingAudit"
-      class="flex-1 py-3 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform disabled:opacity-60 disabled:cursor-not-allowed">
+      class="flex-1 py-3 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-wide flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:brightness-110 hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed">
       @if (isSavingAudit) {
       <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
       Saving...
@@ -2100,97 +2205,105 @@
 </app-common-dialog>
 
 <app-common-dialog [open]="showBillingModal" maxWidth="max-w-2xl" backdropClass="bg-slate-900/50"
-  panelClass="bg-white dark:bg-slate-900 rounded-3xl p-5 animate-in zoom-in-95 duration-300"
+  panelClass="bg-white dark:bg-slate-900 rounded-3xl max-h-[88vh] flex flex-col p-0 animate-in zoom-in-95 duration-300"
   (closed)="showBillingModal = false">
-  <div class="flex justify-between items-center mb-6">
+
+  <div
+    class="sticky top-0 z-10 flex justify-between items-center px-5 pt-5 pb-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-t-3xl shrink-0">
     <h3 class="text-2xl font-black tracking-tight">Billing Summary</h3>
     <button (click)="showBillingModal = false"
       class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
       <span class="material-symbols-outlined text-[22px]">close</span>
     </button>
   </div>
-  <div class="grid grid-cols-2 gap-4 mb-5">
-    <div class="bg-surface-container-low p-5 rounded-2xl text-center">
-      <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-2">
-        Total Invoices
-      </p>
-      <p class="text-3xl font-black text-on-surface">{{ invoices.length }}</p>
-    </div>
-    <div class="bg-primary/5 border border-primary/10 p-5 rounded-2xl text-center">
-      <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-2">
-        Budget Allocated
-      </p>
-      <p class="text-xl font-black text-primary">{{ selectedVendor?.budget ?? '—' }}</p>
-    </div>
-  </div>
-  @if (invoices.length > 0) {
-  <div class="mb-4 flex items-center justify-between px-1">
-    <span class="text-xs font-bold text-outline uppercase tracking-wider">Total Billed</span>
-    <span class="font-black text-primary text-lg">₹{{ totalBilled | number }}</span>
-  </div>
-  }
-  <div class="space-y-3 pr-1 max-h-[85vh] overflow-y-auto">
-    @for (inv of invoices; track inv.id) {
-    <div
-      class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-colors">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" [ngClass]="{
-              'bg-green-100': inv.status === 'Paid',
-              'bg-red-100': inv.status === 'Cancelled',
-              'bg-amber-100': inv.status !== 'Paid' && inv.status !== 'Cancelled',
-            }">
-          <span class="material-symbols-outlined text-sm" [ngClass]="{
-                'text-green-600': inv.status === 'Paid',
-                'text-red-600': inv.status === 'Cancelled',
-                'text-amber-600': inv.status !== 'Paid' && inv.status !== 'Cancelled',
-              }">
-            {{
-            inv.status === 'Paid'
-            ? 'check_circle'
-            : inv.status === 'Cancelled'
-            ? 'cancel'
-            : 'pending'
-            }}
-          </span>
-        </div>
-        <div>
-          <p class="font-black text-sm text-on-surface">{{ inv.invoice_number }}</p>
-          <p class="text-[10px] text-outline font-bold uppercase tracking-widest mt-0.5">
-            {{ formatDate(inv.invoice_date) }}
-          </p>
-        </div>
-      </div>
-      <div class="text-right flex flex-col items-end gap-1">
-        <p class="font-black text-base text-on-surface">
-          ₹{{ (+inv.grand_total).toLocaleString('en-IN') }}
+
+  <div class="flex-1 overflow-y-auto px-5 pb-2 min-h-0">
+    <div class="grid grid-cols-2 gap-4 mb-5 mt-1">
+      <div class="bg-surface-container-low p-5 rounded-2xl text-center">
+        <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-2">
+          Total Invoices
         </p>
-        <span class="px-2.5 py-1 rounded-md text-[10px] font-black uppercase" [ngClass]="{
-              'bg-green-100 text-green-700': inv.status === 'Paid',
-              'bg-red-100 text-red-700': inv.status === 'Cancelled',
-              'bg-amber-100 text-amber-700': inv.status !== 'Paid' && inv.status !== 'Cancelled',
-            }">
-          {{ inv.status }}
-        </span>
-        <button (click)="viewInvoice(inv)"
-          class="text-[10px] font-black text-primary flex items-center gap-1 hover:underline cursor-pointer">
-          <span class="material-symbols-outlined text-[12px]">open_in_new</span> View Invoice
-        </button>
+        <p class="text-3xl font-black text-on-surface">{{ invoices.length }}</p>
+      </div>
+      <div class="bg-primary/5 border border-primary/10 p-5 rounded-2xl text-center">
+        <p class="text-[10px] font-black uppercase tracking-widest text-outline mb-2">
+          Budget Allocated
+        </p>
+        <p class="text-xl font-black text-primary">{{ selectedVendor?.budget ?? '—' }}</p>
       </div>
     </div>
-    } @empty {
-    <div class="py-12 flex flex-col items-center gap-3 text-outline">
-      <span class="material-symbols-outlined text-5xl">receipt_long</span>
-      <p class="font-bold text-sm">No billing records found.</p>
+
+    @if (invoices.length > 0) {
+    <div class="mb-4 flex items-center justify-between px-1">
+      <span class="text-xs font-bold text-outline uppercase tracking-wider">Total Billed</span>
+      <span class="font-black text-primary text-lg">₹{{ totalBilled | number }}</span>
     </div>
     }
+
+    <div class="space-y-3 pr-1">
+      @for (inv of invoices; track inv.id) {
+      <div
+        class="flex items-center justify-between p-4 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-colors">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" [ngClass]="{
+                'bg-green-100': inv.status === 'Paid',
+                'bg-red-100': inv.status === 'Cancelled',
+                'bg-amber-100': inv.status !== 'Paid' && inv.status !== 'Cancelled',
+              }">
+            <span class="material-symbols-outlined text-sm" [ngClass]="{
+                  'text-green-600': inv.status === 'Paid',
+                  'text-red-600': inv.status === 'Cancelled',
+                  'text-amber-600': inv.status !== 'Paid' && inv.status !== 'Cancelled',
+                }">
+              {{
+              inv.status === 'Paid'
+              ? 'check_circle'
+              : inv.status === 'Cancelled'
+              ? 'cancel'
+              : 'pending'
+              }}
+            </span>
+          </div>
+          <div>
+            <p class="font-black text-sm text-on-surface">{{ inv.invoice_number }}</p>
+            <p class="text-[10px] text-outline font-bold uppercase tracking-widest mt-0.5">
+              {{ formatDate(inv.invoice_date) }}
+            </p>
+          </div>
+        </div>
+        <div class="text-right flex flex-col items-end gap-1">
+          <p class="font-black text-base text-on-surface">
+            ₹{{ (+inv.grand_total).toLocaleString('en-IN') }}
+          </p>
+          <span class="px-2.5 py-1 rounded-md text-[10px] font-black uppercase" [ngClass]="{
+                'bg-green-100 text-green-700': inv.status === 'Paid',
+                'bg-red-100 text-red-700': inv.status === 'Cancelled',
+                'bg-amber-100 text-amber-700': inv.status !== 'Paid' && inv.status !== 'Cancelled',
+              }">
+            {{ inv.status }}
+          </span>
+          <button (click)="viewInvoice(inv)"
+            class="text-[10px] font-black text-primary flex items-center gap-1 hover:underline cursor-pointer">
+            <span class="material-symbols-outlined text-[12px]">open_in_new</span> View Invoice
+          </button>
+        </div>
+      </div>
+      } @empty {
+      <div class="py-12 flex flex-col items-center gap-3 text-outline">
+        <span class="material-symbols-outlined text-5xl">receipt_long</span>
+        <p class="font-bold text-sm">No billing records found.</p>
+      </div>
+      }
+    </div>
   </div>
-  <div class="flex gap-3 mt-6">
+
+  <div class="flex gap-3 px-5 py-4 border-t border-outline-variant/10 shrink-0">
     <button (click)="openSubmission(); showBillingModal = false"
       class="flex-1 py-3 rounded-2xl border border-primary text-primary text-xs font-black uppercase tracking-wide cursor-pointer hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
       <span class="material-symbols-outlined text-sm">add</span> New Invoice
     </button>
     <button (click)="showBillingModal = false"
-      class="w-[120px] py-3 rounded-2xl bg-on-surface text-white text-xs font-black uppercase tracking-wide cursor-pointer shadow-md hover:scale-[1.02] transition-transform">
+      class="w-[120px] py-3 rounded-2xl bg-on-surface text-white text-xs font-black uppercase tracking-wide cursor-pointer shadow-md hover:opacity-90 hover:shadow-lg transition-all">
       Close
     </button>
   </div>

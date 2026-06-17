@@ -1,0 +1,16 @@
+input[type="date"] {
+    cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}
+
+
+input[type="time"] {
+    cursor: pointer;
+}
+
+input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}

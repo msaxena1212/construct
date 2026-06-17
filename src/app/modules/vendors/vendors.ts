@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, Input } from '@angular/core';
+import { Component, OnInit, inject, Input, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   VendorsServices,
@@ -38,6 +38,9 @@ export class Vendors implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
+  showSkillDropdown = false;
+  showStatusDropdown = false;
+  showAssignDropdown = false;
   allTasks: IProjectTask[] = [];
   skillOptions: { value: string; label: string }[] = [];
   milestoneDropdownOpen = false;
@@ -144,9 +147,24 @@ export class Vendors implements OnInit {
     { value: 'inactive', label: 'Inactive' },
   ];
 
+  readonly typeOptions: { value: string; label: string }[] = [
+    { value: 'material', label: 'Material' },
+    { value: 'equipment', label: 'Equipment' },
+    { value: 'labor', label: 'Labor' },
+    { value: 'others', label: 'Others' },
+  ];
+
+  readonly gstOptions: { value: number; label: string }[] = [
+    { value: 0, label: '0%' },
+    { value: 5, label: '5%' },
+    { value: 12, label: '12%' },
+    { value: 18, label: '18%' },
+    { value: 28, label: '28%' },
+  ];
+
   readonly sumRate = (acc: number, w: LaborWorker): number =>
     acc + (Number(w.daily_rate) || 0) * (w.labor_count || 0);
-  Math: any;
+  Math = Math;
 
 
   ngOnInit(): void {
@@ -640,7 +658,6 @@ export class Vendors implements OnInit {
   }
 
   private createVendorData(): void {
-    debugger
     const fd = new FormData();
     fd.append('vendorLegalName', this.newVendor.name);
     fd.append('spocName', this.newVendor.spoc.name);
@@ -742,7 +759,17 @@ export class Vendors implements OnInit {
       (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
     );
   }
+  getSkillLabel(value: string): string {
+    return this.skillOptions.find(s => s.value === value)?.label || '';
+  }
 
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showSkillDropdown = false;
+    this.showStatusDropdown = false;
+    this.showAssignDropdown = false;
+    this.closeAllItemDropdowns();
+  }
   deleteVendor(id: string): void {
     if (this.isDeleting) return;
     if (!confirm('Are you sure you want to remove this vendor?')) return;
@@ -835,6 +862,39 @@ export class Vendors implements OnInit {
 
   onTypeChange(item: any): void {
     if (item.type !== 'labor') item.hours = 0;
+    this.calculateInvoiceTotals();
+  }
+
+  getTypeLabel(value: string): string {
+    return this.typeOptions.find(o => o.value === value)?.label || 'Select';
+  }
+
+  toggleDropdown(item: any, field: 'type' | 'gst'): void {
+    const isOpen = field === 'type' ? item.typeOpen : item.gstOpen;
+    this.closeAllItemDropdowns();
+    if (field === 'type') {
+      item.typeOpen = !isOpen;
+    } else {
+      item.gstOpen = !isOpen;
+    }
+  }
+
+  closeAllItemDropdowns(): void {
+    (this.invoiceForm?.items || []).forEach((i: any) => {
+      i.typeOpen = false;
+      i.gstOpen = false;
+    });
+  }
+
+  selectType(item: any, value: string): void {
+    item.type = value;
+    item.typeOpen = false;
+    this.onTypeChange(item);
+  }
+
+  selectGst(item: any, value: number): void {
+    item.gst = value;
+    item.gstOpen = false;
     this.calculateInvoiceTotals();
   }
 
@@ -1043,8 +1103,6 @@ export class Vendors implements OnInit {
       reference: referenceValue !== '' ? referenceValue : null,
       clearance_date: this.paymentForm.clearance_date || null,
     };
-
-    console.log('FINAL PAYLOAD:', JSON.stringify(payload, null, 2));
 
     if (this.showSettlementCards && this.paymentForm.project_id) {
       payload.settlement_type = this.selectedSettlementType;
@@ -1417,6 +1475,7 @@ export class Vendors implements OnInit {
   }
 
   editLaborWorker(id: number): void {
+    this.showSkillDropdown = this.showStatusDropdown = this.showAssignDropdown = false;
     const worker = this.laborWorkers.find(w => w.id === id);
     if (!worker) return;
     this.editingLaborId = id;
