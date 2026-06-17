@@ -5,7 +5,7 @@ import { CoreRoutingModule } from './core-routing-module';
 import { AccessDenied } from './interceptors/access-denied/access-denied';
 
 @NgModule({
-  declarations: [AccessDenied],
-  imports: [CommonModule, CoreRoutingModule],
+   declarations: [],
+  imports: [CommonModule, CoreRoutingModule, AccessDenied],
 })
 export class CoreModule {}
