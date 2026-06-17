@@ -7,7 +7,7 @@ module.exports = (router) => {
     router.post("/createCategory",checkPermission("category", "can_create"), categoryCtrl.createCategory);
 
     // Get all categories
-    router.get("/getAllCategory", checkPermission("category", "can_read"), categoryCtrl.getAllCategory);
+    router.get("/getAllCategory", categoryCtrl.getAllCategory);
 
     // Get category by ID
     router.get("/getCategoryById/:id", checkPermission("category", "can_read"), categoryCtrl.getCategoryById);

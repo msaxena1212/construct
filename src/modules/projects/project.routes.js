@@ -17,7 +17,7 @@ module.exports = (router) => {
 
   // List all projects for the company
   // router.get("/projects", projectCtrl.getAllProjects);
-  router.get("/projects",checkPermission("projects", "can_read"), projectCtrl.getAllProjects);
+  router.get("/projects", projectCtrl.getAllProjects);
 
   // Get single project details
   router.get("/projects/:id",checkPermission("projects", "can_read"),  projectCtrl.getProjectById);
