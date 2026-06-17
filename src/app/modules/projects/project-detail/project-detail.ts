@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 
-import { IProject, IUser, IAuditEntry, IMilestone, MilestoneStatus } from '../../../shared/interfaces/project.interface';
+import { IProject, IUser, IAuditEntry, IMilestone, IProjectTask, IProjectSubTask, MilestoneStatus } from '../../../shared/interfaces/project.interface';
 import { MatDialog } from '@angular/material/dialog';
 import { MilestoneFormDialog } from '../dialogs/milestone-form-dialog/milestone-form-dialog';
 import { environment } from '../../../../environments/environment';
@@ -16,6 +16,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class ProjectDetail implements OnInit {
   project: IProject | null = null;
+  selectedTask: IProjectTask | null = null;
   loading = true;
   error: string | null = null;
 
@@ -72,27 +73,83 @@ export class ProjectDetail implements OnInit {
 
   private mapProjectData(p: IProject): IProject {
     const allMilestones = p.milestones || [];
+    const allTasks: IProjectTask[] = (((p as any).tasks || p.tasks) || []) as IProjectTask[];
 
-    // Create a map to group sub-milestones under their parents
-    const parentMilestones: IMilestone[] = allMilestones
+    // If API already returns nested `milestones_with_child`, prefer that shape
+    if (p.milestones_with_child && p.milestones_with_child.length) {
+      const parentMilestones = (p.milestones_with_child as IMilestone[]).map((m, i) => ({
+        ...m,
+        color: m.color || (i % 3 === 0 ? 'blue-600' : i % 3 === 1 ? 'indigo-600' : 'emerald-600'),
+        progress: m.milestone_progress ?? m.progress ?? 0,
+        // normalize children/subMilestones property name
+        children: m.children || m.subMilestones || [],
+        // ensure each child has tasks array (may already be present)
+        subMilestones: m.subMilestones || m.children || []
+      }));
+
+      const totalMs = parentMilestones.length;
+      let totalProgress = 0;
+      parentMilestones.forEach(m => totalProgress += (m.progress || 0));
+      const progress = totalMs > 0 ? Math.round(totalProgress / totalMs) : 0;
+
+      // attach tasks list to each child if not present
+      parentMilestones.forEach((m) => {
+        (m.children || []).forEach((child: IMilestone) => {
+          child.progress = child.submilestone_progress ?? child.progress ?? 0;
+          if (!child.tasks) {
+            child.tasks = allTasks.filter(t => Number(t.submilestone_id) === Number(child.id));
+          }
+        });
+      });
+
+      return {
+        ...p,
+        progress,
+        milestones: parentMilestones,
+        milestones_with_child: parentMilestones,
+        tasks: allTasks,
+        estimatedCompletion: p.completion_date,
+        budget_summary: {
+          total: p.budget_total || 0,
+          used: p.budget_used || 0
+        },
+        team: (p.team_members || []).map((m: IUser) => ({
+          name: `${m.firstname} ${m.lastname}`,
+          role: (m as any).PROJECT_TEAM?.role || 'Technical Staff',
+          avatar: m.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop'
+        }))
+      };
+    }
+
+    // Fallback: build nested structure from flat milestones + tasks
+    const parentMilestones = allMilestones
       .filter((m) => !m.parent_id)
       .map((m, i) => ({
         ...m,
         color: m.color || (i % 3 === 0 ? 'blue-600' : i % 3 === 1 ? 'indigo-600' : 'emerald-600'),
-        subMilestones: allMilestones.filter((sm) => sm.parent_id === m.id)
+        progress: m.milestone_progress ?? m.progress ?? 0,
+        children: allMilestones.filter((sm) => sm.parent_id === m.id)
       }));
+
+    // attach tasks to submilestones
+    parentMilestones.forEach((m) => {
+      (m.children || []).forEach((child: IMilestone) => {
+        child.progress = child.submilestone_progress ?? child.progress ?? 0;
+        child.tasks = allTasks.filter(t => Number(t.submilestone_id) === Number(child.id));
+      });
+    });
 
     const totalMs = parentMilestones.length;
     let totalProgress = 0;
-    parentMilestones.forEach(m => {
-      totalProgress += (m.progress || 0);
-    });
+    parentMilestones.forEach(m => totalProgress += (m.milestone_progress ?? m.progress ?? 0));
     const progress = totalMs > 0 ? Math.round(totalProgress / totalMs) : 0;
 
     return {
       ...p,
       progress: progress,
       milestones: parentMilestones,
+      milestones_with_child: parentMilestones,
+      tasks: allTasks,
       estimatedCompletion: p.completion_date,
       budget_summary: {
         total: p.budget_total || 0,
@@ -110,6 +167,35 @@ export class ProjectDetail implements OnInit {
     if (this.project?.team) {
       this.teamMembers = [{ name: 'All Members' }, ...this.project.team];
     }
+  }
+
+  getTasksForSubMilestone(subMilestoneId: number) {
+    if (!this.project?.tasks?.length) {
+      return [];
+    }
+    return this.project.tasks.filter((task) => Number(task.submilestone_id) === Number(subMilestoneId));
+  }
+
+  getTaskProgress(task: IProjectTask) {
+    if (typeof task.task_progress === 'number') {
+      return task.task_progress;
+    }
+    if (typeof task.progress === 'number') {
+      return task.progress;
+    }
+    if (task.sub_tasks?.length) {
+      const completedCount = task.sub_tasks.filter((sub: IProjectSubTask) => sub.completed).length;
+      return Math.round((completedCount / task.sub_tasks.length) * 100);
+    }
+    return 0;
+  }
+
+  openTaskDetail(task: IProjectTask) {
+    this.selectedTask = task;
+  }
+
+  closeTaskDetail() {
+    this.selectedTask = null;
   }
 
   setActiveTab(tab: string) {

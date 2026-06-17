@@ -41,6 +41,7 @@ import { CommonDialogComponent } from '../../shared/components/common-dialog/com
     DragDropModule,
     MaterialModule,
     TaskManagement,
+    TaskDetail,
     StockApprovalModule,
     CommonDialogComponent
   ],

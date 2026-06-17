@@ -225,7 +225,7 @@ export class NewProjectWizard implements OnInit {
       name: [milestone.name || '', Validators.required],
       phase: [milestone.phase || 'Drafting'],
       color: [milestone.color || 'primary'],
-      progress: [milestone.progress || 0],
+      progress: [milestone.milestone_progress || milestone.submilestone_progress || 0],
       status: [milestone.status || 'Not Started'],
       startDate: [milestone.startDate || milestone.start_date || null],
       endDate: [milestone.endDate || milestone.end_date || null],
@@ -234,6 +234,8 @@ export class NewProjectWizard implements OnInit {
   }
 
   getMilestoneChildren(milestone: AbstractControl): FormArray {
+    console.log(milestone.get('children'),'tst');
+    
     return milestone.get('children') as FormArray;
   }
 
@@ -323,7 +325,7 @@ this.milestoneTree.value.forEach((parent: any) => {
         id: child.id,
         name: child.name,
         phase: child.phase,
-        progress: child.progress,
+        progress: child.submilestone_progress || child.submilestone_progress,
         color: child.color,
         status: child.status,
         startDate: child.startDate,

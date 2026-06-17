@@ -17,25 +17,50 @@ export class Projects implements OnInit {
   availableTeamMembers: string[] = ['All Members'];
   selectedMember = 'All Members';
   serverUrl = environment.serverUrl;
+  searchText = '';
+
+  allProjects: any[] = [];
+  filteredProjects: any[] = [];
 
   constructor(private projectService: ProjectService) { }
 
   ngOnInit(): void {
     this.fetchProjects();
+
   }
 
-  get filteredProjects(): IProject[] {
-    if (this.selectedMember === 'All Members') return this.projects;
-    return this.projects.filter((p) =>
-      p.team_members?.some((m) => (m.firstname + ' ' + m.lastname) === this.selectedMember)
+
+
+
+  filterProjects() {
+    const search = this.searchText.toLowerCase().trim();
+
+    if (!search) {
+      this.filteredProjects = [...this.projects];
+      return;
+    }
+
+    this.filteredProjects = this.projects.filter((project:any) =>
+      project.name?.toLowerCase().includes(search) ||
+      project.clientName?.toLowerCase().includes(search) ||
+      project.location?.toLowerCase().includes(search)
     );
   }
+
+  // get filteredProjects(): IProject[] {
+  //   if (this.selectedMember === 'All Members') return this.projects;
+  //   return this.projects.filter((p) =>
+  //     p.team_members?.some((m) => (m.firstname + ' ' + m.lastname) === this.selectedMember)
+  //   );
+  // }
 
   fetchProjects(): void {
     this.loading = true;
     this.projectService.getProjects().subscribe({
       next: (res) => {
         this.projects = res.data;
+        this.filteredProjects = [...this.projects];
+
         this.extractUniqueMembers();
         this.loading = false;
       },
