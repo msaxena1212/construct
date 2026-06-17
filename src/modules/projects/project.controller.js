@@ -661,32 +661,160 @@ const formattedProjects = projects.map(project => {
             as: 'team_members',
             attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
             through: { attributes: ['role'] }
-          }
+          },
+          {
+          model: db.project_task,
+          as: "tasks",
+          include: [
+            {
+              model: db.user,
+              as: "assignees",
+              attributes: ["id", "firstname", "lastname", "avatar"]
+            },
+            {
+              model: db.project_sub_task,
+              as: "sub_tasks"
+            }
+          ]
+        }
         ]
       });
 
-      if (!project) {
-        return res.status(404).json({
-          message: "Project not found or unauthorized."
-        });
+      // if (!project) {
+      //   return res.status(404).json({
+      //     message: "Project not found or unauthorized."
+      //   });
+      // }
+
+      // const projectData = project.toJSON();
+
+      // const milestones = projectData.milestones || [];
+
+      // projectData.milestones_with_child = milestones
+      //   .filter(m => m.parent_id === null)
+      //   .map(parent => ({
+      //     ...parent,
+      //     children: milestones.filter(
+      //       child => child.parent_id === parent.id
+      //     )
+      //   }));
+
+      // return res.status(200).json({
+      //   data: projectData
+      // });
+
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found or unauthorized."
+      });
+    }
+
+    const projectData = project.toJSON();
+
+    const milestones = projectData.milestones || [];
+    const tasks = projectData.tasks || [];
+
+    // Group tasks by submilestone_id
+    const taskMap = Object.create(null);
+
+    for (const task of tasks) {
+      if (!taskMap[task.submilestone_id]) {
+        taskMap[task.submilestone_id] = [];
       }
 
-      const projectData = project.toJSON();
+      taskMap[task.submilestone_id].push(task);
+    }
 
-      const milestones = projectData.milestones || [];
+    const parentMilestones = [];
+    const subMilestoneMap = Object.create(null);
 
-      projectData.milestones_with_child = milestones
-        .filter(m => m.parent_id === null)
-        .map(parent => ({
-          ...parent,
-          children: milestones.filter(
-            child => child.parent_id === parent.id
+    for (const milestone of milestones) {
+      if (!milestone.parent_id) {
+        parentMilestones.push(milestone);
+      } else {
+        if (!subMilestoneMap[milestone.parent_id]) {
+          subMilestoneMap[milestone.parent_id] = [];
+        }
+
+        const milestoneTasks = taskMap[milestone.id] || [];
+
+        // TASK PROGRESS
+        const tasksWithProgress = milestoneTasks.map(task => {
+          const totalSubTasks = task.sub_tasks?.length || 0;
+
+          const completedSubTasks =
+            task.sub_tasks?.filter(st => st.completed === true).length || 0;
+
+          const task_progress =
+            totalSubTasks > 0
+              ? Math.round(
+                  (completedSubTasks / totalSubTasks) * 100
+                )
+              : 0;
+
+          return {
+            ...task,
+            task_progress
+          };
+        });
+
+        // SUB MILESTONE PROGRESS
+        const submilestone_progress =
+          tasksWithProgress.length > 0
+            ? Math.round(
+                tasksWithProgress.reduce(
+                  (sum, task) => sum + task.task_progress,
+                  0
+                ) / tasksWithProgress.length
+              )
+            : 0;
+
+        subMilestoneMap[milestone.parent_id].push({
+          ...milestone,
+          tasks: tasksWithProgress,
+          submilestone_progress
+        });
+      }
+    }
+
+    projectData.milestones_with_child = parentMilestones.map(parent => {
+      const children = subMilestoneMap[parent.id] || [];
+
+      // MILESTONE PROGRESS
+      const milestone_progress =
+        children.length > 0
+          ? Math.round(
+              children.reduce(
+                (sum, sm) => sum + sm.submilestone_progress,
+                0
+              ) / children.length
+            )
+          : 0;
+
+      return {
+        ...parent,
+        children,
+        milestone_progress
+      };
+    });
+
+    // PROJECT PROGRESS
+    projectData.project_progress =
+      projectData.milestones_with_child.length > 0
+        ? Math.round(
+            projectData.milestones_with_child.reduce(
+              (sum, milestone) =>
+                sum + milestone.milestone_progress,
+              0
+            ) / projectData.milestones_with_child.length
           )
-        }));
+        : 0;
 
-      return res.status(200).json({
-        data: projectData
-      });
+    return res.status(200).json({
+      success: true,
+      data: projectData
+    });
 
     } catch (error) {
       return res.status(500).json({
