@@ -58,6 +58,7 @@ const routes: Routes = [
 
       { path: 'profile', loadChildren: () => import('./profile/profile-module').then(m => m.ProfileModule) },
       { path: 'analytics', loadChildren: () => import('./analytics/analytics-module').then(m => m.AnalyticsModule) },
+      { path: 'access-denied', loadComponent: () => import('../core/interceptors/access-denied/access-denied').then(m => m.AccessDenied) },
     ],
   },
 ];
