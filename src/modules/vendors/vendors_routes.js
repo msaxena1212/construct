@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../vendors/upload');
-
+const checkPermission = require("../../core/middleware/permission.middleware");
 const vendorCtrl = require('../vendors/vendors_controller');
 const invoiceCtrl = require('../vendors/vendors_invoice_controller');
 const auditCtrl = require('../vendors/vendors_audit_controller');
@@ -18,22 +18,22 @@ router.get('/:vendorId/audits', auditCtrl.getAuditsByVendor);
 router.post('/:vendorId/audits', auditCtrl.createAudit);
 
 router.get('/', vendorCtrl.getAllVendors);
-router.get('/:id', vendorCtrl.getVendorById);
+router.get('/:id', checkPermission("resources/vendors", "can_read"), vendorCtrl.getVendorById);
 
 router.post('/', (req, res, next) => {
   upload.array('contractFiles', 10)(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message });
     next();
   });
-}, vendorCtrl.createVendor);
+}, checkPermission("resources/vendors", "can_create"), vendorCtrl.createVendor);
 
 router.put('/:id', (req, res, next) => {
   upload.array('contractFiles', 10)(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message });
     next();
   });
-}, vendorCtrl.updateVendor);
+}, checkPermission("resources/vendors", "can_update"), vendorCtrl.updateVendor);
 
-router.delete('/:id', vendorCtrl.deleteVendor);
+router.delete('/:id', checkPermission("resources/vendors", "can_delete"), vendorCtrl.deleteVendor);
 
 module.exports = router;
