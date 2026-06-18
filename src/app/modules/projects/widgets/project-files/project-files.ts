@@ -18,9 +18,9 @@ export class ProjectFiles implements OnInit, OnChanges {
 
   categories = [
     { name: 'All', icon: 'grid_view', count: 0, color: 'text-primary' },
-    { name: 'Drawings', icon: 'architecture', count: 0, color: 'text-secondary' },
+    // { name: 'Drawings', icon: 'architecture', count: 0, color: 'text-secondary' },
     { name: 'Photos', icon: 'image', count: 0, color: 'text-tertiary-container' },
-    { name: 'Legal', icon: 'gavel', count: 0, color: 'text-error' },
+    // { name: 'Legal', icon: 'gavel', count: 0, color: 'text-error' },
     { name: 'Others', icon: 'description', count: 0, color: 'text-outline' }
   ];
 
