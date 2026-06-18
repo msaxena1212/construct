@@ -29,7 +29,7 @@
         </div>
 
         <!-- Category Overview (Replacement for manual folders) -->
-        <div class="grid grid-cols-5 gap-4">
+        <div class="grid grid-cols-3 gap-4">
             @for (cat of categories; track cat.name) {
             <div (click)="selectCategory(cat.name)"
                 class="p-5 rounded-2xl cursor-pointer transition-all border group relative overflow-hidden"
