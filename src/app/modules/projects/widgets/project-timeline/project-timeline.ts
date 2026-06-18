@@ -143,7 +143,7 @@ export class ProjectTimeline implements AfterViewInit {
 
     this.timelineColumns = this.getDateLabels(minDate, maxDate, this.currentView);
     const columnWidth = this.currentView === 'Day' ? 60 : this.currentView === 'Week' ? 100 : 140;
-    const sidebarWidth = 300; // increased to provide a larger sidebar for titles/badges
+    const sidebarWidth = 420; // increased for better task visibility
     this.gridTemplate = `${sidebarWidth}px repeat(${this.timelineColumns.length}, ${columnWidth}px)`;
 
     this.ganttRows = rows.map((row) => {
