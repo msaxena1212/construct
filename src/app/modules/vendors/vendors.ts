@@ -28,6 +28,7 @@ export class Vendors implements OnInit {
   @Input() projectId: string | number = '';
   showPaymentModeDropdown = false;
   projectdata: any = null;
+  modalProjectData: any = null;
   private _pendingEditVendor: Vendor | null = null;
   private vendorService = inject(VendorsServices);
   private laborService = inject(VendorsLaborServices);
@@ -42,6 +43,7 @@ export class Vendors implements OnInit {
   showStatusDropdown = false;
   showAssignDropdown = false;
   allTasks: IProjectTask[] = [];
+  settlementTasks: IProjectTask[] = [];
   skillOptions: { value: string; label: string }[] = [];
   milestoneDropdownOpen = false;
   subMilestoneDropdownOpen = false;
@@ -270,30 +272,29 @@ export class Vendors implements OnInit {
     if (selectedId) {
       this.showSettlementCards = true;
       this.paymentForm.project_id = selectedId;
-      this.loadProjectTasks(selectedId);
+      this.loadProjectTasks(selectedId, 'settlement');
 
       this.isLoadingMilestones = true;
       this.projectService.getProjectById(selectedId).subscribe({
         next: (res: any) => {
-          this.projectdata = res?.data ?? null;
+          this.modalProjectData = res?.data ?? null;
           this.setProjectMilestones(res?.data?.milestones ?? []);
           this.updateSettlementCompletionFromProject();
           this.isLoadingMilestones = false;
         },
         error: (err: any) => {
-          this.projectdata = null;
+          this.modalProjectData = null;
           this.isLoadingMilestones = false;
           console.error('Selected project load failed', err);
         },
       });
     } else {
       this.showSettlementCards = false;
-      this.projectdata = null;
-      this.allTasks = [];
+      this.modalProjectData = null;
+      this.settlementTasks = [];
       this.setProjectMilestones([]);
     }
   }
-
 
   private syncSelectedVendor(): void {
     if (!this.viewingVendorId) {
@@ -322,31 +323,20 @@ export class Vendors implements OnInit {
 
 
   get availableSubMilestones(): any[] {
-    const allMilestones = this.projectdata?.milestones ?? [];
+    const allMilestones = this.modalProjectData?.milestones ?? [];
     if (this.selectedMilestoneIds.length === 0) return [];
-    return allMilestones.filter((m: any) =>
-      this.selectedMilestoneIds.includes(Number(m.parent_id))
-    );
+    return allMilestones.filter((m: any) => this.selectedMilestoneIds.includes(Number(m.parent_id)));
   }
 
   get availableTaskOptions(): IProjectTask[] {
-    if (!this.selectedSubMilestoneIds.length) {
-      return [];
-    }
+    if (!this.selectedSubMilestoneIds.length) return [];
 
-    const selectedParents =
-      this.availableSubMilestones
-        .filter(sm =>
-          this.selectedSubMilestoneIds.includes(
-            Number(sm.id)
-          )
-        )
-        .map(sm => Number(sm.parent_id));
+    const selectedParents = this.availableSubMilestones
+      .filter(sm => this.selectedSubMilestoneIds.includes(Number(sm.id)))
+      .map(sm => Number(sm.parent_id));
 
-    return this.allTasks.filter(task =>
-      selectedParents.includes(
-        Number(task.milestone_id)
-      )
+    return this.settlementTasks.filter(task =>
+      selectedParents.includes(Number(task.milestone_id))
     );
   }
 
@@ -375,14 +365,19 @@ export class Vendors implements OnInit {
   }
 
 
-  private loadProjectTasks(projectId: string | number): void {
+  private loadProjectTasks(projectId: string | number, target: 'main' | 'settlement' = 'main'): void {
     this.projectService.getProjectTasks(projectId).subscribe({
       next: (res: any) => {
-        this.allTasks = res?.data || [];
+        if (target === 'settlement') {
+          this.settlementTasks = res?.data || [];
+        } else {
+          this.allTasks = res?.data || [];
+        }
         this.syncSelectedTasksWithOptions();
       },
       error: (err: any) => {
-        this.allTasks = [];
+        if (target === 'settlement') this.settlementTasks = [];
+        else this.allTasks = [];
         console.error('Task load failed', err);
       },
     });
@@ -401,11 +396,9 @@ export class Vendors implements OnInit {
       milestone: 'milestone_completion',
       lumpsum: 'lumpsum_completion',
     };
-    const rawValue = this.projectdata?.[fieldMap[this.selectedSettlementType]];
-    this.settlementCompletion =
-      rawValue == null || rawValue === '' ? null : Number(rawValue);
+    const rawValue = this.modalProjectData?.[fieldMap[this.selectedSettlementType]];
+    this.settlementCompletion = rawValue == null || rawValue === '' ? null : Number(rawValue);
   }
-
   private getItemProgress(item: any): number | null {
     const rawProgress =
       item?.progress ?? item?.completion ?? item?.percent_complete ?? item?.percentage;
@@ -429,7 +422,7 @@ export class Vendors implements OnInit {
   }
 
   private updateSettlementCompletionFromSelection(): void {
-    const selectedTasks = this.allTasks.filter(task =>
+    const selectedTasks = this.settlementTasks.filter(task =>
       this.selectedTaskIds.includes(Number(task.id))
     );
     const selectedSubMilestones = this.availableSubMilestones.filter((sm: any) =>
@@ -843,6 +836,7 @@ export class Vendors implements OnInit {
 
   openSubmission(): void {
     if (!this.selectedVendor) return;
+    this.modalProjectData = null;
     let started = false;
     const sub = this.invoiceService.loading$.subscribe((loading) => {
       if (started && !loading) {
@@ -995,7 +989,7 @@ export class Vendors implements OnInit {
     this.subMilestones = [];
     this.milestoneTasks = [];
     this.showSettlementCards = false;
-    this.projectdata = null;
+    this.modalProjectData = null;
 
     this.paymentError = '';
     this.isProcessingPayment = false;
@@ -1020,7 +1014,7 @@ export class Vendors implements OnInit {
     this.milestones = [];
     this.subMilestones = [];
     this.milestoneTasks = [];
-    this.projectdata = null;
+    this.modalProjectData = null;
     this.milestoneDropdownOpen = false;
     this.subMilestoneDropdownOpen = false;
     this.taskDropdownOpen = false;

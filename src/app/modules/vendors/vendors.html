@@ -518,7 +518,7 @@
             <span class="font-black text-slate-500 uppercase mr-2"> Project : </span>
 
             <span class="font-black text-slate-800 dark:text-slate-100">
-              {{ projectdata?.name || 'Project not linked' }}
+              {{ modalProjectData?.name || 'Project not linked' }}
             </span>
           </div>
           @if (showSettlementCards) {
@@ -539,9 +539,9 @@
             class="cursor-pointer rounded-2xl border p-4 flex flex-col items-center justify-center gap-1 transition-all">
             <span class="material-symbols-outlined text-2xl">account_balance_wallet</span>
             <p class="text-xs font-black uppercase tracking-wider">Work POC</p>
-            @if (projectdata?.work_poc_completion != null) {
+            @if (modalProjectData?.work_poc_completion != null) {
             <p class="text-[10px] font-bold mt-1 opacity-80">
-              {{ projectdata.work_poc_completion }}% complete
+              {{ modalProjectData.work_poc_completion }}% complete
             </p>
             }
           </div>
@@ -553,9 +553,9 @@
             class="cursor-pointer rounded-2xl border p-4 flex flex-col items-center justify-center gap-1 transition-all">
             <span class="material-symbols-outlined text-2xl">flag</span>
             <p class="text-xs font-black uppercase tracking-wider">Milestone</p>
-            @if (projectdata?.milestone_completion != null) {
+            @if (modalProjectData?.milestone_completion != null) {
             <p class="text-[10px] font-bold mt-1 opacity-80">
-              {{ projectdata.milestone_completion }}% complete
+              {{ modalProjectData.milestone_completion }}% complete
             </p>
             }
           </div>
@@ -567,9 +567,9 @@
             class="cursor-pointer rounded-2xl border p-4 flex flex-col items-center justify-center gap-1 transition-all">
             <span class="material-symbols-outlined text-2xl">payments</span>
             <p class="text-xs font-black uppercase tracking-wider">Lump Sum</p>
-            @if (projectdata?.lumpsum_completion != null) {
+            @if (modalProjectData?.lumpsum_completion != null) {
             <p class="text-[10px] font-bold mt-1 opacity-80">
-              {{ projectdata.lumpsum_completion }}% complete
+              {{ modalProjectData.lumpsum_completion }}% complete
             </p>
             }
           </div>
@@ -1824,7 +1824,7 @@
           Project
         </label>
 
-        <input type="text" [value]="projectdata?.name || ''" readonly
+        <input type="text" [value]="modalProjectData?.name || ''" readonly
           class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 text-sm font-bold bg-slate-50 cursor-not-allowed" />
       </div>
     </div>
