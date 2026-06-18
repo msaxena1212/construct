@@ -332,7 +332,7 @@
                 </td>
               </tr>
               @if (task.sub_tasks && task.sub_tasks.length) {
-              <tr class="bg-slate-50/20 dark:bg-slate-900/20 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 border-b border-slate-100 dark:border-slate-800 transition-colors">
+              <!-- <tr class="bg-slate-50/20 dark:bg-slate-900/20 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 border-b border-slate-100 dark:border-slate-800 transition-colors">
                 <td class="w-[45%] pl-32 pr-6 py-4">
                   <div class="flex items-center gap-3">
                     <span class="material-symbols-outlined text-slate-400">
@@ -363,7 +363,7 @@
                   </div>
                 </td>
                 <td class="w-[10%] px-6 py-4 text-left"></td>
-              </tr>
+              </tr> -->
 
               <!-- Render each subtask as its own table row for clarity -->
               @for (s of task.sub_tasks; track s.id) {

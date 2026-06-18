@@ -22,13 +22,13 @@
     </div>
 
     <div class="timeline-table-body">
-      <div *ngFor="let row of ganttRows; let i = index; trackBy: trackByRow" class="timeline-table-row" [class.child-row]="row.isChild" [style.gridTemplateColumns]="gridTemplate">
+      <div *ngFor="let row of ganttRows; let i = index; trackBy: trackByRow" class="timeline-table-row" [class.child-row]="row.isChild" [attr.data-level]="row.indentLevel" [style.gridTemplateColumns]="gridTemplate">
         <div class="timeline-sidebar-cell">
           <div class="row-content">
             <div class="row-header">
               <span class="type-badge" [ngClass]="'badge-' + row.type">{{ row.type | titlecase }}</span>
               <span class="row-color-indicator" [style.background]="row.color"></span>
-              <div class="row-label" [style.marginLeft.px]="row.indentLevel * 12">
+              <div class="row-label">
                 {{ row.name }}
                 <!-- <span class="child-indicator" *ngIf="row.hasChildren">({{ row.childCount }})</span> -->
               </div>
