@@ -27,14 +27,48 @@ const storage = multer.diskStorage({
   }
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['.pdf', '.dwg', '.png', '.jpg', '.jpeg'];
-  const ext = path.extname(file.originalname).toLowerCase();
+// const fileFilter = (req, file, cb) => {
+//   const allowedTypes = ['.pdf', '.dwg', '.png', '.jpg', '.jpeg'];
+//   const ext = path.extname(file.originalname).toLowerCase();
   
+//   if (allowedTypes.includes(ext)) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error('Invalid file type. Only PDF, DWG, PNG, JPG are allowed.'), false);
+//   }
+// };
+
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    '.pdf',
+    '.dwg',
+    '.dxf',
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.jfif',
+    '.gif',
+    '.bmp',
+    '.webp',
+    '.svg',
+    '.tiff',
+    '.tif',
+    '.heic',
+    '.heif'
+  ];
+
+  const ext = path.extname(file.originalname).toLowerCase();
+
   if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only PDF, DWG, PNG, JPG are allowed.'), false);
+    cb(
+      new Error(
+        'Invalid file type. Allowed types: PDF, DWG, DXF, PNG, JPG, JPEG, JFIF, GIF, BMP, WEBP, SVG, TIFF, HEIC.'
+      ),
+      false
+    );
   }
 };
 
