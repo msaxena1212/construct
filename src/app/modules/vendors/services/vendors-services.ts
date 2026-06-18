@@ -38,7 +38,7 @@ interface ApiSingleResponse<T> {
 
 export interface VendorStats {
   totalActive: number;
-  pendingPayments: string;
+  pendingPayments: number; 
   compliantPartners: string;
 }
 
@@ -114,7 +114,7 @@ export class VendorsServices {
   private readonly activityUrl = `${environment.serverUrl}/api/v1/activities`;
 
   private vendorsSubject = new BehaviorSubject<Vendor[]>([]);
-  private statsSubject = new BehaviorSubject<VendorStats>({ totalActive: 0, pendingPayments: '₹0', compliantPartners: '0%' });
+  private statsSubject = new BehaviorSubject<VendorStats>({ totalActive: 0, pendingPayments: 0, compliantPartners: '0%' });
   private activitiesSubject = new BehaviorSubject<Activity[]>([]);
   private loadingSubject = new BehaviorSubject<boolean>(false);
 
