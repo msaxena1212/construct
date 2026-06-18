@@ -59,26 +59,71 @@ export class Login implements OnInit, AfterViewInit {
     this.isSubmited = false;
   }
 
-  loginFormSubmit() {
-    this.isSubmited = true;
-    if (this.loginForm.invalid) {
-      this.toast.error('Please enter valid credentials', 'Validation Error');
-      return;
-    }
+  // loginFormSubmit() {
+  //   this.isSubmited = true;
+  //   if (this.loginForm.invalid) {
+  //     this.toast.error('Please enter valid credentials', 'Validation Error');
+  //     return;
+  //   }
     
-    this.showLoader = true;
-    this.auth.signIn(this.loginForm.value).subscribe({
-      next: (res) => {
-        this.showLoader = false;
-        this.toast.success('Welcome back!', 'Login Successful');
-        this.route.navigate(['/master/dashboard']);
-      },
-      error: (err) => {
-        this.showLoader = false;
-        this.toast.error(err.error?.message || 'Login failed', 'Error');
-      }
-    });
+  //   this.showLoader = true;
+  //   this.auth.signIn(this.loginForm.value).subscribe({
+  //     next: (res) => {
+  //       this.showLoader = false;
+  //       this.toast.success('Welcome back!', 'Login Successful');
+  //       this.route.navigate(['/master/dashboard']);
+  //     },
+  //     error: (err) => {
+  //       this.showLoader = false;
+  //       this.toast.error(err.error?.message || 'Login failed', 'Error');
+  //     }
+  //   });
+  // }
+
+  loginFormSubmit() {
+  this.isSubmited = true;
+
+  if (this.loginForm.invalid) {
+    this.toast.error('Please enter valid credentials', 'Validation Error');
+    return;
   }
+
+  this.showLoader = true;
+
+  this.auth.signIn(this.loginForm.value).subscribe({
+    next: (res) => {
+
+      this.auth.getRolePermissions(res.role_id).subscribe({
+        next: (permissionRes) => {
+
+          localStorage.setItem(
+            'permissions',
+            JSON.stringify(permissionRes.data)
+          );
+
+          this.showLoader = false;
+          this.toast.success('Welcome back!', 'Login Successful');
+          this.route.navigate(['/master/dashboard']);
+        },
+        error: (err) => {
+          this.showLoader = false;
+          this.toast.error(
+            err.error?.message || 'Permission loading failed',
+            'Error'
+          );
+        }
+      });
+
+    },
+    error: (err) => {
+      this.showLoader = false;
+      this.toast.error(
+        err.error?.message || 'Login failed',
+        'Error'
+      );
+    }
+  });
+}
 
   registerFormSubmit() {
     this.isSubmited = true;
