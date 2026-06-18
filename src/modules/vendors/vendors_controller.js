@@ -3,6 +3,7 @@ const db = require('../../models');
 
 const VendorModel = db.vendors;
 const ActivityModel = db.vendors_activity;
+const InvoiceModel = db.vendors_invoice;
 
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
@@ -37,26 +38,27 @@ const getStats = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
 
-    const [totalActive, totalVendors, compliantCount, totalBudget] = await Promise.all([
+    const [totalActive, totalVendors, compliantCount, pendingInvoices] = await Promise.all([
       VendorModel.count({ where: { company_id, status: 'active' } }),
       VendorModel.count({ where: { company_id } }),
       VendorModel.count({ where: { company_id, compliance_score: { [Op.gte]: 90 } } }),
-      VendorModel.sum('budget_allocation', { where: { company_id, status: 'active' } }),
+      InvoiceModel.findAll({
+        where: { company_id, status: { [Op.in]: ['Pending', 'Partially Paid'] } },
+        attributes: ['grand_total', 'paid_amount'],
+      }),
     ]);
 
-    const formatCurrency = (num) => {
-      if (!num) return '₹0';
-      if (num >= 10_000_000) return `₹${(num / 10_000_000).toFixed(1)}Cr`;
-      if (num >= 100_000) return `₹${(num / 100_000).toFixed(1)}L`;
-      if (num >= 1_000) return `₹${(num / 1_000).toFixed(1)}k`;
-      return `₹${num}`;
-    };
+    const pendingAmount = pendingInvoices.reduce((sum, inv) => {
+      const total = parseFloat(inv.grand_total) || 0;
+      const paid = parseFloat(inv.paid_amount) || 0;
+      return sum + Math.max(0, total - paid);
+    }, 0);
 
     return res.status(200).json({
       success: true,
       data: {
         totalActive,
-        pendingPayments: formatCurrency(totalBudget),
+        pendingPayments: pendingAmount,
         compliantPartners:
           totalVendors > 0
             ? `${Math.round((compliantCount / totalVendors) * 100)}%`

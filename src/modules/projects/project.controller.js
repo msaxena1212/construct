@@ -1287,6 +1287,7 @@ class ProjectController {
       let total_material = 0;
       let total_equipment = 0;
       let total_labor = 0;
+      let total_others = 0;
 
       invoices.forEach(invoice => {
         (invoice.items || []).forEach(item => {
@@ -1298,11 +1299,14 @@ class ProjectController {
             total_equipment += total;
           } else if (item.type === "labor") {
             total_labor += total;
+          } else if (item.type === "others") {
+            total_others += total;
           }
 
         });
       });
 
+      
       const totalSpend = invoices.reduce((sum, invoice) => {
 
         return sum + parseFloat(invoice.paid_amount || 0);
@@ -1332,6 +1336,7 @@ class ProjectController {
           total_material: total_material.toFixed(2),
           total_equipment: total_equipment.toFixed(2),
           total_labor: total_labor.toFixed(2),
+          total_others: total_others.toFixed(2),
         }
 
       });
