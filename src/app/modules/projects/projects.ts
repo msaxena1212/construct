@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ProjectService } from './services/project-service';
 import { IProject, IUser, MilestoneStatus } from '../../shared/interfaces/project.interface';
 import { environment } from '../../../environments/environment';
+import { PermissionService } from '../../shared/services/permission/permission.service';
 
 @Component({
   selector: 'app-projects',
@@ -22,7 +23,11 @@ export class Projects implements OnInit {
   allProjects: any[] = [];
   filteredProjects: any[] = [];
 
-  constructor(private projectService: ProjectService) { }
+  // constructor(private projectService: ProjectService) { }
+  constructor(
+  private projectService: ProjectService,
+  public permissionService: PermissionService
+) {}
 
   ngOnInit(): void {
     this.fetchProjects();

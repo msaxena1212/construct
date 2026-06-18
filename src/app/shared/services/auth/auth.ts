@@ -143,4 +143,10 @@ export class AuthService {
       })
     );
   }
+  
+  getRolePermissions(roleId: number | string): Observable<any> {
+  return this.http.get(
+    `${databaseKey}/api/v1/roles/${roleId}/permissions`
+  );
+}
 }
