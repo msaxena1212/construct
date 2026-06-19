@@ -3,6 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
+export interface BudgetInfo {
+  allocated: number;
+  totalInvoiced: number;
+  exceeded: boolean;
+  exceededBy: number;
+}
+
 export interface InvoiceItem {
   type: string;
   description: string;
@@ -110,46 +117,44 @@ export class VendorInvoiceService {
       tax_amount: number;
       grand_total: number;
     }
-  ): Observable<any> {
-    return this.http
-      .post<{ success: boolean; data: VendorInvoice }>(
-        `${this.base}/${vendorId}/invoices`,
-        payload
-      )
-      .pipe(
-        tap((res) => {
-          if (res.success) {
-            this.invoicesSubject.next([res.data, ...this.invoicesSubject.value]);
-          }
-        })
-      );
-  }
+  ): Observable<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }> {
+  return this.http
+    .post<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }>(
+      `${this.base}/${vendorId}/invoices`,
+      payload
+    )
+    .pipe(
+      tap((res) => {
+        if (res.success) {
+          this.invoicesSubject.next([res.data, ...this.invoicesSubject.value]);
+        }
+      })
+    );
+}
 
-  updateStatus(
-    invoiceId: number,
-    payload: PaymentPayload
-  ): Observable<any> {
-    const vendorId = this.currentVendorId;
-    if (!vendorId) {
-      throw new Error('Vendor ID not set. Call loadInvoices() first.');
-    }
+updateStatus(
+  invoiceId: number,
+  payload: PaymentPayload
+): Observable<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }> {
+  const vendorId = this.currentVendorId;
+  if (!vendorId) throw new Error('Vendor ID not set. Call loadInvoices() first.');
 
-    return this.http
-      .put<any>(
-        `${this.base}/${vendorId}/invoices/${invoiceId}/status`,
-        payload
-      )
-      .pipe(
-        tap((res) => {
-          if (res.success) {
-            const list = this.invoicesSubject.value.map((inv) =>
-              inv.id === invoiceId ? { ...inv, ...res.data } : inv
-            );
-            this.invoicesSubject.next(list);
-          }
-        })
-      );
-  }
+  return this.http
+    .put<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }>(
+      `${this.base}/${vendorId}/invoices/${invoiceId}/status`,
+      payload
+    )
+    .pipe(
+      tap((res) => {
+        if (res.success) {
+          const list = this.invoicesSubject.value.map((inv) =>
+            inv.id === invoiceId ? { ...inv, ...res.data } : inv
+          );
+          this.invoicesSubject.next(list);
+        }
+      })
+    );
+}
 
   deleteInvoice(invoiceId: number): Observable<any> {
     const vendorId = this.currentVendorId;

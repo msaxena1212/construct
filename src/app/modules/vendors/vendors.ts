@@ -114,7 +114,7 @@ export class Vendors implements OnInit {
   selectedVendor: Vendor | undefined = undefined;
   vendors: Vendor[] = [];
   projects: any[] = [];
-  stats: VendorStats = { totalActive: 0, pendingPayments: '₹0', compliantPartners: '0%' };
+  stats: VendorStats = { totalActive: 0, pendingPayments: 0, compliantPartners: '0%' };
   activities: Activity[] = [];
 
   laborWorkers: LaborWorker[] = [];
@@ -190,31 +190,32 @@ export class Vendors implements OnInit {
   }
 
 
-  private loadVendorSubData(vendorId: string): void {
-    this.invoiceService.loadInvoices(vendorId);
-    this.auditService.loadAudits(vendorId);
-    this.laborService.loadLaborForVendor(vendorId);
+private loadVendorSubData(vendorId: string): void {
+  this.invoiceService.loadInvoices(vendorId);
+  this.auditService.loadAudits(vendorId);
+  this.laborService.loadLaborForVendor(vendorId);
 
-    const projectId = this.selectedVendor?.project_id;
-    if (projectId) {
-      this.loadProjectTasks(projectId);
-      this.projectService.getProjectById(projectId).subscribe({
-        next: (res: any) => {
-          this.projectdata = res?.data ?? null;
-          this.setProjectMilestones(res?.data?.milestones ?? []);
-          this.updateSettlementCompletionFromProject();
-        },
-        error: (err: any) => {
-          this.projectdata = null;
-          console.error('Project load failed', err);
-        },
-      });
-    } else {
-      this.allTasks = [];
-      this.projectdata = null;
-      this.setProjectMilestones([]);
-    }
+  const projectId = this.selectedVendor?.project_id;
+  if (projectId) {
+    this.loadProjectTasks(projectId);
+    this.projectService.getProjectById(projectId).subscribe({
+      next: (res: any) => {
+        this.projectdata = res?.data ?? null;
+        // ✅ poora projectData pass karo
+        this.setProjectMilestones(res?.data ?? {});
+        this.updateSettlementCompletionFromProject();
+      },
+      error: (err: any) => {
+        this.projectdata = null;
+        console.error('Project load failed', err);
+      },
+    });
+  } else {
+    this.allTasks = [];
+    this.projectdata = null;
+    this.setProjectMilestones({});
   }
+}
 
   getSkill(): void {
     this.skillMasterService.loadSkills().subscribe({
@@ -270,31 +271,32 @@ export class Vendors implements OnInit {
     this.selectedTaskIds = [];
 
     if (selectedId) {
-      this.showSettlementCards = true;
-      this.paymentForm.project_id = selectedId;
-      this.loadProjectTasks(selectedId, 'settlement');
+    this.showSettlementCards = true;
+    this.paymentForm.project_id = selectedId;
+    this.loadProjectTasks(selectedId, 'settlement');
 
-      this.isLoadingMilestones = true;
-      this.projectService.getProjectById(selectedId).subscribe({
-        next: (res: any) => {
-          this.modalProjectData = res?.data ?? null;
-          this.setProjectMilestones(res?.data?.milestones ?? []);
-          this.updateSettlementCompletionFromProject();
-          this.isLoadingMilestones = false;
-        },
-        error: (err: any) => {
-          this.modalProjectData = null;
-          this.isLoadingMilestones = false;
-          console.error('Selected project load failed', err);
-        },
-      });
-    } else {
-      this.showSettlementCards = false;
-      this.modalProjectData = null;
-      this.settlementTasks = [];
-      this.setProjectMilestones([]);
-    }
+    this.isLoadingMilestones = true;
+    this.projectService.getProjectById(selectedId).subscribe({
+      next: (res: any) => {
+        this.modalProjectData = res?.data ?? null;
+        // ✅ poora projectData pass karo
+        this.setProjectMilestones(res?.data ?? {});
+        this.updateSettlementCompletionFromProject();
+        this.isLoadingMilestones = false;
+      },
+      error: (err: any) => {
+        this.modalProjectData = null;
+        this.isLoadingMilestones = false;
+        console.error('Selected project load failed', err);
+      },
+    });
+  } else {
+    this.showSettlementCards = false;
+    this.modalProjectData = null;
+    this.settlementTasks = [];
+    this.setProjectMilestones({});
   }
+}
 
   private syncSelectedVendor(): void {
     if (!this.viewingVendorId) {
@@ -322,24 +324,34 @@ export class Vendors implements OnInit {
   }
 
 
-  get availableSubMilestones(): any[] {
-    const allMilestones = this.modalProjectData?.milestones ?? [];
-    if (this.selectedMilestoneIds.length === 0) return [];
-    return allMilestones.filter((m: any) => this.selectedMilestoneIds.includes(Number(m.parent_id)));
-  }
+get availableSubMilestones(): any[] {
+  if (this.selectedMilestoneIds.length === 0) return [];
 
-  get availableTaskOptions(): IProjectTask[] {
-    if (!this.selectedSubMilestoneIds.length) return [];
+  const withChild = Array.isArray(this.modalProjectData?.milestones_with_child)
+    ? this.modalProjectData.milestones_with_child
+    : [];
 
-    const selectedParents = this.availableSubMilestones
-      .filter(sm => this.selectedSubMilestoneIds.includes(Number(sm.id)))
-      .map(sm => Number(sm.parent_id));
+  // ✅ Selected milestones ke children (sub-milestones) lo
+  const result: any[] = [];
+  withChild
+    .filter((m: any) => this.selectedMilestoneIds.includes(Number(m.id)))
+    .forEach((m: any) => {
+      if (Array.isArray(m.children)) {
+        result.push(...m.children);
+      }
+    });
 
-    return this.settlementTasks.filter(task =>
-      selectedParents.includes(Number(task.milestone_id))
-    );
-  }
+  return result;
+}
 
+get availableTaskOptions(): IProjectTask[] {
+  if (!this.selectedSubMilestoneIds.length) return [];
+
+  // ✅ task.submilestone_id se match karo (API response dekho)
+  return this.settlementTasks.filter(task =>
+    this.selectedSubMilestoneIds.includes(Number((task as any).submilestone_id))
+  );
+}
   get isSettlementCompletionEditable(): boolean {
     return this.selectedSettlementType === 'work_poc';
   }
@@ -383,12 +395,17 @@ export class Vendors implements OnInit {
     });
   }
 
-  private setProjectMilestones(milestones: any[]): void {
-    const allMilestones = Array.isArray(milestones) ? milestones : [];
-    this.milestones = allMilestones.filter((m: any) => !m.parent_id);
-    this.subMilestones = [];
-    this.milestoneTasks = [];
-  }
+private setProjectMilestones(projectData: any): void {
+  // ✅ milestones_with_child se parent milestones lo (children embedded hain)
+  const withChild = Array.isArray(projectData?.milestones_with_child)
+    ? projectData.milestones_with_child
+    : [];
+
+  // Sirf parent milestones (parent_id null)
+  this.milestones = withChild.filter((m: any) => !m.parent_id);
+  this.subMilestones = [];
+  this.milestoneTasks = [];
+}
 
   private updateSettlementCompletionFromProject(): void {
     const fieldMap: Record<typeof this.selectedSettlementType, string> = {
@@ -400,18 +417,24 @@ export class Vendors implements OnInit {
     this.settlementCompletion = rawValue == null || rawValue === '' ? null : Number(rawValue);
   }
   private getItemProgress(item: any): number | null {
-    const rawProgress =
-      item?.progress ?? item?.completion ?? item?.percent_complete ?? item?.percentage;
-    if (rawProgress != null && rawProgress !== '') {
-      const progress = Number(rawProgress);
-      return Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : null;
-    }
-    const status = String(item?.status ?? '').toLowerCase().replace(/\s+/g, '_');
-    if (status === 'completed') return 100;
-    if (status === 'in_progress' || status === 'review') return 50;
-    if (status === 'pending' || status === 'to_do' || status === 'on_hold') return 0;
-    return null;
+   const rawProgress =
+    item?.milestone_progress ??   // ✅ pehle ye check karo
+    item?.progress ??
+    item?.completion ??
+    item?.percent_complete ??
+    item?.percentage;
+
+  if (rawProgress != null && rawProgress !== '') {
+    const progress = Number(rawProgress);
+    return Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : null;
   }
+
+  const status = String(item?.status ?? '').toLowerCase().replace(/\s+/g, '_');
+  if (status === 'completed') return 100;
+  if (status === 'in_progress' || status === 'review') return 50;
+  if (status === 'pending' || status === 'to_do' || status === 'on_hold') return 0;
+  return null;
+}
 
   private averageProgress(items: any[]): number | null {
     const values = items
@@ -421,28 +444,29 @@ export class Vendors implements OnInit {
     return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
   }
 
-  private updateSettlementCompletionFromSelection(): void {
-    const selectedTasks = this.settlementTasks.filter(task =>
-      this.selectedTaskIds.includes(Number(task.id))
-    );
-    const selectedSubMilestones = this.availableSubMilestones.filter((sm: any) =>
-      this.selectedSubMilestoneIds.includes(Number(sm.id))
-    );
-    const selectedMilestones = this.milestones.filter((m: any) =>
-      this.selectedMilestoneIds.includes(Number(m.id))
-    );
+private updateSettlementCompletionFromSelection(): void {
+  const selectedTasks = this.settlementTasks.filter(task =>
+    this.selectedTaskIds.includes(Number(task.id))
+  );
+  const selectedSubMilestones = this.availableSubMilestones.filter((sm: any) =>
+    this.selectedSubMilestoneIds.includes(Number(sm.id))
+  );
+  const selectedMilestones = this.milestones.filter((m: any) =>
+    this.selectedMilestoneIds.includes(Number(m.id))
+  );
 
-    const progress =
-      this.averageProgress(selectedTasks) ??
-      this.averageProgress(selectedSubMilestones) ??
-      this.averageProgress(selectedMilestones);
+  // ✅ Priority: tasks > sub-milestones > milestones
+  const progress =
+    (selectedTasks.length > 0 ? this.averageProgress(selectedTasks) : null) ??
+    (selectedSubMilestones.length > 0 ? this.averageProgress(selectedSubMilestones) : null) ??
+    (selectedMilestones.length > 0 ? this.averageProgress(selectedMilestones) : null);
 
-    if (progress != null) {
-      this.settlementCompletion = progress;
-    } else {
-      this.updateSettlementCompletionFromProject();
-    }
+  if (progress != null) {
+    this.settlementCompletion = progress;
+  } else {
+    this.updateSettlementCompletionFromProject();
   }
+}
   applyMilestoneSelection(): void {
     this.onMilestoneMultiSelect();
     this.milestoneDropdownOpen = false;
@@ -956,10 +980,11 @@ export class Vendors implements OnInit {
     };
 
     this.invoiceService.createInvoice(this.selectedVendor.id, payload).subscribe({
-      next: () => {
+      next: (res:any) => {
         this.isSavingInvoice = false;
         this.showInvoiceModal = false;
         this.vendorService.loadStats();
+         this.checkBudgetWarning(res?.budget);
       },
       error: (err: any) => {
         this.isSavingInvoice = false;
@@ -969,6 +994,10 @@ export class Vendors implements OnInit {
   }
 
   payInvoice(inv: VendorInvoice): void {
+     if (inv.status === 'Cancelled') {
+    alert('This invoice has been cancelled and can no longer accept payments.');
+    return;
+  }
     this.selectedInvoice = inv;
     const selectedProjectId = inv.project_id ? Number(inv.project_id) : null;
 
@@ -1107,13 +1136,14 @@ export class Vendors implements OnInit {
     }
 
     this.invoiceService.updateStatus(this.selectedInvoice.id, payload).subscribe({
-      next: () => {
+      next: (res:any) => {
         this.isProcessingPayment = false;
         this.closePayModal();
         if (this.selectedVendor) {
           this.invoiceService.loadInvoices(this.selectedVendor.id);
           this.vendorService.loadStats();
         }
+          this.checkBudgetWarning(res?.budget);
       },
       error: (err: any) => {
         this.isProcessingPayment = false;
@@ -1136,26 +1166,32 @@ export class Vendors implements OnInit {
     this.selectedInvoice = null;
   }
 
-  confirmCancelInvoice(): void {
-    if (!this.selectedInvoice || this.isCancellingInvoice) return;
-    this.isCancellingInvoice = true;
+confirmCancelInvoice(): void {
+  if (!this.selectedInvoice || this.isCancellingInvoice) return;
 
-    this.invoiceService.updateStatus(this.selectedInvoice.id, { status: 'Cancelled' }).subscribe({
-      next: () => {
-        this.isCancellingInvoice = false;
-        this.closeCancelInvoiceDialog();
-        if (this.selectedVendor) {
-          this.invoiceService.loadInvoices(this.selectedVendor.id);
-          this.vendorService.loadStats();
-        }
-      },
-      error: (err: any) => {
-        this.isCancellingInvoice = false;
-        alert('Cancel failed: ' + (err?.error?.message ?? 'Server error'));
-      },
-    });
+  // ✅ Partially Paid invoice cancel nahi ho sakta
+  if (this.selectedInvoice.status === 'Partially Paid') {
+    alert('This invoice has partial payments recorded and cannot be cancelled.');
+    this.closeCancelInvoiceDialog();
+    return;
   }
 
+  this.isCancellingInvoice = true;
+  this.invoiceService.updateStatus(this.selectedInvoice.id, { status: 'Cancelled' }).subscribe({
+    next: () => {
+      this.isCancellingInvoice = false;
+      this.closeCancelInvoiceDialog();
+      if (this.selectedVendor) {
+        this.invoiceService.loadInvoices(this.selectedVendor.id);
+        this.vendorService.loadStats();
+      }
+    },
+    error: (err: any) => {
+      this.isCancellingInvoice = false;
+      alert('Cancel failed: ' + (err?.error?.message ?? 'Server error'));
+    },
+  });
+}
   toggleMilestoneSelection(id: number): void {
     const idx = this.selectedMilestoneIds.indexOf(id);
     if (idx === -1) {
@@ -1186,7 +1222,7 @@ export class Vendors implements OnInit {
     this.onTaskMultiSelect();
   }
 
-  viewInvoice(inv: VendorInvoice): void {
+viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;
 
     let invoiceItems: any[] = [];
@@ -1256,6 +1292,9 @@ export class Vendors implements OnInit {
         </table>
       </div>` : '';
 
+    // ✅ Project name fetch karo - projectdata ya modalProjectData se
+    const projectName = this.projectdata?.name || this.modalProjectData?.name || null;
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -1278,18 +1317,21 @@ export class Vendors implements OnInit {
       <p style="font-weight:900;font-size:18px;margin:0;">${inv.invoice_number}</p>
       <p style="color:#64748b;margin:4px 0 0;">${this.formatDate(inv.invoice_date)}</p>
       <span style="display:inline-block;padding:4px 10px;border-radius:9999px;font-size:11px;font-weight:700;
-        background:${inv.status === 'Paid' ? '#dcfce7' : inv.status === 'Cancelled' ? '#fee2e2' : '#fef3c7'};
-        color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Cancelled' ? '#dc2626' : '#b45309'};margin-top:6px;">
+        background:${inv.status === 'Paid' ? '#dcfce7' : inv.status === 'Cancelled' ? '#fee2e2' : inv.status === 'Partially Paid' ? '#dbeafe' : '#fef3c7'};
+        color:${inv.status === 'Paid' ? '#15803d' : inv.status === 'Cancelled' ? '#dc2626' : inv.status === 'Partially Paid' ? '#1d4ed8' : '#b45309'};margin-top:6px;">
         ${inv.status}
       </span>
     </div>
   </div>
+
   ${vendor ? `
   <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;">
     <p style="margin:0;font-weight:700;">Bill To: ${vendor.name}</p>
     <p style="margin:4px 0 0;color:#64748b;">${vendor.address?.street || ''} ${vendor.address?.pincode || ''}</p>
     <p style="margin:4px 0 0;color:#64748b;">GST: ${vendor.kyc?.gst || '—'} | PAN: ${vendor.kyc?.pan || '—'}</p>
+    ${projectName ? `<p style="margin:6px 0 0;"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;">Project:</span> <span style="font-weight:700;color:#1e293b;">${projectName}</span></p>` : ''}
   </div>` : ''}
+
   <table>
     <thead>
       <tr>
@@ -1305,6 +1347,7 @@ export class Vendors implements OnInit {
     </thead>
     <tbody>${itemRows}</tbody>
   </table>
+
   <div style="margin-top:24px;max-width:340px;margin-left:auto;">
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
       <span style="color:#64748b;">Subtotal (excl. Tax)</span>
@@ -1329,7 +1372,9 @@ export class Vendors implements OnInit {
       <span style="color:#dc2626;font-weight:900;">₹${Math.max(0, Number(inv.grand_total) - Number(inv.paid_amount)).toLocaleString('en-IN')}</span>
     </div>` : ''}
   </div>
+
   ${paymentHistoryRows}
+
   <div style="margin-top:32px;text-align:center;">
     <button onclick="window.print()"
       style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">
@@ -1349,11 +1394,35 @@ export class Vendors implements OnInit {
     }
     this.showBillingModal = true;
   }
-
-  get totalBilled(): number {
-    return this.invoices.reduce((acc, inv) => acc + Number(inv.grand_total), 0);
+private checkBudgetWarning(
+  budget?: { allocated: number; totalInvoiced: number; exceeded: boolean; exceededBy: number } | null
+): void {
+  if (budget?.exceeded) {
+    alert(
+      `⚠️ Budget Exceeded for "${this.selectedVendor?.name ?? 'this vendor'}"\n\n` +
+      `Allocated Budget: ₹${Number(budget.allocated).toLocaleString('en-IN')}\n` +
+      `Total Invoiced: ₹${Number(budget.totalInvoiced).toLocaleString('en-IN')}\n` +
+      `Exceeded By: ₹${Number(budget.exceededBy).toLocaleString('en-IN')}`
+    );
   }
+}
 
+// 4) Live indicator getter — "Budget Allocated" card ke neeche dikhane ke liye
+get budgetUsage(): { allocated: number; invoiced: number; percent: number; exceeded: boolean; exceededBy: number } {
+  const allocated = Number(this.selectedVendor?.budget_allocation) || 0;
+  const invoiced = (this.invoices || [])
+    .filter(inv => inv.status !== 'Cancelled')
+    .reduce((sum, inv) => sum + (Number(inv.grand_total) || 0), 0);
+  const percent = allocated > 0 ? Math.round((invoiced / allocated) * 100) : 0;
+  const exceeded = allocated > 0 && invoiced > allocated;
+  return { allocated, invoiced, percent, exceeded, exceededBy: exceeded ? invoiced - allocated : 0 };
+}
+
+get totalBilled(): number {
+  return this.invoices
+    .filter(inv => inv.status !== 'Cancelled')
+    .reduce((acc, inv) => acc + Number(inv.grand_total), 0);
+}
   openAudit(): void {
     const latest = this.vendorAudits[0];
     this.auditForm = latest

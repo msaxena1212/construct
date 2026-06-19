@@ -46,7 +46,8 @@ get totalResources() {
   return (
     Number(this.budgetData.total_labor || 0) +
     Number(this.budgetData.total_material || 0) +
-    Number(this.budgetData.total_equipment || 0)
+    Number(this.budgetData.total_equipment || 0) +
+    Number(this.budgetData.total_others || 0)
   );
 }
 
@@ -65,6 +66,12 @@ get materialPercent() {
 get equipmentPercent() {
   return this.totalResources
     ? (Number(this.budgetData.total_equipment) / this.totalResources) * 100
+    : 0;
+}
+
+get othersPercent() {
+  return this.totalResources
+    ? (Number(this.budgetData.total_others) / this.totalResources) * 100
     : 0;
 }
 }

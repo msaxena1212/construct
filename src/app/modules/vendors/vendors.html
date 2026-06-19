@@ -56,7 +56,7 @@
           </p>
 
           <h3 class="text-4xl font-black mt-3">
-            {{ stats.pendingPayments }}
+            ₹{{ stats.pendingPayments | number:'1.0-2' }}
           </h3>
 
           <p class="text-xs text-white/70 mt-1">Awaiting Clearance</p>
@@ -281,9 +281,21 @@
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <div
-        class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32 border-l-4 border-primary">
+        class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between min-h-32 border-l-4 border-primary"
+        [class.border-red-500]="budgetUsage.exceeded">
         <span class="text-xs font-bold text-outline uppercase tracking-widest">Budget Allocated</span>
         <p class="text-2xl font-black">{{ selectedVendor.budget }}</p>
+        @if (budgetUsage.allocated > 0) {
+        <p class="text-[10px] font-bold mt-1 flex items-center gap-1" [class.text-red-600]="budgetUsage.exceeded"
+          [class.text-outline]="!budgetUsage.exceeded">
+          @if (budgetUsage.exceeded) {
+          <span class="material-symbols-outlined text-[12px]">warning</span>
+          Exceeded by ₹{{ budgetUsage.exceededBy | number:'1.0-0' }}
+          } @else {
+          {{ budgetUsage.percent }}% utilized
+          }
+        </p>
+        }
       </div>
       <div
         class="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between h-32 border-l-4 border-secondary">
@@ -396,41 +408,44 @@
                 </td>
                 <td class="py-4">
                   <div class="flex items-center gap-3">
+
+                    <!-- View button - always visible -->
                     <div class="relative group">
                       <button (click)="viewInvoice(inv)"
                         class="text-primary opacity-80 hover:opacity-100 cursor-pointer">
                         <span class="material-symbols-outlined text-sm">visibility</span>
                       </button>
-
-                      <div
-                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
+                      <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block 
+                  bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
                         View
                       </div>
                     </div>
 
+                    <!-- Pay button - only if NOT Cancelled and NOT Paid -->
+                    @if (inv.status !== 'Cancelled' && inv.status !== 'Paid') {
                     <div class="relative group">
                       <button (click)="payInvoice(inv)"
                         class="text-green-600 opacity-80 hover:opacity-100 cursor-pointer">
                         <span class="material-symbols-outlined text-sm">payments</span>
                       </button>
-
-                      <div
-                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
+                      <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block 
+                    bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
                         Payment
                       </div>
                     </div>
-
+                    }
+                    @if (inv.status !== 'Cancelled' && inv.status !== 'Paid' && inv.status !== 'Partially Paid') {
                     <div class="relative group">
                       <button (click)="openCancelInvoiceDialog(inv)"
                         class="text-red-600 opacity-80 hover:opacity-100 cursor-pointer">
                         <span class="material-symbols-outlined text-sm">cancel</span>
                       </button>
-
-                      <div
-                        class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
+                      <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block 
+                bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
                         Cancel
                       </div>
                     </div>
+                    }
                   </div>
                 </td>
               </tr>
@@ -616,9 +631,11 @@
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0" />
                   <span class="text-xs font-semibold text-slate-700 flex-1 truncate dark:text-slate-300">{{ m.name ??
                     m.title }}</span>
-                  @if (m.progress != null) {
+                  @if (m.milestone_progress != null || m.progress != null) {
                   <span class="text-[9px] font-black shrink-0"
-                    [ngClass]="m.progress >= 100 ? 'text-green-600' : 'text-amber-500'">{{ m.progress }}%</span>
+                    [ngClass]="(m.milestone_progress ?? m.progress) >= 100 ? 'text-green-600' : 'text-amber-500'">
+                    {{ m.milestone_progress ?? m.progress }}%
+                  </span>
                   }
                 </label>
                 }
@@ -679,9 +696,11 @@
                     class="w-3.5 h-3.5 accent-blue-600 cursor-pointer rounded flex-shrink-0" />
                   <span class="text-xs font-semibold text-slate-700 flex-1 truncate dark:text-slate-300">{{ sm.name ??
                     sm.title }}</span>
-                  @if (sm.progress != null) {
+                  @if (sm.milestone_progress != null || sm.progress != null) {
                   <span class="text-[9px] font-black shrink-0"
-                    [ngClass]="sm.progress >= 100 ? 'text-green-600' : 'text-amber-500'">{{ sm.progress }}%</span>
+                    [ngClass]="(sm.milestone_progress ?? sm.progress) >= 100 ? 'text-green-600' : 'text-amber-500'">
+                    {{ sm.milestone_progress ?? sm.progress }}%
+                  </span>
                   }
                 </label>
                 }
@@ -2230,6 +2249,12 @@
           Budget Allocated
         </p>
         <p class="text-xl font-black text-primary">{{ selectedVendor?.budget ?? '—' }}</p>
+        @if (budgetUsage.exceeded) {
+        <p class="text-[9px] font-bold text-red-600 mt-1 flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-[11px]">warning</span>
+          Exceeded
+        </p>
+        }
       </div>
     </div>
 
