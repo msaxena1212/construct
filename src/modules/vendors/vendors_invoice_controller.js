@@ -82,24 +82,22 @@ const createInvoice = async (req, res) => {
 const updateInvoiceStatus = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
-    const {
-      status,
-      amount,
-      mode,
-      reference,
-      clearance_date,
-      settlement_type,
-      settlement_completion,
-      milestone_ids,
-      sub_milestone_ids,
-      task_ids,
-    } = req.body;
+    const { status, amount, mode, reference, clearance_date,
+      settlement_type, settlement_completion,
+      milestone_ids, sub_milestone_ids, task_ids } = req.body;
 
     const invoice = await InvoiceModel.findOne({
       where: { id: req.params.id, company_id },
     });
     if (!invoice)
       return res.status(404).json({ success: false, message: 'Invoice not found' });
+
+    if (status === 'Cancelled' && invoice.status === 'Partially Paid') {
+      return res.status(400).json({
+        success: false,
+        message: 'Partially paid invoice cannot be cancelled. Please refund the payment first.',
+      });
+    }
 
     const updatePayload = { status };
 
