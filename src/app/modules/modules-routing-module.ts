@@ -43,7 +43,7 @@ const routes: Routes = [
       {
         path: 'stock-approval',
         loadChildren: () => import('./stock-approval/stock-approval-module').then((m) => m.StockApprovalModule),
-        
+
       },
       {
         path: 'resources',
@@ -59,6 +59,7 @@ const routes: Routes = [
       { path: 'profile', loadChildren: () => import('./profile/profile-module').then(m => m.ProfileModule) },
       { path: 'analytics', loadChildren: () => import('./analytics/analytics-module').then(m => m.AnalyticsModule) },
       { path: 'access-denied', loadComponent: () => import('../core/interceptors/access-denied/access-denied').then(m => m.AccessDenied) },
+      { path: 'history', loadChildren: () => import('./history/history-module').then(m => m.HistoryModule) },
     ],
   },
 ];
