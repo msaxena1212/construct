@@ -74,6 +74,7 @@ export interface Vendor {
   project_id: number | null;
   id: string;
   name: string;
+  created_at?: string;
   type: string;
   email: string;
   phone: string;
@@ -175,6 +176,7 @@ export class VendorsServices {
       project_id: b.project_id ?? null,
       name: b.name,
       type: 'Subcontractor',
+      created_at: b.createdAt,
       email: b.official_email,
       phone: b.official_phone,
       spoc: { name: b.spoc_name, role: 'SPOC', phone: b.spoc_phone, email: b.official_email },

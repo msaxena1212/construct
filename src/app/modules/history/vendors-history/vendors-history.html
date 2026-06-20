@@ -1,384 +1,234 @@
-<section class="px-4 pt-2 pb-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+<section class="px-4 pt-2 pb-8 flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-    <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div class="space-y-1">
             <h2 class="text-3xl font-black tracking-tight text-slate-800 dark:text-white">Vendor History</h2>
             <p class="text-slate-500 mt-1 text-sm font-medium">
-                Complete record per vendor — details, tasks, invoicing, settlements, audits &amp; labor.
+                Complete activity timeline — invoices, payments, milestones, tasks, audits &amp; labor, merged in one
+                feed.
             </p>
         </div>
-        <button (click)="exportAllToCsv()" [disabled]="exporting"
-            class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-highest text-primary hover:bg-surface-dim transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-            <span class="material-symbols-outlined text-lg" [class.animate-spin]="exporting">
-                {{ exporting ? 'progress_activity' : 'download' }}
-            </span>
-            {{ exporting ? 'Preparing Export…' : 'Export All (CSV)' }}
-        </button>
-    </div>
 
-    <div
-        class="bg-surface-container-lowest p-4 rounded-2xl border border-outline-variant/10 shadow-sm flex flex-col md:flex-row gap-3">
-        <input [(ngModel)]="searchTerm" type="text" placeholder="Search vendor name, email or skill..."
-            class="flex-1 px-4 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-white dark:bg-slate-900 cursor-pointer" />
-        <select [(ngModel)]="statusFilter"
-            class="px-4 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-white dark:bg-slate-900 cursor-pointer">
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="inactive">Inactive</option>
-        </select>
-    </div>
+        <div class="flex items-center gap-3 flex-wrap">
 
-    <div class="space-y-4">
-        @for (vendor of filteredVendors; track vendor.id) {
-        <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/10 shadow-sm overflow-hidden">
+            <div class="relative" data-dropdown="vendor" #vendorDropdownRef>
+                <button (click)="toggleVendorDropdown()"
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white dark:bg-slate-900 border border-outline-variant/20 text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer shadow-sm min-w-[200px]">
+                    <span class="material-symbols-outlined text-primary text-lg">storefront</span>
+                    <span class="flex-1 text-left truncate">{{ vendorDropdownLabel }}</span>
+                    <span class="material-symbols-outlined text-outline text-base transition-transform duration-200"
+                        [class.rotate-180]="vendorDropdownOpen">expand_more</span>
+                </button>
 
-            <div (click)="toggleVendor(vendor)"
-                class="flex items-center justify-between gap-4 p-5 cursor-pointer hover:bg-surface-container-low transition-colors">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center">
-                        <span class="material-symbols-outlined text-outline">{{ vendor.icon }}</span>
-                    </div>
-                    <div>
-                        <p class="font-bold text-on-surface">{{ vendor.name }}</p>
-                        <p class="text-xs text-outline">{{ vendor.email }} · {{ vendor.phone }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="px-3 py-1 text-[10px] font-bold uppercase rounded-full"
-                        [ngClass]="vendor.statusColor">{{ vendor.status }}</span>
-                    <span class="material-symbols-outlined text-outline transition-transform"
-                        [class.rotate-180]="isExpanded(vendor)">expand_more</span>
-                </div>
-            </div>
+                @if (vendorDropdownOpen) {
+                <div
+                    class="absolute right-0 top-full mt-1.5 w-72 bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/20 shadow-xl z-50 overflow-hidden">
 
-            @if (isExpanded(vendor)) {
-            @if (records[vendor.id]?.loading) {
-            <div class="py-14 flex flex-col items-center gap-3 text-outline border-t border-outline-variant/10">
-                <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
-                <p class="text-sm font-bold">Loading vendor record…</p>
-            </div>
-            } @else {
-            <div class="border-t border-outline-variant/10 p-5 space-y-6">
-
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-outline-variant/10">
-                    <h3
-                        class="text-sm font-black uppercase tracking-widest text-outline mb-3 flex items-center justify-between gap-2">
-                        <span class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-base">business_center</span> Vendor
-                            Details
-                        </span>
-                        <button (click)="downloadVendorReport(records[vendor.id])"
-                            class="flex items-center gap-1.5 text-[11px] font-black text-primary hover:underline cursor-pointer normal-case">
-                            <span class="material-symbols-outlined text-sm">picture_as_pdf</span> Download Report
-                        </button>
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="bg-surface-container-low rounded-xl px-4 py-3">
-                            <p class="text-[10px] font-black uppercase text-slate-400">SPOC</p>
-                            <p class="text-sm font-bold">{{ vendor.spoc.name }}</p>
-                            <p class="text-xs text-slate-500">{{ vendor.spoc.phone }} · {{ vendor.spoc.email }}</p>
-                        </div>
-                        <div class="bg-surface-container-low rounded-xl px-4 py-3">
-                            <p class="text-[10px] font-black uppercase text-slate-400">KYC</p>
-                            <p class="text-xs font-bold uppercase">GST: {{ vendor.kyc.gst || '—' }}</p>
-                            <p class="text-xs font-bold uppercase">PAN: {{ vendor.kyc.pan || '—' }}</p>
-                        </div>
-                        <div class="bg-surface-container-low rounded-xl px-4 py-3 md:col-span-2">
-                            <p class="text-[10px] font-black uppercase text-slate-400">Address</p>
-                            <p class="text-xs font-semibold">{{ vendor.address.street }}, {{ vendor.address.pincode }}
-                            </p>
-                        </div>
-                        <div class="bg-surface-container-low rounded-xl px-4 py-3 md:col-span-2">
-                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">Skills</p>
-                            <div class="flex flex-wrap gap-1.5">
-                                @for (s of vendor.skill; track s) {
-                                <span
-                                    class="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full">{{
-                                    s }}</span>
-                                }
-                            </div>
-                        </div>
-                        @if (vendor.contract_files.length > 0) {
-                        <div class="bg-surface-container-low rounded-xl px-4 py-3 md:col-span-2">
-                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1.5">Documents ({{
-                                vendor.contract_files.length }})</p>
-                            <div class="flex flex-col gap-1.5">
-                                @for (file of vendor.contract_files; track file) {
-                                <a [href]="file" target="_blank"
-                                    class="text-xs font-semibold text-primary hover:underline flex items-center gap-1.5">
-                                    <span class="material-symbols-outlined text-[14px]">description</span> {{
-                                    getFileName(file) }}
-                                </a>
-                                }
-                            </div>
-                        </div>
-                        }
-                    </div>
-
-                    <div class="mt-4 p-4 rounded-xl border-l-4"
-                        [ngClass]="budgetUsage(records[vendor.id]).exceeded ? 'border-red-500 bg-red-50' : 'border-primary bg-primary/5'">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-outline">Budget
-                                Allocated</span>
-                            <span class="font-black">{{ vendor.budget }}</span>
-                        </div>
-                        <div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden mt-2">
-                            <div class="h-full rounded-full"
-                                [class.bg-red-500]="budgetUsage(records[vendor.id]).exceeded"
-                                [class.bg-primary]="!budgetUsage(records[vendor.id]).exceeded"
-                                [style.width.%]="Math.min(100, budgetUsage(records[vendor.id]).percent)"></div>
-                        </div>
-                        <p class="text-[10px] font-bold mt-1"
-                            [class.text-red-600]="budgetUsage(records[vendor.id]).exceeded"
-                            [class.text-outline]="!budgetUsage(records[vendor.id]).exceeded">
-                            @if (budgetUsage(records[vendor.id]).exceeded) {
-                            Exceeded by {{ formatAmount(budgetUsage(records[vendor.id]).exceededBy) }}
-                            } @else {
-                            {{ budgetUsage(records[vendor.id]).percent }}% utilized · Invoiced {{
-                            formatAmount(budgetUsage(records[vendor.id]).invoiced) }}
-                            }
-                        </p>
-                    </div>
-                </div>
-
-
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-outline-variant/10">
-                    <h3 class="text-sm font-black uppercase tracking-widest text-outline mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary text-base">checklist</span>
-                        Service Tasks &amp; Performance
-                        <span class="text-[10px] font-bold text-slate-400 normal-case ml-1">— Project: {{
-                            records[vendor.id].projectData?.name || 'Not linked' }}</span>
-                    </h3>
-                    <div class="space-y-2">
-                        @for (task of records[vendor.id].tasks; track task.id) {
-                        <div class="flex items-center gap-4 p-3 bg-surface-container-low rounded-xl">
-                            <div class="flex-1">
-                                <p class="font-bold text-sm">{{ task.title }}</p>
-                                <p class="text-[11px] text-outline">Due: {{ formatDate(task.due_date) }}</p>
-                            </div>
-                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase"
-                                [ngClass]="getTaskStatusColor(task.status)">{{ task.status }}</span>
-                        </div>
-                        } @empty {
-                        <p class="text-center py-6 text-outline text-xs font-bold italic">No tasks linked to this
-                            vendor's project.</p>
-                        }
-                    </div>
-                </div>
-
-
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-outline-variant/10">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-black uppercase tracking-widest text-outline flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-base">receipt_long</span> Vendor
-                            Invoicing
-                        </h3>
-                        <div class="flex gap-4 text-[11px] font-bold">
-                            <span class="text-amber-600">Billed: {{ formatAmount(records[vendor.id].totalBilled)
-                                }}</span>
-                            <span class="text-green-600">Paid: {{ formatAmount(records[vendor.id].totalPaid) }}</span>
+                    <div class="px-3 py-2.5 border-b border-outline-variant/10">
+                        <div class="relative">
+                            <span
+                                class="absolute left-2.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-[15px]">search</span>
+                            <input [(ngModel)]="dropdownSearch" type="text" placeholder="Search vendors…"
+                                class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-outline-variant/20 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest" />
                         </div>
                     </div>
 
-                    <div class="space-y-3">
-                        @for (inv of records[vendor.id].invoices; track inv.id) {
-                        <div class="border border-outline-variant/10 rounded-2xl overflow-hidden">
-                            <div class="flex items-center justify-between p-4 bg-surface-container-low flex-wrap gap-2">
-                                <div>
-                                    <p class="font-black text-sm">{{ inv.invoice_number }}</p>
-                                    <p class="text-[11px] text-outline">{{ formatDate(inv.invoice_date) }}</p>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <p class="font-black">{{ formatAmount(inv.grand_total) }}</p>
-                                    <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase"
-                                        [ngClass]="getInvoiceStatusColor(inv.status)">{{ inv.status }}</span>
-                                    <button (click)="viewInvoice(records[vendor.id], inv)"
-                                        class="text-primary hover:opacity-70 cursor-pointer">
-                                        <span class="material-symbols-outlined text-base">visibility</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="p-4 space-y-3">
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-xs">
-                                        <thead>
-                                            <tr
-                                                class="text-[10px] font-black uppercase text-outline border-b border-outline-variant/10">
-                                                <th class="py-2 text-left">Type</th>
-                                                <th class="py-2 text-left">Description</th>
-                                                <th class="py-2 text-center">Qty</th>
-                                                @if (invoiceHasLabor(inv)) {
-                                                <th class="py-2 text-center">Hours</th>
-                                                }
-                                                <th class="py-2 text-right">Rate</th>
-                                                <th class="py-2 text-center">Tax</th>
-                                                <th class="py-2 text-right">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @for (item of getInvoiceItems(inv); track $index) {
-                                            <tr class="border-b border-outline-variant/5">
-                                                <td class="py-2 capitalize">{{ item.type || '—' }}</td>
-                                                <td class="py-2">{{ item.description || '—' }}</td>
-                                                <td class="py-2 text-center">{{ item.quantity }}</td>
-                                                @if (invoiceHasLabor(inv)) {
-                                                <td class="py-2 text-center">{{ item.type === 'labor' ? (item.hours ||
-                                                    0) + 'h' : '—' }}</td>
-                                                }
-                                                <td class="py-2 text-right">{{ formatAmount(item.unitPrice) }}</td>
-                                                <td class="py-2 text-center">{{ item.gst }}%</td>
-                                                <td class="py-2 text-right font-bold">{{ formatAmount(item.total) }}
-                                                </td>
-                                            </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-
-
-                                @if (resolveSettlement(records[vendor.id], inv); as settlement) {
-                                <div class="bg-blue-50 dark:bg-blue-900/10 rounded-xl px-4 py-3 text-xs space-y-1">
-                                    <p class="font-black text-blue-700 uppercase text-[10px] tracking-wide">Settlement:
-                                        {{ settlement.type }}</p>
-                                    @if (settlement.completion != null) {
-                                    <p><strong>% Complete:</strong> {{ settlement.completion }}%</p>
-                                    }
-                                    @if (settlement.milestoneNames.length) {
-                                    <p><strong>Milestone:</strong> {{ settlement.milestoneNames.join(', ') }}</p>
-                                    }
-                                    @if (settlement.subMilestoneNames.length) {
-                                    <p><strong>Sub-Milestone:</strong> {{ settlement.subMilestoneNames.join(', ') }}</p>
-                                    }
-                                    @if (settlement.taskNames.length) {
-                                    <p><strong>Task:</strong> {{ settlement.taskNames.join(', ') }}</p>
-                                    }
-                                </div>
-                                }
-
-
-                                @if (inv.payment_history && inv.payment_history.length > 0) {
-                                <div class="space-y-1.5">
-                                    <p class="text-[10px] font-black uppercase text-outline">Payment Details</p>
-                                    @for (p of inv.payment_history; track $index) {
-                                    <div
-                                        class="flex items-center justify-between bg-surface-container-low rounded-lg px-3 py-2 text-xs">
-                                        <span class="font-semibold">{{ formatDate(p.paid_at) }} · {{ p.mode }}{{
-                                            p.reference ? ' · Ref: ' + p.reference : '' }}{{ p.clearance_date ? ' · Clr:
-                                            ' + formatDate(p.clearance_date) : '' }}</span>
-                                        <span class="font-black text-green-600">{{ formatAmount(p.amount) }}</span>
-                                    </div>
-                                    }
-                                </div>
-                                }
-
-                                @if (toNumber(inv.paid_amount) > 0 && inv.status !== 'Paid') {
-                                <p class="text-[11px] font-bold text-amber-600">
-                                    Remaining: {{ formatAmount(remainingAmount(inv)) }}
-                                </p>
-                                }
-                            </div>
-                        </div>
-                        } @empty {
-                        <p class="text-center py-8 text-outline text-xs font-bold italic">No invoices submitted for this
-                            vendor.</p>
-                        }
-                    </div>
-                </div>
-
-
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-outline-variant/10">
-                    <h3 class="text-sm font-black uppercase tracking-widest text-outline mb-3 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary text-base">fact_check</span> Compliance
-                        Audits
-                    </h3>
-                    <div class="space-y-2">
-                        @for (a of records[vendor.id].audits; track a.id) {
-                        <div class="bg-surface-container-low rounded-xl p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <p class="text-[11px] font-bold text-outline">{{ formatDate(a.audit_date || a.createdAt)
-                                    }}</p>
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase"
-                                    [ngClass]="getAuditColor(+a.composite_score)">{{ Math.round(+a.composite_score)
-                                    }}%</span>
-                            </div>
-                            <div class="flex gap-4 text-xs font-semibold mb-1">
-                                <span>Quality: {{ a.quality }}/10</span>
-                                <span>Timeliness: {{ a.timeliness }}/10</span>
-                                <span>Safety: {{ a.safety }}/10</span>
-                            </div>
-                            @if (a.observations) {
-                            <p class="text-xs text-outline italic">"{{ a.observations }}"</p>
+                    <div (click)="toggleSelectAll()"
+                        class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-container-low transition-colors border-b border-outline-variant/10">
+                        <div class="w-4 h-4 rounded flex items-center justify-center border-2 transition-all" [ngClass]="isAllSelected
+                ? 'bg-primary border-primary'
+                : isPartiallySelected
+                  ? 'bg-primary/30 border-primary'
+                  : 'border-outline/40 bg-white dark:bg-slate-800'">
+                            @if (isAllSelected) {
+                            <span class="material-symbols-outlined text-white text-[11px]">check</span>
+                            } @else if (isPartiallySelected) {
+                            <span class="material-symbols-outlined text-primary text-[11px]">remove</span>
                             }
                         </div>
-                        } @empty {
-                        <p class="text-center py-6 text-outline text-xs font-bold italic">No audits recorded yet.</p>
-                        }
-                    </div>
-                </div>
-
-
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-outline-variant/10">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-black uppercase tracking-widest text-outline flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-base">engineering</span> Labor
-                            Details
-                        </h3>
-                        <span class="text-[11px] font-bold text-secondary">
-                            {{ records[vendor.id].laborStats.totalPersonnel }} workers · {{
-                            formatAmount(records[vendor.id].totalDailyLaborCost) }}/day
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-black text-on-surface">All Vendors</p>
+                            <p class="text-[10px] text-outline">{{ vendors.length }} total</p>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            {{ selectedVendorIds.size }}/{{ vendors.length }}
                         </span>
                     </div>
-                    @if (records[vendor.id].laborWorkers.length === 0) {
-                    <p class="text-center py-6 text-outline text-xs font-bold italic">No labor records found.</p>
-                    } @else {
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs">
-                            <thead>
-                                <tr
-                                    class="text-[10px] font-black uppercase text-outline border-b border-outline-variant/10">
-                                    <th class="py-2 text-left">Skill</th>
-                                    <th class="py-2 text-center">Count</th>
-                                    <th class="py-2 text-center">Assigned</th>
-                                    <th class="py-2 text-right">Rate/day</th>
-                                    <th class="py-2 text-right">Cost/day</th>
-                                    <th class="py-2 text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (w of records[vendor.id].laborWorkers; track w.id) {
-                                <tr class="border-b border-outline-variant/5">
-                                    <td class="py-2 font-bold">{{ w.skill }}</td>
-                                    <td class="py-2 text-center">{{ w.labor_count }}</td>
-                                    <td class="py-2 text-center">{{ w.assign_worker || '—' }}</td>
-                                    <td class="py-2 text-right">{{ formatAmount(w.daily_rate) }}</td>
-                                    <td class="py-2 text-right font-bold text-primary">{{ formatAmount(w.daily_rate *
-                                        w.labor_count) }}</td>
-                                    <td class="py-2 text-center">
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
-                                            [ngClass]="w.status === 'active' || w.status === 'on_site' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'">
-                                            {{ w.statusLabel || w.status }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                    }
-                </div>
 
+                    <div class="max-h-60 overflow-y-auto">
+                        @for (v of dropdownFilteredVendors; track v.id) {
+                        <div (click)="toggleVendorSelection(v)"
+                            class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-container-low transition-colors border-b border-outline-variant/5">
+                            <div class="w-4 h-4 rounded flex items-center justify-center border-2 shrink-0 transition-all"
+                                [ngClass]="selectedVendorIds.has(v.id)
+                  ? 'bg-primary border-primary'
+                  : 'border-outline/40 bg-white dark:bg-slate-800'">
+                                @if (selectedVendorIds.has(v.id)) {
+                                <span class="material-symbols-outlined text-white text-[11px]">check</span>
+                                }
+                            </div>
+                            <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                                [ngClass]="selectedVendorIds.has(v.id) ? 'bg-primary/15' : 'bg-surface-container-high'">
+                                <span class="material-symbols-outlined text-[14px]"
+                                    [ngClass]="selectedVendorIds.has(v.id) ? 'text-primary' : 'text-outline'">business</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold truncate text-on-surface">{{ v.name }}</p>
+                                <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                        [ngClass]="v.statusColor">{{ v.status }}</span>
+                                    <span class="text-[10px] font-semibold"
+                                        [class.text-green-600]="v.compliance_score >= 90"
+                                        [class.text-amber-500]="v.compliance_score < 90 && v.compliance_score >= 70"
+                                        [class.text-red-500]="v.compliance_score < 70">
+                                        {{ v.compliance_score }}%
+                                    </span>
+                                    <span class="text-[9px] text-outline font-semibold">· Since {{
+                                        formatDate(v.created_at) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        } @empty {
+                        <div class="py-6 text-center text-outline">
+                            <span class="material-symbols-outlined text-2xl">search_off</span>
+                            <p class="text-xs font-bold mt-1">No vendors found</p>
+                        </div>
+                        }
+                    </div>
+
+                    <div
+                        class="px-4 py-2.5 border-t border-outline-variant/10 bg-surface-container-low flex items-center justify-between gap-3">
+                        <div class="flex gap-3 text-[10px] font-bold text-outline">
+                            <span>Active: <span class="text-green-600 font-black">{{ activeCount }}</span></span>
+                            <span>Pending: <span class="text-amber-600 font-black">{{ pendingCount }}</span></span>
+                        </div>
+                        <button (click)="vendorDropdownOpen = false"
+                            class="text-[11px] font-black text-primary hover:underline cursor-pointer">Done</button>
+                    </div>
+
+                </div>
+                }
             </div>
-            }
-            }
+
+            <button (click)="exportAllToCsv()" [disabled]="exporting"
+                class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-highest text-primary hover:bg-surface-dim transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                <span class="material-symbols-outlined text-lg" [class.animate-spin]="exporting">
+                    {{ exporting ? 'progress_activity' : 'download' }}
+                </span>
+                {{ exporting ? 'Preparing Export…' : 'Export All (CSV)' }}
+            </button>
         </div>
-        } @empty {
-        <div class="py-20 flex flex-col items-center gap-3 text-outline">
-            <span class="material-symbols-outlined text-5xl">storefront</span>
-            <p class="font-bold">No vendors found.</p>
+    </div>
+
+    <div class="flex flex-col gap-5">
+
+        @if (!isAllSelected && selectedVendorIds.size > 0) {
+        <div class="flex flex-wrap gap-2 items-center">
+            <span class="text-[11px] font-black text-outline uppercase tracking-widest">Showing:</span>
+            @for (id of selectedVendorIdsArray; track id) {
+            <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                <span class="text-[11px] font-black text-primary">{{ getVendorNameById(id) }}</span>
+                <button (click)="removeVendorSelection(id)"
+                    class="text-primary/60 hover:text-primary transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined text-[13px]">close</span>
+                </button>
+            </div>
+            }
+            <button (click)="clearAllSelections()"
+                class="text-[11px] font-bold text-outline hover:text-primary transition-colors cursor-pointer underline">
+                Clear all
+            </button>
         </div>
         }
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div
+                class="bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500 text-white rounded-2xl p-4 shadow-md">
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Vendors</p>
+                <p class="text-2xl font-black mt-1">{{ displayVendors.length }}</p>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-2xl p-4 shadow-md">
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Invoices</p>
+                <p class="text-2xl font-black mt-1">{{ displayTotalInvoices }}</p>
+            </div>
+            <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl p-4 shadow-md">
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Billed</p>
+                <p class="text-lg font-black mt-1">{{ formatAmount(displayTotalBilled) }}</p>
+            </div>
+            <div class="bg-gradient-to-br from-rose-400 to-pink-500 text-white rounded-2xl p-4 shadow-md">
+                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Paid</p>
+                <p class="text-lg font-black mt-1">{{ formatAmount(displayTotalPaid) }}</p>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+                <h3 class="text-lg font-black text-on-surface">
+                    {{ isAllSelected ? 'All Vendors — Activity History' : selectedVendorIds.size + ' Vendor(s) —
+                    Activity History' }}
+                </h3>
+                <p class="text-xs text-outline mt-0.5">
+                    {{ displayVendors.length }} vendor(s) — combined, chronological activity feed
+                </p>
+            </div>
+        </div>
+
+        <!-- ── Merged Activity Timeline ─────────────────────────────────────── -->
+        @if (selectedVendorIds.size === 0) {
+        <div
+            class="py-20 flex flex-col items-center gap-3 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
+            <span class="material-symbols-outlined text-5xl">storefront</span>
+            <p class="font-bold text-sm">No vendors selected</p>
+            <p class="text-xs text-center max-w-xs">Use the "Select Vendors" dropdown above to choose vendors whose
+                history you want to view.</p>
+            <button (click)="toggleSelectAll()"
+                class="mt-2 px-5 py-2 rounded-xl text-xs font-black text-white bg-primary hover:bg-primary/90 transition-colors cursor-pointer">
+                Select All Vendors
+            </button>
+        </div>
+        } @else if (isTimelineLoading) {
+        <div
+            class="py-16 flex flex-col items-center gap-3 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
+            <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+            <p class="text-sm font-bold">Loading history…</p>
+        </div>
+        } @else {
+        <div class="space-y-2.5">
+            @for (ev of timelineEvents; track ev.id) {
+            <div
+                class="flex items-start gap-3 bg-surface-container-low rounded-2xl px-4 py-3.5 hover:bg-surface-container transition-colors">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" [ngClass]="ev.iconBg">
+                    <span class="material-symbols-outlined text-[16px]" [ngClass]="ev.iconColor">{{ ev.icon }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <span class="text-[11px] font-black text-slate-500">{{ formatDate(ev.date) }}, {{
+                            formatTime(ev.date) }}</span>
+                        @if (!isSingleVendorSelected) {
+                        <span
+                            class="text-[9px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">{{
+                            ev.vendorName }}</span>
+                        }
+                    </div>
+                    <p class="text-sm font-semibold text-on-surface mt-1">{{ ev.description }}</p>
+                </div>
+                @if (ev.viewAction) {
+                <button (click)="ev.viewAction()"
+                    class="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer shrink-0">
+                    <span class="material-symbols-outlined text-base">visibility</span>
+                </button>
+                }
+            </div>
+            } @empty {
+            <div
+                class="py-16 flex flex-col items-center gap-2 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
+                <span class="material-symbols-outlined text-4xl">history</span>
+                <p class="text-xs font-bold italic">No history events found for the selected vendor(s) yet.</p>
+            </div>
+            }
+        </div>
+        }
+
     </div>
+
 </section>
