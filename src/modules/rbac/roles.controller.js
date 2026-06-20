@@ -1,5 +1,5 @@
 const db = require("../../models");
-
+const { Op } = require("sequelize");
 class RolesController {
   async createRole(req, res) {
     try {
@@ -112,7 +112,17 @@ class RolesController {
       const company_id = req.user?.company_id || null;
 
       // Verify role belongs to company (or is readable)
-      const role = await db.role.findOne({ where: { id, company_id, is_deleted: false } });
+      // const role = await db.role.findOne({ where: { id, company_id, is_deleted: false } });
+      const role = await db.role.findOne({
+        where: {
+          id,
+          is_deleted: false,
+          [Op.or]: [
+            { company_id },
+            { company_id: null }
+          ]
+        }
+      });
       if (!role) {
         return res.status(404).json({ message: "Role not found or access denied" });
       }
@@ -159,7 +169,17 @@ class RolesController {
       const company_id = req.user?.company_id || null;
       const { permissions } = req.body; // Array of { module_id, can_create, can_read, can_update, can_delete }
 
-      const role = await db.role.findOne({ where: { id, company_id, is_deleted: false } });
+      // const role = await db.role.findOne({ where: { id, company_id, is_deleted: false } });
+      const role = await db.role.findOne({
+        where: {
+          id,
+          is_deleted: false,
+          [Op.or]: [
+            { company_id },
+            { company_id: null }
+          ]
+        }
+      });
       if (!role) {
         return res.status(404).json({ message: "Role not found or access denied" });
       }
