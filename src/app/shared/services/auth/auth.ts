@@ -88,6 +88,9 @@ export class AuthService {
   logout() {
     this.userS.next(null);
     localStorage.removeItem(this.LS_KEY);
+    localStorage.removeItem('permissions'); 
+    localStorage.clear();
+    sessionStorage.clear();
     this.route.navigate(['']);
   }
 
