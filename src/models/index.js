@@ -62,6 +62,9 @@ db.material = require("../modules/material/models/material.model.js")(sequelize,
 
 db.material_project_stock = require("../modules/material/models/material_project_stock.model.js")(sequelize, Sequelize);
 
+db.material_project_stock_history = require("../modules/material/models/material_project_stock_history.model.js")(sequelize, Sequelize);
+
+
 //Labor
 // db.labor = require("../modules/labor/models/labor_models.js")(sequelize, Sequelize);
 db.material_history = require("../modules/material/models/material_history.model.js")(sequelize, Sequelize);
@@ -318,6 +321,12 @@ db.meeting.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor" });
 
 db.user.hasMany(db.meeting, { foreignKey: "created_by", as: "created_meetings" });
 db.meeting.belongsTo(db.user, { foreignKey: "created_by", as: "creator" });
+
+
+
+db.material_project_stock.hasMany(db.material_project_stock_history, { foreignKey: "material_project_stock_id", as: "material_project_stock_history" });
+db.material_project_stock_history.belongsTo(db.material_project_stock, { foreignKey: "material_project_stock_id", as: "material_project_stock" });
+
 
 // PROJECT MANAGEMENT END
 // ── LABOR associations ──────────────────────────────────────
