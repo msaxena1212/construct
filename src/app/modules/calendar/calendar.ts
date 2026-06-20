@@ -33,7 +33,8 @@ export class Calendar implements OnInit {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
   ];
-
+  selectedProjectIds: number[] = [];
+  showProjectFilterDropdown = false;
   currentDate = new Date();
   currentMonth = this.currentDate.getMonth();
   currentYear = this.currentDate.getFullYear();
@@ -116,7 +117,13 @@ export class Calendar implements OnInit {
 
   loadProjects(): void {
     this.projectService.getProjects().subscribe({
-      next: (res) => { this.projects = res.data || []; this.generateCalendar(); },
+      next: (res) => {
+        this.projects = res.data || [];
+        if (!this.selectedProjectIds.length) {
+          this.selectedProjectIds = this.projects.map(p => Number(p.id));
+        }
+        this.generateCalendar();
+      },
       error: (err) => console.error('loadProjects:', err),
     });
   }
@@ -193,7 +200,7 @@ export class Calendar implements OnInit {
   private getEventsForDate(fullDate: string): CalendarEvent[] {
     const events: CalendarEvent[] = [];
 
-    this.projects.forEach(project => {
+    this.filteredProjects.forEach(project => {
       const startDate = project.createdAt?.split('T')[0];
       const completionDate = project.completion_date?.split('T')[0];
 
@@ -217,7 +224,12 @@ export class Calendar implements OnInit {
     });
 
     this.meetings
-      .filter(m => m.date?.split('T')[0] === fullDate)
+      .filter(m => {
+        if (m.date?.split('T')[0] !== fullDate) return false;
+        return m.project_id
+          ? this.selectedProjectIds.includes(Number(m.project_id))
+          : this.isAllProjectsSelected;
+      })
       .forEach(meeting => {
         const project = this.projects.find(p => Number(p.id) === Number(meeting.project_id));
         const vendor = this.vendors.find(v => Number(v.id) === Number(meeting.vendor_id));
@@ -236,6 +248,14 @@ export class Calendar implements OnInit {
       case 'Day': this.generateDayView(); break;
       case 'Week': this.generateWeekView(); break;
       default: this.generateMonthView(); break;
+    }
+    this.refreshDayEventsPanel();
+  }
+
+  private refreshDayEventsPanel(): void {
+    if (this.showDayEventsPanel && this.selectedDayFullDate) {
+      const refreshed = this.calendarDays.find(d => d.fullDate === this.selectedDayFullDate);
+      if (refreshed) this.selectedDayEvents = [...refreshed.events];
     }
   }
 
@@ -267,6 +287,42 @@ export class Calendar implements OnInit {
     return idx * 32;
   }
 
+  get filteredProjects(): IProject[] {
+    return this.projects.filter(p => this.selectedProjectIds.includes(Number(p.id)));
+  }
+
+  get isAllProjectsSelected(): boolean {
+    return this.projects.length > 0 &&
+      this.selectedProjectIds.length === this.projects.length;
+  }
+
+  toggleAllProjects(): void {
+    if (this.isAllProjectsSelected) {
+      this.selectedProjectIds = [];
+    } else {
+      this.selectedProjectIds = this.projects.map(p => Number(p.id));
+    }
+    this.generateCalendar();
+  }
+
+  selectAllProjects(): void {
+    this.selectedProjectIds = this.projects.map(p => Number(p.id));
+    this.generateCalendar();
+  }
+
+  toggleProjectFilter(projectId: number): void {
+    const idx = this.selectedProjectIds.indexOf(projectId);
+    if (idx === -1) {
+      this.selectedProjectIds.push(projectId);
+    } else {
+      this.selectedProjectIds.splice(idx, 1);
+    }
+    this.generateCalendar();
+  }
+
+  isProjectFilterSelected(projectId: number): boolean {
+    return this.selectedProjectIds.includes(projectId);
+  }
   currentTimeVisible(): boolean {
     return this.calendarDays.some((d: any) => d.today);
   }
@@ -331,11 +387,6 @@ export class Calendar implements OnInit {
       this.calendarDays.push({
         date: day, fullDate, events: this.getEventsForDate(fullDate), today: fullDate === todayStr
       });
-    }
-
-    if (this.showDayEventsPanel && this.selectedDayFullDate) {
-      const refreshed = this.calendarDays.find(d => d.fullDate === this.selectedDayFullDate);
-      if (refreshed) this.selectedDayEvents = [...refreshed.events];
     }
   }
 
@@ -599,11 +650,21 @@ export class Calendar implements OnInit {
     return this.vendors.filter(v => ids.includes(v.id)).map(v => v.name).join(', ');
   }
 
+  get selectedProjectsLabel(): string {
+    if (this.isAllProjectsSelected) return 'All Projects';
+    if (this.selectedProjectIds.length === 0) return 'No Projects';
+    if (this.selectedProjectIds.length === 1) {
+      const project = this.projects.find(p => Number(p.id) === this.selectedProjectIds[0]);
+      return project?.name || '1 Project';
+    }
+    return `${this.selectedProjectIds.length} Projects`;
+  }
   @HostListener('document:click')
   onDocumentClick(): void {
     this.showVendorDropdown = false;
     this.showProjectDropdown = false;
     this.showAttendeeSuggestions = false;
+    this.showProjectFilterDropdown = false;
   }
 
   onAttendeeSearch(value: string): void {
