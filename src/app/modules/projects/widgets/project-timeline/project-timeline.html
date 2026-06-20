@@ -15,10 +15,18 @@
     </div>
   </div>
 
-  <div class="timeline-table">
+  <div class="timeline-table" #timelineTable>
     <div class="timeline-table-header" [style.gridTemplateColumns]="gridTemplate">
       <div class="timeline-header-cell timeline-sidebar-header">Task</div>
-      <div *ngFor="let column of timelineColumns" class="timeline-header-cell">{{ column.label }}</div>
+      <div *ngFor="let column of timelineColumns; let first = first; let last = last" class="timeline-header-cell timeline-date-header">
+        <button *ngIf="first" type="button" class="header-scroll-btn header-scroll-left" (click)="scrollTimeline('left')" aria-label="Scroll timeline left">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <span>{{ column.label }}</span>
+        <button *ngIf="last" type="button" class="header-scroll-btn header-scroll-right" (click)="scrollTimeline('right')" aria-label="Scroll timeline right">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
     </div>
 
     <div class="timeline-table-body">
