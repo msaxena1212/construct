@@ -64,6 +64,7 @@ db.material_project_stock = require("../modules/material/models/material_project
 
 db.material_project_stock_history = require("../modules/material/models/material_project_stock_history.model.js")(sequelize, Sequelize);
 
+db.equipment_project_stock_history = require("../modules/equipment/models/equipment_project_stock_history.model.js")(sequelize, Sequelize);
 
 //Labor
 // db.labor = require("../modules/labor/models/labor_models.js")(sequelize, Sequelize);
@@ -326,6 +327,9 @@ db.meeting.belongsTo(db.user, { foreignKey: "created_by", as: "creator" });
 
 db.material_project_stock.hasMany(db.material_project_stock_history, { foreignKey: "material_project_stock_id", as: "material_project_stock_history" });
 db.material_project_stock_history.belongsTo(db.material_project_stock, { foreignKey: "material_project_stock_id", as: "material_project_stock" });
+
+db.equipment_project_stock.hasMany(db.equipment_project_stock_history, { foreignKey: "equipment_project_stock_id", as: "equipment_project_stock_history" });
+db.equipment_project_stock_history.belongsTo(db.equipment_project_stock, { foreignKey: "equipment_project_stock_id", as: "equipment_project_stock" });
 
 
 // PROJECT MANAGEMENT END
