@@ -9,6 +9,8 @@ import { ProjectService } from '../../services/project-service';
 })
 export class ProjectTimeline implements AfterViewInit {
 
+  @ViewChild('timelineTable') timelineTable?: ElementRef<HTMLElement>;
+
   @Input() projectId!: number;
   @Input() selectedMember: any;
 
@@ -17,7 +19,7 @@ export class ProjectTimeline implements AfterViewInit {
   timelineColumns: Array<{ label: string; date: Date }> = [];
   ganttRows: any[] = [];
   gridTemplate = '220px repeat(14, 42px)';
-  private isSyncingScroll = false;
+  private readonly sidebarWidth = 420;
 
   private readonly taskColors = [
     '#3b82f6',
@@ -52,6 +54,19 @@ export class ProjectTimeline implements AfterViewInit {
 
   trackByRow(index: number, row: any): number | string {
     return row.id ?? index;
+  }
+
+  scrollTimeline(direction: 'left' | 'right'): void {
+    const table = this.timelineTable?.nativeElement;
+    if (!table) {
+      return;
+    }
+
+    const scrollAmount = Math.max(this.getColumnWidth() * 4, 240);
+    table.scrollBy({
+      left: direction === 'right' ? scrollAmount : -scrollAmount,
+      behavior: 'smooth'
+    });
   }
 
   private buildTimeline(): void {
@@ -139,39 +154,51 @@ export class ProjectTimeline implements AfterViewInit {
       maxDate.setDate(maxDate.getDate() + 6);
     }
 
-    maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate(), 23, 59, 59);
+    const today = new Date();
+    const timelineStart = this.currentView === 'Day'
+      ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0)
+      : new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate(), 0, 0, 0);
 
-    this.timelineColumns = this.getDateLabels(minDate, maxDate, this.currentView);
-    const columnWidth = this.currentView === 'Day' ? 60 : this.currentView === 'Week' ? 100 : 140;
-    const sidebarWidth = 420; // increased for better task visibility
-    this.gridTemplate = `${sidebarWidth}px repeat(${this.timelineColumns.length}, ${columnWidth}px)`;
+    let timelineEnd = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate(), 23, 59, 59);
+    if (timelineEnd < timelineStart) {
+      timelineEnd = new Date(timelineStart);
+      timelineEnd.setDate(timelineEnd.getDate() + 6);
+      timelineEnd.setHours(23, 59, 59, 999);
+    }
+
+    this.timelineColumns = this.getDateLabels(timelineStart, timelineEnd, this.currentView);
+    const columnWidth = this.getColumnWidth();
+    this.gridTemplate = `${this.sidebarWidth}px repeat(${this.timelineColumns.length}, ${columnWidth}px)`;
 
     this.ganttRows = rows.map((row) => {
       const start = this.parseDate(row.startDate)!;
       const end = this.parseDate(row.endDate)!;
-      const startOfMinDate = new Date(minDate!.getFullYear(), minDate!.getMonth(), minDate!.getDate(), 0, 0, 0);
-      const startOfMaxDate = new Date(maxDate!.getFullYear(), maxDate!.getMonth(), maxDate!.getDate(), 0, 0, 0);
+      const startOfTimeline = new Date(timelineStart.getFullYear(), timelineStart.getMonth(), timelineStart.getDate(), 0, 0, 0);
+      const endOfTimeline = new Date(timelineEnd.getFullYear(), timelineEnd.getMonth(), timelineEnd.getDate(), 0, 0, 0);
       
       // Clamp start and end to timeline boundaries
-      const clampedStart = start < startOfMinDate ? startOfMinDate : start;
-      const clampedEnd = end > startOfMaxDate ? startOfMaxDate : end;
+      const clampedStart = start < startOfTimeline ? startOfTimeline : start;
+      let clampedEnd = end > endOfTimeline ? endOfTimeline : end;
+      if (clampedEnd < startOfTimeline) {
+        clampedEnd = startOfTimeline;
+      }
       
       let startIndex = 0;
       let span = 1;
 
       if (this.currentView === 'Day') {
-        startIndex = this.diffDaysFloor(startOfMinDate, clampedStart);
+        startIndex = this.diffDaysFloor(startOfTimeline, clampedStart);
         span = Math.max(1, this.diffDaysFloor(clampedStart, clampedEnd) + 1);
       } else if (this.currentView === 'Week') {
         // Calculate which week each date belongs to
-        const startWeekIndex = this.getWeekIndex(startOfMinDate, clampedStart);
-        const endWeekIndex = this.getWeekIndex(startOfMinDate, clampedEnd);
+        const startWeekIndex = this.getWeekIndex(startOfTimeline, clampedStart);
+        const endWeekIndex = this.getWeekIndex(startOfTimeline, clampedEnd);
         startIndex = startWeekIndex;
         span = Math.max(1, endWeekIndex - startWeekIndex + 1);
       } else if (this.currentView === 'Month') {
         // Calculate which month each date belongs to
-        const startMonthIndex = this.getMonthIndex(startOfMinDate, clampedStart);
-        const endMonthIndex = this.getMonthIndex(startOfMinDate, clampedEnd);
+        const startMonthIndex = this.getMonthIndex(startOfTimeline, clampedStart);
+        const endMonthIndex = this.getMonthIndex(startOfTimeline, clampedEnd);
         startIndex = startMonthIndex;
         span = Math.max(1, endMonthIndex - startMonthIndex + 1);
       }
@@ -183,6 +210,10 @@ export class ProjectTimeline implements AfterViewInit {
       };
     });
 
+  }
+
+  private getColumnWidth(): number {
+    return this.currentView === 'Day' ? 60 : this.currentView === 'Week' ? 100 : 140;
   }
 
   private parseDate(value: string): Date | null {

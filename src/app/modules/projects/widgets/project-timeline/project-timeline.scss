@@ -120,6 +120,48 @@
   color: #1e293b;
 }
 
+.timeline-date-header {
+  gap: 4px;
+}
+
+.timeline-date-header > span {
+  min-width: 0;
+}
+
+.header-scroll-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.header-scroll-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.header-scroll-left:hover {
+  transform: translateX(-2px);
+}
+
+.header-scroll-right:hover {
+  transform: translateX(2px);
+}
+
+.header-scroll-btn .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+}
+
 .timeline-sidebar-header {
   position: sticky;
   left: 0;
