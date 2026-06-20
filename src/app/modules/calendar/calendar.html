@@ -7,6 +7,80 @@
       <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Project schedules, milestones &amp; team meetings</p>
     </div>
     <div class="flex flex-wrap gap-3">
+
+      <div class="relative">
+        <button (click)="showProjectFilterDropdown = !showProjectFilterDropdown; $event.stopPropagation()"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm transition-all duration-200 hover:border-orange-400 cursor-pointer"
+          [class.border-orange-400]="selectedProjectIds.length > 0"
+          [class.text-orange-600]="selectedProjectIds.length > 0">
+          <span class="material-symbols-outlined text-[18px]">folder_open</span>
+          <span>
+            {{ selectedProjectsLabel }}
+          </span>
+          <span class="material-symbols-outlined text-[16px] transition-transform duration-200"
+            [class.rotate-180]="showProjectFilterDropdown">
+            expand_more
+          </span>
+        </button>
+
+        <div *ngIf="showProjectFilterDropdown" (click)="$event.stopPropagation()"
+          class="absolute z-50 top-full left-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden"
+          style="min-width: 220px; max-height: 300px;">
+
+          <div class="overflow-y-auto" style="max-height: 260px;">
+
+            <div (click)="toggleAllProjects()"
+              class="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-700"
+              [class.bg-orange-50]="isAllProjectsSelected" [class.dark:bg-orange-900/20]="isAllProjectsSelected"
+              [class.hover:bg-slate-50]="!isAllProjectsSelected"
+              [class.dark:hover:bg-slate-700]="!isAllProjectsSelected">
+              <span class="flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all"
+                [class.bg-orange-500]="isAllProjectsSelected" [class.border-orange-500]="isAllProjectsSelected"
+                [class.border-slate-300]="!isAllProjectsSelected" [class.dark:border-slate-600]="!isAllProjectsSelected"
+                [class.bg-white]="!isAllProjectsSelected" [class.dark:bg-slate-900]="!isAllProjectsSelected">
+                <span *ngIf="isAllProjectsSelected" class="material-symbols-outlined text-white"
+                  style="font-size:11px;font-variation-settings:'wght' 700">check</span>
+              </span>
+              <span class="text-sm font-bold text-slate-800 dark:text-white">All Projects</span>
+              <span class="ml-auto text-xs font-bold text-slate-400">{{ projects.length }}</span>
+            </div>
+
+            <div *ngFor="let p of projects" (click)="toggleProjectFilter(+p.id)"
+              class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors">
+              <span class="flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-all"
+                [class.bg-orange-500]="isProjectFilterSelected(+p.id)"
+                [class.border-orange-500]="isProjectFilterSelected(+p.id)"
+                [class.border-slate-300]="!isProjectFilterSelected(+p.id)"
+                [class.dark:border-slate-600]="!isProjectFilterSelected(+p.id)"
+                [class.bg-white]="!isProjectFilterSelected(+p.id)"
+                [class.dark:bg-slate-900]="!isProjectFilterSelected(+p.id)">
+                <span *ngIf="isProjectFilterSelected(+p.id)" class="material-symbols-outlined text-white"
+                  style="font-size:11px;font-variation-settings:'wght' 700">check</span>
+              </span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-slate-800 dark:text-white truncate">{{ p.name }}</p>
+                <p class="text-xs text-slate-400 truncate">{{ p.type || '' }}</p>
+              </div>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                [class]="getStatusBadge(p.status || '')">
+                {{ p.status || '' }}
+              </span>
+            </div>
+          </div>
+
+          <div
+            class="px-4 py-2.5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-800/80">
+            <span class="text-xs text-slate-400 font-medium">
+              {{ isAllProjectsSelected ? 'Showing all' : selectedProjectIds.length + ' selected' }}
+            </span>
+            <button *ngIf="selectedProjectIds.length > 0" (click)="selectAllProjects(); $event.stopPropagation()"
+              class="text-xs font-bold text-orange-500 hover:text-orange-600 cursor-pointer">
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
       <button (click)="goToToday()" [disabled]="!isNavigationChanged" [ngClass]="{
     'cursor-pointer hover:bg-slate-50': isNavigationChanged,
     'cursor-default opacity-60': !isNavigationChanged
@@ -316,11 +390,12 @@
         <div>
           <div class="flex justify-between mb-2">
             <span class="text-sm font-bold text-slate-700 dark:text-slate-200">Overall Progress</span>
-            <span class="text-sm font-black text-orange-500">{{ selectedProject?.progress || 0 }}%</span>
+            <span class="text-sm font-black text-orange-500">{{ selectedProject?.project_progress || 0 }}%</span>
           </div>
           <div class="h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div class="h-2.5 rounded-full transition-all duration-700" [style.width.%]="selectedProject?.progress || 0"
-              [class]="getProgressColor(selectedProject?.progress || 0)"></div>
+            <div class="h-2.5 rounded-full transition-all duration-700"
+              [style.width.%]="selectedProject?.project_progress || 0"
+              [class]="getProgressColor(selectedProject?.project_progress || 0)"></div>
           </div>
           <div class="flex justify-between mt-3 mb-1">
             <span class="text-xs text-slate-400">Budget Used</span>
@@ -447,7 +522,7 @@
                     [class]="getStatusBadge(event.project?.status || '')">
                     {{ event.project?.status || '—' }}
                   </span>
-                  <span class="ml-auto font-bold text-orange-500">{{ event.project?.progress || 0 }}%</span>
+                  <span class="ml-auto font-bold text-orange-500">{{ event.project?.project_progress || 0 }}%</span>
                 </div>
               </div>
               <button
@@ -587,7 +662,6 @@
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Project</label>
             <div class="relative">
-              <!-- ✅ FIX: If prefilled from project panel → show read-only, no chevron -->
               <ng-container *ngIf="prefilledProjectId; else projectDropdown">
                 <div
                   class="w-full flex items-center border border-violet-300 dark:border-violet-700 rounded-xl px-4 py-3 text-sm bg-violet-50 dark:bg-slate-800 text-slate-800 dark:text-white cursor-default">
