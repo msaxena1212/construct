@@ -1306,7 +1306,7 @@ class ProjectController {
         });
       });
 
-      
+
       const totalSpend = invoices.reduce((sum, invoice) => {
 
         return sum + parseFloat(invoice.paid_amount || 0);
