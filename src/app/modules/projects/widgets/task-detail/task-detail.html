@@ -259,7 +259,7 @@
                 <div
                     class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 relative">
                     <img class="w-12 h-12 rounded-xl object-cover ring-2 ring-slate-100 dark:ring-slate-800"
-                        [src]="task.assignees?.[0]?.avatar || 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&h=256&auto=format&fit=crop'"
+                       [src]="getAvatarUrl(task.assignees?.[0]?.avatar)"
                         [alt]="task.assignees?.[0]?.firstname || 'Assignee'">
                     <div class="flex-1">
                         @if (isEditing) {
@@ -288,7 +288,7 @@
                 <div
                     class="flex items-center gap-4 p-4 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <img class="w-10 h-10 rounded-xl object-cover"
-                        [src]="task.creator?.avatar || 'assets/default-avatar.png'"
+                        [src]="getAvatarUrl(task.creator?.avatar)"
                         [alt]="task.creator?.firstname || 'Creator'">
                     <div>
                         <p class="text-sm font-bold text-slate-900 dark:text-slate-50">{{ task.creator?.firstname ||
