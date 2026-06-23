@@ -20,6 +20,9 @@ export class ProjectTimeline implements AfterViewInit {
   ganttRows: any[] = [];
   gridTemplate = '220px repeat(14, 42px)';
   private readonly sidebarWidth = 420;
+  private allTimelineColumns: Array<{ label: string; date: Date }> = [];
+  private timelineRows: any[] = [];
+  private timelineWindowStartIndex = 0;
 
   private readonly taskColors = [
     '#3b82f6',
@@ -49,6 +52,7 @@ export class ProjectTimeline implements AfterViewInit {
 
   changeView(mode: 'Day' | 'Week' | 'Month'): void {
     this.currentView = mode;
+    this.timelineWindowStartIndex = 0;
     this.buildTimeline();
   }
 
@@ -57,16 +61,18 @@ export class ProjectTimeline implements AfterViewInit {
   }
 
   scrollTimeline(direction: 'left' | 'right'): void {
-    const table = this.timelineTable?.nativeElement;
-    if (!table) {
+    if (!this.allTimelineColumns.length) {
       return;
     }
 
-    const scrollAmount = Math.max(this.getColumnWidth() * 4, 240);
-    table.scrollBy({
-      left: direction === 'right' ? scrollAmount : -scrollAmount,
-      behavior: 'smooth'
-    });
+    const visibleCount = this.getVisibleColumnCount();
+    const maxStartIndex = Math.max(0, this.allTimelineColumns.length - visibleCount);
+    this.timelineWindowStartIndex = direction === 'right'
+      ? Math.min(maxStartIndex, this.timelineWindowStartIndex + visibleCount)
+      : Math.max(0, this.timelineWindowStartIndex - visibleCount);
+
+    this.timelineTable?.nativeElement.scrollTo({ left: 0, behavior: 'smooth' });
+    this.updateVisibleTimeline();
   }
 
   private buildTimeline(): void {
@@ -154,10 +160,36 @@ export class ProjectTimeline implements AfterViewInit {
       maxDate.setDate(maxDate.getDate() + 6);
     }
 
+    // const today = new Date();
+    // let timelineStart = this.currentView === 'Day'
+    //   ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0)
+    //   : new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate(), 0, 0, 0);
+
+    // if (this.currentView === 'Week') {
+    //   timelineStart = this.getStartOfISOWeek(timelineStart);
+    // } else if (this.currentView === 'Month') {
+    //   timelineStart = new Date(timelineStart.getFullYear(), timelineStart.getMonth(), 1, 0, 0, 0);
+    // }
     const today = new Date();
-    const timelineStart = this.currentView === 'Day'
-      ? new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0)
-      : new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate(), 0, 0, 0);
+    let timelineStart: Date;
+
+    if (this.currentView === 'Day') {
+      timelineStart = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        0, 0, 0
+      );
+    } else if (this.currentView === 'Week') {
+      timelineStart = this.getStartOfISOWeek(today);
+    } else {
+      timelineStart = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1,
+        0, 0, 0
+      );
+    }
 
     let timelineEnd = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate(), 23, 59, 59);
     if (timelineEnd < timelineStart) {
@@ -166,54 +198,133 @@ export class ProjectTimeline implements AfterViewInit {
       timelineEnd.setHours(23, 59, 59, 999);
     }
 
-    this.timelineColumns = this.getDateLabels(timelineStart, timelineEnd, this.currentView);
+    timelineEnd = this.ensureMinimumTimelineEnd(timelineStart, timelineEnd, this.currentView);
+    this.allTimelineColumns = this.getDateLabels(timelineStart, timelineEnd, this.currentView);
+    this.timelineRows = rows;
+    this.timelineWindowStartIndex = Math.min(
+      this.timelineWindowStartIndex,
+      Math.max(0, this.allTimelineColumns.length - this.getVisibleColumnCount())
+    );
+    this.updateVisibleTimeline();
+
+  }
+
+  private updateVisibleTimeline(): void {
+    const visibleCount = this.getVisibleColumnCount();
+    this.timelineColumns = this.allTimelineColumns.slice(
+      this.timelineWindowStartIndex,
+      this.timelineWindowStartIndex + visibleCount
+    );
     const columnWidth = this.getColumnWidth();
     this.gridTemplate = `${this.sidebarWidth}px repeat(${this.timelineColumns.length}, ${columnWidth}px)`;
 
-    this.ganttRows = rows.map((row) => {
+    if (!this.timelineColumns.length) {
+      this.ganttRows = [];
+      return;
+    }
+
+    const visibleStart = this.getColumnStartDate(this.timelineColumns[0].date);
+    const visibleEnd = this.getColumnEndDate(this.timelineColumns[this.timelineColumns.length - 1].date);
+
+    this.ganttRows = this.timelineRows.map((row) => {
       const start = this.parseDate(row.startDate)!;
       const end = this.parseDate(row.endDate)!;
-      const startOfTimeline = new Date(timelineStart.getFullYear(), timelineStart.getMonth(), timelineStart.getDate(), 0, 0, 0);
-      const endOfTimeline = new Date(timelineEnd.getFullYear(), timelineEnd.getMonth(), timelineEnd.getDate(), 0, 0, 0);
-      
-      // Clamp start and end to timeline boundaries
-      const clampedStart = start < startOfTimeline ? startOfTimeline : start;
-      let clampedEnd = end > endOfTimeline ? endOfTimeline : end;
-      if (clampedEnd < startOfTimeline) {
-        clampedEnd = startOfTimeline;
+
+      const isVisible = end >= visibleStart && start <= visibleEnd;
+      if (!isVisible) {
+        return {
+          ...row,
+          startIndex: 0,
+          span: 1,
+          isVisible: false
+        };
       }
-      
+
+      const clampedStart = start < visibleStart ? visibleStart : start;
+      const clampedEnd = end > visibleEnd ? visibleEnd : end;
+
       let startIndex = 0;
       let span = 1;
 
       if (this.currentView === 'Day') {
-        startIndex = this.diffDaysFloor(startOfTimeline, clampedStart);
+        startIndex = this.diffDaysFloor(visibleStart, clampedStart);
         span = Math.max(1, this.diffDaysFloor(clampedStart, clampedEnd) + 1);
       } else if (this.currentView === 'Week') {
         // Calculate which week each date belongs to
-        const startWeekIndex = this.getWeekIndex(startOfTimeline, clampedStart);
-        const endWeekIndex = this.getWeekIndex(startOfTimeline, clampedEnd);
+        const startWeekIndex = this.getWeekIndex(visibleStart, clampedStart);
+        const endWeekIndex = this.getWeekIndex(visibleStart, clampedEnd);
         startIndex = startWeekIndex;
         span = Math.max(1, endWeekIndex - startWeekIndex + 1);
       } else if (this.currentView === 'Month') {
         // Calculate which month each date belongs to
-        const startMonthIndex = this.getMonthIndex(startOfTimeline, clampedStart);
-        const endMonthIndex = this.getMonthIndex(startOfTimeline, clampedEnd);
+        const startMonthIndex = this.getMonthIndex(visibleStart, clampedStart);
+        const endMonthIndex = this.getMonthIndex(visibleStart, clampedEnd);
         startIndex = startMonthIndex;
         span = Math.max(1, endMonthIndex - startMonthIndex + 1);
       }
-      
+
       return {
         ...row,
         startIndex: Math.max(0, startIndex),
-        span: Math.min(span, this.timelineColumns.length - Math.max(0, startIndex))
+        span: Math.min(span, this.timelineColumns.length - Math.max(0, startIndex)),
+        isVisible: true
       };
     });
-
   }
 
   private getColumnWidth(): number {
-    return this.currentView === 'Day' ? 60 : this.currentView === 'Week' ? 100 : 140;
+    return this.currentView === 'Day' ? 90 : this.currentView === 'Week' ? 120 : 130;
+  }
+
+  private getVisibleColumnCount(): number {
+    return this.currentView === 'Day' ? 7 : 5;
+  }
+
+  private ensureMinimumTimelineEnd(start: Date, end: Date, viewMode: 'Day' | 'Week' | 'Month'): Date {
+    const minimumEnd = new Date(start);
+    const visibleCount = this.getVisibleColumnCount();
+
+    if (viewMode === 'Day') {
+      minimumEnd.setDate(minimumEnd.getDate() + visibleCount - 1);
+      minimumEnd.setHours(23, 59, 59, 999);
+    } else if (viewMode === 'Week') {
+      minimumEnd.setDate(minimumEnd.getDate() + (visibleCount * 7) - 1);
+      minimumEnd.setHours(23, 59, 59, 999);
+    } else {
+      minimumEnd.setMonth(minimumEnd.getMonth() + visibleCount);
+      minimumEnd.setDate(0);
+      minimumEnd.setHours(23, 59, 59, 999);
+    }
+
+    return end < minimumEnd ? minimumEnd : end;
+  }
+
+  private getColumnStartDate(date: Date): Date {
+    if (this.currentView === 'Week') {
+      return this.getStartOfISOWeek(date);
+    }
+
+    if (this.currentView === 'Month') {
+      return new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0);
+    }
+
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+  }
+
+  private getColumnEndDate(date: Date): Date {
+    if (this.currentView === 'Week') {
+      const weekEnd = this.getStartOfISOWeek(date);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+      return weekEnd;
+    }
+
+    if (this.currentView === 'Month') {
+      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+      return monthEnd;
+    }
+
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
   }
 
   private parseDate(value: string): Date | null {

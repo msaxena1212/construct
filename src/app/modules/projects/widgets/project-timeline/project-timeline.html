@@ -50,7 +50,7 @@
 
         <div *ngFor="let column of timelineColumns" class="timeline-cell"></div>
 
-        <div class="timeline-bar" [ngClass]="['bar-' + row.type, i < 2 ? 'tooltip-below' : 'tooltip-above']"
+        <div *ngIf="row.isVisible" class="timeline-bar" [ngClass]="['bar-' + row.type, i < 2 ? 'tooltip-below' : 'tooltip-above']"
           [style.gridColumnStart]="row.startIndex + 2"
           [style.gridColumnEnd]="'span ' + row.span"
           [title]="row.name">
