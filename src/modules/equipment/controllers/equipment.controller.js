@@ -392,6 +392,26 @@ class equipmentController {
             status: "UPDATED",
           });
 
+
+          //history_check
+          // await db.equipment_project_stock_history.create({
+          //     equipment_project_stock_id: projectStockData.id,
+          //     equipment_id: id,
+          //     project_id: project.project_id,
+          //     name,
+          //     sku,
+          //     category,
+          //     vendor_name,
+          //     stockUsed: project.stock,
+          //     cost,
+          //     status: project.status,
+          //     vendor_id,
+          //     equipment_master_id,
+          //     project_name: project.project_name,
+          //     quotation_id,
+          //     company_id
+          // });
+
           return projectStockData;
         })
       );
@@ -699,6 +719,8 @@ class equipmentController {
       });
     }
   }
+
+
 
 }
 

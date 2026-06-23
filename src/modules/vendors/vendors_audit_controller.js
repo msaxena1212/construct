@@ -2,6 +2,7 @@ const db = require('../../models');
 
 const AuditModel = db.vendors_audit;
 const VendorModel = db.vendors;
+const { logVendorHistory } = require('./history_helper');
 
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
@@ -53,6 +54,18 @@ const createAudit = async (req, res) => {
       composite_score,
       observations: observations || null,
       audit_date: new Date().toISOString().split('T')[0],
+    });
+    await logVendorHistory({
+      req,
+      vendor_id: parseInt(vendorId),
+      company_id,
+      project_id: vendor.project_id || null,
+      entity_type: 'audit',
+      entity_id: audit.id,
+      action: 'created',
+      description: `Audit for Vendor "${vendor.name}" submitted with score ${composite_score}%.`,
+      new_values: audit.toJSON(),
+      meta: { quality: q, timeliness: t, safety: s, composite_score },
     });
     await vendor.update({ compliance_score: Math.round(composite_score) });
 
