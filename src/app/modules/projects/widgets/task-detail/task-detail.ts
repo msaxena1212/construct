@@ -5,6 +5,7 @@ import { IProjectSubTask, IProjectTask, IUser, IProjectTaskDependency, IProject 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CommonDialogComponent } from '../../../../shared/components/common-dialog/common-dialog';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-task-detail',
@@ -59,8 +60,23 @@ export class TaskDetail implements OnInit {
       this.fetchTeamMembers();
 
     }
-    
+
   }
+
+  environment = environment;
+
+  getAvatarUrl(avatar?: string): string {
+    if (!avatar) {
+      return 'assets/default-avatar.png';
+    }
+
+    if (avatar.startsWith('http')) {
+      return avatar;
+    }
+
+    return `${this.environment.serverUrl}${avatar}`;
+  }
+
 
   onMilestoneChange(event: any) {
     const milestoneId = event.target.value || this.task.milestone_id;

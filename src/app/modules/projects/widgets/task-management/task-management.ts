@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskDetail } from "../task-detail/task-detail";
 import { AddTask } from "../add-task/add-task";
 import { SubtaskProgressPipe } from '../../../../shared/pipes/subtask-progress.pipe';
+import { environment } from '../../../../../environments/environment';
 
 interface TaskColumn {
   id: string;
@@ -79,6 +80,20 @@ export class TaskManagement implements OnInit, OnChanges {
     this.selectedMilestoneId = milestoneId;
     this.filterTasks();
   }
+
+environment = environment;
+getAvatarUrl(avatar?: string): string {
+  if (!avatar) {
+    return 'assets/default-avatar.png';
+  }
+
+  // Agar URL pehle se full hai to waise hi return karo
+  if (avatar.startsWith('http')) {
+    return avatar;
+  }
+
+  return `${this.environment.serverUrl}${avatar}`;
+}
 
   fetchTasks() {
     this.loading = true;
