@@ -52,6 +52,7 @@ db.vendors_activity = require("../modules/vendors/models/vendors_activity_model.
 db.vendors_labor = require("../modules/vendors/models/vendors_labor_model.js")(sequelize, Sequelize);
 db.vendors_invoice = require("../modules/vendors/models/vendors_invoice_model.js")(sequelize, Sequelize);
 db.vendors_audit = require("../modules/vendors/models/vendors_audit_model.js")(sequelize, Sequelize);
+db.vendors_history = require("../modules/vendors/models/vendors_history_model.js")(sequelize, Sequelize);
 db.skill = require("../modules/skill/model/skill_model.js")(sequelize, Sequelize);
 //Material
 db.material_master = require("../modules/material/models/material_master.model.js")(sequelize, Sequelize);
@@ -302,6 +303,16 @@ db.vendors_audit.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' }
 
 db.company.hasMany(db.vendors_audit, { foreignKey: 'company_id', as: 'vendors_audits' });
 db.vendors_audit.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+// Vendor ↔ History
+db.vendors.hasMany(db.vendors_history, { foreignKey: 'vendor_id', as: 'history' });
+db.vendors_history.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendor' });
+
+db.company.hasMany(db.vendors_history, { foreignKey: 'company_id', as: 'vendors_history' });
+db.vendors_history.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
+
+db.project.hasMany(db.vendors_history, { foreignKey: 'project_id', as: 'vendors_history' });
+db.vendors_history.belongsTo(db.project, { foreignKey: 'project_id', as: 'project' });
 
 // Skill ↔ Master
 db.company.hasMany(db.skill, { foreignKey: 'company_id', as: 'skill' });

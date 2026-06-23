@@ -3,6 +3,7 @@ const db = require('../../models');
 const LaborModel = db.vendors_labor;
 const VendorModel = db.vendors;
 const SkillModel = db.skill;
+const { logVendorHistory } = require('./history_helper');
 
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
@@ -90,7 +91,7 @@ const getLaborByVendor = async (req, res) => {
       statusLabel: w.status.replace(/_/g, ' ').toUpperCase(),
       statusColor: STATUS_COLOR[w.status] || '',
       daily_rate: w.daily_rate,
-      labor_count: w.labor_count,   // ← always expose labor_count
+      labor_count: w.labor_count,
       vendor_id: w.vendor_id,
       company_id: w.company_id,
     }));
@@ -238,6 +239,13 @@ const createLabor = async (req, res) => {
       labor_count: parsedCount,
       count: parsedCount,
     });
+    await logVendorHistory({
+      req, vendor_id, company_id,
+      project_id: vendor.project_id || null,
+      entity_type: 'labor', entity_id: worker.id, action: 'created',
+      description: `${parsedCount} "${skill}" worker(s) added to Vendor "${vendor.name}".`,
+      new_values: worker.toJSON(),
+    });
 
     return res.status(201).json({
       success: true,
@@ -265,21 +273,14 @@ const updateLabor = async (req, res) => {
   try {
     if (req.body.labor_count !== undefined) {
       req.body.labor_count = Math.max(1, parseInt(req.body.labor_count) || 1);
-      req.body.count = req.body.labor_count; // keep mirror in sync
+      req.body.count = req.body.labor_count;
     }
 
     const company_id = getCompanyId(req);
-
-    const worker = await LaborModel.findOne({
-      where: { id: req.params.id, company_id },
-    });
-
-    if (!worker) {
-      return res.status(404).json({ success: false, message: 'Labor record not found' });
-    }
+    const worker = await LaborModel.findOne({ where: { id: req.params.id, company_id } });
+    if (!worker) return res.status(404).json({ success: false, message: 'Labor record not found' });
 
     const SKILL_LABEL = await getSkillLabels(company_id);
-
     if (req.body.skill && !SKILL_LABEL[req.body.skill]) {
       return res.status(400).json({ success: false, message: 'Invalid skill selected' });
     }
@@ -288,7 +289,18 @@ const updateLabor = async (req, res) => {
     delete req.body.company_id;
     delete req.body.vendor_id;
 
+    const oldSnapshot = worker.toJSON();
     await worker.update(req.body);
+
+    const vendor = await VendorModel.findOne({ where: { id: worker.vendor_id, company_id } });
+
+    await logVendorHistory({
+      req, vendor_id: worker.vendor_id, company_id,
+      project_id: vendor?.project_id || null,
+      entity_type: 'labor', entity_id: worker.id, action: 'updated',
+      description: `Labor record for skill "${worker.skill}" updated.`,
+      old_values: oldSnapshot, new_values: worker.toJSON(),
+    });
 
     return res.status(200).json({
       success: true,
@@ -315,16 +327,21 @@ const updateLabor = async (req, res) => {
 const deleteLabor = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
+    const worker = await LaborModel.findOne({ where: { id: req.params.id, company_id } });
+    if (!worker) return res.status(404).json({ success: false, message: 'Labor record not found' });
 
-    const worker = await LaborModel.findOne({
-      where: { id: req.params.id, company_id },
-    });
-
-    if (!worker) {
-      return res.status(404).json({ success: false, message: 'Labor record not found' });
-    }
+    const snapshot = worker.toJSON();
+    const vendor = await VendorModel.findOne({ where: { id: worker.vendor_id, company_id } });
 
     await worker.destroy();
+
+    await logVendorHistory({
+      req, vendor_id: snapshot.vendor_id, company_id,
+      project_id: vendor?.project_id || null,
+      entity_type: 'labor', entity_id: snapshot.id, action: 'deleted',
+      description: `${snapshot.labor_count} "${snapshot.skill}" worker(s) removed${vendor ? ` from Vendor "${vendor.name}"` : ''}.`,
+      old_values: snapshot,
+    });
 
     return res.status(200).json({ success: true, message: 'Labor record deleted' });
   } catch (err) {
