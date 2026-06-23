@@ -335,91 +335,6 @@ class ProjectController {
     }
   }
 
-  /**
-   * Get all projects for the current company
-   */
-  //   async getAllProjects(req, res) {
-  //     try {
-  //       const company_id = req.user.company_id;
-  //       if (!company_id) {
-  //         return res.status(401).json({ message: "Unauthorized. Company context missing." });
-  //       }
-
-  //       // const projects = await db.project.findAll({
-  //       //   where: { company_id },
-  //       //   include: [
-  //       //     { model: db.milestone, as: 'milestones' },
-  //       //     { model: db.project_document, as: 'documents' },
-  //       //     {
-  //       //       model: db.user,
-  //       //       as: 'team_members',
-  //       //       attributes: ['id', 'firstname', 'lastname', 'avatar'],
-  //       //       through: { attributes: ['role'] }
-  //       //     }
-  //       //   ],
-  //       //   order: [['createdAt', 'DESC']]
-  //       // });
-
-  //       // res.status(200).json({ data: projects });
-
-  // const projects = await db.project.findAll({
-  //   where: { company_id },
-  //   include: [
-  //     { model: db.milestone, as: 'milestones' },
-  //     { model: db.project_document, as: 'documents' },
-  //     {
-  //       model: db.user,
-  //       as: 'team_members',
-  //       attributes: ['id', 'firstname', 'lastname', 'avatar'],
-  //       through: { attributes: ['role'] }
-  //     }
-  //   ],
-  //   order: [['createdAt', 'DESC']]
-  // });
-
-  // const allTasks = await db.project_task.findAll({
-  //   raw: true
-  // });
-
-  // const taskMap = allTasks.reduce((acc, task) => {
-  //   if (!acc[task.submilestone_id]) {
-  //     acc[task.submilestone_id] = [];
-  //   }
-
-  //   acc[task.submilestone_id].push(task);
-
-  //   return acc;
-  // }, {});
-
-
-  // const formattedProjects = projects.map(project => {
-  //   const projectData = project.toJSON();
-
-  //   projectData.milestone_with_sub = projectData.milestones
-  //     .filter(milestone => !milestone.parent_id)
-  //     .map(parentMilestone => ({
-  //       ...parentMilestone,
-  //       subMilestones: projectData.milestones
-  //         .filter(subMilestone => subMilestone.parent_id === parentMilestone.id)
-  //         .map(subMilestone => ({
-  //           ...subMilestone,
-  //           tasks: taskMap[subMilestone.id] || []
-  //         }))
-  //     }));
-
-  //   return projectData;
-  // });
-
-  // return res.status(200).json({
-  //   data: formattedProjects
-  // });
-
-  //     } catch (error) {
-  //       console.error("[GET_ALL_PROJECTS_ERROR]", error);
-  //       res.status(500).json({ message: "Error fetching projects.", error: error.message });
-  //     }
-  //   }
-
   async getAllProjects(req, res) {
     try {
       const company_id = req.user.company_id;
@@ -479,34 +394,7 @@ class ProjectController {
         taskMap[task.submilestone_id].push(task);
       }
 
-      // const formattedProjects = projects.map(project => {
-      //   const projectData = project.toJSON();
 
-      //   const parentMilestones = [];
-      //   const subMilestoneMap = Object.create(null);
-
-      //   for (const milestone of projectData.milestones) {
-      //     if (!milestone.parent_id) {
-      //       parentMilestones.push(milestone);
-      //     } else {
-      //       if (!subMilestoneMap[milestone.parent_id]) {
-      //         subMilestoneMap[milestone.parent_id] = [];
-      //       }
-
-      //       subMilestoneMap[milestone.parent_id].push({
-      //         ...milestone,
-      //         tasks: taskMap[milestone.id] || []
-      //       });
-      //     }
-      //   }
-
-      //   projectData.milestone_with_sub = parentMilestones.map(parent => ({
-      //     ...parent,
-      //     subMilestones: subMilestoneMap[parent.id] || []
-      //   }));
-
-      //   return projectData;
-      // });
 
       const formattedProjects = projects.map(project => {
         const projectData = project.toJSON();
@@ -614,37 +502,6 @@ class ProjectController {
     }
   }
 
-  /**
-   * Get project details by ID
-   */
-  // async getProjectById(req, res) {
-  //   try {
-  //     const { id } = req.params;
-  //     const company_id = req.user.company_id;
-
-  //     const project = await db.project.findOne({
-  //       where: { id, company_id },
-  //       include: [
-  //         { model: db.milestone, as: 'milestones' },
-  //         { model: db.project_document, as: 'documents' },
-  //         {
-  //           model: db.user,
-  //           as: 'team_members',
-  //           attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
-  //           through: { attributes: ['role'] }
-  //         }
-  //       ]
-  //     });
-
-  //     if (!project) {
-  //       return res.status(404).json({ message: "Project not found or unauthorized." });
-  //     }
-
-  //     res.status(200).json({ data: project });
-  //   } catch (error) {
-  //     res.status(500).json({ message: "Error fetching project details.", error: error.message });
-  //   }
-  // }
 
   async getProjectById(req, res) {
     try {
@@ -680,28 +537,6 @@ class ProjectController {
         ]
       });
 
-      // if (!project) {
-      //   return res.status(404).json({
-      //     message: "Project not found or unauthorized."
-      //   });
-      // }
-
-      // const projectData = project.toJSON();
-
-      // const milestones = projectData.milestones || [];
-
-      // projectData.milestones_with_child = milestones
-      //   .filter(m => m.parent_id === null)
-      //   .map(parent => ({
-      //     ...parent,
-      //     children: milestones.filter(
-      //       child => child.parent_id === parent.id
-      //     )
-      //   }));
-
-      // return res.status(200).json({
-      //   data: projectData
-      // });
 
 
       if (!project) {
@@ -1409,13 +1244,6 @@ class ProjectController {
         }));
 
 
-      // const company_id = getCompanyId(req);
-      // const { vendorId } = req.params;
-
-      // const vendor = await db.vendors.findOne({ where: { id: vendorId, company_id } });
-      // if (!vendor)
-      //   return res.status(404).json({ success: false, message: 'Vendor not found' });
-
       const invoices = await db.vendors_invoice.findAll({
         where: {
           project_id: id,
@@ -1425,7 +1253,6 @@ class ProjectController {
         order: [['createdAt', 'DESC']],
       });
 
-      // console.log("datatatat", invoices)
 
       let total_material = 0;
       let total_equipment = 0;
@@ -1446,17 +1273,13 @@ class ProjectController {
         });
       });
 
-      // console.log("total_material", total_material);
-      // console.log("total_equipment", total_equipment);
-      // console.log("total_labor", total_labor);
-
+ 
       const totalSpend = invoices.reduce((sum, invoice) => {
 
         return sum + parseFloat(invoice.paid_amount || 0);
 
       }, 0);
 
-      // console.log("Total Spend:", totalSpend);
 
       const grand_total = invoices.reduce((sum, invoice) => {
 
@@ -1464,17 +1287,9 @@ class ProjectController {
 
       }, 0);
 
-      // console.log("budget used:", grand_total);
-
-
       const on_hold = (grand_total - totalSpend);
 
-      // console.log("on_hold", on_hold)
-
       const remaining_budget = (projectData.budget_total - grand_total);
-
-      // console.log("remaining_budget", remaining_budget);
-
 
       return res.status(200).json({
 
