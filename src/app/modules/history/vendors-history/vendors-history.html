@@ -1,234 +1,421 @@
 <section class="px-4 pt-2 pb-8 flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div class="space-y-1">
-            <h2 class="text-3xl font-black tracking-tight text-slate-800 dark:text-white">Vendor History</h2>
-            <p class="text-slate-500 mt-1 text-sm font-medium">
-                Complete activity timeline — invoices, payments, milestones, tasks, audits &amp; labor, merged in one
-                feed.
-            </p>
-        </div>
-
-        <div class="flex items-center gap-3 flex-wrap">
-
-            <div class="relative" data-dropdown="vendor" #vendorDropdownRef>
-                <button (click)="toggleVendorDropdown()"
-                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white dark:bg-slate-900 border border-outline-variant/20 text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer shadow-sm min-w-[200px]">
-                    <span class="material-symbols-outlined text-primary text-lg">storefront</span>
-                    <span class="flex-1 text-left truncate">{{ vendorDropdownLabel }}</span>
-                    <span class="material-symbols-outlined text-outline text-base transition-transform duration-200"
-                        [class.rotate-180]="vendorDropdownOpen">expand_more</span>
-                </button>
-
-                @if (vendorDropdownOpen) {
-                <div
-                    class="absolute right-0 top-full mt-1.5 w-72 bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/20 shadow-xl z-50 overflow-hidden">
-
-                    <div class="px-3 py-2.5 border-b border-outline-variant/10">
-                        <div class="relative">
-                            <span
-                                class="absolute left-2.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-[15px]">search</span>
-                            <input [(ngModel)]="dropdownSearch" type="text" placeholder="Search vendors…"
-                                class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-outline-variant/20 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest" />
-                        </div>
-                    </div>
-
-                    <div (click)="toggleSelectAll()"
-                        class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-container-low transition-colors border-b border-outline-variant/10">
-                        <div class="w-4 h-4 rounded flex items-center justify-center border-2 transition-all" [ngClass]="isAllSelected
-                ? 'bg-primary border-primary'
-                : isPartiallySelected
-                  ? 'bg-primary/30 border-primary'
-                  : 'border-outline/40 bg-white dark:bg-slate-800'">
-                            @if (isAllSelected) {
-                            <span class="material-symbols-outlined text-white text-[11px]">check</span>
-                            } @else if (isPartiallySelected) {
-                            <span class="material-symbols-outlined text-primary text-[11px]">remove</span>
-                            }
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-black text-on-surface">All Vendors</p>
-                            <p class="text-[10px] text-outline">{{ vendors.length }} total</p>
-                        </div>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            {{ selectedVendorIds.size }}/{{ vendors.length }}
-                        </span>
-                    </div>
-
-                    <div class="max-h-60 overflow-y-auto">
-                        @for (v of dropdownFilteredVendors; track v.id) {
-                        <div (click)="toggleVendorSelection(v)"
-                            class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-container-low transition-colors border-b border-outline-variant/5">
-                            <div class="w-4 h-4 rounded flex items-center justify-center border-2 shrink-0 transition-all"
-                                [ngClass]="selectedVendorIds.has(v.id)
-                  ? 'bg-primary border-primary'
-                  : 'border-outline/40 bg-white dark:bg-slate-800'">
-                                @if (selectedVendorIds.has(v.id)) {
-                                <span class="material-symbols-outlined text-white text-[11px]">check</span>
-                                }
-                            </div>
-                            <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                                [ngClass]="selectedVendorIds.has(v.id) ? 'bg-primary/15' : 'bg-surface-container-high'">
-                                <span class="material-symbols-outlined text-[14px]"
-                                    [ngClass]="selectedVendorIds.has(v.id) ? 'text-primary' : 'text-outline'">business</span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-bold truncate text-on-surface">{{ v.name }}</p>
-                                <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                                        [ngClass]="v.statusColor">{{ v.status }}</span>
-                                    <span class="text-[10px] font-semibold"
-                                        [class.text-green-600]="v.compliance_score >= 90"
-                                        [class.text-amber-500]="v.compliance_score < 90 && v.compliance_score >= 70"
-                                        [class.text-red-500]="v.compliance_score < 70">
-                                        {{ v.compliance_score }}%
-                                    </span>
-                                    <span class="text-[9px] text-outline font-semibold">· Since {{
-                                        formatDate(v.created_at) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        } @empty {
-                        <div class="py-6 text-center text-outline">
-                            <span class="material-symbols-outlined text-2xl">search_off</span>
-                            <p class="text-xs font-bold mt-1">No vendors found</p>
-                        </div>
-                        }
-                    </div>
-
-                    <div
-                        class="px-4 py-2.5 border-t border-outline-variant/10 bg-surface-container-low flex items-center justify-between gap-3">
-                        <div class="flex gap-3 text-[10px] font-bold text-outline">
-                            <span>Active: <span class="text-green-600 font-black">{{ activeCount }}</span></span>
-                            <span>Pending: <span class="text-amber-600 font-black">{{ pendingCount }}</span></span>
-                        </div>
-                        <button (click)="vendorDropdownOpen = false"
-                            class="text-[11px] font-black text-primary hover:underline cursor-pointer">Done</button>
-                    </div>
-
-                </div>
-                }
-            </div>
-
-            <button (click)="exportAllToCsv()" [disabled]="exporting"
-                class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-highest text-primary hover:bg-surface-dim transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                <span class="material-symbols-outlined text-lg" [class.animate-spin]="exporting">
-                    {{ exporting ? 'progress_activity' : 'download' }}
-                </span>
-                {{ exporting ? 'Preparing Export…' : 'Export All (CSV)' }}
-            </button>
-        </div>
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div class="space-y-1">
+      <h2 class="text-3xl font-black tracking-tight text-slate-800 dark:text-white">Vendor History</h2>
+      <p class="text-slate-500 mt-1 text-sm font-medium">
+        Complete activity timeline — invoices, payments, milestones, tasks, audits &amp; labor, grouped by vendor.
+      </p>
     </div>
 
-    <div class="flex flex-col gap-5">
+    <div class="flex items-center gap-3 flex-wrap">
 
-        @if (!isAllSelected && selectedVendorIds.size > 0) {
-        <div class="flex flex-wrap gap-2 items-center">
-            <span class="text-[11px] font-black text-outline uppercase tracking-widest">Showing:</span>
-            @for (id of selectedVendorIdsArray; track id) {
-            <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                <span class="text-[11px] font-black text-primary">{{ getVendorNameById(id) }}</span>
-                <button (click)="removeVendorSelection(id)"
-                    class="text-primary/60 hover:text-primary transition-colors cursor-pointer">
-                    <span class="material-symbols-outlined text-[13px]">close</span>
-                </button>
-            </div>
-            }
-            <button (click)="clearAllSelections()"
-                class="text-[11px] font-bold text-outline hover:text-primary transition-colors cursor-pointer underline">
-                Clear all
-            </button>
-        </div>
-        }
+      <div class="relative" data-dropdown="vendor" #vendorDropdownRef>
+        <button (click)="toggleVendorDropdown()"
+          class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white dark:bg-slate-900 border border-outline-variant/20 text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer shadow-sm min-w-[200px]">
+          <span class="material-symbols-outlined text-primary text-lg">storefront</span>
+          <span class="flex-1 text-left truncate">{{ vendorDropdownLabel }}</span>
+          <span class="material-symbols-outlined text-outline text-base transition-transform duration-200"
+            [class.rotate-180]="vendorDropdownOpen">expand_more</span>
+        </button>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div
-                class="bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500 text-white rounded-2xl p-4 shadow-md">
-                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Vendors</p>
-                <p class="text-2xl font-black mt-1">{{ displayVendors.length }}</p>
-            </div>
-            <div class="bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-2xl p-4 shadow-md">
-                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Invoices</p>
-                <p class="text-2xl font-black mt-1">{{ displayTotalInvoices }}</p>
-            </div>
-            <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl p-4 shadow-md">
-                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Billed</p>
-                <p class="text-lg font-black mt-1">{{ formatAmount(displayTotalBilled) }}</p>
-            </div>
-            <div class="bg-gradient-to-br from-rose-400 to-pink-500 text-white rounded-2xl p-4 shadow-md">
-                <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Paid</p>
-                <p class="text-lg font-black mt-1">{{ formatAmount(displayTotalPaid) }}</p>
-            </div>
-        </div>
-
-        <div class="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-                <h3 class="text-lg font-black text-on-surface">
-                    {{ isAllSelected ? 'All Vendors — Activity History' : selectedVendorIds.size + ' Vendor(s) —
-                    Activity History' }}
-                </h3>
-                <p class="text-xs text-outline mt-0.5">
-                    {{ displayVendors.length }} vendor(s) — combined, chronological activity feed
-                </p>
-            </div>
-        </div>
-
-        <!-- ── Merged Activity Timeline ─────────────────────────────────────── -->
-        @if (selectedVendorIds.size === 0) {
+        @if (vendorDropdownOpen) {
         <div
-            class="py-20 flex flex-col items-center gap-3 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
-            <span class="material-symbols-outlined text-5xl">storefront</span>
-            <p class="font-bold text-sm">No vendors selected</p>
-            <p class="text-xs text-center max-w-xs">Use the "Select Vendors" dropdown above to choose vendors whose
-                history you want to view.</p>
-            <button (click)="toggleSelectAll()"
-                class="mt-2 px-5 py-2 rounded-xl text-xs font-black text-white bg-primary hover:bg-primary/90 transition-colors cursor-pointer">
-                Select All Vendors
-            </button>
-        </div>
-        } @else if (isTimelineLoading) {
-        <div
-            class="py-16 flex flex-col items-center gap-3 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
-            <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
-            <p class="text-sm font-bold">Loading history…</p>
-        </div>
-        } @else {
-        <div class="space-y-2.5">
-            @for (ev of timelineEvents; track ev.id) {
-            <div
-                class="flex items-start gap-3 bg-surface-container-low rounded-2xl px-4 py-3.5 hover:bg-surface-container transition-colors">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" [ngClass]="ev.iconBg">
-                    <span class="material-symbols-outlined text-[16px]" [ngClass]="ev.iconColor">{{ ev.icon }}</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between gap-2 flex-wrap">
-                        <span class="text-[11px] font-black text-slate-500">{{ formatDate(ev.date) }}, {{
-                            formatTime(ev.date) }}</span>
-                        @if (!isSingleVendorSelected) {
-                        <span
-                            class="text-[9px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">{{
-                            ev.vendorName }}</span>
-                        }
-                    </div>
-                    <p class="text-sm font-semibold text-on-surface mt-1">{{ ev.description }}</p>
-                </div>
-                @if (ev.viewAction) {
-                <button (click)="ev.viewAction()"
-                    class="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer shrink-0">
-                    <span class="material-symbols-outlined text-base">visibility</span>
-                </button>
+          class="absolute right-0 top-full mt-1.5 w-72 bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/20 shadow-xl z-50 overflow-hidden">
+
+          <div class="px-3 py-2.5 border-b border-outline-variant/10">
+            <div class="relative">
+              <span
+                class="absolute left-2.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-[15px]">search</span>
+              <input [(ngModel)]="dropdownSearch" type="text" placeholder="Search vendors…"
+                class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-outline-variant/20 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest" />
+            </div>
+          </div>
+
+
+          <div (click)="toggleSelectAll()"
+            class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-container-low transition-colors border-b border-outline-variant/10">
+            <div class="w-4 h-4 rounded flex items-center justify-center border-2 transition-all"
+              [ngClass]="isAllSelected ? 'bg-primary border-primary' : isPartiallySelected ? 'bg-primary/30 border-primary' : 'border-outline/40 bg-white dark:bg-slate-800'">
+              @if (isAllSelected) {
+              <span class="material-symbols-outlined text-white text-[11px]">check</span>
+              } @else if (isPartiallySelected) {
+              <span class="material-symbols-outlined text-primary text-[11px]">remove</span>
+              }
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-black text-on-surface">All Vendors</p>
+              <p class="text-[10px] text-outline">{{ vendors.length }} total</p>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+              {{ selectedVendorIds.size }}/{{ vendors.length }}
+            </span>
+          </div>
+
+
+          <div class="max-h-60 overflow-y-auto">
+            @for (v of dropdownFilteredVendors; track v.id) {
+            <div (click)="toggleVendorSelection(v)"
+              class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-container-low transition-colors border-b border-outline-variant/5">
+              <div class="w-4 h-4 rounded flex items-center justify-center border-2 shrink-0 transition-all"
+                [ngClass]="selectedVendorIds.has(v.id) ? 'bg-primary border-primary' : 'border-outline/40 bg-white dark:bg-slate-800'">
+                @if (selectedVendorIds.has(v.id)) {
+                <span class="material-symbols-outlined text-white text-[11px]">check</span>
                 }
+              </div>
+              <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                [ngClass]="selectedVendorIds.has(v.id) ? 'bg-primary/15' : 'bg-surface-container-high'">
+                <span class="material-symbols-outlined text-[14px]"
+                  [ngClass]="selectedVendorIds.has(v.id) ? 'text-primary' : 'text-outline'">business</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold truncate text-on-surface">{{ v.name }}</p>
+                <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full" [ngClass]="v.statusColor">{{ v.status
+                    }}</span>
+                  <span class="text-[10px] font-semibold" [class.text-green-600]="v.compliance_score >= 90"
+                    [class.text-amber-500]="v.compliance_score < 90 && v.compliance_score >= 70"
+                    [class.text-red-500]="v.compliance_score < 70">{{ v.compliance_score }}%</span>
+                  <span class="text-[9px] text-outline font-semibold">· Since {{ formatDate(v.created_at) }}</span>
+                </div>
+              </div>
             </div>
             } @empty {
-            <div
-                class="py-16 flex flex-col items-center gap-2 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
-                <span class="material-symbols-outlined text-4xl">history</span>
-                <p class="text-xs font-bold italic">No history events found for the selected vendor(s) yet.</p>
+            <div class="py-6 text-center text-outline">
+              <span class="material-symbols-outlined text-2xl">search_off</span>
+              <p class="text-xs font-bold mt-1">No vendors found</p>
             </div>
             }
+          </div>
+
+
+          <div
+            class="px-4 py-2.5 border-t border-outline-variant/10 bg-surface-container-low flex items-center justify-between gap-3">
+            <div class="flex gap-3 text-[10px] font-bold text-outline">
+              <span>Active: <span class="text-green-600 font-black">{{ activeCount }}</span></span>
+              <span>Pending: <span class="text-amber-600 font-black">{{ pendingCount }}</span></span>
+            </div>
+            <button (click)="vendorDropdownOpen = false"
+              class="text-[11px] font-black text-primary hover:underline cursor-pointer">Done</button>
+          </div>
         </div>
         }
+      </div>
+
+
+      <button (click)="exportAllToCsv()" [disabled]="exporting"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-highest text-primary hover:bg-surface-dim transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+        <span class="material-symbols-outlined text-lg" [class.animate-spin]="exporting">
+          {{ exporting ? 'progress_activity' : 'download' }}
+        </span>
+        {{ exporting ? 'Preparing Export…' : 'Export All (CSV)' }}
+      </button>
+    </div>
+  </div>
+
+
+  <div class="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+    @for (tab of categoryTabs; track tab.key) {
+    <button (click)="setActiveCategory(tab.key)"
+      class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors cursor-pointer shrink-0"
+      [ngClass]="activeCategory === tab.key
+          ? 'bg-primary text-white shadow-sm'
+          : 'bg-surface-container-low text-slate-500 hover:bg-surface-container'">
+      {{ tab.label }}
+
+      @if (tab.key === 'vendor') {
+      <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full"
+        [ngClass]="activeCategory === tab.key ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'">
+        {{ displayVendors.length }}
+      </span>
+      } @else if (getCategoryCount(tab.key) > 0) {
+      <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full"
+        [ngClass]="activeCategory === tab.key ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'">
+        {{ getCategoryCount(tab.key) }}
+      </span>
+      }
+    </button>
+    }
+  </div>
+
+
+  <div class="flex flex-col gap-5">
+
+    @if (!isAllSelected && selectedVendorIds.size > 0) {
+    <div class="flex flex-wrap gap-2 items-center">
+      <span class="text-[11px] font-black text-outline uppercase tracking-widest">Showing:</span>
+      @for (id of selectedVendorIdsArray; track id) {
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+        <span class="text-[11px] font-black text-primary">{{ getVendorNameById(id) }}</span>
+        <button (click)="removeVendorSelection(id)"
+          class="text-primary/60 hover:text-primary transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-[13px]">close</span>
+        </button>
+      </div>
+      }
+      <button (click)="clearAllSelections()"
+        class="text-[11px] font-bold text-outline hover:text-primary transition-colors cursor-pointer underline">Clear
+        all</button>
+    </div>
+    }
+
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500 text-white rounded-2xl p-4 shadow-md">
+        <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Vendors</p>
+        <p class="text-2xl font-black mt-1">{{ displayVendors.length }}</p>
+      </div>
+      <div class="bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-2xl p-4 shadow-md">
+        <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Invoices</p>
+        <p class="text-2xl font-black mt-1">{{ displayTotalInvoices }}</p>
+      </div>
+      <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl p-4 shadow-md">
+        <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Billed</p>
+        <p class="text-lg font-black mt-1">{{ formatAmount(displayTotalBilled) }}</p>
+      </div>
+      <div class="bg-gradient-to-br from-rose-400 to-pink-500 text-white rounded-2xl p-4 shadow-md">
+        <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Paid</p>
+        <p class="text-lg font-black mt-1">{{ formatAmount(displayTotalPaid) }}</p>
+      </div>
+    </div>
+
+
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h3 class="text-lg font-black text-on-surface">
+          @if (isAllSelected || selectedVendorIds.size === 0) {
+          All Vendors — Activity History
+          } @else {
+          {{ selectedVendorIds.size }} Vendor(s) — Activity History
+          }
+        </h3>
+        <p class="text-xs text-outline mt-0.5">
+          {{ displayVendors.length }} vendor(s) — grouped by vendor, chronological activity feed
+        </p>
+      </div>
+    </div>
+
+
+    @if (isTimelineLoading) {
+    <div
+      class="py-16 flex flex-col items-center gap-3 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
+      <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+      <p class="text-sm font-bold">Loading history…</p>
+    </div>
+
+    } @else {
+
+
+    @if (activeCategory === 'budget') {
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Total Allocated</p>
+        <p class="text-xl font-black mt-1 text-violet-600">{{ formatAmount(totalAllocated) }}</p>
+      </div>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Total Invoiced</p>
+        <p class="text-xl font-black mt-1 text-amber-600">{{ formatAmount(totalInvoiced) }}</p>
+        <p class="text-[10px] font-bold mt-0.5" [class.text-red-500]="overallUtilizationPercent > 100"
+          [class.text-amber-500]="overallUtilizationPercent >= 80 && overallUtilizationPercent <= 100"
+          [class.text-emerald-600]="overallUtilizationPercent < 80">
+          {{ overallUtilizationPercent }}% utilized
+        </p>
+      </div>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Total Paid</p>
+        <p class="text-xl font-black mt-1 text-emerald-600">{{ formatAmount(totalBudgetPaid) }}</p>
+      </div>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
+        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Remaining</p>
+        <p class="text-xl font-black mt-1" [class.text-red-500]="exceededVendorsCount > 0"
+          [class.text-slate-700]="exceededVendorsCount === 0">
+          {{ formatAmount(totalBudgetRemaining) }}
+        </p>
+        @if (exceededVendorsCount > 0) {
+        <p class="text-[10px] font-bold text-red-500 mt-0.5">{{ exceededVendorsCount }} vendor(s) exceeded</p>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 border border-outline-variant/10 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-black text-on-surface">Overall Budget Utilization — {{ vendorBudgetSummaries.length }}
+          vendor(s)</p>
+        <span class="text-sm font-black" [class.text-red-500]="overallUtilizationPercent > 100"
+          [class.text-amber-500]="overallUtilizationPercent >= 80 && overallUtilizationPercent <= 100"
+          [class.text-emerald-600]="overallUtilizationPercent < 80">
+          {{ overallUtilizationPercent }}%
+        </span>
+      </div>
+      <div class="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-700"
+          [class.bg-red-500]="overallUtilizationPercent > 100"
+          [class.bg-amber-500]="overallUtilizationPercent >= 80 && overallUtilizationPercent <= 100"
+          [class.bg-emerald-500]="overallUtilizationPercent < 80"
+          [style.width.%]="Math.min(overallUtilizationPercent, 100)">
+        </div>
+      </div>
+      <div class="flex justify-between mt-1.5 text-[10px] font-bold text-outline">
+        <span>₹0</span>
+        <span>{{ formatAmount(totalAllocated) }}</span>
+      </div>
+    </div>
+    }
+
+
+    @if (groupedTimelineEvents.length === 0) {
+    <div
+      class="py-16 flex flex-col items-center gap-2 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
+      <span class="material-symbols-outlined text-4xl">history</span>
+      <p class="text-sm font-bold">No activity found for this filter.</p>
+      <p class="text-xs text-outline/70">Try selecting a different tab or vendor.</p>
+    </div>
+    }
+
+    @for (group of groupedTimelineEvents; track group.vendor.id) {
+    <div class="flex flex-col gap-2">
+
+
+      <div class="flex items-center gap-3 px-1">
+
+        <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <span class="text-sm font-black text-primary">{{ getVendorInitials(group.vendor.name) }}</span>
+        </div>
+
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h4 class="text-sm font-black text-on-surface">{{ group.vendor.name }}</h4>
+
+            <span class="text-[9px] font-black px-2 py-0.5 rounded-full" [ngClass]="group.vendor.statusColor">
+              {{ group.vendor.status }}
+            </span>
+
+            <span class="text-[10px] font-bold" [class.text-green-600]="group.complianceScore >= 90"
+              [class.text-amber-500]="group.complianceScore < 90 && group.complianceScore >= 70"
+              [class.text-red-500]="group.complianceScore < 70">
+              {{ group.complianceScore }}% compliance
+            </span>
+          </div>
+
+          <div class="flex items-center gap-3 mt-0.5 flex-wrap">
+            <span class="text-[10px] font-semibold text-outline">
+              {{ group.events.length }} event(s)
+            </span>
+            <span class="text-[10px] text-outline">·</span>
+            <span class="text-[10px] font-semibold text-outline">
+              Billed: <span class="text-amber-600 font-black">{{ formatAmount(group.totalBilled) }}</span>
+            </span>
+            <span class="text-[10px] text-outline">·</span>
+            <span class="text-[10px] font-semibold text-outline">
+              Paid: <span class="text-green-600 font-black">{{ formatAmount(group.totalPaid) }}</span>
+            </span>
+            <span class="text-[10px] text-outline">·</span>
+            <span class="text-[10px] font-semibold text-outline">
+              Since <span class="font-bold text-slate-500">{{ formatDate(group.vendor.created_at) }}</span>
+            </span>
+          </div>
+        </div>
+
+
+        <span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary shrink-0">
+          {{ group.events.length }}
+        </span>
+      </div>
+
+
+      <div class="ml-4 pl-7 border-l-2 border-dashed border-outline-variant/20 flex flex-col gap-2">
+        @for (ev of group.events; track ev.id) {
+        <div
+          class="flex items-start gap-3 bg-white dark:bg-slate-900 border border-outline-variant/10 rounded-2xl px-4 py-3.5 hover:bg-surface-container-low transition-colors shadow-sm relative">
+
+          <div
+            class="absolute -left-[33px] top-4 w-3 h-3 rounded-full border-2 border-white dark:border-slate-950 shadow-sm"
+            [ngClass]="ev.iconBg"></div>
+
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" [ngClass]="ev.iconBg">
+            <span class="material-symbols-outlined text-[16px]" [ngClass]="ev.iconColor">{{ ev.icon }}</span>
+          </div>
+
+
+          <div class="flex-1 min-w-0">
+
+
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="text-[10px] font-bold text-slate-400">{{ formatDate(ev.date) }}, {{ formatTime(ev.date)
+                }}</span>
+              <span class="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide"
+                [ngClass]="getCategoryBadgeClass(ev.primaryCategory)">
+                {{ getCategoryLabel(ev.primaryCategory) }}
+              </span>
+            </div>
+
+            <div class="mt-0.5">
+              <p class="text-sm font-semibold text-on-surface leading-snug">{{ ev.description }}</p>
+
+
+              @if (ev.subDetails && ev.subDetails.length > 0) {
+              <div class="flex flex-wrap gap-3 mt-1.5">
+                @for (detail of ev.subDetails; track detail.label) {
+                <div class="flex items-center gap-1">
+                  <span class="text-[10px] font-bold text-outline">{{ detail.label }}:</span>
+                  <span class="text-[10px] font-black" [ngClass]="detail.valueColor || 'text-on-surface'">{{
+                    detail.value }}</span>
+                </div>
+                }
+              </div>
+              }
+            </div>
+
+
+            @if (ev.budgetMeta) {
+            <div class="mt-2.5">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500"
+                    [class.bg-red-500]="ev.budgetMeta.exceeded"
+                    [class.bg-amber-500]="!ev.budgetMeta.exceeded && ev.budgetMeta.utilizationPercent >= 80"
+                    [class.bg-emerald-500]="ev.budgetMeta.utilizationPercent < 80"
+                    [style.width.%]="Math.min(ev.budgetMeta.utilizationPercent, 100)">
+                  </div>
+                </div>
+                <span class="text-[10px] font-black shrink-0" [class.text-red-500]="ev.budgetMeta.exceeded"
+                  [class.text-amber-500]="!ev.budgetMeta.exceeded && ev.budgetMeta.utilizationPercent >= 80"
+                  [class.text-emerald-600]="ev.budgetMeta.utilizationPercent < 80">
+                  {{ ev.budgetMeta.utilizationPercent }}% of {{ formatAmount(ev.budgetMeta.allocated) }}
+                </span>
+              </div>
+              <div class="flex gap-3 text-[9px] font-bold text-outline">
+                <span>Paid: <span class="text-emerald-600 font-black">{{ formatAmount(ev.budgetMeta.paid)
+                    }}</span></span>
+                <span>Remaining:
+                  <span class="font-black" [class.text-red-500]="ev.budgetMeta.exceeded"
+                    [class.text-slate-600]="!ev.budgetMeta.exceeded">
+                    {{ formatAmount(ev.budgetMeta.remaining) }}
+                  </span>
+                </span>
+              </div>
+            </div>
+            }
+          </div>
+
+
+          @if (ev.viewAction) {
+          <button (click)="ev.viewAction()"
+            class="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer shrink-0 mt-0.5"
+            title="View details">
+            <span class="material-symbols-outlined text-base">visibility</span>
+          </button>
+          }
+        </div>
+        }
+      </div>
 
     </div>
+    }
+
+    }
+
+  </div>
 
 </section>
