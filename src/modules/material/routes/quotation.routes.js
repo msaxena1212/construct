@@ -1,5 +1,5 @@
 const quotationCtrl = require("../controllers/quotation.controller");
-const checkPermission = require("../../../core/middleware/permission.middleware");  
+const checkPermission = require("../../../core/middleware/permission.middleware");
 module.exports = (router) => {
 
     // =========================================
@@ -27,7 +27,7 @@ module.exports = (router) => {
     // =========================================
     // UPDATE QUOTATION
     // =========================================
-    router.put("/update_quotation/:id", checkPermission("resources/quotations", "can_update"),quotationCtrl.update_quotation);
+    router.put("/update_quotation/:id", checkPermission("resources/quotations", "can_update"), quotationCtrl.update_quotation);
 
 
     // =========================================
@@ -40,7 +40,7 @@ module.exports = (router) => {
     // GET QUOTATION BY MATERIAL MASTER ID
     // =========================================
     router.get(
-        "/get_quotation_by_material_master_id/:material_master_id",checkPermission("resources/quotations", "can_read"), 
+        "/get_quotation_by_material_master_id/:material_master_id", checkPermission("resources/quotations", "can_read"),
         quotationCtrl.get_quotation_by_material_master_id
     );
 
@@ -49,7 +49,7 @@ module.exports = (router) => {
     // GET QUOTATION BY EQUIPMENT MASTER ID
     // =========================================
     router.get(
-        "/get_quotation_by_equipment_master_id/:equipment_master_id",checkPermission("resources/quotations", "can_read"), 
+        "/get_quotation_by_equipment_master_id/:equipment_master_id", checkPermission("resources/quotations", "can_read"),
         quotationCtrl.get_quotation_by_equipment_master_id
     );
 
@@ -60,13 +60,13 @@ module.exports = (router) => {
 
     // Get All Material Quotations
     router.get(
-        "/getall_material_quotation",checkPermission("resources/quotations", "can_read"), 
+        "/getall_material_quotation", checkPermission("resources/quotations", "can_read"),
         quotationCtrl.getall_material_quotation
     );
 
     // Get Material Quotation By ID
     router.get(
-        "/get_material_quotation_by_id/:id",checkPermission("resources/quotations", "can_read"), 
+        "/get_material_quotation_by_id/:id", checkPermission("resources/quotations", "can_read"),
         quotationCtrl.get_material_quotation_by_id
     );
 
@@ -77,20 +77,23 @@ module.exports = (router) => {
 
     // Get All Equipment Quotations
     router.get(
-        "/getall_equipment_quotation",checkPermission("resources/equipment-inventory", "can_read"), 
+        "/getall_equipment_quotation", checkPermission("resources/equipment-inventory", "can_read"),
         quotationCtrl.getall_equipment_quotation
     );
 
     // Get Equipment Quotation By ID
     router.get(
-        "/get_equipment_quotation_by_id/:id",checkPermission("resources/equipment-inventory", "can_read"), 
+        "/get_equipment_quotation_by_id/:id", checkPermission("resources/equipment-inventory", "can_read"),
         quotationCtrl.get_equipment_quotation_by_id
     );
 
 
-    router.get("/getall_material_quotation_company/:id", checkPermission("resources/materials", "can_read"),quotationCtrl.getall_material_quotation_company);
+    router.get("/getall_material_quotation_company/:id", checkPermission("resources/materials", "can_read"), quotationCtrl.getall_material_quotation_company);
+
+    router.get("/getall_material_quotation_company_wise/:id", checkPermission("resources/materials", "can_read"), quotationCtrl.getall_material_quotation_company_wise);
 
 
-    
+
+
 
 };

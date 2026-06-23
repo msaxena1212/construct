@@ -1054,6 +1054,72 @@ class QuotationController {
     }
 
 
+
+    async getall_material_quotation_company_wise(req, res) {
+        try {
+
+            const company_id = req.user.company_id;
+
+            const quotations = await db.quotation.findAll({
+                where: {
+                    isDeleted: false,
+                    company_id
+                },
+                order: [["createdAt", "DESC"]]
+            });
+
+            if (quotations.length === 0) {
+                return res.status(404).json({
+                    message: "No quotations found."
+                });
+            }
+
+            const materialQuotations = quotations
+                .map((quotation) => {
+
+                    // Convert items into array if string
+                    let items = quotation.items;
+
+                    if (typeof items === "string") {
+                        items = JSON.parse(items);
+                    }
+
+                    // Filter only MATERIAL items
+                    const materialItems = Array.isArray(items)
+                        ? items.filter(
+                            (item) => item.status === "MATERIAL"
+                        )
+                        : [];
+
+                    return {
+                        ...quotation.toJSON(),
+                        items: materialItems
+                    };
+                })
+                .filter((quotation) => quotation.items.length > 0);
+
+            if (materialQuotations.length === 0) {
+                return res.status(404).json({
+                    message: "No material quotations found."
+                });
+            }
+
+            return res.status(200).json({
+                message: "Material quotations fetched successfully.",
+                data: materialQuotations
+            });
+
+        } catch (error) {
+
+            console.error("[GETALL_MATERIAL_QUOTATION_ERROR]", error);
+
+            return res.status(500).json({
+                message: "Error fetching material quotations.",
+                error: error.message
+            });
+        }
+    }
+
 }
 
 
