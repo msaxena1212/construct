@@ -32,7 +32,6 @@
             </div>
           </div>
 
-
           <div (click)="toggleSelectAll()"
             class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-container-low transition-colors border-b border-outline-variant/10">
             <div class="w-4 h-4 rounded flex items-center justify-center border-2 transition-all"
@@ -51,7 +50,6 @@
               {{ selectedVendorIds.size }}/{{ vendors.length }}
             </span>
           </div>
-
 
           <div class="max-h-60 overflow-y-auto">
             @for (v of dropdownFilteredVendors; track v.id) {
@@ -88,7 +86,6 @@
             }
           </div>
 
-
           <div
             class="px-4 py-2.5 border-t border-outline-variant/10 bg-surface-container-low flex items-center justify-between gap-3">
             <div class="flex gap-3 text-[10px] font-bold text-outline">
@@ -102,7 +99,6 @@
         }
       </div>
 
-
       <button (click)="exportAllToCsv()" [disabled]="exporting"
         class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-surface-container-highest text-primary hover:bg-surface-dim transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
         <span class="material-symbols-outlined text-lg" [class.animate-spin]="exporting">
@@ -113,7 +109,6 @@
     </div>
   </div>
 
-
   <div class="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
     @for (tab of categoryTabs; track tab.key) {
     <button (click)="setActiveCategory(tab.key)"
@@ -122,7 +117,6 @@
           ? 'bg-primary text-white shadow-sm'
           : 'bg-surface-container-low text-slate-500 hover:bg-surface-container'">
       {{ tab.label }}
-
       @if (tab.key === 'vendor') {
       <span class="text-[10px] font-black px-1.5 py-0.5 rounded-full"
         [ngClass]="activeCategory === tab.key ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'">
@@ -137,7 +131,6 @@
     </button>
     }
   </div>
-
 
   <div class="flex flex-col gap-5">
 
@@ -159,7 +152,6 @@
     </div>
     }
 
-
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500 text-white rounded-2xl p-4 shadow-md">
         <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Vendors</p>
@@ -179,7 +171,6 @@
       </div>
     </div>
 
-
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div>
         <h3 class="text-lg font-black text-on-surface">
@@ -189,12 +180,8 @@
           {{ selectedVendorIds.size }} Vendor(s) — Activity History
           }
         </h3>
-        <p class="text-xs text-outline mt-0.5">
-          {{ displayVendors.length }} vendor(s) — grouped by vendor, chronological activity feed
-        </p>
       </div>
     </div>
-
 
     @if (isTimelineLoading) {
     <div
@@ -204,64 +191,6 @@
     </div>
 
     } @else {
-
-
-    @if (activeCategory === 'budget') {
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
-        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Total Allocated</p>
-        <p class="text-xl font-black mt-1 text-violet-600">{{ formatAmount(totalAllocated) }}</p>
-      </div>
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
-        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Total Invoiced</p>
-        <p class="text-xl font-black mt-1 text-amber-600">{{ formatAmount(totalInvoiced) }}</p>
-        <p class="text-[10px] font-bold mt-0.5" [class.text-red-500]="overallUtilizationPercent > 100"
-          [class.text-amber-500]="overallUtilizationPercent >= 80 && overallUtilizationPercent <= 100"
-          [class.text-emerald-600]="overallUtilizationPercent < 80">
-          {{ overallUtilizationPercent }}% utilized
-        </p>
-      </div>
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
-        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Total Paid</p>
-        <p class="text-xl font-black mt-1 text-emerald-600">{{ formatAmount(totalBudgetPaid) }}</p>
-      </div>
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-outline-variant/10 shadow-sm">
-        <p class="text-[10px] font-black uppercase tracking-widest text-outline">Remaining</p>
-        <p class="text-xl font-black mt-1" [class.text-red-500]="exceededVendorsCount > 0"
-          [class.text-slate-700]="exceededVendorsCount === 0">
-          {{ formatAmount(totalBudgetRemaining) }}
-        </p>
-        @if (exceededVendorsCount > 0) {
-        <p class="text-[10px] font-bold text-red-500 mt-0.5">{{ exceededVendorsCount }} vendor(s) exceeded</p>
-        }
-      </div>
-    </div>
-
-    <div class="bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 border border-outline-variant/10 shadow-sm">
-      <div class="flex items-center justify-between mb-2">
-        <p class="text-xs font-black text-on-surface">Overall Budget Utilization — {{ vendorBudgetSummaries.length }}
-          vendor(s)</p>
-        <span class="text-sm font-black" [class.text-red-500]="overallUtilizationPercent > 100"
-          [class.text-amber-500]="overallUtilizationPercent >= 80 && overallUtilizationPercent <= 100"
-          [class.text-emerald-600]="overallUtilizationPercent < 80">
-          {{ overallUtilizationPercent }}%
-        </span>
-      </div>
-      <div class="w-full h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-        <div class="h-full rounded-full transition-all duration-700"
-          [class.bg-red-500]="overallUtilizationPercent > 100"
-          [class.bg-amber-500]="overallUtilizationPercent >= 80 && overallUtilizationPercent <= 100"
-          [class.bg-emerald-500]="overallUtilizationPercent < 80"
-          [style.width.%]="Math.min(overallUtilizationPercent, 100)">
-        </div>
-      </div>
-      <div class="flex justify-between mt-1.5 text-[10px] font-bold text-outline">
-        <span>₹0</span>
-        <span>{{ formatAmount(totalAllocated) }}</span>
-      </div>
-    </div>
-    }
-
 
     @if (groupedTimelineEvents.length === 0) {
     <div
@@ -273,143 +202,189 @@
     }
 
     @for (group of groupedTimelineEvents; track group.vendor.id) {
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-3">
 
-
-      <div class="flex items-center gap-3 px-1">
-
-        <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-          <span class="text-sm font-black text-primary">{{ getVendorInitials(group.vendor.name) }}</span>
-        </div>
-
-
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h4 class="text-sm font-black text-on-surface">{{ group.vendor.name }}</h4>
-
-            <span class="text-[9px] font-black px-2 py-0.5 rounded-full" [ngClass]="group.vendor.statusColor">
-              {{ group.vendor.status }}
-            </span>
-
-            <span class="text-[10px] font-bold" [class.text-green-600]="group.complianceScore >= 90"
-              [class.text-amber-500]="group.complianceScore < 90 && group.complianceScore >= 70"
-              [class.text-red-500]="group.complianceScore < 70">
-              {{ group.complianceScore }}% compliance
-            </span>
-          </div>
-
-          <div class="flex items-center gap-3 mt-0.5 flex-wrap">
-            <span class="text-[10px] font-semibold text-outline">
-              {{ group.events.length }} event(s)
-            </span>
-            <span class="text-[10px] text-outline">·</span>
-            <span class="text-[10px] font-semibold text-outline">
-              Billed: <span class="text-amber-600 font-black">{{ formatAmount(group.totalBilled) }}</span>
-            </span>
-            <span class="text-[10px] text-outline">·</span>
-            <span class="text-[10px] font-semibold text-outline">
-              Paid: <span class="text-green-600 font-black">{{ formatAmount(group.totalPaid) }}</span>
-            </span>
-            <span class="text-[10px] text-outline">·</span>
-            <span class="text-[10px] font-semibold text-outline">
-              Since <span class="font-bold text-slate-500">{{ formatDate(group.vendor.created_at) }}</span>
-            </span>
-          </div>
-        </div>
-
-
-        <span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary shrink-0">
-          {{ group.events.length }}
-        </span>
+      @if (groupedTimelineEvents.length > 1) {
+      <div class="flex items-center gap-2 px-1">
+        <span class="text-xs font-black text-on-surface">{{ group.vendor.name }}</span>
+        <span class="text-[10px] font-bold text-outline">· {{ group.events.length }} events</span>
       </div>
+      }
 
+      @for (dGroup of group.dateGroups; track dGroup.date.getTime()) {
+      <div class="flex flex-col gap-2">
 
-      <div class="ml-4 pl-7 border-l-2 border-dashed border-outline-variant/20 flex flex-col gap-2">
-        @for (ev of group.events; track ev.id) {
-        <div
-          class="flex items-start gap-3 bg-white dark:bg-slate-900 border border-outline-variant/10 rounded-2xl px-4 py-3.5 hover:bg-surface-container-low transition-colors shadow-sm relative">
+        <div class="flex items-center gap-3 px-1">
+          <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <span class="text-sm font-black text-primary">{{ getVendorInitials(group.vendor.name) }}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h4 class="text-sm font-black text-on-surface">
+                {{ formatDate(dGroup.date) }}
+              </h4>
+            </div>
+          </div>
+          <span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary shrink-0">
+            {{ dGroup.events.length }}
+          </span>
+        </div>
+
+        <div class="ml-4 pl-7 border-l-2 border-dashed border-outline-variant/20 flex flex-col gap-2">
+          @for (ev of dGroup.events; track ev.id) {
 
           <div
-            class="absolute -left-[33px] top-4 w-3 h-3 rounded-full border-2 border-white dark:border-slate-950 shadow-sm"
-            [ngClass]="ev.iconBg"></div>
+            class="flex flex-col bg-white dark:bg-slate-900 border border-outline-variant/10 rounded-2xl px-4 py-3.5 hover:bg-surface-container-low transition-colors shadow-sm relative">
 
-          <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" [ngClass]="ev.iconBg">
-            <span class="material-symbols-outlined text-[16px]" [ngClass]="ev.iconColor">{{ ev.icon }}</span>
-          </div>
+            <div
+              class="absolute -left-[33px] top-4 w-3 h-3 rounded-full border-2 border-white dark:border-slate-950 shadow-sm"
+              [ngClass]="ev.iconBg"></div>
 
+            <div class="flex items-start gap-3">
 
-          <div class="flex-1 min-w-0">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5" [ngClass]="ev.iconBg">
+                <span class="material-symbols-outlined text-[16px]" [ngClass]="ev.iconColor">{{ ev.icon }}</span>
+              </div>
 
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <span class="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide"
+                    [ngClass]="getCategoryBadgeClass(ev.primaryCategory)">
+                    {{ getCategoryLabel(ev.primaryCategory) }}
+                  </span>
+                </div>
 
-            <div class="flex items-center gap-2 flex-wrap mb-1">
-              <span class="text-[10px] font-bold text-slate-400">{{ formatDate(ev.date) }}, {{ formatTime(ev.date)
-                }}</span>
-              <span class="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide"
-                [ngClass]="getCategoryBadgeClass(ev.primaryCategory)">
-                {{ getCategoryLabel(ev.primaryCategory) }}
-              </span>
-            </div>
+                <div class="mt-0.5">
 
-            <div class="mt-0.5">
-              <p class="text-sm font-semibold text-on-surface leading-snug">{{ ev.description }}</p>
+                  <p class="text-sm font-semibold text-on-surface leading-snug" style="white-space: pre-line">{{
+                    ev.description }}</p>
+                </div>
+              </div>
 
+              @if (hasMetaFields(ev)) {
+              <div class="flex flex-col items-end gap-1 shrink-0 self-start ml-2 min-w-[160px]
+                          border-l border-outline-variant/10 pl-3">
 
-              @if (ev.subDetails && ev.subDetails.length > 0) {
-              <div class="flex flex-wrap gap-3 mt-1.5">
-                @for (detail of ev.subDetails; track detail.label) {
-                <div class="flex items-center gap-1">
-                  <span class="text-[10px] font-bold text-outline">{{ detail.label }}:</span>
-                  <span class="text-[10px] font-black" [ngClass]="detail.valueColor || 'text-on-surface'">{{
-                    detail.value }}</span>
+                @if (ev.createdBy) {
+                <div class="flex items-center gap-1 whitespace-nowrap">
+                  <span class="text-[8.5px] font-bold text-outline/60 uppercase tracking-wide leading-tight">
+                    Created By:
+                  </span>
+                  <span
+                    class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[8.5px] font-black leading-tight">
+                    {{ ev.createdBy }}
+                  </span>
                 </div>
                 }
+
+                @if (ev.createdAt) {
+                <div class="flex items-center gap-1 whitespace-nowrap">
+                  <span class="text-[8.5px] font-bold text-outline/60 uppercase tracking-wide leading-tight">
+                    Created At:
+                  </span>
+                  <span
+                    class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[8.5px] font-black leading-tight">
+                    {{ ev.createdAt }}
+                  </span>
+                </div>
+                }
+
+                @if (ev.updatedBy) {
+                <div class="flex items-center gap-1 whitespace-nowrap">
+                  <span class="text-[8.5px] font-bold text-outline/60 uppercase tracking-wide leading-tight">
+                    Updated By:
+                  </span>
+                  <span
+                    class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[8.5px] font-black leading-tight">
+                    {{ ev.updatedBy }}
+                  </span>
+                </div>
+                }
+
+                @if (ev.updatedAt) {
+                <div class="flex items-center gap-1 whitespace-nowrap">
+                  <span class="text-[8.5px] font-bold text-outline/60 uppercase tracking-wide leading-tight">
+                    Updated At:
+                  </span>
+                  <span
+                    class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[8.5px] font-black leading-tight">
+                    {{ ev.updatedAt }}
+                  </span>
+                </div>
+                }
+
+              </div>
+              }
+
+              @if (ev.viewAction) {
+              <button (click)="ev.viewAction()"
+                class="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer shrink-0 mt-0.5"
+                title="View details">
+                <span class="material-symbols-outlined text-base">visibility</span>
+              </button>
+              }
+
+            </div>
+          </div>
+
+          @if (ev.budgetMeta && ev.id.endsWith('-onboard')) {
+          <div
+            class="flex items-start gap-3 bg-white dark:bg-slate-900 border border-violet-200/60 rounded-2xl px-4 py-3.5 shadow-sm relative">
+
+            <div
+              class="absolute -left-[33px] top-4 w-3 h-3 rounded-full border-2 border-white dark:border-slate-950 shadow-sm bg-violet-100">
+            </div>
+
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-violet-100">
+              <span class="material-symbols-outlined text-[16px] text-violet-600">account_balance_wallet</span>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap mb-1">
+                <span
+                  class="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide bg-violet-100 text-violet-700">
+                  Budget
+                </span>
+              </div>
+              <p class="text-sm font-semibold text-on-surface leading-snug">
+                Budget of {{ formatAmount(ev.budgetMeta.allocated) }} was allocated to Vendor "{{ ev.vendorName }}".
+              </p>
+            </div>
+
+            @if (ev.createdBy || ev.createdAt) {
+            <div class="flex flex-col items-end gap-1 shrink-0 self-start ml-2 min-w-[160px]
+                        border-l border-outline-variant/10 pl-3">
+              @if (ev.createdBy) {
+              <div class="flex items-center gap-1 whitespace-nowrap">
+                <span class="text-[8.5px] font-bold text-outline/60 uppercase tracking-wide leading-tight">
+                  Created By:
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[8.5px] font-black leading-tight">
+                  {{ ev.createdBy }}
+                </span>
+              </div>
+              }
+              @if (ev.createdAt) {
+              <div class="flex items-center gap-1 whitespace-nowrap">
+                <span class="text-[8.5px] font-bold text-outline/60 uppercase tracking-wide leading-tight">
+                  Created At:
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 text-[8.5px] font-black leading-tight">
+                  {{ ev.createdAt }}
+                </span>
               </div>
               }
             </div>
-
-
-            @if (ev.budgetMeta) {
-            <div class="mt-2.5">
-              <div class="flex items-center gap-2 mb-1">
-                <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                  <div class="h-full rounded-full transition-all duration-500"
-                    [class.bg-red-500]="ev.budgetMeta.exceeded"
-                    [class.bg-amber-500]="!ev.budgetMeta.exceeded && ev.budgetMeta.utilizationPercent >= 80"
-                    [class.bg-emerald-500]="ev.budgetMeta.utilizationPercent < 80"
-                    [style.width.%]="Math.min(ev.budgetMeta.utilizationPercent, 100)">
-                  </div>
-                </div>
-                <span class="text-[10px] font-black shrink-0" [class.text-red-500]="ev.budgetMeta.exceeded"
-                  [class.text-amber-500]="!ev.budgetMeta.exceeded && ev.budgetMeta.utilizationPercent >= 80"
-                  [class.text-emerald-600]="ev.budgetMeta.utilizationPercent < 80">
-                  {{ ev.budgetMeta.utilizationPercent }}% of {{ formatAmount(ev.budgetMeta.allocated) }}
-                </span>
-              </div>
-              <div class="flex gap-3 text-[9px] font-bold text-outline">
-                <span>Paid: <span class="text-emerald-600 font-black">{{ formatAmount(ev.budgetMeta.paid)
-                    }}</span></span>
-                <span>Remaining:
-                  <span class="font-black" [class.text-red-500]="ev.budgetMeta.exceeded"
-                    [class.text-slate-600]="!ev.budgetMeta.exceeded">
-                    {{ formatAmount(ev.budgetMeta.remaining) }}
-                  </span>
-                </span>
-              </div>
-            </div>
             }
+
           </div>
+          }
 
-
-          @if (ev.viewAction) {
-          <button (click)="ev.viewAction()"
-            class="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer shrink-0 mt-0.5"
-            title="View details">
-            <span class="material-symbols-outlined text-base">visibility</span>
-          </button>
           }
         </div>
-        }
+
       </div>
+      }
 
     </div>
     }

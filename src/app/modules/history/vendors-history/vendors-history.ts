@@ -67,6 +67,10 @@ interface HistoryEvent {
   subDetails?: EventSubDetail[];
   viewAction?: () => void;
   budgetMeta?: BudgetEventMeta;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export interface BudgetEventMeta {
@@ -79,9 +83,15 @@ export interface BudgetEventMeta {
   exceededBy: number;
 }
 
+export interface VendorDateGroup {
+  date: Date;
+  events: HistoryEvent[];
+}
+
 export interface VendorGroup {
   vendor: Vendor;
   events: HistoryEvent[];
+  dateGroups: VendorDateGroup[];
   totalBilled: number;
   totalPaid: number;
   invoiceCount: number;
@@ -172,7 +182,6 @@ export class VendorsHistory implements OnInit {
     { key: 'safety', label: 'Safety' },
     { key: 'invoice', label: 'Invoices' },
     { key: 'labor', label: 'Labor' },
-    { key: 'budget', label: 'Budget' },
   ];
 
   getCategoryBadgeClass(cat: ConcreteCategory): string {
@@ -183,9 +192,14 @@ export class VendorsHistory implements OnInit {
     return CATEGORY_META[cat]?.label ?? cat;
   }
 
+  hasMetaFields(ev: HistoryEvent): boolean {
+    return !!(ev.createdAt || ev.createdBy || ev.updatedAt || ev.updatedBy);
+  }
+
   ngOnInit(): void {
     this.vendorService.vendors$.subscribe(v => {
       this.vendors = v;
+      this.selectedVendorIds = new Set(v.map(vendor => vendor.id));
       v.forEach(vendor => {
         if (!this.records[vendor.id]?.loaded && !this.records[vendor.id]?.loading) {
           this.loadVendorRecord(vendor);
@@ -198,6 +212,7 @@ export class VendorsHistory implements OnInit {
     } else {
       const existing = this.vendorService.getVendors();
       this.vendors = existing;
+      this.selectedVendorIds = new Set(existing.map(v => v.id));
       existing.forEach(v => {
         if (!this.records[v.id]?.loaded && !this.records[v.id]?.loading) {
           this.loadVendorRecord(v);
@@ -215,8 +230,7 @@ export class VendorsHistory implements OnInit {
   }
 
   get vendorDropdownLabel(): string {
-    if (this.selectedVendorIds.size === 0) return 'Select Vendors';
-    if (this.isAllSelected) return 'All Vendors';
+    if (this.selectedVendorIds.size === 0 || this.isAllSelected) return 'All Vendors';
     if (this.selectedVendorIds.size === 1) {
       const id = [...this.selectedVendorIds][0];
       return this.vendors.find(v => v.id === id)?.name ?? '1 Vendor';
@@ -295,7 +309,6 @@ export class VendorsHistory implements OnInit {
 
   setActiveCategory(key: HistoryCategory): void { this.activeCategory = key; }
 
-
   getCategoryCount(key: HistoryCategory): number {
     if (key === 'all') return this.timelineEvents.length;
     return this.timelineEvents.filter(ev =>
@@ -303,11 +316,9 @@ export class VendorsHistory implements OnInit {
     ).length;
   }
 
-
   get activeCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'active').length; }
   get pendingCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'pending').length; }
   get inactiveCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'inactive').length; }
-
 
   get displayVendors(): Vendor[] {
     if (this.selectedVendorIds.size === 0) return this.vendors;
@@ -387,13 +398,34 @@ export class VendorsHistory implements OnInit {
     return 'bg-emerald-100 text-emerald-600';
   }
 
+  private buildLaborDescription(
+    vendorName: string, skill: string, count: number, dailyRate: number, status: string
+  ): string {
+    const dailyCost = dailyRate * count;
+    const statusCap = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Active';
+    const noun = count === 1 ? 'labor' : 'labors';
+    const verb = count === 1 ? 'was' : 'were';
+    return `${count} ${skill} ${noun} ${verb} added to Vendor "${vendorName}" at a daily rate of ${this.formatAmount(dailyRate)} per labor (total daily cost ${this.formatAmount(dailyCost)}). Current status: ${statusCap}.`;
+  }
+
+  private _timelineCache: { key: string; events: HistoryEvent[] } | null = null;
+
   get timelineEvents(): HistoryEvent[] {
+    const key = this.displayVendors
+      .filter(v => this.records[v.id]?.loaded)
+      .map(v => v.id)
+      .join(',');
+
+    if (this._timelineCache?.key === key) return this._timelineCache.events;
+
     const events: HistoryEvent[] = [];
     this.displayVendors.forEach(v => {
       const rec = this.records[v.id];
       if (rec?.loaded) events.push(...this.buildVendorEvents(rec));
     });
-    return events.sort((a, b) => b.date.getTime() - a.date.getTime());
+    const sorted = events.sort((a, b) => b.date.getTime() - a.date.getTime());
+    this._timelineCache = { key, events: sorted };
+    return sorted;
   }
 
   get filteredTimelineEvents(): HistoryEvent[] {
@@ -404,17 +436,32 @@ export class VendorsHistory implements OnInit {
   }
 
   get groupedTimelineEvents(): VendorGroup[] {
+    const allEvents = this.timelineEvents;
+
     return this.displayVendors
       .filter(v => this.records[v.id]?.loaded)
       .map(v => {
         const rec = this.records[v.id];
-        const allEvts = this.buildVendorEvents(rec);
+        const vendorEvents = allEvents.filter(ev => ev.vendorId === v.id);
         const filtered = this.activeCategory === 'all'
-          ? allEvts
-          : allEvts.filter(ev => ev.categories.includes(this.activeCategory as ConcreteCategory));
+          ? vendorEvents
+          : vendorEvents.filter(ev => ev.categories.includes(this.activeCategory as ConcreteCategory));
+
+        const dateMap = new Map<string, HistoryEvent[]>();
+        filtered.forEach(ev => {
+          const key = this.dateKey(ev.date);
+          if (!dateMap.has(key)) dateMap.set(key, []);
+          dateMap.get(key)!.push(ev);
+        });
+
+        const dateGroups: VendorDateGroup[] = Array.from(dateMap.values())
+          .map(events => ({ date: events[0].date, events }))
+          .sort((a, b) => b.date.getTime() - a.date.getTime());
+
         return {
           vendor: v,
-          events: filtered.sort((a, b) => b.date.getTime() - a.date.getTime()),
+          events: filtered,
+          dateGroups,
           totalBilled: rec.totalBilled,
           totalPaid: rec.totalPaid,
           invoiceCount: rec.invoices.length,
@@ -424,20 +471,34 @@ export class VendorsHistory implements OnInit {
       .filter(g => g.events.length > 0);
   }
 
+  private dateKey(d: Date): string {
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  private parseDate(rawDate: any): Date | null {
+    if (!rawDate) return null;
+    const d = new Date(rawDate);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   private addEvent(
     events: HistoryEvent[], vendor: Vendor, rawDate: any,
     icon: string, iconBg: string, iconColor: string,
     description: string, idSuffix: string, categories: ConcreteCategory[],
-    subDetails?: EventSubDetail[], viewAction?: () => void, budgetMeta?: BudgetEventMeta
+    subDetails?: EventSubDetail[], viewAction?: () => void, budgetMeta?: BudgetEventMeta,
+    meta?: { createdAt?: string; createdBy?: string; updatedAt?: string; updatedBy?: string }
   ): void {
-    if (!rawDate) return;
-    const d = new Date(rawDate);
-    if (isNaN(d.getTime())) return;
+    const d = this.parseDate(rawDate);
+    if (!d) return;
     events.push({
       id: `${vendor.id}-${idSuffix}`,
       vendorId: vendor.id, vendorName: vendor.name, date: d,
       icon, iconBg, iconColor, description, categories,
       primaryCategory: categories[0], subDetails, viewAction, budgetMeta,
+      createdAt: meta?.createdAt,
+      createdBy: meta?.createdBy,
+      updatedAt: meta?.updatedAt,
+      updatedBy: meta?.updatedBy,
     });
   }
 
@@ -449,6 +510,13 @@ export class VendorsHistory implements OnInit {
     return null;
   }
 
+  private dateObjToStmt(d: Date | null): string {
+    if (!d || isNaN(d.getTime())) return '—';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mmm = d.toLocaleString('en-US', { month: 'short' });
+    return `${dd}-${mmm}-${d.getFullYear()}`;
+  }
+
   private extractAuditArray(raw: any): any[] {
     if (!raw) return [];
     if (Array.isArray(raw)) return raw;
@@ -458,15 +526,35 @@ export class VendorsHistory implements OnInit {
     return [];
   }
 
+  formatDateTime(dateInput: string | Date | undefined | null): string {
+    if (!dateInput) return '—';
+    const d = dateInput instanceof Date ? dateInput : new Date(String(dateInput));
+    if (isNaN(d.getTime())) return '—';
+    return `${this.formatDate(d)}, ${this.formatTime(d)}`;
+  }
+
   private stmtDate(dateInput: string | Date | undefined | null): string {
     if (!dateInput) return '—';
     const d = dateInput instanceof Date ? dateInput : new Date(String(dateInput));
     if (isNaN(d.getTime())) return '—';
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mmm = d.toLocaleString('en-US', { month: 'short' });
-    return `${dd}-${mmm}-${d.getFullYear()}`;
+    return this.dateObjToStmt(d);
   }
 
+  private buildBudgetMeta(allocated: number, totalBilled: number, totalPaid: number): BudgetEventMeta {
+    const invoiced = totalBilled;
+    const utilizationPercent = allocated > 0
+      ? Math.min(Math.round((invoiced / allocated) * 100), 999) : 0;
+    const exceeded = invoiced > allocated;
+    return {
+      allocated,
+      invoiced,
+      paid: totalPaid,
+      remaining: Math.max(0, allocated - invoiced),
+      utilizationPercent,
+      exceeded,
+      exceededBy: exceeded ? invoiced - allocated : 0,
+    };
+  }
 
   private buildVendorEvents(rec: VendorRecord): HistoryEvent[] {
     const v = rec.vendor;
@@ -474,47 +562,59 @@ export class VendorsHistory implements OnInit {
     const allocated = Number(v.budget_allocation) || 0;
     const projectName = rec.projectData?.name || null;
     const updatedAt = (v as any).updated_at;
+    const updatedBy = (v as any).updated_by_name || null;
+    const createdBy = (v as any).created_by_name || 'Admin';
+
 
     this.addEvent(
       events, v, v.created_at,
       'person_add', 'bg-pink-100', 'text-pink-600',
-      `Vendor "${v.name}" was onboarded${projectName ? ` under Project "${projectName}"` : ''} by Admin on ${this.stmtDate(v.created_at)}.`,
+      `Vendor "${v.name}" was onboarded.`,
       'onboard', ['vendor'],
       [
         { label: 'Vendor', value: v.name, valueColor: 'text-pink-600' },
+        { label: 'Added On', value: this.stmtDate(v.created_at), valueColor: 'text-slate-500' },
         { label: 'Status', value: v.status, valueColor: v.status.toLowerCase() === 'active' ? 'text-green-600' : 'text-amber-600' },
+        { label: 'SPOC', value: `${v.spoc?.name || '—'} · ${v.spoc?.phone || '—'}`, valueColor: 'text-slate-700' },
+        { label: 'Email', value: v.email || '—', valueColor: 'text-slate-600' },
+        { label: 'Phone', value: v.phone || '—', valueColor: 'text-slate-600' },
+        { label: 'GST', value: v.kyc?.gst || '—', valueColor: 'text-slate-500' },
+        { label: 'PAN', value: v.kyc?.pan || '—', valueColor: 'text-slate-500' },
+        { label: 'Budget', value: allocated > 0 ? this.formatAmount(allocated) : 'Not allocated', valueColor: 'text-violet-600' },
         { label: 'Compliance', value: `${v.compliance_score}%`, valueColor: v.compliance_score >= 90 ? 'text-green-600' : v.compliance_score >= 70 ? 'text-amber-600' : 'text-red-500' },
-        { label: 'Since', value: this.stmtDate(v.created_at), valueColor: 'text-slate-500' },
-        ...(v.skill?.length ? [{ label: 'Skills', value: v.skill.join(', '), valueColor: 'text-slate-600' }] : []),
-      ]
-    );
+        { label: 'Skills', value: v.skill?.length ? v.skill.join(', ') : 'Not specified', valueColor: 'text-slate-600' },
+        ...(projectName ? [{ label: 'Project', value: projectName, valueColor: 'text-indigo-600' }] : []),
+      ],
+      undefined,
 
+      allocated > 0 ? this.buildBudgetMeta(allocated, rec.totalBilled, rec.totalPaid) : undefined,
+      {
+        createdAt: this.formatDateTime(v.created_at),
+        createdBy: createdBy,
+        updatedAt: updatedAt ? this.formatDateTime(updatedAt) : undefined,
+        updatedBy: updatedAt ? (updatedBy || 'Admin') : undefined,
+      }
+    );
 
     if (projectName) {
       this.addEvent(
         events, v, v.created_at,
         'folder_special', 'bg-indigo-100', 'text-indigo-600',
-        `Vendor "${v.name}" was linked to Project "${projectName}" on ${this.stmtDate(v.created_at)}.`,
+        `Vendor "${v.name}" was linked to Project "${projectName}". Current status: ${v.status}.`,
         'project-link', ['project'],
         [
           { label: 'Vendor', value: v.name, valueColor: 'text-pink-600' },
           { label: 'Project', value: projectName, valueColor: 'text-indigo-600' },
           { label: 'Status', value: v.status, valueColor: v.status.toLowerCase() === 'active' ? 'text-green-600' : 'text-amber-600' },
           { label: 'Since', value: this.stmtDate(v.created_at), valueColor: 'text-slate-500' },
-        ]
-      );
-    }
-
-    if (allocated > 0) {
-      this.addEvent(
-        events, v, v.created_at,
-        'account_balance_wallet', 'bg-violet-100', 'text-violet-600',
-        `A budget of ${this.formatAmount(allocated)} was allocated to Vendor "${v.name}" by Admin on ${this.stmtDate(v.created_at)}.`,
-        'budget-alloc', ['budget'],
-        [
-          { label: 'Allocated', value: this.formatAmount(allocated), valueColor: 'text-violet-600' },
-          { label: 'Compliance', value: `${v.compliance_score}%`, valueColor: v.compliance_score >= 90 ? 'text-green-600' : v.compliance_score >= 70 ? 'text-amber-600' : 'text-red-500' },
-        ]
+        ],
+        undefined, undefined,
+        {
+          createdAt: this.formatDateTime(v.created_at),
+          createdBy: createdBy,
+          updatedAt: updatedAt ? this.formatDateTime(updatedAt) : undefined,
+          updatedBy: updatedAt ? (updatedBy || 'Admin') : undefined,
+        }
       );
     }
 
@@ -525,15 +625,127 @@ export class VendorsHistory implements OnInit {
       this.addEvent(
         events, v, latestInvDate || v.created_at,
         'warning', 'bg-red-100', 'text-red-600',
-        `Budget for Vendor "${v.name}" was exceeded by ${this.formatAmount(exceededBy)} (${utilPct}% utilized) as of ${this.stmtDate(latestInvDate || v.created_at)}.`,
+        `Budget for Vendor "${v.name}" was exceeded by ${this.formatAmount(exceededBy)} (${utilPct}% utilized).`,
         'budget-exceeded', ['budget'],
         [
           { label: 'Allocated', value: this.formatAmount(allocated), valueColor: 'text-violet-600' },
           { label: 'Invoiced', value: this.formatAmount(rec.totalBilled), valueColor: 'text-red-500' },
           { label: 'Exceeded By', value: this.formatAmount(exceededBy), valueColor: 'text-red-600' },
-        ]
+        ],
+        undefined, undefined,
+        {
+          createdAt: this.formatDateTime(latestInvDate || v.created_at),
+          createdBy: createdBy,
+        }
       );
     }
+
+    const invoiceIdsWithHistoryEvent = new Set<number | string>();
+    rec.historyEvents
+      .filter(h => h.entity_type === 'invoice' && h.entity_id != null)
+      .forEach(h => invoiceIdsWithHistoryEvent.add(h.entity_id!));
+
+    rec.invoices.forEach((inv, idx) => {
+      if (invoiceIdsWithHistoryEvent.has(inv.id)) return;
+
+      const statusColorMap: Record<string, string> = {
+        'Paid': 'text-green-600', 'Unpaid': 'text-amber-600',
+        'Pending': 'text-amber-600', 'Partially Paid': 'text-blue-600', 'Cancelled': 'text-red-500',
+      };
+      const statusColor = statusColorMap[inv.status] ?? 'text-slate-600';
+
+      let icon = 'receipt_long', iconBg = 'bg-amber-100', iconColor = 'text-amber-600';
+      if (inv.status === 'Paid') { icon = 'payments'; iconBg = 'bg-green-100'; iconColor = 'text-green-600'; }
+      else if (inv.status === 'Cancelled') { icon = 'cancel'; iconBg = 'bg-red-100'; iconColor = 'text-red-600'; }
+
+      const invRawDate = inv.invoice_date || v.created_at;
+
+      const subDetails: EventSubDetail[] = [
+        { label: 'Invoice', value: inv.invoice_number, valueColor: 'text-slate-700' },
+        { label: 'Amount', value: this.formatAmount(inv.grand_total), valueColor: 'text-amber-700' },
+        { label: 'Paid', value: this.formatAmount(inv.paid_amount), valueColor: 'text-green-600' },
+        { label: 'Status', value: inv.status, valueColor: statusColor },
+      ];
+
+      const remainingAmt = this.remainingAmount(inv);
+      if (remainingAmt > 0 && inv.status !== 'Cancelled') {
+        subDetails.push({ label: 'Remaining', value: this.formatAmount(remainingAmt), valueColor: 'text-red-500' });
+      }
+
+      const categories: ConcreteCategory[] = ['invoice'];
+
+      const invCreatedAt = (inv as any).created_at || (inv as any).createdAt || inv.invoice_date;
+      const invCreatedBy = (inv as any).created_by_name || (inv as any).createdByName || 'Admin';
+      const invUpdatedAt = (inv as any).updated_at || (inv as any).updatedAt;
+      const invUpdatedBy = (inv as any).updated_by_name || (inv as any).updatedByName;
+
+      this.addEvent(
+        events, v, invRawDate,
+        icon, iconBg, iconColor,
+        `Invoice ${inv.invoice_number} (${inv.status}) — ${this.formatAmount(inv.grand_total)} for Vendor "${v.name}".`,
+        `inv-synthetic-${inv.id ?? idx}`,
+        categories, subDetails,
+        () => this.viewInvoice(rec, inv),
+        undefined,
+        {
+          createdAt: this.formatDateTime(invCreatedAt),
+          createdBy: invCreatedBy,
+          updatedAt: invUpdatedAt ? this.formatDateTime(invUpdatedAt) : undefined,
+          updatedBy: invUpdatedAt ? (invUpdatedBy || 'Admin') : undefined,
+        }
+      );
+    });
+
+    const laborIdsWithHistoryEvent = new Set<number | string>();
+    rec.historyEvents
+      .filter(h => h.entity_type === 'labor' && h.entity_id != null)
+      .forEach(h => laborIdsWithHistoryEvent.add(h.entity_id!));
+
+    rec.laborWorkers.forEach((w, idx) => {
+      if (laborIdsWithHistoryEvent.has((w as any).id)) return;
+
+      const skillLabel = String(w.skill || '').replace(/_/g, ' ');
+      const laborCount = w.labor_count || 0;
+      const dailyRate = Number(w.daily_rate) || 0;
+      const dailyCost = dailyRate * laborCount;
+      const statusRaw = String((w as any).status || (w as any).statusLabel || 'active');
+      const statusLabel = statusRaw.replace(/_/g, ' ');
+      const statusColor = statusRaw.toLowerCase().includes('active') ? 'text-green-600'
+        : statusRaw.toLowerCase().includes('inactive') ? 'text-red-500'
+          : 'text-amber-600';
+
+      const subDetails: EventSubDetail[] = [
+        { label: 'Skill', value: skillLabel, valueColor: 'text-teal-600' },
+        { label: 'Count', value: String(laborCount), valueColor: 'text-slate-700' },
+        { label: 'Daily Rate', value: this.formatAmount(dailyRate), valueColor: 'text-teal-700' },
+        { label: 'Daily Cost', value: this.formatAmount(dailyCost), valueColor: 'text-teal-800' },
+        { label: 'Status', value: statusLabel, valueColor: statusColor },
+      ];
+      if (w.assign_worker) {
+        subDetails.push({ label: 'Assigned To', value: String(w.assign_worker), valueColor: 'text-slate-600' });
+      }
+
+      const lCreatedAt = (w as any).created_at || (w as any).createdAt || v.created_at;
+      const lCreatedBy = (w as any).created_by_name || (w as any).createdByName || 'Admin';
+      const lUpdatedAt = (w as any).updated_at || (w as any).updatedAt;
+      const lUpdatedBy = (w as any).updated_by_name || (w as any).updatedByName;
+
+      this.addEvent(
+        events, v, lCreatedAt,
+        'engineering', 'bg-teal-100', 'text-teal-600',
+        this.buildLaborDescription(v.name, skillLabel, laborCount, dailyRate, statusLabel),
+        `labor-synthetic-${(w as any).id ?? idx}`,
+        ['labor'], subDetails,
+        undefined, undefined,
+        {
+          createdAt: this.formatDateTime(lCreatedAt),
+          createdBy: lCreatedBy,
+          updatedAt: lUpdatedAt ? this.formatDateTime(lUpdatedAt) : undefined,
+          updatedBy: lUpdatedAt ? (lUpdatedBy || 'Admin') : undefined,
+        }
+      );
+    });
+
 
     rec.historyEvents.forEach(h => {
       const isInvoice = h.entity_type === 'invoice';
@@ -544,18 +756,79 @@ export class VendorsHistory implements OnInit {
       let icon = 'history', iconBg = 'bg-slate-100', iconColor = 'text-slate-600';
       let categories: ConcreteCategory[] = ['vendor'];
       let viewAction: (() => void) | undefined;
-      let budgetMeta: BudgetEventMeta | undefined;
       const subDetails: EventSubDetail[] = [];
+      let eventDescription = h.description;
+
+      const hDateObj = this.parseDate(h.createdAt);
+      const hCreatedAt = this.formatDateTime(h.createdAt);
+      const hCreatedBy = h.changed_by_name || 'Admin';
 
       if (isVendor) {
         categories = ['vendor'];
         icon = h.action === 'deleted' ? 'person_remove' : 'edit';
         iconBg = 'bg-pink-100'; iconColor = 'text-pink-600';
-        subDetails.push({ label: 'Action', value: h.action.replace(/_/g, ' '), valueColor: 'text-pink-600' });
+
+        const actionLabel = h.action === 'deleted' ? 'removed'
+          : h.action === 'updated' ? 'updated'
+            : h.action === 'status_changed' ? 'status changed'
+              : h.action === 'created' ? 'created'
+                : h.action.replace(/_/g, ' ');
+
+        const oldName = h.old_values?.name;
+        const newName = h.new_values?.name;
+        const nameChanged = oldName && newName && oldName !== newName;
+
+        const oldStatus = h.old_values?.status;
+        const newStatus = h.new_values?.status || h.meta?.status;
+        const statusChanged = oldStatus && newStatus && oldStatus !== newStatus;
+
+        const newBudget = h.new_values?.budget_allocation || h.meta?.budget_allocation;
+        const newEmail = h.new_values?.email || h.meta?.email;
+        const newGst = h.new_values?.kyc?.gst || h.meta?.gst;
+        const newPan = h.new_values?.kyc?.pan || h.meta?.pan;
+        const newAddress = h.new_values?.address || h.meta?.address;
+
+        const mainLine = `Vendor "${nameChanged ? oldName : v.name}" was ${actionLabel}` +
+          `${h.changed_by_name ? ` by ${h.changed_by_name}` : ''}.`;
+
+        const extraLines: string[] = [];
+        if (nameChanged) extraLines.push(`Name changed from "${oldName}" to "${newName}".`);
+        if (statusChanged) extraLines.push(`Status changed from "${oldStatus}" to "${newStatus}".`);
+        if (newBudget != null) extraLines.push(`Budget updated to ${this.formatAmount(newBudget)}.`);
+        if (newEmail) extraLines.push(`Email updated to ${newEmail}.`);
+        if (newGst) extraLines.push(`GST updated to ${newGst}.`);
+        if (newPan) extraLines.push(`PAN updated to ${newPan}.`);
+        eventDescription = extraLines.length > 0
+          ? `${mainLine}\n${extraLines.join('\n')}`
+          : mainLine;
+
+        subDetails.push({ label: 'Action', value: actionLabel, valueColor: 'text-pink-600' });
+        subDetails.push({ label: 'Date', value: this.dateObjToStmt(hDateObj), valueColor: 'text-slate-500' });
+        if (h.changed_by_name) subDetails.push({ label: 'By', value: h.changed_by_name, valueColor: 'text-slate-500' });
+        if (nameChanged) {
+          subDetails.push({ label: 'Old Name', value: oldName, valueColor: 'text-red-400' });
+          subDetails.push({ label: 'New Name', value: newName, valueColor: 'text-green-600' });
+        }
+        if (statusChanged) {
+          subDetails.push({ label: 'Old Status', value: oldStatus, valueColor: 'text-red-400' });
+          subDetails.push({ label: 'New Status', value: newStatus, valueColor: 'text-green-600' });
+        }
+        if (newBudget != null) subDetails.push({ label: 'Budget', value: this.formatAmount(newBudget), valueColor: 'text-violet-600' });
+        if (newEmail) subDetails.push({ label: 'Email', value: newEmail, valueColor: 'text-slate-600' });
+        if (newGst) subDetails.push({ label: 'GST', value: newGst, valueColor: 'text-slate-500' });
+        if (newPan) subDetails.push({ label: 'PAN', value: newPan, valueColor: 'text-slate-500' });
+        if (newAddress) subDetails.push({
+          label: 'Address',
+          value: typeof newAddress === 'string'
+            ? newAddress
+            : [newAddress?.street, newAddress?.city, newAddress?.state, newAddress?.pincode].filter(Boolean).join(', '),
+          valueColor: 'text-slate-600',
+        });
       }
 
       if (isInvoice) {
-        categories = allocated > 0 ? ['invoice', 'budget'] : ['invoice'];
+
+        categories = ['invoice'];
         if (h.action === 'payment_added') {
           icon = 'payments'; iconBg = 'bg-green-100'; iconColor = 'text-green-600';
           if (h.meta?.amount) subDetails.push({ label: 'Amount', value: this.formatAmount(h.meta.amount), valueColor: 'text-green-700' });
@@ -572,25 +845,32 @@ export class VendorsHistory implements OnInit {
 
         const matchedInv = rec.invoices.find(i => i.id === h.entity_id);
         if (matchedInv) viewAction = () => this.viewInvoice(rec, matchedInv);
-
-        if (allocated > 0 && h.action !== 'deleted') {
-          const invoiced = rec.totalBilled;
-          const utilizationPercent = Math.round((invoiced / allocated) * 100);
-          const exceeded = invoiced > allocated;
-          budgetMeta = {
-            allocated, invoiced, paid: rec.totalPaid,
-            remaining: Math.max(0, allocated - invoiced),
-            utilizationPercent, exceeded,
-            exceededBy: exceeded ? invoiced - allocated : 0,
-          };
-        }
       }
 
       if (isLabor) {
         categories = ['labor'];
         icon = h.action === 'deleted' ? 'person_remove' : 'engineering';
         iconBg = 'bg-teal-100'; iconColor = 'text-teal-600';
-        if (h.meta?.skill) subDetails.push({ label: 'Skill', value: h.meta.skill, valueColor: 'text-teal-600' });
+
+        if (h.meta?.skill) subDetails.push({ label: 'Skill', value: String(h.meta.skill).replace(/_/g, ' '), valueColor: 'text-teal-600' });
+        if (h.meta?.labor_count != null) subDetails.push({ label: 'Count', value: String(h.meta.labor_count), valueColor: 'text-slate-700' });
+        if (h.meta?.daily_rate != null) subDetails.push({ label: 'Daily Rate', value: this.formatAmount(h.meta.daily_rate), valueColor: 'text-teal-700' });
+
+        const laborCount = Number(h.meta?.labor_count) || 0;
+        const dailyRate = Number(h.meta?.daily_rate) || 0;
+        if (laborCount > 0 && dailyRate > 0) {
+          subDetails.push({ label: 'Daily Cost', value: this.formatAmount(laborCount * dailyRate), valueColor: 'text-teal-800' });
+        }
+        if (h.meta?.status) subDetails.push({ label: 'Status', value: String(h.meta.status).replace(/_/g, ' '), valueColor: 'text-slate-600' });
+        if (h.meta?.assign_worker) subDetails.push({ label: 'Assigned To', value: h.meta.assign_worker, valueColor: 'text-slate-600' });
+
+        if (h.meta?.skill && h.meta?.labor_count != null && h.meta?.daily_rate != null) {
+          const skill = String(h.meta.skill).replace(/_/g, ' ');
+          const count = Number(h.meta.labor_count) || 0;
+          const rate = Number(h.meta.daily_rate) || 0;
+          const status = h.meta.status ? String(h.meta.status).replace(/_/g, ' ') : 'active';
+          eventDescription = this.buildLaborDescription(v.name, skill, count, rate, status);
+        }
       }
 
       if (isAudit) {
@@ -600,26 +880,40 @@ export class VendorsHistory implements OnInit {
           subDetails.push({ label: 'Score', value: `${Math.round(h.meta.composite_score)}%`, valueColor: 'text-emerald-600' });
       }
 
-      if (h.changed_by_name) subDetails.push({ label: 'By', value: h.changed_by_name, valueColor: 'text-slate-500' });
-
+      const hIsUpdate = h.action === 'updated' || h.action === 'status_changed';
       this.addEvent(
         events, v, h.createdAt,
         icon, iconBg, iconColor,
-        h.description,
+        eventDescription,
         `hist-${h.id}`, categories,
-        subDetails, viewAction, budgetMeta
+        subDetails, viewAction,
+        undefined,
+        {
+          createdAt: hIsUpdate ? undefined : hCreatedAt,
+          createdBy: hIsUpdate ? undefined : hCreatedBy,
+          updatedAt: hIsUpdate ? hCreatedAt : undefined,
+          updatedBy: hIsUpdate ? hCreatedBy : undefined,
+        }
       );
     });
 
-
     rec.tasks.forEach((t: any) => {
-      const taskDate = this.resolveDate(t, 'updated_at', 'updatedAt', 'due_date', 'dueDate', 'start_date', 'startDate', 'created_at', 'createdAt');
+      const taskRawDate = this.resolveDate(t, 'updated_at', 'updatedAt', 'created_at', 'createdAt', 'due_date', 'dueDate', 'start_date', 'startDate');
+      const taskDateObj = this.parseDate(taskRawDate);
+      if (!taskDateObj) return;
+
       const statusHuman = this.humanizeStatus(t.status);
+
+      const tCreatedAt = (t as any).created_at || (t as any).createdAt;
+      const tCreatedBy = (t as any).created_by_name || (t as any).createdByName || 'Admin';
+      const tUpdatedAt = (t as any).updated_at || (t as any).updatedAt;
+      const tUpdatedBy = (t as any).updated_by_name || (t as any).updatedByName;
+
       this.addEvent(
-        events, v, taskDate,
+        events, v, taskRawDate,
         'checklist', 'bg-blue-100', 'text-blue-600',
-        `Task "${t.title}" for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''} was marked as "${statusHuman}" on ${this.stmtDate(taskDate)}.`,
-        `task-${t.id}`, ['task'],   // ← FIX: only ['task'], not ['task', 'project']
+        `Task "${t.title}" for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''} was marked as "${statusHuman}".`,
+        `task-${t.id}`, ['task'],
         [
           { label: 'Task', value: t.title, valueColor: 'text-slate-700' },
           { label: 'Status', value: statusHuman, valueColor: 'text-blue-600' },
@@ -627,46 +921,82 @@ export class VendorsHistory implements OnInit {
           ...(t.due_date || t.dueDate
             ? [{ label: 'Due', value: this.stmtDate(t.due_date || t.dueDate), valueColor: 'text-slate-500' }]
             : []),
-        ]
+        ],
+        undefined, undefined,
+        {
+          createdAt: tCreatedAt ? this.formatDateTime(tCreatedAt) : undefined,
+          createdBy: tCreatedBy,
+          updatedAt: tUpdatedAt ? this.formatDateTime(tUpdatedAt) : undefined,
+          updatedBy: tUpdatedAt ? (tUpdatedBy || 'Admin') : undefined,
+        }
       );
     });
 
     rec.milestones.forEach(m => {
-      const mDate = this.resolveDate(m, 'updated_at', 'updatedAt', 'end_date', 'endDate', 'start_date', 'startDate', 'created_at', 'createdAt');
+      const mRawDate = this.resolveDate(m, 'updated_at', 'updatedAt', 'end_date', 'endDate', 'start_date', 'startDate', 'created_at', 'createdAt');
+      const mDateObj = this.parseDate(mRawDate);
+      if (!mDateObj) return;
+
       const progress = m.milestone_progress ?? (m as any).milestoneProgress ?? m.progress ?? null;
       const mLabel = m.name || m.title || `Milestone #${m.id}`;
+
+      const mCreatedAt = (m as any).created_at || (m as any).createdAt;
+      const mUpdatedAt = (m as any).updated_at || (m as any).updatedAt;
+
       this.addEvent(
-        events, v, mDate,
+        events, v, mRawDate,
         'flag', 'bg-purple-100', 'text-purple-600',
         progress != null
-          ? `Milestone "${mLabel}" for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''} reached ${progress}% completion as of ${this.stmtDate(mDate)}.`
-          : `Milestone "${mLabel}" for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''} was updated to "${this.humanizeStatus(m.status)}" on ${this.stmtDate(mDate)}.`,
-        `milestone-${m.id}`, ['milestone'],   // ← FIX: only ['milestone'], not ['milestone', 'project']
+          ? `Milestone "${mLabel}" for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''} reached ${progress}% completion.`
+          : `Milestone "${mLabel}" for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''} was updated to "${this.humanizeStatus(m.status)}".`,
+        `milestone-${m.id}`, ['milestone'],
         [
           { label: 'Milestone', value: mLabel, valueColor: 'text-purple-600' },
           ...(progress != null
             ? [{ label: 'Progress', value: `${progress}%`, valueColor: Number(progress) >= 80 ? 'text-green-600' : Number(progress) >= 40 ? 'text-amber-600' : 'text-red-500' }]
             : [{ label: 'Status', value: this.humanizeStatus(m.status), valueColor: 'text-purple-600' }]),
           ...(projectName ? [{ label: 'Project', value: projectName, valueColor: 'text-indigo-600' }] : []),
-        ]
+        ],
+        undefined, undefined,
+        {
+          createdAt: mCreatedAt ? this.formatDateTime(mCreatedAt) : undefined,
+          createdBy: 'Admin',
+          updatedAt: mUpdatedAt ? this.formatDateTime(mUpdatedAt) : undefined,
+          updatedBy: mUpdatedAt ? 'Admin' : undefined,
+        }
       );
 
+
       (m.children || []).forEach(c => {
-        const cDate = this.resolveDate(c, 'updated_at', 'updatedAt', 'end_date', 'endDate', 'start_date', 'startDate', 'created_at', 'createdAt');
+        const cRawDate = this.resolveDate(c, 'updated_at', 'updatedAt', 'end_date', 'endDate', 'start_date', 'startDate', 'created_at', 'createdAt');
+        const cDateObj = this.parseDate(cRawDate);
+        if (!cDateObj) return;
+
         const cLabel = c.name || c.title || `Sub-Milestone #${c.id}`;
+        const cCreatedAt = (c as any).created_at || (c as any).createdAt;
+        const cUpdatedAt = (c as any).updated_at || (c as any).updatedAt;
+
         this.addEvent(
-          events, v, cDate,
+          events, v, cRawDate,
           'subdirectory_arrow_right', 'bg-purple-50', 'text-purple-500',
-          `Sub-Milestone "${cLabel}" under "${mLabel}" for Vendor "${v.name}" was updated to "${this.humanizeStatus(c.status)}" on ${this.stmtDate(cDate)}.`,
-          `sub-milestone-${c.id}`, ['milestone'],   // ← FIX: only ['milestone'], not ['milestone', 'project']
+          `Sub-Milestone "${cLabel}" under "${mLabel}" for Vendor "${v.name}" was updated to "${this.humanizeStatus(c.status)}".`,
+          `sub-milestone-${c.id}`, ['milestone'],
           [
             { label: 'Sub-Milestone', value: cLabel, valueColor: 'text-purple-500' },
             { label: 'Parent', value: mLabel, valueColor: 'text-purple-600' },
             { label: 'Status', value: this.humanizeStatus(c.status), valueColor: 'text-slate-600' },
-          ]
+          ],
+          undefined, undefined,
+          {
+            createdAt: cCreatedAt ? this.formatDateTime(cCreatedAt) : undefined,
+            createdBy: 'Admin',
+            updatedAt: cUpdatedAt ? this.formatDateTime(cUpdatedAt) : undefined,
+            updatedBy: cUpdatedAt ? 'Admin' : undefined,
+          }
         );
       });
     });
+
 
     (v.contract_files || []).forEach((file, idx) => {
       const docDate = updatedAt || v.created_at;
@@ -674,13 +1004,20 @@ export class VendorsHistory implements OnInit {
       this.addEvent(
         events, v, docDate,
         'description', 'bg-slate-100', 'text-slate-600',
-        `Document "${fileName}" was uploaded for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''} by Admin on ${this.stmtDate(docDate)}.`,
+        `Document "${fileName}" was uploaded for Vendor "${v.name}"${projectName ? ` under Project "${projectName}"` : ''}.`,
         `doc-${idx}`, ['document'],
         [
           { label: 'File', value: fileName, valueColor: 'text-slate-700' },
           { label: 'Vendor', value: v.name, valueColor: 'text-primary' },
           ...(projectName ? [{ label: 'Project', value: projectName, valueColor: 'text-indigo-600' }] : []),
-        ]
+        ],
+        undefined, undefined,
+        {
+          createdAt: this.formatDateTime(v.created_at),
+          createdBy: createdBy,
+          updatedAt: updatedAt ? this.formatDateTime(updatedAt) : undefined,
+          updatedBy: updatedAt ? (updatedBy || 'Admin') : undefined,
+        }
       );
     });
 
@@ -746,6 +1083,7 @@ export class VendorsHistory implements OnInit {
             this.computeTotals(rec);
             rec.loaded = true;
             rec.loading = false;
+            this._timelineCache = null;
             this.records = { ...this.records, [vendor.id]: { ...rec } };
             resolve(rec);
           },
@@ -753,6 +1091,7 @@ export class VendorsHistory implements OnInit {
             console.error(`[VendorsHistory] Error loading ${vendor.name}:`, err);
             rec.loaded = true;
             rec.loading = false;
+            this._timelineCache = null;
             this.records = { ...this.records, [vendor.id]: { ...rec } };
             resolve(rec);
           },
@@ -877,7 +1216,6 @@ export class VendorsHistory implements OnInit {
     return `${this.formatDate(startDate)} → ${this.formatDate(endDate)} · ${daysLeft} day(s) left`;
   }
 
-
   viewInvoice(rec: VendorRecord, inv: VendorInvoice): void {
     const invoiceItems = this.getInvoiceItems(inv);
     const gstMap: Record<number, number> = {};
@@ -986,7 +1324,7 @@ table{width:100%;border-collapse:collapse;margin-top:16px;}th{background:#f1f5f9
     <div style="display:flex;justify-content:space-between;padding:8px 0;">
       <span style="color:#dc2626;font-weight:700;">Remaining</span>
       <span style="color:#dc2626;font-weight:900;">₹${Math.max(0, Number(inv.grand_total) - Number(inv.paid_amount)).toLocaleString('en-IN')}</span>
-    </div>`: ''}
+    </div>` : ''}
   </div>
   ${settlementBlock}${paymentRows}
   <div style="margin-top:32px;text-align:center;">
@@ -998,7 +1336,6 @@ table{width:100%;border-collapse:collapse;margin-top:16px;}th{background:#f1f5f9
     const win = window.open('', '_blank');
     if (win) { win.document.write(html); win.document.close(); }
   }
-
 
   downloadVendorReport(rec: VendorRecord): void {
     const v = rec.vendor;
@@ -1081,32 +1418,36 @@ table{width:100%;border-collapse:collapse;margin-top:6px;}th{background:#f1f5f9;
         check();
       });
       const rows: string[] = [];
-      rows.push('Vendor,Project,Record Type,Reference,Date,Amount,Status,Details');
+      rows.push('Vendor,Project,Record Type,Reference,Date,Amount,Status,Details,Created At,Created By,Updated At,Updated By');
       const esc = (val: any) => `"${String(val ?? '—').replace(/"/g, '""')}"`;
       vendorsToExport.forEach(v => {
         const rec = this.records[v.id];
         if (!rec) return;
         const projectName = rec.projectData?.name || 'Not linked';
+        const createdBy = (v as any).created_by_name || 'Admin';
+        const updatedBy = (v as any).updated_by_name || 'Admin';
         rec.invoices.forEach(inv => {
-          rows.push([esc(v.name), esc(projectName), esc('Invoice'), esc(inv.invoice_number), esc(this.formatDate(inv.invoice_date)), esc(this.toNumber(inv.grand_total)), esc(inv.status), esc(`Paid: ${this.formatAmount(inv.paid_amount)}`)].join(','));
+          const iCreatedAt = (inv as any).created_at || (inv as any).createdAt || inv.invoice_date;
+          const iUpdatedAt = (inv as any).updated_at || (inv as any).updatedAt || '';
+          rows.push([esc(v.name), esc(projectName), esc('Invoice'), esc(inv.invoice_number), esc(this.formatDate(inv.invoice_date)), esc(this.toNumber(inv.grand_total)), esc(inv.status), esc(`Paid: ${this.formatAmount(inv.paid_amount)}`), esc(this.formatDateTime(iCreatedAt)), esc((inv as any).created_by_name || 'Admin'), esc(this.formatDateTime(iUpdatedAt)), esc((inv as any).updated_by_name || '—')].join(','));
           (inv.payment_history || []).forEach(p => {
-            rows.push([esc(v.name), esc(projectName), esc('Payment'), esc(inv.invoice_number), esc(this.formatDate((p as any).paid_at || (p as any).payment_date)), esc(this.toNumber((p as any).amount)), esc((p as any).mode), esc((p as any).reference ? `Ref: ${(p as any).reference}` : '—')].join(','));
+            rows.push([esc(v.name), esc(projectName), esc('Payment'), esc(inv.invoice_number), esc(this.formatDate((p as any).paid_at || (p as any).payment_date)), esc(this.toNumber((p as any).amount)), esc((p as any).mode), esc((p as any).reference ? `Ref: ${(p as any).reference}` : '—'), esc('—'), esc('—'), esc('—'), esc('—')].join(','));
           });
         });
         rec.audits.forEach((a: any) => {
-          rows.push([esc(v.name), esc(projectName), esc('Audit'), esc('—'), esc(this.formatDate(a.audit_date || a.auditDate || a.createdAt || a.created_at)), esc('—'), esc(`${Math.round(Number(a.composite_score ?? a.compositeScore ?? 0))}%`), esc(a.observations || '—')].join(','));
+          rows.push([esc(v.name), esc(projectName), esc('Audit'), esc('—'), esc(this.formatDate(a.audit_date || a.auditDate || a.createdAt || a.created_at)), esc('—'), esc(`${Math.round(Number(a.composite_score ?? a.compositeScore ?? 0))}%`), esc(a.observations || '—'), esc(this.formatDateTime(a.created_at || a.createdAt)), esc(a.created_by_name || 'Admin'), esc(this.formatDateTime(a.updated_at || a.updatedAt)), esc(a.updated_by_name || '—')].join(','));
         });
         rec.laborWorkers.forEach(w => {
-          rows.push([esc(v.name), esc(projectName), esc('Labor'), esc(w.skill), esc('—'), esc(this.toNumber(w.daily_rate) * (w.labor_count || 0)), esc((w as any).statusLabel || w.status), esc(`Count: ${w.labor_count} · Assigned: ${w.assign_worker || 'Unassigned'}`)].join(','));
+          rows.push([esc(v.name), esc(projectName), esc('Labor'), esc(w.skill), esc('—'), esc(this.toNumber(w.daily_rate) * (w.labor_count || 0)), esc((w as any).statusLabel || w.status), esc(`Count: ${w.labor_count} · Assigned: ${w.assign_worker || 'Unassigned'}`), esc(this.formatDateTime((w as any).created_at || (w as any).createdAt)), esc((w as any).created_by_name || 'Admin'), esc(this.formatDateTime((w as any).updated_at || (w as any).updatedAt)), esc((w as any).updated_by_name || '—')].join(','));
         });
         rec.tasks.forEach((t: any) => {
-          rows.push([esc(v.name), esc(projectName), esc('Task'), esc(t.title), esc(this.formatDate(t.due_date || t.dueDate)), esc('—'), esc(t.status), esc(`Subtasks: ${(t.subtasks || []).length}`)].join(','));
+          rows.push([esc(v.name), esc(projectName), esc('Task'), esc(t.title), esc(this.formatDate(t.due_date || t.dueDate)), esc('—'), esc(t.status), esc(`Subtasks: ${(t.subtasks || []).length}`), esc(this.formatDateTime(t.created_at || t.createdAt)), esc(t.created_by_name || 'Admin'), esc(this.formatDateTime(t.updated_at || t.updatedAt)), esc(t.updated_by_name || '—')].join(','));
         });
         rec.milestones.forEach(m => {
-          rows.push([esc(v.name), esc(projectName), esc('Milestone'), esc(m.name || m.title), esc(`${this.formatDate(m.start_date)} → ${this.formatDate(m.end_date)}`), esc('—'), esc(m.status || '—'), esc(`Sub-milestones: ${(m.children || []).length}`)].join(','));
+          rows.push([esc(v.name), esc(projectName), esc('Milestone'), esc(m.name || m.title), esc(`${this.formatDate(m.start_date)} → ${this.formatDate(m.end_date)}`), esc('—'), esc(m.status || '—'), esc(`Sub-milestones: ${(m.children || []).length}`), esc(this.formatDateTime((m as any).created_at || (m as any).createdAt)), esc('Admin'), esc(this.formatDateTime(m.updated_at)), esc('—')].join(','));
         });
         const allocated = Number(v.budget_allocation) || 0;
-        rows.push([esc(v.name), esc(projectName), esc('Budget'), esc('Allocation Summary'), esc(this.formatDate(v.created_at)), esc(allocated), esc(allocated > 0 && rec.totalBilled > allocated ? 'Exceeded' : 'Within Budget'), esc(`Invoiced: ${this.formatAmount(rec.totalBilled)} | Paid: ${this.formatAmount(rec.totalPaid)} | Remaining: ${this.formatAmount(Math.max(0, allocated - rec.totalBilled))}`)].join(','));
+        rows.push([esc(v.name), esc(projectName), esc('Budget'), esc('Allocation Summary'), esc(this.formatDate(v.created_at)), esc(allocated), esc(allocated > 0 && rec.totalBilled > allocated ? 'Exceeded' : 'Within Budget'), esc(`Invoiced: ${this.formatAmount(rec.totalBilled)} | Paid: ${this.formatAmount(rec.totalPaid)} | Remaining: ${this.formatAmount(Math.max(0, allocated - rec.totalBilled))}`), esc(this.formatDateTime(v.created_at)), esc(createdBy), esc(this.formatDateTime((v as any).updated_at)), esc(updatedBy)].join(','));
       });
       if (rows.length <= 1) { alert('No data to export.'); return; }
       const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
