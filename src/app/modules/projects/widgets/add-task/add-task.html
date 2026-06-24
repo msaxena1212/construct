@@ -74,6 +74,64 @@
                     </div>
                 </section>
 
+                <!-- Settings Grid (moved above Vendor) -->
+                <div class="space-y-6">
+                    <!-- Settings Grid -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label
+                                class="block text-[10px] font-black uppercase tracking-widest text-outline">Priority</label>
+                            <select formControlName="priority"
+                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                                @for (p of priorities; track $index) {
+                                <option [value]="p.label">{{ p.label }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label
+                                class="block text-[10px] font-black uppercase tracking-widest text-outline">Assignee</label>
+                            <select formControlName="assigneeId"
+                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                                <option value="" disabled selected>Select Team Member</option>
+                                @for(member of teamMembers; track $index){
+                                <option [value]="member.id">{{ member.firstname }} {{ member.lastname }}</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Scheduling Analysis -->
+                    <section class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label
+                                class="block text-[10px] font-black uppercase tracking-widest text-outline">Scheduling
+                                Parameters</label>
+                            <span
+                                class="text-[8px] font-black bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase tracking-widest">CPM
+                                Enabled</span>
+                        </div>
+                        <div
+                            class="grid grid-cols-2 gap-4 bg-surface-container-low/50 p-4 rounded-2xl ring-1 ring-outline-variant/10">
+                            <div class="space-y-2">
+                                <label class="block text-[9px] font-bold text-outline uppercase tracking-wider">Start
+                                    Date</label>
+                                <input type="date" formControlName="startDate"
+                                    class="w-full bg-surface border-none rounded-lg p-2.5 text-xs font-bold outline-none ring-1 ring-outline-variant/10" />
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[9px] font-bold text-outline uppercase tracking-wider">Duration
+                                    (Days)</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" formControlName="duration"
+                                        class="flex-1 bg-surface border-none rounded-lg p-2.5 text-xs font-bold outline-none ring-1 ring-outline-variant/10" />
+                                    <span class="text-[10px] font-black text-outline">DYS</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
                 <!-- vender list -->
                 <div class="space-y-2">
                     <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Vendor</label>
@@ -114,63 +172,6 @@
                         </label>
                     </div>
                 </section>
-
-
-                <div class="space-y-6">
-                    <!-- Settings Grid -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label
-                                class="block text-[10px] font-black uppercase tracking-widest text-outline">Priority</label>
-                            <select formControlName="priority"
-                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                @for (p of priorities; track $index) {
-                                <option [value]="p.label">{{ p.label }}</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="space-y-2">
-                            <label
-                                class="block text-[10px] font-black uppercase tracking-widest text-outline">Assignee</label>
-                            <select formControlName="assigneeId"
-                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                <option value="" disabled selected>Select Team Member</option>
-                                @for(member of teamMembers; track $index){
-                                <option [value]="member.id">{{ member.firstname }} {{ member.lastname }}</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Scheduling Analysis -->
-                    <section class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <label
-                                class="block text-[10px] font-black uppercase tracking-widest text-outline">Scheduling
-                                Parameters</label>
-                            <span
-                                class="text-[8px] font-black bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase">CPM
-                                Enabled</span>
-                        </div>
-                        <div
-                            class="grid grid-cols-2 gap-4 bg-surface-container-low/50 p-4 rounded-2xl ring-1 ring-outline-variant/10">
-                            <div class="space-y-2">
-                                <label class="block text-[9px] font-bold text-outline uppercase tracking-wider">Start
-                                    Date</label>
-                                <input type="date" formControlName="startDate"
-                                    class="w-full bg-surface border-none rounded-lg p-2.5 text-xs font-bold outline-none ring-1 ring-outline-variant/10" />
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-[9px] font-bold text-outline uppercase tracking-wider">Duration
-                                    (Days)</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="number" formControlName="duration"
-                                        class="flex-1 bg-surface border-none rounded-lg p-2.5 text-xs font-bold outline-none ring-1 ring-outline-variant/10" />
-                                    <span class="text-[10px] font-black text-outline">DYS</span>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
 
                     <!-- Relationships (Predecessors) -->
                     <section class="space-y-4">
@@ -525,8 +526,8 @@
         </div>
 
     </div>
-
-    </div>
+<!-- 
+    </div> -->
 
     <!-- Stock Shortage Dialog -->
     <app-common-dialog [open]="showStockDialog && !!stockDialogData" title="Insufficient Stock"

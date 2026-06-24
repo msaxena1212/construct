@@ -112,7 +112,7 @@
                             <div class="flex -space-x-2">
                                 @for (assignee of task.assignees; track assignee.id) {
                                 <img class="w-6 h-6 rounded-lg ring-2 ring-white object-cover"
-                                    [src]="assignee.avatar || 'assets/default-avatar.png'"
+                                    [src]="getAvatarUrl(assignee.avatar)"
                                     [title]="assignee.firstname" />
                                 }
                             </div>
