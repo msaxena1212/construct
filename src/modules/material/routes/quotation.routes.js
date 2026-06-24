@@ -90,9 +90,6 @@ module.exports = (router) => {
 
     router.get("/getall_material_quotation_company/:id", checkPermission("resources/materials", "can_read"), quotationCtrl.getall_material_quotation_company);
 
-    router.get("/getall_material_quotation_company_wise/:id", checkPermission("resources/materials", "can_read"), quotationCtrl.getall_material_quotation_company_wise);
-
-
 
 
 
