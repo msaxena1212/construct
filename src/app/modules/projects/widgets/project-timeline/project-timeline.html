@@ -18,19 +18,53 @@
   <div class="timeline-table" #timelineTable>
     <div class="timeline-table-header" [style.gridTemplateColumns]="gridTemplate">
       <div class="timeline-header-cell timeline-sidebar-header">Task</div>
-      <div *ngFor="let column of timelineColumns; let first = first; let last = last" class="timeline-header-cell timeline-date-header">
-        <button *ngIf="first" type="button" class="header-scroll-btn header-scroll-left" (click)="scrollTimeline('left')" aria-label="Scroll timeline left">
+      <div *ngFor="let column of timelineColumns; let first = first; let last = last"
+        class="timeline-header-cell timeline-date-header">
+        <button *ngIf="first" type="button" class="header-scroll-btn header-scroll-left"
+          (click)="scrollTimeline('left')" aria-label="Scroll timeline left" style="
+    width:32px;
+    height:32px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    color:white;
+    box-shadow:0 4px 12px rgba(59,130,246,.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    margin-right:8px;
+  ">
           <span class="material-symbols-outlined">chevron_left</span>
         </button>
-        <span>{{ column.label }}</span>
-        <button *ngIf="last" type="button" class="header-scroll-btn header-scroll-right" (click)="scrollTimeline('right')" aria-label="Scroll timeline right">
+
+        <span style="font-weight:700;">
+          {{ column.label }}
+        </span>
+
+        <button *ngIf="last" type="button" class="header-scroll-btn header-scroll-right"
+          (click)="scrollTimeline('right')" aria-label="Scroll timeline right" style="
+    width:32px;
+    height:32px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(135deg,#3b82f6,#2563eb);
+    color:white;
+    box-shadow:0 4px 12px rgba(59,130,246,.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    margin-left:8px;
+  ">
           <span class="material-symbols-outlined">chevron_right</span>
         </button>
       </div>
     </div>
 
     <div class="timeline-table-body">
-      <div *ngFor="let row of ganttRows; let i = index; trackBy: trackByRow" class="timeline-table-row" [class.child-row]="row.isChild" [attr.data-level]="row.indentLevel" [style.gridTemplateColumns]="gridTemplate">
+      <div *ngFor="let row of ganttRows; let i = index; trackBy: trackByRow" class="timeline-table-row"
+        [class.child-row]="row.isChild" [attr.data-level]="row.indentLevel" [style.gridTemplateColumns]="gridTemplate">
         <div class="timeline-sidebar-cell">
           <div class="row-content">
             <div class="row-header">
@@ -50,10 +84,9 @@
 
         <div *ngFor="let column of timelineColumns" class="timeline-cell"></div>
 
-        <div *ngIf="row.isVisible" class="timeline-bar" [ngClass]="['bar-' + row.type, i < 2 ? 'tooltip-below' : 'tooltip-above']"
-          [style.gridColumnStart]="row.startIndex + 2"
-          [style.gridColumnEnd]="'span ' + row.span"
-          [title]="row.name">
+        <div *ngIf="row.isVisible" class="timeline-bar"
+          [ngClass]="['bar-' + row.type, i < 2 ? 'tooltip-below' : 'tooltip-above']"
+          [style.gridColumnStart]="row.startIndex + 2" [style.gridColumnEnd]="'span ' + row.span" [title]="row.name">
           <span>{{ row.name }}</span>
           <div class="bar-tooltip">
             <div class="tooltip-header">{{ row.name }}</div>
@@ -75,7 +108,8 @@
             </div>
             <div class="tooltip-row" *ngIf="row.type === 'subtask'">
               <span class="tooltip-label">Completed:</span>
-              <span class="tooltip-value">{{ row.completed === true ? 'Yes' : row.completed === false ? 'No' : 'N/A' }}</span>
+              <span class="tooltip-value">{{ row.completed === true ? 'Yes' : row.completed === false ? 'No' : 'N/A'
+                }}</span>
             </div>
           </div>
         </div>
