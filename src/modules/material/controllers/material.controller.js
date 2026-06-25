@@ -409,27 +409,28 @@ class MaterialController {
             company_id,
             project_id: project.project_id,
             vendor_id,
+            quotation_id,
             status: "UPDATED",
           });
 
           //history_check
-          // await db.material_project_stock_history.create({
-          //     material_project_stock_id: projectStockData.id,
-          //     material_id: id,
-          //     project_id: project.project_id,
-          //     name,
-          //     sku,
-          //     category,
-          //     vendor_name,
-          //     stockUsed: project.stock,
-          //     cost,
-          //     status: project.status,
-          //     vendor_id,
-          //     material_master_id,
-          //     project_name: project.project_name,
-          //     quotation_id,
-          //     company_id
-          // });
+          await db.material_project_stock_history.create({
+              material_project_stock_id: projectStockData.id,
+              material_id: id,
+              project_id: project.project_id,
+              name,
+              sku,
+              category,
+              vendor_name,
+              stockUsed: project.stock,
+              cost,
+              status: project.status,
+              vendor_id,
+              material_master_id,
+              project_name: project.project_name,
+              quotation_id,
+              company_id
+          });
 
           return projectStockData;
         })
