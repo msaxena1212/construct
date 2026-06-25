@@ -21,7 +21,8 @@ export class ProjectDetail implements OnInit {
   error: string | null = null;
 
   activeTab = 'Overview';
-  tabs = ['Overview', 'Tasks', 'Timeline', 'Budget', 'Files', 'Updates'];
+  // tabs = ['Overview', 'Tasks', 'Timeline', 'Budget', 'Files', 'Updates'];
+  tabs = ['Overview', 'Tasks', 'Timeline', 'Budget', 'Files'];
 
   teamMembers: { name: string; avatar?: string; role?: string }[] = [{ name: 'All Members' }];
   selectedMember = 'All Members';
