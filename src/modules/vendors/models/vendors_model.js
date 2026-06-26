@@ -10,6 +10,17 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: true,
     },
+    project_ids: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      get() {
+        const raw = this.getDataValue('project_ids');
+        try { return raw ? JSON.parse(raw) : []; } catch { return []; }
+      },
+      set(value) {
+        this.setDataValue('project_ids', value ? JSON.stringify(value) : null);
+      },
+    },
     name: {
       type: Sequelize.STRING(255),
       allowNull: false,
@@ -57,7 +68,6 @@ module.exports = (sequelize, Sequelize) => {
     },
     skill: {
       type: Sequelize.TEXT,
-      allowNull: false,
       allowNull: false,
     },
 

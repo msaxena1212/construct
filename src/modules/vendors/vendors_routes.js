@@ -6,18 +6,27 @@ const vendorCtrl = require('../vendors/vendors_controller');
 const invoiceCtrl = require('../vendors/vendors_invoice_controller');
 const auditCtrl = require('../vendors/vendors_audit_controller');
 const historyCtrl = require('../vendors/vendors_history_controller');
+const paymentRequestCtrl = require('../vendors/vendors_payment_request_controller');
 
 router.get('/stats', vendorCtrl.getStats);
-
-// ── History routes  ──────────────────────
-router.get('/:vendorId/history', historyCtrl.getVendorHistory);
-router.get('/:vendorId/history/summary', historyCtrl.getVendorHistorySummary);
 
 // ── Invoice routes ────────────────────────────────────────────────────────
 router.get('/:vendorId/invoices', invoiceCtrl.getInvoicesByVendor);
 router.post('/:vendorId/invoices', invoiceCtrl.createInvoice);
 router.put('/:vendorId/invoices/:id/status', invoiceCtrl.updateInvoiceStatus);
 router.delete('/:vendorId/invoices/:id', invoiceCtrl.deleteInvoice);
+
+// ── Vendors payment request routes ────────────────────────────────────────────────────────
+router.post('/:vendorId/invoices/:invoiceId/payment-requests', paymentRequestCtrl.createPaymentRequest);
+router.get('/:vendorId/invoices/:invoiceId/payment-requests', paymentRequestCtrl.getRequestsByInvoice);
+
+router.get('/payment-requests', paymentRequestCtrl.getPaymentRequests);
+router.put('/payment-requests/:requestId/approve', paymentRequestCtrl.approvePaymentRequest);
+router.put('/payment-requests/:requestId/reject', paymentRequestCtrl.rejectPaymentRequest);
+
+// ── Vendors history routes  ──────────────────────
+router.get('/:vendorId/history', historyCtrl.getVendorHistory);
+router.get('/:vendorId/history/summary', historyCtrl.getVendorHistorySummary);
 
 // ── Audit routes ──────────────────────────────────────────────────────────
 router.get('/:vendorId/audits', auditCtrl.getAuditsByVendor);
