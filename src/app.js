@@ -43,7 +43,7 @@ const db = require("./models");
 // db.vendors.sync({ alter: true });
 // db.material_project_stock_history.sync({ alter: true });
 // db.equipment_project_stock_history.sync({ alter: true });
-
+// db.quotation_history.sync({ alter: true });
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));

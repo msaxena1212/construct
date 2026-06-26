@@ -20,13 +20,13 @@ module.exports = (router) => {
   router.get("/projects", projectCtrl.getAllProjects);
 
   // Get single project details
-  router.get("/projects/:id",checkPermission("projects", "can_read"),  projectCtrl.getProjectById);
+  router.get("/projects/:id", checkPermission("projects", "can_read"), projectCtrl.getProjectById);
 
   // Get project timeline data
-  router.get("/projects/:projectId/timeline",checkPermission("projects", "can_read"), projectCtrl.getProjectTimeline);
+  router.get("/projects/:projectId/timeline", checkPermission("projects", "can_read"), projectCtrl.getProjectTimeline);
 
   // --- Milestone Routes ---
-  router.post("/projects/:projectId/milestones",checkPermission("projects", "can_create"), projectCtrl.createMilestone);
+  router.post("/projects/:projectId/milestones", checkPermission("projects", "can_create"), projectCtrl.createMilestone);
   router.put("/projects/:projectId/milestones/:milestoneId", checkPermission("projects", "can_update"), projectCtrl.updateMilestone);
 
   // Upload project documents/media
@@ -51,10 +51,10 @@ module.exports = (router) => {
   const taskCtrl = require("./task.controller");
 
   // Get project tasks
-  router.get("/projects/:projectId/tasks",   checkPermission("tasks", "can_read"), taskCtrl.getTasksByProject);
+  router.get("/projects/:projectId/tasks", checkPermission("tasks", "can_read"), taskCtrl.getTasksByProject);
 
   // Create task
-  router.post("/projects/:projectId/tasks", checkPermission("tasks", "can_create"),taskCtrl.createTask);
+  router.post("/projects/:projectId/tasks", checkPermission("tasks", "can_create"), taskCtrl.createTask);
 
   // Update task (details or status)
   router.put("/tasks/:taskId", checkPermission("tasks", "can_update"), taskCtrl.updateTask);
@@ -63,12 +63,12 @@ module.exports = (router) => {
   router.delete("/tasks/:taskId", checkPermission("tasks", "can_delete"), taskCtrl.deleteTask);
 
   // Comments
-  router.post("/tasks/:taskId/comments",checkPermission("tasks", "can_create"), taskCtrl.addComment);
+  router.post("/tasks/:taskId/comments", checkPermission("tasks", "can_create"), taskCtrl.addComment);
 
   // Attachments
   router.post(
     "/tasks/:taskId/attachments",
-    upload.array("attachments", 10),checkPermission("tasks", "can_create"),
+    upload.array("attachments", 10), checkPermission("tasks", "can_create"),
     taskCtrl.uploadAttachment
   );
 
@@ -79,7 +79,7 @@ module.exports = (router) => {
 
 
 
-  router.get("/getBudget_ProjectById/:id", checkPermission("projects", "can_read"),projectCtrl.getBudget_ProjectById);
+  router.get("/getBudget_ProjectById/:id", checkPermission("projects", "can_read"), projectCtrl.getBudget_ProjectById);
 
 
   router.get("/getBudget_total_spent_ProjectById/:id", checkPermission("projects", "can_read"), projectCtrl.getBudget_total_spent_ProjectById);

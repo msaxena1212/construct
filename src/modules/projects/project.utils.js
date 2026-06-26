@@ -27,7 +27,7 @@ const syncProjectProgress = async (projectId, transaction = null) => {
     const projectProgress = Math.round(totalMilestoneProgress / milestones.length);
     console.log(`[ProgressSync] Project ${projectId} progress: ${projectProgress}%`);
     await project.update({ progress: projectProgress }, { transaction });
-    
+
     return projectProgress;
   } catch (error) {
     console.error("[ProgressSync] Error syncing project progress:", error);
@@ -109,7 +109,7 @@ const syncTaskProgress = async (taskId, transaction = null) => {
     if (task.milestone_id) {
       await syncMilestoneProgress(task.milestone_id, transaction);
     }
-    
+
     await syncProjectProgress(task.project_id, transaction);
 
     return progress;
