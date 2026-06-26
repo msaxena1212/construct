@@ -155,88 +155,6 @@
     }
   </div>
 
-  <!-- <div class="bg-surface-container-low rounded-3xl p-8 mt-4">
-    <div class="flex items-center justify-between mb-8">
-      <h3 class="text-xl font-black text-on-surface">Compliance & Billing Activity</h3>
-      <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
-        View All History
-      </button>
-    </div>
-    <div class="space-y-4 p-4 rounded-3xl
-         bg-gradient-to-br
-         from-slate-50
-         via-white
-         to-blue-50
-         border border-slate-200/60
-         shadow-sm">
-
-      @for (act of activities; track act.id) {
-
-      <div class="group flex items-center gap-4 p-3 rounded-2xl
-           bg-white/80 backdrop-blur-sm
-           border border-slate-200/60
-           hover:bg-white
-           hover:shadow-md
-           transition-all duration-300">
-
-        <div class="w-11 h-11 rounded-2xl
-             bg-gradient-to-br from-blue-50 to-indigo-100
-             border border-blue-100
-             flex items-center justify-center
-             flex-shrink-0">
-
-          <span class="material-symbols-outlined text-[20px]" [ngClass]="act.iconColor">
-
-            {{ act.icon }}
-
-          </span>
-
-        </div>
-
-        <div class="flex-1 min-w-0">
-
-          <p class="text-sm font-bold text-slate-800 truncate">
-            {{ act.title }}
-          </p>
-
-          <p class="text-xs text-slate-500 truncate mt-0.5">
-            {{ act.desc }}
-          </p>
-
-        </div>
-
-        <div class="px-3 py-1 rounded-full
-             bg-blue-100
-             text-blue-700
-             text-[10px] font-bold">
-
-          {{ act.time }}
-
-        </div>
-
-      </div>
-
-      } @empty {
-
-      <div class="py-10 rounded-2xl
-           bg-white
-           border border-dashed border-slate-300
-           text-center">
-
-        <span class="material-symbols-outlined text-5xl text-slate-300">
-          history
-        </span>
-
-        <p class="mt-2 text-sm font-semibold text-slate-500">
-          No recent activity found
-        </p>
-
-      </div>
-
-      }
-
-    </div>
-  </div> -->
   } @else {
   <!-- ═══════════════════════════ VENDOR DETAIL ═══════════════════════════ -->
   <div class="space-y-8 animate-in slide-in-from-right duration-500">
@@ -409,7 +327,6 @@
                 <td class="py-4">
                   <div class="flex items-center gap-3">
 
-                    <!-- View button - always visible -->
                     <div class="relative group">
                       <button (click)="viewInvoice(inv)"
                         class="text-primary opacity-80 hover:opacity-100 cursor-pointer">
@@ -421,7 +338,6 @@
                       </div>
                     </div>
 
-                    <!-- Pay button - only if NOT Cancelled and NOT Paid -->
                     @if (inv.status !== 'Cancelled' && inv.status !== 'Paid') {
                     <div class="relative group">
                       <button (click)="payInvoice(inv)"
@@ -466,8 +382,10 @@
   <app-common-dialog [open]="payInvoiceeModal" maxWidth="max-w-3xl" backdropClass="bg-slate-950/60"
     panelClass="bg-white dark:bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border border-white/20 dark:border-slate-800"
     title="Vendor Invoice Payment" subtitle="Review invoice details and record payment" [showCloseButton]="true"
-    [showFooter]="true" cancelLabel="Cancel" primaryLabel="Confirm Payment" [primaryDisabled]="isProcessingPayment"
-    (closed)="closePayModal()" (primary)="confirmPayment()">
+    [showFooter]="true" cancelLabel="Cancel"
+    [primaryLabel]="showBudgetExceedConfirm ? 'Raise Request' : 'Confirm Payment'"
+    [primaryDisabled]="isProcessingPayment" (closed)="closePayModal()"
+    (primary)="showBudgetExceedConfirm ? raisePaymentRequest() : confirmPayment()">
     <div class="space-y-5 px-1 py-1" (click)="closeAllDropdowns()">
       <div
         class="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-emerald-50/50 p-5 shadow-sm dark:border-slate-800 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
@@ -949,6 +867,29 @@
           class="mt-4 flex items-start gap-2 bg-red-50 border border-red-200 px-4 py-3 rounded-xl dark:bg-red-500/10 dark:border-red-500/20">
           <span class="material-symbols-outlined text-red-600 text-[18px] shrink-0 mt-0.5">error</span>
           <p class="text-xs font-bold text-red-600 break-words flex-1">{{ paymentError }}</p>
+        </div>
+        }
+        @if (showBudgetExceedConfirm && budgetExceedDetails) {
+        <div
+          class="mt-4 flex items-start gap-3 bg-red-50 border border-red-200 px-4 py-3 rounded-xl dark:bg-red-500/10 dark:border-red-500/20">
+          <span class="material-symbols-outlined text-red-600 text-[20px] shrink-0 mt-0.5">warning</span>
+          <div class="flex-1">
+            <p class="text-xs font-black text-red-700 mb-1">Budget Exceeded Warning</p>
+            <p class="text-[11px] font-semibold text-red-600 leading-relaxed">
+              The entered <strong>Amount to Pay</strong>
+              (₹{{ budgetExceedDetails.thisAmount | number:'1.0-0' }}) exceeds the allocated
+              <strong>Budget</strong>
+              (₹{{ budgetExceedDetails.allocated | number:'1.0-0' }})
+              by ₹{{ budgetExceedDetails.exceededBy | number:'1.0-0' }}.
+            </p>
+            <p class="text-[10px] font-bold text-red-500 mt-1">
+              Raise a Request to continue and allocate Budget, click <strong>"Raise Request"</strong>.
+            </p>
+            <button (click)="cancelBudgetExceedConfirm()" type="button"
+              class="mt-2 text-[10px] font-black text-slate-500 hover:underline cursor-pointer">
+              ← Edit Amount
+            </button>
+          </div>
         </div>
         }
       </div>
@@ -1606,25 +1547,62 @@
       </div>
       <div>
         <label class="text-[9px] font-black uppercase tracking-widest text-outline mb-1.5 block">
-          Project
-          <span class="normal-case font-normal tracking-normal text-outline/60 ml-1"></span>
+          Project <span class="text-error">*</span>
         </label>
-        <select [(ngModel)]="newVendor.project_id" [disabled]="!!newVendor.project_id && !!projectId"
-          [class.opacity-60]="!!newVendor.project_id && !!projectId"
-          [class.cursor-not-allowed]="!!newVendor.project_id && !!projectId"
-          [class.cursor-pointer]="!(!!newVendor.project_id && !!projectId)"
-          class="w-full px-3 py-2.5 rounded-xl border border-outline-variant/20 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest">
-          <option [ngValue]="null" disabled>Select Project</option>
-          @for (p of projects; track p.id) {
-          <option [ngValue]="p.id">{{ p.name }}</option>
+
+        <div class="border border-outline-variant/20 rounded-xl overflow-hidden bg-surface-container-lowest">
+          <div
+            class="flex items-center justify-between px-4 py-2.5 bg-surface-container border-b border-outline-variant/10">
+            <span class="text-[10px] font-bold text-outline">
+              {{
+              newVendor.project_ids?.length > 0
+              ? newVendor.project_ids.length + ' project(s) selected'
+              : 'Select projects'
+              }}
+            </span>
+            @if (newVendor.project_ids?.length > 0) {
+            <button type="button" (click)="newVendor.project_ids = []"
+              class="text-[9px] font-black text-error hover:underline cursor-pointer">
+              Clear all
+            </button>
+            }
+          </div>
+
+          <div class="max-h-44 overflow-y-auto divide-y divide-outline-variant/10">
+            @for (p of projects; track p.id) {
+            <label
+              class="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container cursor-pointer transition-colors"
+              [class.bg-primary/5]="isProjectSelected(p.id)">
+              <input type="checkbox" [checked]="isProjectSelected(p.id)" (change)="toggleProject(p.id)"
+                class="w-4 h-4 rounded accent-primary cursor-pointer flex-shrink-0" />
+              <span class="text-xs font-semibold text-on-surface">{{ p.name }}</span>
+              @if (isProjectSelected(p.id)) {
+              <span class="ml-auto material-symbols-outlined text-primary text-base">check</span>
+              }
+            </label>
+            } @empty {
+            <p class="text-center py-6 text-outline text-xs font-bold italic">
+              No projects available.
+            </p>
+            }
+          </div>
+        </div>
+
+        @if (newVendor.project_ids?.length > 0) {
+        <div class="flex flex-wrap gap-1.5 mt-2">
+          @for (pid of newVendor.project_ids; track pid) {
+          <span
+            class="px-2.5 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold flex items-center gap-1.5">
+            {{ getProjectName(pid) }}
+            <button type="button" (click)="toggleProject(pid)"
+              class="cursor-pointer hover:text-error leading-none font-black">
+              ✕
+            </button>
+          </span>
           }
-        </select>
-        @if (!!newVendor.project_id && !!projectId) {
-        <p class="text-[9px] text-outline/60 mt-1 flex items-center gap-1">
-          <span class="material-symbols-outlined text-[11px]">lock</span>
-          Project context se auto-linked — change nahi kar sakte.
-        </p>
+        </div>
         }
+        <p class="text-[9px] text-outline/70 mt-1">Multiple projects select kar sakte ho</p>
       </div>
       <div>
         <label class="text-[9px] font-black uppercase tracking-widest text-outline mb-1.5 block">

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export interface BudgetInfo {
@@ -71,6 +71,19 @@ export interface PaymentPayload {
   sub_milestone_ids?: number[];
   task_ids?: number[];
 }
+export interface PaymentRequest {
+  id: number;
+  vendor_id: number;
+  invoice_id: number;
+  amount: number;
+  mode: string;
+  reference: string | null;
+  status: 'pending_approval' | 'approved' | 'rejected';
+  budget_allocated: number;
+  budget_invoiced: number;
+  exceeded_by: number;
+  createdAt: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class VendorInvoiceService {
@@ -118,43 +131,43 @@ export class VendorInvoiceService {
       grand_total: number;
     }
   ): Observable<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }> {
-  return this.http
-    .post<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }>(
-      `${this.base}/${vendorId}/invoices`,
-      payload
-    )
-    .pipe(
-      tap((res) => {
-        if (res.success) {
-          this.invoicesSubject.next([res.data, ...this.invoicesSubject.value]);
-        }
-      })
-    );
-}
+    return this.http
+      .post<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }>(
+        `${this.base}/${vendorId}/invoices`,
+        payload
+      )
+      .pipe(
+        tap((res) => {
+          if (res.success) {
+            this.invoicesSubject.next([res.data, ...this.invoicesSubject.value]);
+          }
+        })
+      );
+  }
 
-updateStatus(
-  invoiceId: number,
-  payload: PaymentPayload
-): Observable<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }> {
-  const vendorId = this.currentVendorId;
-  if (!vendorId) throw new Error('Vendor ID not set. Call loadInvoices() first.');
+  updateStatus(
+    invoiceId: number,
+    payload: PaymentPayload
+  ): Observable<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }> {
+    const vendorId = this.currentVendorId;
+    if (!vendorId) return throwError(() => new Error('Vendor ID not set.'));
 
-  return this.http
-    .put<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }>(
-      `${this.base}/${vendorId}/invoices/${invoiceId}/status`,
-      payload
-    )
-    .pipe(
-      tap((res) => {
-        if (res.success) {
-          const list = this.invoicesSubject.value.map((inv) =>
-            inv.id === invoiceId ? { ...inv, ...res.data } : inv
-          );
-          this.invoicesSubject.next(list);
-        }
-      })
-    );
-}
+    return this.http
+      .put<{ success: boolean; data: VendorInvoice; budget?: BudgetInfo }>(
+        `${this.base}/${vendorId}/invoices/${invoiceId}/status`,
+        payload
+      )
+      .pipe(
+        tap((res) => {
+          if (res.success) {
+            const list = this.invoicesSubject.value.map((inv) =>
+              inv.id === invoiceId ? { ...inv, ...res.data } : inv
+            );
+            this.invoicesSubject.next(list);
+          }
+        })
+      );
+  }
 
   deleteInvoice(invoiceId: number): Observable<any> {
     const vendorId = this.currentVendorId;
@@ -176,5 +189,28 @@ updateStatus(
 
   getInvoices(): VendorInvoice[] {
     return this.invoicesSubject.value;
+  }
+  raisePaymentRequest(
+    vendorId: string | number,
+    invoiceId: number,
+    payload: {
+      amount: number;
+      mode: string;
+      reference?: string | null;
+      clearance_date?: string | null;
+      settlement_type?: string;
+      settlement_completion?: number | null;
+      milestone_ids?: number[];
+      sub_milestone_ids?: number[];
+      task_ids?: number[];
+      budget_allocated?: number;
+      budget_invoiced?: number;
+      exceeded_by?: number;
+    }
+  ): Observable<{ success: boolean; data: PaymentRequest; message: string }> {
+    return this.http.post<{ success: boolean; data: PaymentRequest; message: string }>(
+      `${this.base}/${vendorId}/invoices/${invoiceId}/payment-requests`,
+      payload
+    );
   }
 }

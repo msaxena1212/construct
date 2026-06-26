@@ -16,6 +16,7 @@ import { VendorAuditService, VendorAudit } from '../vendors/services/vendors-aud
 import { SkillMasterServices } from '../master/skill-master/skill-master-services';
 import { ProjectService } from '../projects/services/project-service';
 import { IProjectTask } from '../../shared/interfaces/project.interface';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-vendors',
@@ -38,10 +39,12 @@ export class Vendors implements OnInit {
   private projectService = inject(ProjectService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private toastr = inject(ToastrService);
 
   showSkillDropdown = false;
   showStatusDropdown = false;
   showAssignDropdown = false;
+  showProjectDropdown = false;
   allTasks: IProjectTask[] = [];
   settlementTasks: IProjectTask[] = [];
   skillOptions: { value: string; label: string }[] = [];
@@ -75,6 +78,9 @@ export class Vendors implements OnInit {
   stepError = '';
   fileError = '';
   contractFiles: File[] = [];
+
+  showBudgetExceedConfirm = false;
+  budgetExceedDetails: { allocated: number; invoiced: number; thisAmount: number; exceededBy: number } | null = null;
 
   readonly vendorSteps = [
     { num: 1, label: 'Basic Info' },
@@ -168,7 +174,6 @@ export class Vendors implements OnInit {
     acc + (Number(w.daily_rate) || 0) * (w.labor_count || 0);
   Math = Math;
 
-
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       this.viewingVendorId = params.get('id');
@@ -189,33 +194,31 @@ export class Vendors implements OnInit {
     this.loadProjects();
   }
 
+  private loadVendorSubData(vendorId: string): void {
+    this.invoiceService.loadInvoices(vendorId);
+    this.auditService.loadAudits(vendorId);
+    this.laborService.loadLaborForVendor(vendorId);
 
-private loadVendorSubData(vendorId: string): void {
-  this.invoiceService.loadInvoices(vendorId);
-  this.auditService.loadAudits(vendorId);
-  this.laborService.loadLaborForVendor(vendorId);
-
-  const projectId = this.selectedVendor?.project_id;
-  if (projectId) {
-    this.loadProjectTasks(projectId);
-    this.projectService.getProjectById(projectId).subscribe({
-      next: (res: any) => {
-        this.projectdata = res?.data ?? null;
-        // ✅ poora projectData pass karo
-        this.setProjectMilestones(res?.data ?? {});
-        this.updateSettlementCompletionFromProject();
-      },
-      error: (err: any) => {
-        this.projectdata = null;
-        console.error('Project load failed', err);
-      },
-    });
-  } else {
-    this.allTasks = [];
-    this.projectdata = null;
-    this.setProjectMilestones({});
+    const projectId = this.selectedVendor?.project_id;
+    if (projectId) {
+      this.loadProjectTasks(projectId);
+      this.projectService.getProjectById(projectId).subscribe({
+        next: (res: any) => {
+          this.projectdata = res?.data ?? null;
+          this.setProjectMilestones(res?.data ?? {});
+          this.updateSettlementCompletionFromProject();
+        },
+        error: (err: any) => {
+          this.projectdata = null;
+          console.error('Project load failed', err);
+        },
+      });
+    } else {
+      this.allTasks = [];
+      this.projectdata = null;
+      this.setProjectMilestones({});
+    }
   }
-}
 
   getSkill(): void {
     this.skillMasterService.loadSkills().subscribe({
@@ -271,32 +274,31 @@ private loadVendorSubData(vendorId: string): void {
     this.selectedTaskIds = [];
 
     if (selectedId) {
-    this.showSettlementCards = true;
-    this.paymentForm.project_id = selectedId;
-    this.loadProjectTasks(selectedId, 'settlement');
+      this.showSettlementCards = true;
+      this.paymentForm.project_id = selectedId;
+      this.loadProjectTasks(selectedId, 'settlement');
 
-    this.isLoadingMilestones = true;
-    this.projectService.getProjectById(selectedId).subscribe({
-      next: (res: any) => {
-        this.modalProjectData = res?.data ?? null;
-        // ✅ poora projectData pass karo
-        this.setProjectMilestones(res?.data ?? {});
-        this.updateSettlementCompletionFromProject();
-        this.isLoadingMilestones = false;
-      },
-      error: (err: any) => {
-        this.modalProjectData = null;
-        this.isLoadingMilestones = false;
-        console.error('Selected project load failed', err);
-      },
-    });
-  } else {
-    this.showSettlementCards = false;
-    this.modalProjectData = null;
-    this.settlementTasks = [];
-    this.setProjectMilestones({});
+      this.isLoadingMilestones = true;
+      this.projectService.getProjectById(selectedId).subscribe({
+        next: (res: any) => {
+          this.modalProjectData = res?.data ?? null;
+          this.setProjectMilestones(res?.data ?? {});
+          this.updateSettlementCompletionFromProject();
+          this.isLoadingMilestones = false;
+        },
+        error: (err: any) => {
+          this.modalProjectData = null;
+          this.isLoadingMilestones = false;
+          console.error('Selected project load failed', err);
+        },
+      });
+    } else {
+      this.showSettlementCards = false;
+      this.modalProjectData = null;
+      this.settlementTasks = [];
+      this.setProjectMilestones({});
+    }
   }
-}
 
   private syncSelectedVendor(): void {
     if (!this.viewingVendorId) {
@@ -323,42 +325,31 @@ private loadVendorSubData(vendorId: string): void {
     return this.vendors.filter(v => v.assignee === this.selectedMember);
   }
 
+  get availableSubMilestones(): any[] {
+    if (this.selectedMilestoneIds.length === 0) return [];
+    const withChild = Array.isArray(this.modalProjectData?.milestones_with_child)
+      ? this.modalProjectData.milestones_with_child : [];
+    const result: any[] = [];
+    withChild
+      .filter((m: any) => this.selectedMilestoneIds.includes(Number(m.id)))
+      .forEach((m: any) => {
+        if (Array.isArray(m.children)) result.push(...m.children);
+      });
+    return result;
+  }
 
-get availableSubMilestones(): any[] {
-  if (this.selectedMilestoneIds.length === 0) return [];
+  get availableTaskOptions(): IProjectTask[] {
+    if (!this.selectedSubMilestoneIds.length) return [];
+    return this.settlementTasks.filter(task =>
+      this.selectedSubMilestoneIds.includes(Number((task as any).submilestone_id))
+    );
+  }
 
-  const withChild = Array.isArray(this.modalProjectData?.milestones_with_child)
-    ? this.modalProjectData.milestones_with_child
-    : [];
-
-  // ✅ Selected milestones ke children (sub-milestones) lo
-  const result: any[] = [];
-  withChild
-    .filter((m: any) => this.selectedMilestoneIds.includes(Number(m.id)))
-    .forEach((m: any) => {
-      if (Array.isArray(m.children)) {
-        result.push(...m.children);
-      }
-    });
-
-  return result;
-}
-
-get availableTaskOptions(): IProjectTask[] {
-  if (!this.selectedSubMilestoneIds.length) return [];
-
-  // ✅ task.submilestone_id se match karo (API response dekho)
-  return this.settlementTasks.filter(task =>
-    this.selectedSubMilestoneIds.includes(Number((task as any).submilestone_id))
-  );
-}
   get isSettlementCompletionEditable(): boolean {
     return this.selectedSettlementType === 'work_poc';
   }
 
   get settlementCompletionLabel(): string {
-    if (this.selectedSettlementType === 'work_poc') return '% Complete';
-    if (this.selectedSettlementType === 'milestone') return '% Complete';
     return '% Complete';
   }
 
@@ -376,6 +367,37 @@ get availableTaskOptions(): IProjectTask[] {
     return `₹${entered.toLocaleString('en-IN')} / ₹${total.toLocaleString('en-IN')}`;
   }
 
+  get budgetUsage(): { allocated: number; invoiced: number; percent: number; exceeded: boolean; exceededBy: number } {
+    const allocated = Number(this.selectedVendor?.budget_allocation) || 0;
+    const invoiced = (this.invoices || [])
+      .filter(inv => inv.status !== 'Cancelled')
+      .reduce((sum, inv) => sum + (Number(inv.grand_total) || 0), 0);
+    const percent = allocated > 0 ? Math.round((invoiced / allocated) * 100) : 0;
+    const exceeded = allocated > 0 && invoiced > allocated;
+    return { allocated, invoiced, percent, exceeded, exceededBy: exceeded ? invoiced - allocated : 0 };
+  }
+
+  get totalBilled(): number {
+    return this.invoices
+      .filter(inv => inv.status !== 'Cancelled')
+      .reduce((acc, inv) => acc + Number(inv.grand_total), 0);
+  }
+
+  get todayDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  get threeMonthsAgoDate(): string {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 3);
+    return date.toISOString().split('T')[0];
+  }
+
+  get auditScore(): number {
+    return Math.round(
+      ((this.auditForm.quality + this.auditForm.timeliness + this.auditForm.safety) / 30) * 100
+    );
+  }
 
   private loadProjectTasks(projectId: string | number, target: 'main' | 'settlement' = 'main'): void {
     this.projectService.getProjectTasks(projectId).subscribe({
@@ -395,17 +417,13 @@ get availableTaskOptions(): IProjectTask[] {
     });
   }
 
-private setProjectMilestones(projectData: any): void {
-  // ✅ milestones_with_child se parent milestones lo (children embedded hain)
-  const withChild = Array.isArray(projectData?.milestones_with_child)
-    ? projectData.milestones_with_child
-    : [];
-
-  // Sirf parent milestones (parent_id null)
-  this.milestones = withChild.filter((m: any) => !m.parent_id);
-  this.subMilestones = [];
-  this.milestoneTasks = [];
-}
+  private setProjectMilestones(projectData: any): void {
+    const withChild = Array.isArray(projectData?.milestones_with_child)
+      ? projectData.milestones_with_child : [];
+    this.milestones = withChild.filter((m: any) => !m.parent_id);
+    this.subMilestones = [];
+    this.milestoneTasks = [];
+  }
 
   private updateSettlementCompletionFromProject(): void {
     const fieldMap: Record<typeof this.selectedSettlementType, string> = {
@@ -416,25 +434,21 @@ private setProjectMilestones(projectData: any): void {
     const rawValue = this.modalProjectData?.[fieldMap[this.selectedSettlementType]];
     this.settlementCompletion = rawValue == null || rawValue === '' ? null : Number(rawValue);
   }
+
   private getItemProgress(item: any): number | null {
-   const rawProgress =
-    item?.milestone_progress ??   // ✅ pehle ye check karo
-    item?.progress ??
-    item?.completion ??
-    item?.percent_complete ??
-    item?.percentage;
-
-  if (rawProgress != null && rawProgress !== '') {
-    const progress = Number(rawProgress);
-    return Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : null;
+    const rawProgress =
+      item?.milestone_progress ?? item?.progress ?? item?.completion ??
+      item?.percent_complete ?? item?.percentage;
+    if (rawProgress != null && rawProgress !== '') {
+      const progress = Number(rawProgress);
+      return Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : null;
+    }
+    const status = String(item?.status ?? '').toLowerCase().replace(/\s+/g, '_');
+    if (status === 'completed') return 100;
+    if (status === 'in_progress' || status === 'review') return 50;
+    if (status === 'pending' || status === 'to_do' || status === 'on_hold') return 0;
+    return null;
   }
-
-  const status = String(item?.status ?? '').toLowerCase().replace(/\s+/g, '_');
-  if (status === 'completed') return 100;
-  if (status === 'in_progress' || status === 'review') return 50;
-  if (status === 'pending' || status === 'to_do' || status === 'on_hold') return 0;
-  return null;
-}
 
   private averageProgress(items: any[]): number | null {
     const values = items
@@ -444,33 +458,37 @@ private setProjectMilestones(projectData: any): void {
     return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
   }
 
-private updateSettlementCompletionFromSelection(): void {
-  const selectedTasks = this.settlementTasks.filter(task =>
-    this.selectedTaskIds.includes(Number(task.id))
-  );
-  const selectedSubMilestones = this.availableSubMilestones.filter((sm: any) =>
-    this.selectedSubMilestoneIds.includes(Number(sm.id))
-  );
-  const selectedMilestones = this.milestones.filter((m: any) =>
-    this.selectedMilestoneIds.includes(Number(m.id))
-  );
-
-  // ✅ Priority: tasks > sub-milestones > milestones
-  const progress =
-    (selectedTasks.length > 0 ? this.averageProgress(selectedTasks) : null) ??
-    (selectedSubMilestones.length > 0 ? this.averageProgress(selectedSubMilestones) : null) ??
-    (selectedMilestones.length > 0 ? this.averageProgress(selectedMilestones) : null);
-
-  if (progress != null) {
-    this.settlementCompletion = progress;
-  } else {
-    this.updateSettlementCompletionFromProject();
+  private updateSettlementCompletionFromSelection(): void {
+    const selectedTasks = this.settlementTasks.filter(task =>
+      this.selectedTaskIds.includes(Number(task.id))
+    );
+    const selectedSubMilestones = this.availableSubMilestones.filter((sm: any) =>
+      this.selectedSubMilestoneIds.includes(Number(sm.id))
+    );
+    const selectedMilestones = this.milestones.filter((m: any) =>
+      this.selectedMilestoneIds.includes(Number(m.id))
+    );
+    const progress =
+      (selectedTasks.length > 0 ? this.averageProgress(selectedTasks) : null) ??
+      (selectedSubMilestones.length > 0 ? this.averageProgress(selectedSubMilestones) : null) ??
+      (selectedMilestones.length > 0 ? this.averageProgress(selectedMilestones) : null);
+    if (progress != null) {
+      this.settlementCompletion = progress;
+    } else {
+      this.updateSettlementCompletionFromProject();
+    }
   }
-}
+
+  private syncSelectedTasksWithOptions(): void {
+    const allowedTaskIds = this.availableTaskOptions.map(task => Number(task.id));
+    this.selectedTaskIds = this.selectedTaskIds.filter(id => allowedTaskIds.includes(Number(id)));
+  }
+
   applyMilestoneSelection(): void {
     this.onMilestoneMultiSelect();
     this.milestoneDropdownOpen = false;
   }
+
   applySubMilestoneSelection(): void {
     this.onSubMilestoneMultiSelect();
     this.subMilestoneDropdownOpen = false;
@@ -480,6 +498,7 @@ private updateSettlementCompletionFromSelection(): void {
     this.onTaskMultiSelect();
     this.taskDropdownOpen = false;
   }
+
   onMilestoneMultiSelect(): void {
     this.selectedMilestoneIds = this.selectedMilestoneIds.map(id => Number(id));
     const allowedSubIds = this.availableSubMilestones.map((m: any) => Number(m.id));
@@ -491,9 +510,7 @@ private updateSettlementCompletionFromSelection(): void {
   }
 
   onSubMilestoneMultiSelect(): void {
-    this.selectedSubMilestoneIds =
-      this.selectedSubMilestoneIds.map(id => Number(id));
-
+    this.selectedSubMilestoneIds = this.selectedSubMilestoneIds.map(id => Number(id));
     this.syncSelectedTasksWithOptions();
     this.updateSettlementCompletionFromSelection();
   }
@@ -503,11 +520,25 @@ private updateSettlementCompletionFromSelection(): void {
     this.updateSettlementCompletionFromSelection();
   }
 
-  private syncSelectedTasksWithOptions(): void {
-    const allowedTaskIds = this.availableTaskOptions.map(task => Number(task.id));
-    this.selectedTaskIds = this.selectedTaskIds.filter(id =>
-      allowedTaskIds.includes(Number(id))
-    );
+  toggleMilestoneSelection(id: number): void {
+    const idx = this.selectedMilestoneIds.indexOf(id);
+    if (idx === -1) this.selectedMilestoneIds.push(id);
+    else this.selectedMilestoneIds.splice(idx, 1);
+    this.onMilestoneMultiSelect();
+  }
+
+  toggleSubMilestoneSelection(id: number): void {
+    const idx = this.selectedSubMilestoneIds.indexOf(id);
+    if (idx === -1) this.selectedSubMilestoneIds.push(id);
+    else this.selectedSubMilestoneIds.splice(idx, 1);
+    this.onSubMilestoneMultiSelect();
+  }
+
+  toggleTaskSelection(id: number): void {
+    const idx = this.selectedTaskIds.indexOf(id);
+    if (idx === -1) this.selectedTaskIds.push(id);
+    else this.selectedTaskIds.splice(idx, 1);
+    this.onTaskMultiSelect();
   }
 
   onMilestoneSelect(milestoneId: number): void {
@@ -547,6 +578,12 @@ private updateSettlementCompletionFromSelection(): void {
     this.updateSettlementCompletionFromProject();
   }
 
+  closeAllDropdowns(): void {
+    this.milestoneDropdownOpen = false;
+    this.subMilestoneDropdownOpen = false;
+    this.taskDropdownOpen = false;
+  }
+
   openVendorDetail(vendor: Vendor): void {
     this.router.navigate(['/master/resources/vendors', vendor.id]);
   }
@@ -559,6 +596,10 @@ private updateSettlementCompletionFromSelection(): void {
     this.router.navigate(['/master/resources/vendors']);
   }
 
+  openVendorDetailData(): void {
+    this.showVendorDetailModal = true;
+  }
+
   getFileName(filePath: string): string {
     return filePath.split('/').pop() ?? filePath;
   }
@@ -568,7 +609,7 @@ private updateSettlementCompletionFromSelection(): void {
     this.editingVendorId = null;
     this.newVendor = this.defaultVendor();
     if (this.projectId) {
-      this.newVendor.project_id = Number(this.projectId);
+      this.newVendor.project_ids = [Number(this.projectId)];
     }
     this.contractFiles = [];
     this.stepError = '';
@@ -584,7 +625,6 @@ private updateSettlementCompletionFromSelection(): void {
       this._pendingEditVendor = v;
       return;
     }
-
     this.isEditMode = true;
     this.editingVendorId = v.id;
     this.currentStep = 1;
@@ -594,9 +634,7 @@ private updateSettlementCompletionFromSelection(): void {
 
     const rawSkills: string[] = Array.isArray(v.skill)
       ? [...v.skill]
-      : v.skill
-        ? String(v.skill).split(',').map((s: string) => s.trim()).filter(Boolean)
-        : [];
+      : v.skill ? String(v.skill).split(',').map((s: string) => s.trim()).filter(Boolean) : [];
 
     const normalizedSkills = rawSkills.map(raw => {
       const match = this.skillOptions.find(
@@ -617,9 +655,8 @@ private updateSettlementCompletionFromSelection(): void {
       address: { street: v.address?.street ?? '', pincode: v.address?.pincode ?? '' },
       budget: String(v.budget_allocation ?? ''),
       skill: normalizedSkills,
-      project_id: v.project_id ? Number(v.project_id) : null,
+      project_ids: Array.isArray(v.project_ids) ? [...v.project_ids] : (v.project_id ? [Number(v.project_id)] : []),
     };
-
     this.showVendorDetailModal = false;
     this.showAddModal = true;
   }
@@ -656,6 +693,9 @@ private updateSettlementCompletionFromSelection(): void {
     }
     if (this.currentStep === 3) {
       if (!this.newVendor.budget?.toString().trim()) { this.stepError = 'Budget allocation is required.'; return; }
+      if (!this.newVendor.project_ids || this.newVendor.project_ids.length === 0) {
+        this.stepError = 'At least one project is required.'; return;
+      }
       if (!this.newVendor.skill || this.newVendor.skill.length === 0) {
         this.stepError = 'At least one skill is required.'; return;
       }
@@ -687,13 +727,14 @@ private updateSettlementCompletionFromSelection(): void {
     fd.append('pincode', this.newVendor.address.pincode);
     fd.append('budgetAllocation', this.newVendor.budget);
     fd.append('skill', Array.isArray(this.newVendor.skill)
-      ? this.newVendor.skill.join(', ')
-      : this.newVendor.skill);
-    const resolvedProjectId = this.newVendor.project_id || this.projectId || null;
-    if (resolvedProjectId) {
-      fd.append('project_id', String(resolvedProjectId));
-    }
+      ? this.newVendor.skill.join(', ') : this.newVendor.skill);
 
+    const resolvedProjectIds: number[] = this.newVendor.project_ids?.length
+      ? this.newVendor.project_ids
+      : (this.projectId ? [Number(this.projectId)] : []);
+    if (resolvedProjectIds.length > 0) {
+      fd.append('project_ids', JSON.stringify(resolvedProjectIds));
+    }
     this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
     this.isSaving = true;
@@ -713,7 +754,6 @@ private updateSettlementCompletionFromSelection(): void {
 
   private updateVendorData(): void {
     if (!this.editingVendorId) return;
-
     const fd = new FormData();
     fd.append('name', this.newVendor.name);
     fd.append('spoc_name', this.newVendor.spoc.name);
@@ -728,13 +768,14 @@ private updateSettlementCompletionFromSelection(): void {
       parseFloat(String(this.newVendor.budget).replace(/[^0-9.]/g, '')) || 0
     ));
     fd.append('skill', Array.isArray(this.newVendor.skill)
-      ? this.newVendor.skill.join(', ')
-      : this.newVendor.skill);
-    const resolvedProjectId = this.newVendor.project_id || this.projectId || null;
-    if (resolvedProjectId) {
-      fd.append('project_id', String(resolvedProjectId));
-    }
+      ? this.newVendor.skill.join(', ') : this.newVendor.skill);
 
+    const resolvedProjectIds: number[] = this.newVendor.project_ids?.length
+      ? this.newVendor.project_ids
+      : (this.projectId ? [Number(this.projectId)] : []);
+    if (resolvedProjectIds.length > 0) {
+      fd.append('project_ids', JSON.stringify(resolvedProjectIds));
+    }
     this.contractFiles.forEach(file => fd.append('contractFiles', file));
 
     this.isSaving = true;
@@ -758,35 +799,19 @@ private updateSettlementCompletionFromSelection(): void {
     });
   }
 
-  toggleSkill(skillLabel: string): void {
-    if (!Array.isArray(this.newVendor.skill)) this.newVendor.skill = [];
-    const idx = this.newVendor.skill.findIndex(
-      (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
-    );
-    if (idx === -1) {
-      this.newVendor.skill.push(skillLabel);
-    } else {
-      this.newVendor.skill.splice(idx, 1);
-    }
+  updateVendorStatus(status: string): void {
+    if (!this.selectedVendor) return;
+    const statusKey = status.toLowerCase() as 'active' | 'pending' | 'inactive';
+    this.vendorService.updateVendor(this.selectedVendor.id, { status: statusKey }).subscribe({
+      next: () => {
+        const updated = this.vendorService.getVendorById(this.selectedVendor!.id);
+        if (updated) this.selectedVendor = updated;
+      },
+      error: (err: any) =>
+        alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
+    });
   }
 
-  isSkillSelected(skillLabel: string): boolean {
-    if (!Array.isArray(this.newVendor.skill)) return false;
-    return this.newVendor.skill.some(
-      (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
-    );
-  }
-  getSkillLabel(value: string): string {
-    return this.skillOptions.find(s => s.value === value)?.label || '';
-  }
-
-  @HostListener('document:click')
-  onDocumentClick(): void {
-    this.showSkillDropdown = false;
-    this.showStatusDropdown = false;
-    this.showAssignDropdown = false;
-    this.closeAllItemDropdowns();
-  }
   deleteVendor(id: string): void {
     if (this.isDeleting) return;
     if (!confirm('Are you sure you want to remove this vendor?')) return;
@@ -798,6 +823,42 @@ private updateSettlementCompletionFromSelection(): void {
         alert('Delete failed: ' + (err?.error?.message ?? 'Server error'));
       },
     });
+  }
+
+  toggleProject(id: number): void {
+    if (!Array.isArray(this.newVendor.project_ids)) this.newVendor.project_ids = [];
+    const idx = this.newVendor.project_ids.indexOf(id);
+    if (idx === -1) this.newVendor.project_ids.push(id);
+    else this.newVendor.project_ids.splice(idx, 1);
+  }
+
+  isProjectSelected(id: number): boolean {
+    if (!Array.isArray(this.newVendor.project_ids)) return false;
+    return this.newVendor.project_ids.includes(id);
+  }
+
+  getProjectName(id: number): string {
+    return this.projects.find(p => p.id === id)?.name ?? '';
+  }
+
+  toggleSkill(skillLabel: string): void {
+    if (!Array.isArray(this.newVendor.skill)) this.newVendor.skill = [];
+    const idx = this.newVendor.skill.findIndex(
+      (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
+    );
+    if (idx === -1) this.newVendor.skill.push(skillLabel);
+    else this.newVendor.skill.splice(idx, 1);
+  }
+
+  isSkillSelected(skillLabel: string): boolean {
+    if (!Array.isArray(this.newVendor.skill)) return false;
+    return this.newVendor.skill.some(
+      (s: string) => s.toLowerCase() === skillLabel.toLowerCase()
+    );
+  }
+
+  getSkillLabel(value: string): string {
+    return this.skillOptions.find(s => s.value === value)?.label || '';
   }
 
   onContractFilesSelected(event: Event): void {
@@ -866,7 +927,6 @@ private updateSettlementCompletionFromSelection(): void {
       if (started && !loading) {
         this.invoiceForm = this.defaultInvoice();
         this.invoiceForm.project_id = Number(this.selectedVendor?.project_id) || null;
-
         if (this.selectedVendor?.project_id) {
           this.getProject(this.selectedVendor.project_id);
         }
@@ -890,11 +950,8 @@ private updateSettlementCompletionFromSelection(): void {
   toggleDropdown(item: any, field: 'type' | 'gst'): void {
     const isOpen = field === 'type' ? item.typeOpen : item.gstOpen;
     this.closeAllItemDropdowns();
-    if (field === 'type') {
-      item.typeOpen = !isOpen;
-    } else {
-      item.gstOpen = !isOpen;
-    }
+    if (field === 'type') item.typeOpen = !isOpen;
+    else item.gstOpen = !isOpen;
   }
 
   closeAllItemDropdowns(): void {
@@ -938,24 +995,20 @@ private updateSettlementCompletionFromSelection(): void {
     let subtotal = 0;
     let totalGST = 0;
     const gstMap: Record<number, number> = {};
-
     this.invoiceForm.items.forEach((item: any) => {
       const qty = Number(item.quantity) || 0;
       const rate = Number(item.unitPrice) || 0;
       const hours = Number(item.hours) || 0;
       const gst = Number(item.gst) || 0;
-
       item.baseAmount = item.type === 'labor' ? qty * hours * rate : qty * rate;
       item.gstAmount = (item.baseAmount * gst) / 100;
       item.total = item.baseAmount + item.gstAmount;
-
       subtotal += item.baseAmount;
       totalGST += item.gstAmount;
       if (item.gstAmount > 0) {
         gstMap[gst] = (gstMap[gst] || 0) + item.gstAmount;
       }
     });
-
     this.invoiceForm.subtotal = subtotal;
     this.invoiceForm.taxAmount = totalGST;
     this.invoiceForm.grandTotal = subtotal + totalGST;
@@ -967,7 +1020,6 @@ private updateSettlementCompletionFromSelection(): void {
   submitInvoice(): void {
     if (this.isSavingInvoice || !this.selectedVendor) return;
     this.isSavingInvoice = true;
-
     const payload = {
       project_id: this.selectedVendor?.project_id,
       invoice_number: this.invoiceForm.number,
@@ -978,13 +1030,11 @@ private updateSettlementCompletionFromSelection(): void {
       tax_amount: this.invoiceForm.taxAmount,
       grand_total: this.invoiceForm.grandTotal,
     };
-
     this.invoiceService.createInvoice(this.selectedVendor.id, payload).subscribe({
-      next: (res:any) => {
+      next: () => {
         this.isSavingInvoice = false;
         this.showInvoiceModal = false;
         this.vendorService.loadStats();
-         this.checkBudgetWarning(res?.budget);
       },
       error: (err: any) => {
         this.isSavingInvoice = false;
@@ -993,11 +1043,18 @@ private updateSettlementCompletionFromSelection(): void {
     });
   }
 
-  payInvoice(inv: VendorInvoice): void {
-     if (inv.status === 'Cancelled') {
-    alert('This invoice has been cancelled and can no longer accept payments.');
-    return;
+  openBilling(): void {
+    if (this.selectedVendor && this.invoices.length === 0) {
+      this.invoiceService.loadInvoices(this.selectedVendor.id);
+    }
+    this.showBillingModal = true;
   }
+
+  payInvoice(inv: VendorInvoice): void {
+    if (inv.status === 'Cancelled') {
+      alert('This invoice has been cancelled and can no longer accept payments.');
+      return;
+    }
     this.selectedInvoice = inv;
     const selectedProjectId = inv.project_id ? Number(inv.project_id) : null;
 
@@ -1008,7 +1065,6 @@ private updateSettlementCompletionFromSelection(): void {
       reference: '',
       clearance_date: '',
     };
-
     this.selectedSettlementType = 'work_poc';
     this.selectedMilestoneIds = [];
     this.selectedSubMilestoneIds = [];
@@ -1019,10 +1075,12 @@ private updateSettlementCompletionFromSelection(): void {
     this.milestoneTasks = [];
     this.showSettlementCards = false;
     this.modalProjectData = null;
-
+    this.showBudgetExceedConfirm = false;
+    this.budgetExceedDetails = null;
     this.paymentError = '';
     this.isProcessingPayment = false;
     this.payInvoiceeModal = true;
+
     if (selectedProjectId) {
       this.getProject(selectedProjectId);
     }
@@ -1047,36 +1105,25 @@ private updateSettlementCompletionFromSelection(): void {
     this.milestoneDropdownOpen = false;
     this.subMilestoneDropdownOpen = false;
     this.taskDropdownOpen = false;
+    this.showBudgetExceedConfirm = false;
+    this.budgetExceedDetails = null;
   }
 
   onPaymentModeChange(mode: string): void {
     this.paymentForm.mode = mode;
     this.showPaymentModeDropdown = false;
-
     if (mode === 'Cash') {
       this.paymentForm.reference = '';
       this.paymentForm.clearance_date = '';
     }
-
     if (mode !== 'Cheque') {
       this.paymentForm.clearance_date = '';
     }
   }
 
-  get todayDate(): string {
-    return new Date().toISOString().split('T')[0];
-  }
-
-  get threeMonthsAgoDate(): string {
-    const date = new Date();
-    date.setMonth(date.getMonth() - 3);
-    return date.toISOString().split('T')[0];
-  }
   confirmPayment(): void {
     if (!this.selectedInvoice || this.isProcessingPayment) return;
     this.paymentError = '';
-
-    const referenceValue = String(this.paymentForm.reference ?? '').trim();
 
     if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
       this.paymentError = 'Please enter a valid amount.';
@@ -1091,16 +1138,13 @@ private updateSettlementCompletionFromSelection(): void {
         this.paymentError = 'Please select cheque clearance date.';
         return;
       }
-
       const selectedDate = new Date(this.paymentForm.clearance_date);
       const today = new Date();
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-
       selectedDate.setHours(0, 0, 0, 0);
       today.setHours(0, 0, 0, 0);
       threeMonthsAgo.setHours(0, 0, 0, 0);
-
       if (selectedDate < threeMonthsAgo) {
         this.paymentError = 'Cheque clearance date cannot be more than 3 months in the past.';
         return;
@@ -1111,6 +1155,26 @@ private updateSettlementCompletionFromSelection(): void {
       }
     }
 
+    const paidNow = Number(this.paymentForm.amount) || 0;
+    const allocated = this.budgetUsage.allocated;
+    const projectedTotal = this.budgetUsage.invoiced + paidNow;
+
+    if (allocated > 0 && projectedTotal > allocated && !this.showBudgetExceedConfirm) {
+      this.budgetExceedDetails = {
+        allocated,
+        invoiced: this.budgetUsage.invoiced,
+        thisAmount: paidNow,
+        exceededBy: projectedTotal - allocated,
+      };
+      this.showBudgetExceedConfirm = true;
+      return;
+    }
+
+    this.proceedPayment();
+  }
+
+  private proceedPayment(): void {
+    if (!this.selectedInvoice) return;
     this.isProcessingPayment = true;
 
     const paidNow = Number(this.paymentForm.amount);
@@ -1118,6 +1182,7 @@ private updateSettlementCompletionFromSelection(): void {
     const grandTotal = Number(this.selectedInvoice.grand_total);
     const totalAfterThis = alreadyPaid + paidNow;
     const resolvedStatus = totalAfterThis >= grandTotal ? 'Paid' : 'Partially Paid';
+    const referenceValue = String(this.paymentForm.reference ?? '').trim();
 
     const payload: any = {
       status: resolvedStatus,
@@ -1125,6 +1190,7 @@ private updateSettlementCompletionFromSelection(): void {
       mode: this.paymentForm.mode,
       reference: referenceValue !== '' ? referenceValue : null,
       clearance_date: this.paymentForm.clearance_date || null,
+      budget_exceeded: false,
     };
 
     if (this.showSettlementCards && this.paymentForm.project_id) {
@@ -1136,14 +1202,13 @@ private updateSettlementCompletionFromSelection(): void {
     }
 
     this.invoiceService.updateStatus(this.selectedInvoice.id, payload).subscribe({
-      next: (res:any) => {
+      next: () => {
         this.isProcessingPayment = false;
         this.closePayModal();
         if (this.selectedVendor) {
           this.invoiceService.loadInvoices(this.selectedVendor.id);
           this.vendorService.loadStats();
         }
-          this.checkBudgetWarning(res?.budget);
       },
       error: (err: any) => {
         this.isProcessingPayment = false;
@@ -1151,11 +1216,68 @@ private updateSettlementCompletionFromSelection(): void {
       },
     });
   }
-  closeAllDropdowns(): void {
-    this.milestoneDropdownOpen = false;
-    this.subMilestoneDropdownOpen = false;
-    this.taskDropdownOpen = false;
+
+  raisePaymentRequest(): void {
+    if (!this.selectedInvoice || this.isProcessingPayment) return;
+
+    if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
+      this.paymentError = 'Please enter a valid amount.';
+      return;
+    }
+    if (!this.paymentForm.mode) {
+      this.paymentError = 'Please select a payment mode.';
+      return;
+    }
+
+    this.isProcessingPayment = true;
+    this.paymentError = '';
+
+    const payload: any = {
+      amount: Number(this.paymentForm.amount),
+      mode: this.paymentForm.mode,
+      reference: String(this.paymentForm.reference ?? '').trim() || null,
+      clearance_date: this.paymentForm.clearance_date || null,
+      budget_allocated: this.budgetExceedDetails?.allocated,
+      budget_invoiced: this.budgetExceedDetails?.invoiced,
+      exceeded_by: this.budgetExceedDetails?.exceededBy,
+    };
+
+    if (this.showSettlementCards && this.paymentForm.project_id) {
+      payload.settlement_type = this.selectedSettlementType;
+      payload.settlement_completion = this.settlementCompletion;
+      payload.milestone_ids = [...this.selectedMilestoneIds];
+      payload.sub_milestone_ids = [...this.selectedSubMilestoneIds];
+      payload.task_ids = [...this.selectedTaskIds];
+    }
+
+    const vendorId = this.selectedVendor!.id;
+    const invoiceId = this.selectedInvoice.id;
+
+    this.invoiceService
+      .raisePaymentRequest(vendorId, invoiceId, payload)
+      .subscribe({
+        next: () => {
+          this.isProcessingPayment = false;
+          this.closePayModal();
+          this.invoiceService.loadInvoices(vendorId);
+          this.toastr.success(
+            `Payment request of ₹${Number(payload.amount).toLocaleString('en-IN')} via ${payload.mode} has been raised. Invoice will remain pending until approved by Finance team.`,
+            'Payment Request Raised'
+          );
+        },
+        error: (err: any) => {
+          this.isProcessingPayment = false;
+          this.paymentError =
+            err?.error?.message ?? 'Payment request failed. Please try again.';
+        },
+      });
   }
+
+  cancelBudgetExceedConfirm(): void {
+    this.showBudgetExceedConfirm = false;
+    this.budgetExceedDetails = null;
+  }
+
   openCancelInvoiceDialog(inv: VendorInvoice): void {
     this.selectedInvoice = inv;
     this.showCancelInvoiceModal = true;
@@ -1166,63 +1288,31 @@ private updateSettlementCompletionFromSelection(): void {
     this.selectedInvoice = null;
   }
 
-confirmCancelInvoice(): void {
-  if (!this.selectedInvoice || this.isCancellingInvoice) return;
-
-  // ✅ Partially Paid invoice cancel nahi ho sakta
-  if (this.selectedInvoice.status === 'Partially Paid') {
-    alert('This invoice has partial payments recorded and cannot be cancelled.');
-    this.closeCancelInvoiceDialog();
-    return;
-  }
-
-  this.isCancellingInvoice = true;
-  this.invoiceService.updateStatus(this.selectedInvoice.id, { status: 'Cancelled' }).subscribe({
-    next: () => {
-      this.isCancellingInvoice = false;
+  confirmCancelInvoice(): void {
+    if (!this.selectedInvoice || this.isCancellingInvoice) return;
+    if (this.selectedInvoice.status === 'Partially Paid') {
+      alert('This invoice has partial payments recorded and cannot be cancelled.');
       this.closeCancelInvoiceDialog();
-      if (this.selectedVendor) {
-        this.invoiceService.loadInvoices(this.selectedVendor.id);
-        this.vendorService.loadStats();
-      }
-    },
-    error: (err: any) => {
-      this.isCancellingInvoice = false;
-      alert('Cancel failed: ' + (err?.error?.message ?? 'Server error'));
-    },
-  });
-}
-  toggleMilestoneSelection(id: number): void {
-    const idx = this.selectedMilestoneIds.indexOf(id);
-    if (idx === -1) {
-      this.selectedMilestoneIds.push(id);
-    } else {
-      this.selectedMilestoneIds.splice(idx, 1);
+      return;
     }
-    this.onMilestoneMultiSelect();
+    this.isCancellingInvoice = true;
+    this.invoiceService.updateStatus(this.selectedInvoice.id, { status: 'Cancelled' }).subscribe({
+      next: () => {
+        this.isCancellingInvoice = false;
+        this.closeCancelInvoiceDialog();
+        if (this.selectedVendor) {
+          this.invoiceService.loadInvoices(this.selectedVendor.id);
+          this.vendorService.loadStats();
+        }
+      },
+      error: (err: any) => {
+        this.isCancellingInvoice = false;
+        alert('Cancel failed: ' + (err?.error?.message ?? 'Server error'));
+      },
+    });
   }
 
-  toggleSubMilestoneSelection(id: number): void {
-    const idx = this.selectedSubMilestoneIds.indexOf(id);
-    if (idx === -1) {
-      this.selectedSubMilestoneIds.push(id);
-    } else {
-      this.selectedSubMilestoneIds.splice(idx, 1);
-    }
-    this.onSubMilestoneMultiSelect();
-  }
-
-  toggleTaskSelection(id: number): void {
-    const idx = this.selectedTaskIds.indexOf(id);
-    if (idx === -1) {
-      this.selectedTaskIds.push(id);
-    } else {
-      this.selectedTaskIds.splice(idx, 1);
-    }
-    this.onTaskMultiSelect();
-  }
-
-viewInvoice(inv: VendorInvoice): void {
+  viewInvoice(inv: VendorInvoice): void {
     const vendor = this.selectedVendor;
 
     let invoiceItems: any[] = [];
@@ -1292,7 +1382,6 @@ viewInvoice(inv: VendorInvoice): void {
         </table>
       </div>` : '';
 
-    // ✅ Project name fetch karo - projectdata ya modalProjectData se
     const projectName = this.projectdata?.name || this.modalProjectData?.name || null;
 
     const html = `<!DOCTYPE html>
@@ -1323,7 +1412,6 @@ viewInvoice(inv: VendorInvoice): void {
       </span>
     </div>
   </div>
-
   ${vendor ? `
   <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;">
     <p style="margin:0;font-weight:700;">Bill To: ${vendor.name}</p>
@@ -1331,12 +1419,10 @@ viewInvoice(inv: VendorInvoice): void {
     <p style="margin:4px 0 0;color:#64748b;">GST: ${vendor.kyc?.gst || '—'} | PAN: ${vendor.kyc?.pan || '—'}</p>
     ${projectName ? `<p style="margin:6px 0 0;"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;">Project:</span> <span style="font-weight:700;color:#1e293b;">${projectName}</span></p>` : ''}
   </div>` : ''}
-
   <table>
     <thead>
       <tr>
-        <th>Type</th>
-        <th>Description</th>
+        <th>Type</th><th>Description</th>
         <th style="text-align:center;">Qty</th>
         ${hasLabor ? '<th style="text-align:center;">Hours</th>' : ''}
         <th style="text-align:right;">Rate (₹)</th>
@@ -1347,7 +1433,6 @@ viewInvoice(inv: VendorInvoice): void {
     </thead>
     <tbody>${itemRows}</tbody>
   </table>
-
   <div style="margin-top:24px;max-width:340px;margin-left:auto;">
     <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
       <span style="color:#64748b;">Subtotal (excl. Tax)</span>
@@ -1372,9 +1457,7 @@ viewInvoice(inv: VendorInvoice): void {
       <span style="color:#dc2626;font-weight:900;">₹${Math.max(0, Number(inv.grand_total) - Number(inv.paid_amount)).toLocaleString('en-IN')}</span>
     </div>` : ''}
   </div>
-
   ${paymentHistoryRows}
-
   <div style="margin-top:32px;text-align:center;">
     <button onclick="window.print()"
       style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">
@@ -1388,41 +1471,6 @@ viewInvoice(inv: VendorInvoice): void {
     if (win) { win.document.write(html); win.document.close(); }
   }
 
-  openBilling(): void {
-    if (this.selectedVendor && this.invoices.length === 0) {
-      this.invoiceService.loadInvoices(this.selectedVendor.id);
-    }
-    this.showBillingModal = true;
-  }
-private checkBudgetWarning(
-  budget?: { allocated: number; totalInvoiced: number; exceeded: boolean; exceededBy: number } | null
-): void {
-  if (budget?.exceeded) {
-    alert(
-      `⚠️ Budget Exceeded for "${this.selectedVendor?.name ?? 'this vendor'}"\n\n` +
-      `Allocated Budget: ₹${Number(budget.allocated).toLocaleString('en-IN')}\n` +
-      `Total Invoiced: ₹${Number(budget.totalInvoiced).toLocaleString('en-IN')}\n` +
-      `Exceeded By: ₹${Number(budget.exceededBy).toLocaleString('en-IN')}`
-    );
-  }
-}
-
-// 4) Live indicator getter — "Budget Allocated" card ke neeche dikhane ke liye
-get budgetUsage(): { allocated: number; invoiced: number; percent: number; exceeded: boolean; exceededBy: number } {
-  const allocated = Number(this.selectedVendor?.budget_allocation) || 0;
-  const invoiced = (this.invoices || [])
-    .filter(inv => inv.status !== 'Cancelled')
-    .reduce((sum, inv) => sum + (Number(inv.grand_total) || 0), 0);
-  const percent = allocated > 0 ? Math.round((invoiced / allocated) * 100) : 0;
-  const exceeded = allocated > 0 && invoiced > allocated;
-  return { allocated, invoiced, percent, exceeded, exceededBy: exceeded ? invoiced - allocated : 0 };
-}
-
-get totalBilled(): number {
-  return this.invoices
-    .filter(inv => inv.status !== 'Cancelled')
-    .reduce((acc, inv) => acc + Number(inv.grand_total), 0);
-}
   openAudit(): void {
     const latest = this.vendorAudits[0];
     this.auditForm = latest
@@ -1434,12 +1482,6 @@ get totalBilled(): number {
       }
       : { quality: 5, timeliness: 5, safety: 5, observations: '' };
     this.showAuditModal = true;
-  }
-
-  get auditScore(): number {
-    return Math.round(
-      ((this.auditForm.quality + this.auditForm.timeliness + this.auditForm.safety) / 30) * 100
-    );
   }
 
   submitAudit(): void {
@@ -1465,25 +1507,6 @@ get totalBilled(): number {
       },
     });
   }
-
-
-  openVendorDetailData(): void {
-    this.showVendorDetailModal = true;
-  }
-
-  updateVendorStatus(status: string): void {
-    if (!this.selectedVendor) return;
-    const statusKey = status.toLowerCase() as 'active' | 'pending' | 'inactive';
-    this.vendorService.updateVendor(this.selectedVendor.id, { status: statusKey }).subscribe({
-      next: () => {
-        const updated = this.vendorService.getVendorById(this.selectedVendor!.id);
-        if (updated) this.selectedVendor = updated;
-      },
-      error: (err: any) =>
-        alert('Status update failed: ' + (err?.error?.message ?? 'Server error')),
-    });
-  }
-
 
   openLaborModal(): void {
     if (!this.selectedVendor) return;
@@ -1512,7 +1535,6 @@ get totalBilled(): number {
     if (this.isSavingLabor || !this.selectedVendor) return;
     this.laborError = '';
     if (!this.newLabor.skill) { this.laborError = 'Skill is required.'; return; }
-
     const laborCount = Math.max(1, parseInt(this.newLabor.labor_count) || 1);
     const payload = {
       vendor_id: this.selectedVendor.id,
@@ -1522,7 +1544,6 @@ get totalBilled(): number {
       labor_count: laborCount,
       assign_worker: this.newLabor.assign_worker || null,
     };
-
     this.isSavingLabor = true;
     this.laborService.addWorker(payload).subscribe({
       next: () => {
@@ -1582,7 +1603,6 @@ get totalBilled(): number {
     this.laborService.updateWorker(worker.id, { status }).subscribe();
   }
 
-
   updateTaskStatus(task: any, statusRaw: string): void {
     this.projectService.updateTask(task.id, { status: statusRaw }).subscribe();
   }
@@ -1594,14 +1614,10 @@ get totalBilled(): number {
 
   getSkillBarColor(skill: string): string {
     const colors: Record<string, string> = {
-      'Masonry': 'bg-blue-500',
-      'Electrical': 'bg-yellow-500',
-      'Structural Steel': 'bg-red-500',
-      'Plumbing': 'bg-green-500',
-      'HVAC': 'bg-purple-500',
-      'Carpentry': 'bg-orange-400',
-      'Painting': 'bg-pink-400',
-      'Other': 'bg-slate-400',
+      'Masonry': 'bg-blue-500', 'Electrical': 'bg-yellow-500',
+      'Structural Steel': 'bg-red-500', 'Plumbing': 'bg-green-500',
+      'HVAC': 'bg-purple-500', 'Carpentry': 'bg-orange-400',
+      'Painting': 'bg-pink-400', 'Other': 'bg-slate-400',
     };
     return colors[skill] ?? 'bg-slate-400';
   }
@@ -1623,11 +1639,17 @@ get totalBilled(): number {
     const input = event.target as HTMLInputElement;
     const cleaned = input.value.replace(/\D/g, '').slice(0, 10);
     input.value = cleaned;
-    if (field === 'spoc') {
-      this.newVendor.spoc.phone = cleaned;
-    } else {
-      this.newVendor.phone = cleaned;
-    }
+    if (field === 'spoc') this.newVendor.spoc.phone = cleaned;
+    else this.newVendor.phone = cleaned;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showSkillDropdown = false;
+    this.showStatusDropdown = false;
+    this.showAssignDropdown = false;
+    this.showProjectDropdown = false;
+    this.closeAllItemDropdowns();
   }
 
   private defaultVendor() {
@@ -1638,7 +1660,7 @@ get totalBilled(): number {
       address: { street: '', pincode: '' },
       budget: '',
       skill: [] as string[],
-      project_id: null as number | null,
+      project_ids: [] as number[],
     };
   }
 
@@ -1672,8 +1694,7 @@ get totalBilled(): number {
     const today = new Date();
     return {
       project_id: this.selectedVendor?.project_id
-        ? Number(this.selectedVendor.project_id)
-        : null,
+        ? Number(this.selectedVendor.project_id) : null,
       number: this.generateInvoiceNumber(),
       date: this.formatDate(today),
       rawDate: today.toISOString().split('T')[0],
