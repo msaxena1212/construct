@@ -20,14 +20,18 @@ export class NewProjectWizard implements OnInit {
   selectedFiles: File[] = [];
   loading = false;
   showAssignDropdown = false;
+  showBudgetBreakdownDialog = false;
   newMilestoneName = '';
   thumbnailFile: File | null = null;
   thumbnailPreview: string | null = null;
+
+  budgetBreakdown: FormGroup;
 
   editMode = false;
   projectId: string | null = null;
   existingDocuments: any[] = [];
   serverUrl = environment.serverUrl;
+  allDetails: any;
 
   constructor(
     private fb: FormBuilder,
@@ -48,11 +52,17 @@ export class NewProjectWizard implements OnInit {
       milestones: this.fb.array([]),
       documents: this.fb.array([])
     });
+
+    this.budgetBreakdown = this.fb.group({
+      material: [0, [Validators.min(0)]],
+      equipment: [0, [Validators.min(0)]],
+      labor: [0, [Validators.min(0)]],
+      other: [0, [Validators.min(0)]]
+    });
   }
 
   ngOnInit() {
     this.fetchTeamMembers();
-
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
@@ -79,12 +89,25 @@ export class NewProjectWizard implements OnInit {
       next: (res) => {
         const p = res.data;
         const t: any = res.data;
+        this.allDetails = res.data;
         this.projectForm.patchValue({
           name: p.name,
           type: p.type || 'Commercial Renovation',
           completionDate: p.completion_date?.split('T')[0],
           address: p.address,
           budgetTotal: p.budget_total
+        });
+
+        this.budgetBreakdown.valueChanges.subscribe(() => {
+      const total = this.budgetBreakdownTotal;
+      this.projectForm.get('budgetTotal')?.setValue(total , { emitEvent: false });
+    });
+
+        this.budgetBreakdown.patchValue({
+          material: t.material || 0,
+          equipment: t.equipment || 0,
+          labor: t.labor || 0,
+          other: t.other || 0
         });
 
         if (p.thumbnail) {
@@ -131,6 +154,37 @@ export class NewProjectWizard implements OnInit {
   get milestones() { return this.projectForm.get('milestones') as FormArray; }
   get milestoneTree() { return this.milestones; }
   get documents() { return this.projectForm.get('documents') as FormArray; }
+
+  get budgetBreakdownTotal(): number {
+    const breakdown = this.budgetBreakdown.value;
+    return ['material', 'equipment', 'labor', 'other']
+      .reduce((sum, key) => sum + Number(breakdown[key] || 0), 0);
+  }
+
+  get budgetTotalValue(): number {
+    return Number(this.projectForm.get('budgetTotal')?.value ?? 0);
+  }
+
+  get usedBudget(): number {
+    return this.budgetBreakdownTotal;
+  }
+
+  get remainingBudget(): number {
+    return this.budgetTotalValue - this.usedBudget;
+  }
+
+  openBudgetAllocationDialog() {
+    this.showBudgetBreakdownDialog = true;
+  }
+
+  closeBudgetBreakdownDialog() {
+    this.showBudgetBreakdownDialog = false;
+  }
+
+  saveBudgetBreakdown() {
+    this.projectForm.get('budgetTotal')?.setValue(this.budgetBreakdownTotal);
+    this.showBudgetBreakdownDialog = false;
+  }
 
   // --- Data Fetching ---
   fetchTeamMembers() {
@@ -345,6 +399,10 @@ this.milestoneTree.value.forEach((parent: any) => {
     address: this.projectForm.value.address,
     completionDate: this.projectForm.value.completionDate,
     budgetTotal: this.projectForm.value.budgetTotal,
+    material: this.budgetBreakdown.value.material,
+    equipment: this.budgetBreakdown.value.equipment,
+    labor: this.budgetBreakdown.value.labor,
+    other: this.budgetBreakdown.value.other,
     milestones: milestones,
     team: this.projectForm.value.team.map((m: any) => ({
       user_id: m.user_id,
