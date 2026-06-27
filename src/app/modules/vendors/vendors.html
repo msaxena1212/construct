@@ -208,7 +208,7 @@
           [class.text-outline]="!budgetUsage.exceeded">
           @if (budgetUsage.exceeded) {
           <span class="material-symbols-outlined text-[12px]">warning</span>
-          Exceeded by ₹{{ budgetUsage.exceededBy | number:'1.0-0' }}
+          exceeds the allocated Budget {{ selectedVendor.budget }} by ₹{{ budgetUsage.exceededBy | number:'1.0-0' }}
           } @else {
           {{ budgetUsage.percent }}% utilized
           }
