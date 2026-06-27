@@ -19,7 +19,7 @@ const db = require("./models");
 // });
 // db.user.sync({ alter: true });
 // db.role_permission.sync({alter:true});
-db.project.sync({ alter: true });
+// db.project.sync({ alter: true });
 // db.milestone.sync({ alter: true });
 // db.project_team.sync({alter:true});
 // db.project_document.sync({alter:true});
