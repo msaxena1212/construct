@@ -553,7 +553,7 @@ class ProjectController {
       // Group tasks by submilestone_id
       const taskMap = Object.create(null);
 
-////////////////
+      ////////////////
 
       projectData.milestones_with_child = milestones
 
@@ -618,7 +618,7 @@ class ProjectController {
 
       const remaining_budget = (projectData.budget_total - grand_total);
 
-////////////////extra logic
+      ////////////////extra logic
 
 
 
@@ -1354,7 +1354,7 @@ class ProjectController {
         });
       });
 
- 
+
       const totalSpend = invoices.reduce((sum, invoice) => {
 
         return sum + parseFloat(invoice.paid_amount || 0);
