@@ -816,8 +816,15 @@ class ProjectController {
 
       const projectData = req.body.data ? JSON.parse(req.body.data) : req.body;
       const { name, type, address, completionDate, budgetTotal, milestones, team,
-        material_total, material_used, equipment_total, equipment_used, labor_total, labor_used, other_total, other_used
-        } = projectData;
+        material_total,
+        material_used,
+        equipment_total,
+        equipment_used,
+        labor_total,
+        labor_used,
+        other_total,
+        other_used
+      } = projectData;
 
       // 1. Team Validation
       if (team && team.length > 0) {
@@ -836,8 +843,14 @@ class ProjectController {
       let updateData = {
         name, type, address,
         completion_date: completionDate,
-        material_total, material_used, equipment_total, equipment_used,
-         labor_total, labor_used, other_total, other_used,
+        material_total,
+        material_used,
+        equipment_total,
+        equipment_used,
+        labor_total,
+        labor_used,
+        other_total,
+        other_used,
         budget_total: budgetTotal || 0,
       };
 
