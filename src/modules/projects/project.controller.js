@@ -620,73 +620,6 @@ class ProjectController {
 
       ////////////////extra logic
 
-
-      //       projectData.milestones_with_child = milestones
-
-      //   .filter(m => m.parent_id === null)
-
-      //   .map(parent => ({
-
-      //     ...parent,
-      //     children: milestones.filter(
-      //       child => child.parent_id === parent.id
-
-      //     )
-      //   }));
-
-      // const invoices = await db.vendors_invoice.findAll({
-      //   where: {
-      //     project_id: id,
-      //     company_id,
-
-      //   },
-      //   order: [['createdAt', 'DESC']],
-      // });
-
-
-      // let total_material = 0;
-      // let total_equipment = 0;
-      // let total_labor = 0;
-      // let total_others = 0;
-
-      // invoices.forEach(invoice => {
-      //   (invoice.items || []).forEach(item => {
-      //     const total = parseFloat(item.total || 0);
-
-      //     if (item.type === "material") {
-      //       total_material += total;
-      //     } else if (item.type === "equipment") {
-      //       total_equipment += total;
-      //     } else if (item.type === "labor") {
-      //       total_labor += total;
-      //     } else if (item.type === "others") {
-      //       total_others += total;
-      //     }
-
-      //   });
-      // });
-
-
-      // const totalSpend = invoices.reduce((sum, invoice) => {
-
-      //   return sum + parseFloat(invoice.paid_amount || 0);
-
-      // }, 0);
-
-      // const grand_total = invoices.reduce((sum, invoice) => {
-
-      //   return sum + parseFloat(invoice.grand_total || 0);
-
-      // }, 0);
-
-
-      // const on_hold = (grand_total - totalSpend);
-
-      // const remaining_budget = (projectData.budget_total - grand_total);
-
-      /////////////////extra2
-
-
       for (const task of tasks) {
         if (!taskMap[task.submilestone_id]) {
           taskMap[task.submilestone_id] = [];
@@ -903,7 +836,7 @@ class ProjectController {
     }
   }
 
-  
+
   /**
    * Upload additional documents/media to an existing project
    */
