@@ -395,7 +395,7 @@
                             class="rounded-3xl bg-slate-100 dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700">
                             <p class="text-[10px] uppercase tracking-[2px] font-black text-slate-500">Used Budget</p>
                             <p class="mt-2 text-2xl font-black text-slate-900 dark:text-white">₹ {{
-                               ( allDetails?.grand_total || 0) | number:'1.0-2' }}</p>
+                                ( allDetails?.grand_total || 0) | number:'1.0-2' }}</p>
                         </div>
                         <div
                             class="rounded-3xl bg-slate-100 dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700">
@@ -422,7 +422,7 @@
 
                                     <input [class.ring-rose-500]="f['budgetTotal'].touched && f['budgetTotal'].invalid"
                                         class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl h-14 pl-10 pr-4 text-sm font-bold text-slate-900 dark:text-slate-50 ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-300"
-                                        placeholder="0.00" type="number" formControlName="budgetTotal" readonly />
+                                        placeholder="0.00" type="number" formControlName="budgetTotal"  />
                                 </div>
 
                                 <!-- Allocate Button -->
@@ -485,6 +485,13 @@
                                             class="w-full h-14 rounded-2xl pl-11 pr-4 bg-slate-50 dark:bg-slate-800 font-bold border border-transparent hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition-all" />
 
                                     </div>
+                                    <div class="text-sm">
+                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
+                                        <span class="text-slate-300">|</span> -->
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_material}}</strong></span>
+                                        <!-- <span class=" text-slate-300">|</span>
+                                        <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
+                                    </div>
 
                                 </div>
 
@@ -515,7 +522,13 @@
                                             class="w-full h-14 rounded-2xl pl-11 pr-4 bg-slate-50 dark:bg-slate-800 font-bold border border-transparent hover:border-slate-300 focus:border-amber-500 focus:ring-4 focus:ring-amber-100 dark:focus:ring-amber-900/30 outline-none transition-all" />
 
                                     </div>
-
+                                    <div class="text-sm">
+                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
+                                        <span class="text-slate-300">|</span> -->
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_equipment}}</strong></span>
+                                        <!-- <span class=" text-slate-300">|</span>
+                                        <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
+                                    </div>
                                 </div>
 
                                 <!-- Labor -->
@@ -545,7 +558,13 @@
                                             class="w-full h-14 rounded-2xl pl-11 pr-4 bg-slate-50 dark:bg-slate-800 font-bold border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:focus:ring-emerald-900/30 outline-none transition-all" />
 
                                     </div>
-
+                                    <div class="text-sm">
+                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
+                                        <span class="text-slate-300">|</span> -->
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_labor}}</strong></span>
+                                        <!-- <span class=" text-slate-300">|</span>
+                                        <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
+                                    </div>
                                 </div>
 
                                 <!-- Other -->
@@ -576,8 +595,15 @@
 
                                     </div>
 
-                                </div>
 
+                                    <div class="text-sm">
+                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
+                                        <span class="text-slate-300">|</span> -->
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_others}}</strong></span>
+                                        <!-- <span class=" text-slate-300">|</span>
+                                        <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Summary Card -->

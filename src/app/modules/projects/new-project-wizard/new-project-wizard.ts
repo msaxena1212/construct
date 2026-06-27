@@ -200,6 +200,7 @@ export class NewProjectWizard implements OnInit {
 
   // --- Step Logic ---
   nextStep() {
+    console.log('Current Step:', this.currentStep,this.isStepValid(this.currentStep));
     if (this.isStepValid(this.currentStep)) {
       if (this.currentStep < 4) {
         this.currentStep++;
@@ -288,7 +289,6 @@ export class NewProjectWizard implements OnInit {
   }
 
   getMilestoneChildren(milestone: AbstractControl): FormArray {
-    console.log(milestone.get('children'),'tst');
     
     return milestone.get('children') as FormArray;
   }
