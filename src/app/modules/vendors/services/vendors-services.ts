@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 interface BackendVendor {
   id: string;
   project_id: number | null;
+  project_ids: number[] | string | null; // 🔁 NEW: backend now sends multi-select project ids
   company_id: string;
   name: string;
   spoc_name: string;
@@ -38,7 +39,7 @@ interface ApiSingleResponse<T> {
 
 export interface VendorStats {
   totalActive: number;
-  pendingPayments: number; 
+  pendingPayments: number;
   compliantPartners: string;
 }
 
@@ -72,6 +73,7 @@ export interface Invoice {
 export interface Vendor {
   company_id: any;
   project_id: number | null;
+  project_ids: number[];
   id: string;
   name: string;
   created_at?: string;
@@ -139,6 +141,22 @@ export class VendorsServices {
     }
   }
 
+  // 🔁 NEW: safely normalize project_ids coming as array, JSON string, or comma-separated string
+  private parseProjectIds(raw: number[] | string | null | undefined, fallbackProjectId: number | null): number[] {
+    if (Array.isArray(raw)) {
+      return raw.map(Number).filter((v) => !isNaN(v));
+    }
+    if (typeof raw === 'string' && raw.trim() !== '') {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed.map(Number).filter((v) => !isNaN(v));
+      } catch {
+        return raw.split(',').map((v) => Number(v.trim())).filter((v) => !isNaN(v));
+      }
+    }
+    return fallbackProjectId ? [Number(fallbackProjectId)] : [];
+  }
+
   private mapVendor(b: BackendVendor): Vendor {
     const s = STATUS_MAP[b.status] ?? STATUS_MAP['pending'];
 
@@ -174,6 +192,7 @@ export class VendorsServices {
       company_id: b.company_id,
       id: b.id,
       project_id: b.project_id ?? null,
+      project_ids: this.parseProjectIds(b.project_ids, b.project_id), // 🔁 updated to use helper
       name: b.name,
       type: 'Subcontractor',
       created_at: b.createdAt,
