@@ -27,13 +27,10 @@ module.exports = (sequelize, Sequelize) => {
     },
     action: {
       type: Sequelize.ENUM(
-        "created",
-        "updated",
-        "deleted",
-        "status_changed",
-        "payment_added"
+        "created", "updated", "deleted", "status_changed",
+        "payment_added", "payment_request_raised",
+        "payment_request_approved", "payment_request_rejected"
       ),
-      allowNull: false,
     },
     changed_by: {
       type: Sequelize.INTEGER,

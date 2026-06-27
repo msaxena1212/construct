@@ -9,6 +9,20 @@ const InvoiceModel = db.vendors_invoice;
 const getCompanyId = (req) =>
   req.user?.company_id || req.user?.companyId || null;
 
+const parseProjectIds = (raw) => {
+  if (raw == null) return [];
+  if (Array.isArray(raw)) return raw.map((v) => parseInt(v)).filter((v) => !isNaN(v));
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map((v) => parseInt(v)).filter((v) => !isNaN(v)) : [];
+  } catch {
+    return String(raw)
+      .split(',')
+      .map((v) => parseInt(v.trim()))
+      .filter((v) => !isNaN(v));
+  }
+};
+
 
 const getAllVendors = async (req, res) => {
   try {
@@ -79,7 +93,8 @@ const createVendor = async (req, res) => {
       officialEmail, officialPhone,
       gstNo, panCardNo,
       physicalAddress, pincode,
-      budgetAllocation, skill, project_id
+      budgetAllocation, skill,
+      project_id, project_ids,
     } = req.body;
 
     const alwaysRequired = { vendorLegalName, spocName, spocPhone, officialEmail, officialPhone, physicalAddress, pincode, budgetAllocation, skill };
@@ -99,6 +114,15 @@ const createVendor = async (req, res) => {
     if (hasPan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panCardNo.toUpperCase()))
       return res.status(400).json({ success: false, message: 'Invalid PAN format. Expected: ABCDE1234F' });
 
+    const parsedProjectIds = parseProjectIds(project_ids).length > 0
+      ? parseProjectIds(project_ids)
+      : (project_id ? [parseInt(project_id)].filter((v) => !isNaN(v)) : []);
+
+    if (parsedProjectIds.length === 0)
+      return res.status(400).json({ success: false, message: 'At least one project is required.' });
+
+    const primaryProjectId = parsedProjectIds[0];
+
     const skillString = Array.isArray(skill) ? skill.join(', ') : String(skill).trim();
     const budgetNum = parseFloat(String(budgetAllocation).replace(/[^0-9.]/g, '')) || 0;
 
@@ -115,7 +139,8 @@ const createVendor = async (req, res) => {
 
     const newVendor = await VendorModel.create({
       company_id,
-      project_id: project_id || null,
+      project_id: primaryProjectId,
+      project_ids: parsedProjectIds,
       name: vendorLegalName,
       spoc_name: spocName,
       spoc_phone: spocPhone,
@@ -167,10 +192,21 @@ const updateVendor = async (req, res) => {
     const vendor = await VendorModel.findOne({ where: { id: req.params.id, company_id } });
     if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
 
-    const oldSnapshot = vendor.toJSON(); // capture before update
+    const oldSnapshot = vendor.toJSON();
 
     if (req.body.skill)
       req.body.skill = Array.isArray(req.body.skill) ? req.body.skill.join(', ') : String(req.body.skill).trim();
+
+    if (req.body.project_ids !== undefined) {
+      const parsedProjectIds = parseProjectIds(req.body.project_ids);
+      if (parsedProjectIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'At least one project is required.' });
+      }
+      req.body.project_ids = parsedProjectIds;
+      req.body.project_id = parsedProjectIds[0];
+    } else if (req.body.project_id) {
+      req.body.project_ids = [parseInt(req.body.project_id)];
+    }
 
     if (req.files?.length > 0) {
       const newFiles = req.files.map(f => `/uploads/contracts/${f.filename}`);

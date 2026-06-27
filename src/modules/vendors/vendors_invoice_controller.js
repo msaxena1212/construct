@@ -6,6 +6,28 @@ const VendorModel = db.vendors;
 
 const getCompanyId = (req) => req.user?.company_id || req.user?.companyId || null;
 
+const getBudgetInfo = async (vendor, company_id, extraAmount = 0) => {
+  const allocated = parseFloat(vendor.budget_allocation) || 0;
+
+  const invoices = await InvoiceModel.findAll({
+    where: { vendor_id: vendor.id, company_id },
+    attributes: ['grand_total', 'status'],
+  });
+
+  const totalInvoiced = invoices
+    .filter((inv) => inv.status !== 'Cancelled')
+    .reduce((sum, inv) => sum + (parseFloat(inv.grand_total) || 0), 0);
+
+  const projectedTotal = totalInvoiced + (parseFloat(extraAmount) || 0);
+  const exceeded = allocated > 0 && projectedTotal > allocated;
+
+  return {
+    allocated,
+    totalInvoiced: projectedTotal,
+    exceeded,
+    exceededBy: exceeded ? parseFloat((projectedTotal - allocated).toFixed(2)) : 0,
+  };
+};
 
 const getInvoicesByVendor = async (req, res) => {
   try {
@@ -13,14 +35,16 @@ const getInvoicesByVendor = async (req, res) => {
     const { vendorId } = req.params;
     const vendor = await VendorModel.findOne({ where: { id: vendorId, company_id } });
     if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
-    const invoices = await InvoiceModel.findAll({ where: { vendor_id: vendorId, company_id }, order: [['createdAt', 'DESC']] });
+    const invoices = await InvoiceModel.findAll({
+      where: { vendor_id: vendorId, company_id },
+      order: [['createdAt', 'DESC']],
+    });
     return res.status(200).json({ success: true, count: invoices.length, data: invoices });
   } catch (err) {
     console.error('[getInvoicesByVendor]', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
-
 
 const createInvoice = async (req, res) => {
   try {
@@ -35,15 +59,19 @@ const createInvoice = async (req, res) => {
     if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
 
     const invoice = await InvoiceModel.create({
-      vendor_id: vendorId, company_id,
+      vendor_id: vendorId,
+      company_id,
       project_id: project_id || null,
-      invoice_number, invoice_date,
+      invoice_number,
+      invoice_date,
       items: items || [],
       subtotal: parseFloat(subtotal) || 0,
       tax_rate: parseFloat(tax_rate) || 0,
       tax_amount: parseFloat(tax_amount) || 0,
       grand_total: parseFloat(grand_total) || 0,
-      paid_amount: 0, payment_history: [], status: 'Pending',
+      paid_amount: 0,
+      payment_history: [],
+      status: 'Pending',
     });
 
     await logVendorHistory({
@@ -59,26 +87,41 @@ const createInvoice = async (req, res) => {
       meta: { invoice_number, grand_total },
     });
 
-    return res.status(201).json({ success: true, message: 'Invoice created', data: invoice });
+    const budget = await getBudgetInfo(vendor, company_id, parseFloat(grand_total) || 0);
+
+    return res.status(201).json({ success: true, message: 'Invoice created', data: invoice, budget });
   } catch (err) {
     console.error('[createInvoice]', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-
 const updateInvoiceStatus = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
-    const { status, amount, mode, reference, clearance_date,
+    const {
+      status, amount, mode, reference, clearance_date,
       settlement_type, settlement_completion,
-      milestone_ids, sub_milestone_ids, task_ids } = req.body;
+      milestone_ids, sub_milestone_ids, task_ids,
+      budget_exceeded,
+    } = req.body;
 
     const invoice = await InvoiceModel.findOne({ where: { id: req.params.id, company_id } });
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
     if (status === 'Cancelled' && invoice.status === 'Partially Paid')
-      return res.status(400).json({ success: false, message: 'Partially paid invoice cannot be cancelled. Please refund the payment first.' });
+      return res.status(400).json({
+        success: false,
+        message: 'Partially paid invoice cannot be cancelled. Please refund the payment first.',
+      });
+
+    if (status === 'Cancelled' && invoice.status === 'Paid')
+      return res.status(400).json({
+        success: false,
+        message: 'Paid invoice cannot be cancelled.',
+      });
+
+    const vendor = await VendorModel.findOne({ where: { id: invoice.vendor_id, company_id } });
 
     const oldSnapshot = invoice.toJSON();
     const updatePayload = { status };
@@ -86,6 +129,7 @@ const updateInvoiceStatus = async (req, res) => {
     let action = 'status_changed';
     let description = `Invoice #${invoice.invoice_number} status changed to "${status}".`;
     let meta = { invoice_number: invoice.invoice_number, old_status: oldSnapshot.status, new_status: status };
+    let budget = null;
 
     if (status === 'Paid' || status === 'Partially Paid') {
       if (!amount || parseFloat(amount) <= 0)
@@ -100,6 +144,23 @@ const updateInvoiceStatus = async (req, res) => {
       const previouslyPaid = parseFloat(invoice.paid_amount) || 0;
       const totalPaidSoFar = previouslyPaid + paidNow;
 
+      if (totalPaidSoFar > grandTotal)
+        return res.status(400).json({
+          success: false,
+          message: `Payment amount exceeds invoice total. Maximum payable: ₹${(grandTotal - previouslyPaid).toFixed(2)}`,
+        });
+
+      if (vendor && !budget_exceeded) {
+        budget = await getBudgetInfo(vendor, company_id, paidNow);
+        if (budget.exceeded) {
+          return res.status(400).json({
+            success: false,
+            message: 'Budget exceeded. Please raise a payment request instead.',
+            budget,
+          });
+        }
+      }
+
       updatePayload.status = totalPaidSoFar >= grandTotal ? 'Paid' : 'Partially Paid';
       updatePayload.paid_amount = totalPaidSoFar;
       updatePayload.payment_mode = mode;
@@ -109,10 +170,12 @@ const updateInvoiceStatus = async (req, res) => {
 
       const existingHistory = Array.isArray(invoice.payment_history) ? invoice.payment_history : [];
       const newEntry = {
-        amount: paidNow, mode,
+        amount: paidNow,
+        mode,
         reference: (reference && String(reference).trim() !== '') ? String(reference).trim() : null,
         clearance_date: clearance_date || null,
         paid_at: new Date().toISOString(),
+        budget_exceeded: !!budget_exceeded,
       };
       updatePayload.payment_history = [...existingHistory, newEntry];
 
@@ -125,8 +188,17 @@ const updateInvoiceStatus = async (req, res) => {
       }
 
       action = 'payment_added';
-      description = `Payment of ₹${paidNow} via ${mode} added to invoice #${invoice.invoice_number}. Total paid: ₹${totalPaidSoFar}.`;
-      meta = { invoice_number: invoice.invoice_number, amount: paidNow, mode, reference: reference || null, new_status: updatePayload.status };
+      description = budget_exceeded
+        ? `Payment of ₹${paidNow} via ${mode} added to invoice #${invoice.invoice_number} (Budget Exceeded — Raised as Request). Total paid: ₹${totalPaidSoFar}.`
+        : `Payment of ₹${paidNow} via ${mode} added to invoice #${invoice.invoice_number}. Total paid: ₹${totalPaidSoFar}.`;
+      meta = {
+        invoice_number: invoice.invoice_number,
+        amount: paidNow,
+        mode,
+        reference: reference || null,
+        new_status: updatePayload.status,
+        budget_exceeded: !!budget_exceeded,
+      };
     }
 
     await invoice.update(updatePayload);
@@ -145,19 +217,28 @@ const updateInvoiceStatus = async (req, res) => {
       meta,
     });
 
-    return res.status(200).json({ success: true, message: 'Invoice updated', data: invoice });
+    if (vendor && (status === 'Paid' || status === 'Partially Paid')) {
+      budget = await getBudgetInfo(vendor, company_id, 0);
+    }
+
+    return res.status(200).json({ success: true, message: 'Invoice updated', data: invoice, budget });
   } catch (err) {
     console.error('[updateInvoiceStatus]', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-
 const deleteInvoice = async (req, res) => {
   try {
     const company_id = getCompanyId(req);
     const invoice = await InvoiceModel.findOne({ where: { id: req.params.id, company_id } });
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+
+    if (invoice.status === 'Paid' || invoice.status === 'Partially Paid')
+      return res.status(400).json({
+        success: false,
+        message: `Invoice with status "${invoice.status}" cannot be deleted.`,
+      });
 
     const snapshot = invoice.toJSON();
     await invoice.destroy();
