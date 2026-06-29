@@ -90,6 +90,13 @@ export interface BudgetEventMeta {
   exceededBy: number;
 }
 
+// ── NEW: flat date-keyed group used in the template ──────────────────────────
+export interface FlatDateGroup {
+  dateKey: string;   // "YYYY-MM-DD" for tracking
+  date: Date;
+  events: HistoryEvent[];
+}
+
 export interface VendorDateGroup {
   date: Date;
   events: HistoryEvent[];
@@ -152,6 +159,8 @@ interface AddEventOptions {
   viewAction?: () => void;
   budgetMeta?: BudgetEventMeta;
   meta?: EventMeta;
+  createdRawDate?: any;   // ← NEW
+  updatedRawDate?: any;   // ← NEW
 }
 
 const CATEGORY_META: Record<ConcreteCategory, { label: string; badgeClass: string }> = {
@@ -165,7 +174,6 @@ const CATEGORY_META: Record<ConcreteCategory, { label: string; badgeClass: strin
   labor: { label: 'Labor', badgeClass: 'bg-teal-100 text-teal-700' },
   budget: { label: 'Budget', badgeClass: 'bg-violet-100 text-violet-700' },
 };
-
 
 function buildHistoryMeta(
   action: string,
@@ -248,7 +256,6 @@ export class VendorsHistory implements OnInit {
     return CATEGORY_META[cat]?.label ?? cat;
   }
 
-
   hasMetaFields(ev: HistoryEvent): boolean {
     return !!(ev.createdAt || ev.createdBy || ev.updatedAt || ev.updatedBy);
   }
@@ -284,6 +291,7 @@ export class VendorsHistory implements OnInit {
     }
   }
 
+  // ── Vendor dropdown helpers ──────────────────────────────────────────────
   get vendorDropdownLabel(): string {
     if (this.selectedVendorIds.size === 0 || this.isAllSelected) return 'All Vendors';
     if (this.selectedVendorIds.size === 1) {
@@ -331,6 +339,7 @@ export class VendorsHistory implements OnInit {
       this.selectedVendorIds = new Set(this.vendors.map(v => v.id));
       this.vendors.forEach(v => this.ensureVendorLoaded(v));
     }
+    this._flatCache = null; // invalidate flat cache
   }
 
   toggleVendorSelection(vendor: Vendor): void {
@@ -342,15 +351,20 @@ export class VendorsHistory implements OnInit {
       this.ensureVendorLoaded(vendor);
     }
     this.selectedVendorIds = newSet;
+    this._flatCache = null;
   }
 
   removeVendorSelection(id: string): void {
     const newSet = new Set(this.selectedVendorIds);
     newSet.delete(id);
     this.selectedVendorIds = newSet;
+    this._flatCache = null;
   }
 
-  clearAllSelections(): void { this.selectedVendorIds = new Set(); }
+  clearAllSelections(): void {
+    this.selectedVendorIds = new Set();
+    this._flatCache = null;
+  }
 
   getVendorNameById(id: string): string {
     return this.vendors.find(v => v.id === id)?.name ?? id;
@@ -359,14 +373,24 @@ export class VendorsHistory implements OnInit {
   setActiveCategory(key: HistoryCategory): void { this.activeCategory = key; }
 
   getCategoryCount(key: HistoryCategory): number {
-    if (key === 'all') return this.timelineEvents.length;
-    return this.timelineEvents.filter(ev => ev.categories.includes(key as ConcreteCategory)).length;
+    const allVendorEvents = this.timelineEvents;
+
+    const matched = key === 'all'
+      ? allVendorEvents.filter(ev =>
+        ev.categories.some(c => this.categoryTabs.map(t => t.key).includes(c as HistoryCategory))
+      )
+      : allVendorEvents.filter(ev => ev.categories.includes(key as ConcreteCategory));
+
+    // ── De-duplicate split (-created / -updated) halves of same logical event ──
+    const uniqueBaseIds = new Set(
+      matched.map(ev => ev.id.replace(/-(created|updated)$/, ''))
+    );
+    return uniqueBaseIds.size;
   }
 
   get activeCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'active').length; }
   get pendingCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'pending').length; }
   get inactiveCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'inactive').length; }
-
 
   get displayVendors(): Vendor[] {
     if (this.selectedVendorIds.size === 0) return this.vendors;
@@ -460,12 +484,17 @@ export class VendorsHistory implements OnInit {
     return `${count} ${skill} ${noun} ${verb} added to Vendor "${vendorName}" at a daily rate of ${this.formatAmount(dailyRate)} per labor (total daily cost ${this.formatAmount(dailyCost)}). Current status: ${statusCap}.`;
   }
 
+  // ── Timeline cache — now invalidated when selectedVendorIds changes ─────
   private _timelineCache: { key: string; events: HistoryEvent[] } | null = null;
 
   get timelineEvents(): HistoryEvent[] {
-    const key = this.displayVendors
+    // Cache key includes BOTH loaded vendors AND selected vendor ids
+    const selectedKey = [...this.selectedVendorIds].sort().join(',');
+    const loadedKey = this.displayVendors
       .filter(v => this.records[v.id]?.loaded)
       .map(v => v.id).join(',');
+    const key = `${selectedKey}|${loadedKey}`;
+
     if (this._timelineCache?.key === key) return this._timelineCache.events;
 
     const events: HistoryEvent[] = [];
@@ -485,6 +514,44 @@ export class VendorsHistory implements OnInit {
     );
   }
 
+  // ── FIX: flatDateGroups — date-wise grouping ACROSS all selected vendors ─
+  private _flatCache: { key: string; cat: string; groups: FlatDateGroup[] } | null = null;
+
+  get flatDateGroups(): FlatDateGroup[] {
+    const selectedKey = [...this.selectedVendorIds].sort().join(',');
+    const loadedKey = this.displayVendors
+      .filter(v => this.records[v.id]?.loaded)
+      .map(v => v.id).join(',');
+    const cacheKey = `${selectedKey}|${loadedKey}|${this.activeCategory}`;
+
+    if (this._flatCache?.key === cacheKey) return this._flatCache.groups;
+
+    // Get events filtered by active category
+    const events = this.filteredTimelineEvents;
+
+    // Group by date across all vendors
+    const dateMap = new Map<string, { date: Date; events: HistoryEvent[] }>();
+    events.forEach(ev => {
+      const dk = this.dateKey(ev.date);
+      if (!dateMap.has(dk)) {
+        dateMap.set(dk, { date: ev.date, events: [] });
+      }
+      dateMap.get(dk)!.events.push(ev);
+    });
+
+    const groups: FlatDateGroup[] = Array.from(dateMap.entries())
+      .map(([dk, val]) => ({
+        dateKey: dk,
+        date: val.date,
+        events: val.events.sort((a, b) => b.date.getTime() - a.date.getTime()),
+      }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    this._flatCache = { key: cacheKey, cat: this.activeCategory, groups };
+    return groups;
+  }
+
+  // ── Kept for backward compat if template uses it ─────────────────────────
   get groupedTimelineEvents(): VendorGroup[] {
     const allEvents = this.timelineEvents;
 
@@ -492,20 +559,18 @@ export class VendorsHistory implements OnInit {
       .filter(v => this.records[v.id]?.loaded)
       .map(v => {
         const rec = this.records[v.id];
-        const vendorEvents = allEvents.filter(ev => ev.vendorId === v.id);
+        const vendorEvs = allEvents.filter(ev => ev.vendorId === v.id);
         const filtered = this.activeCategory === 'all'
-          ? vendorEvents
-          : vendorEvents.filter(ev =>
+          ? vendorEvs
+          : vendorEvs.filter(ev =>
             ev.categories.includes(this.activeCategory as ConcreteCategory)
           );
 
         const dateMap = new Map<string, { date: Date; events: HistoryEvent[] }>();
         filtered.forEach(ev => {
-          const key = this.dateKey(ev.date);
-          if (!dateMap.has(key)) {
-            dateMap.set(key, { date: ev.date, events: [] });
-          }
-          dateMap.get(key)!.events.push(ev);
+          const k = this.dateKey(ev.date);
+          if (!dateMap.has(k)) dateMap.set(k, { date: ev.date, events: [] });
+          dateMap.get(k)!.events.push(ev);
         });
 
         const dateGroups: VendorDateGroup[] = Array.from(dateMap.values())
@@ -524,6 +589,16 @@ export class VendorsHistory implements OnInit {
       .filter(g => g.events.length > 0);
   }
 
+  // ── Count events in a date group including implicit budget card ──────────
+  // FIX: count the implicit budget card that renders after '-onboard' event
+  countEventsInDateGroup(dGroup: VendorDateGroup | FlatDateGroup): number {
+    let count = dGroup.events.length;
+    dGroup.events.forEach(ev => {
+      if (ev.budgetMeta && ev.id.includes('-onboard')) count++;   // ← endsWith → includes
+    });
+    return count;
+  }
+
   private dateKey(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
@@ -535,6 +610,56 @@ export class VendorsHistory implements OnInit {
   }
 
   private addEvent(events: HistoryEvent[], vendor: Vendor, opts: AddEventOptions): void {
+    const hasCreated = !!(opts.meta?.createdAt || opts.meta?.createdBy);
+    const hasUpdated = !!(opts.meta?.updatedAt || opts.meta?.updatedBy);
+
+    if (hasCreated && hasUpdated) {
+      // ── Created card → apni asli "created" date ke group mein ──
+      const createdDate = this.parseDate(opts.createdRawDate ?? opts.rawDate);
+      if (createdDate) {
+        events.push({
+          id: `${vendor.id}-${opts.idSuffix}-created`,
+          vendorId: vendor.id,
+          vendorName: vendor.name,
+          date: createdDate,
+          icon: opts.icon,
+          iconBg: opts.iconBg,
+          iconColor: opts.iconColor,
+          description: opts.description,
+          categories: opts.categories,
+          primaryCategory: opts.categories[0],
+          subDetails: opts.subDetails,
+          viewAction: opts.viewAction,
+          budgetMeta: opts.budgetMeta,
+          createdAt: opts.meta?.createdAt,
+          createdBy: opts.meta?.createdBy,
+        });
+      }
+
+      // ── Updated card → apni asli "updated" date ke group mein ──
+      const updatedDate = this.parseDate(opts.updatedRawDate ?? opts.rawDate);
+      if (updatedDate) {
+        events.push({
+          id: `${vendor.id}-${opts.idSuffix}-updated`,
+          vendorId: vendor.id,
+          vendorName: vendor.name,
+          date: updatedDate,
+          icon: opts.icon,
+          iconBg: opts.iconBg,
+          iconColor: opts.iconColor,
+          description: opts.description,
+          categories: opts.categories,
+          primaryCategory: opts.categories[0],
+          subDetails: opts.subDetails,
+          viewAction: opts.viewAction,
+          updatedAt: opts.meta?.updatedAt,
+          updatedBy: opts.meta?.updatedBy,
+        });
+      }
+      return;
+    }
+
+    // ── Sirf Created YA sirf Updated (ya kuch nahi) → 1 hi card ──
     const d = this.parseDate(opts.rawDate);
     if (!d) return;
     events.push({
@@ -551,7 +676,6 @@ export class VendorsHistory implements OnInit {
       subDetails: opts.subDetails,
       viewAction: opts.viewAction,
       budgetMeta: opts.budgetMeta,
-
       createdAt: opts.meta?.createdAt,
       createdBy: opts.meta?.createdBy,
       updatedAt: opts.meta?.updatedAt,
@@ -571,10 +695,8 @@ export class VendorsHistory implements OnInit {
     };
 
     if (updatedAtRaw) {
-      const createdMs = createdAtRaw ? new Date(createdAtRaw).getTime() : 0;
       const updatedMs = new Date(updatedAtRaw).getTime();
-
-      if (!isNaN(updatedMs) && Math.abs(updatedMs - createdMs) > 60_000) {
+      if (!isNaN(updatedMs)) {
         meta.updatedAt = this.formatDateTime(updatedAtRaw);
         meta.updatedBy = updatedByRaw || 'Admin';
       }
@@ -646,8 +768,11 @@ export class VendorsHistory implements OnInit {
     const updatedBy = (v as any).updated_by_name || null;
     const createdBy = (v as any).created_by_name || 'Admin';
 
+    // ── Vendor onboarded ─────────────────────────────────────────────────
     this.addEvent(events, v, {
       rawDate: v.created_at,
+      createdRawDate: v.created_at,   // ← NEW
+      updatedRawDate: updatedAt,      // ← NEW
       icon: 'person_add',
       iconBg: 'bg-pink-100',
       iconColor: 'text-pink-600',
@@ -672,9 +797,12 @@ export class VendorsHistory implements OnInit {
       meta: this.buildMeta(v.created_at, createdBy, updatedAt, updatedBy),
     });
 
+    // ── Project linked ────────────────────────────────────────────────────
     if (projectName) {
       this.addEvent(events, v, {
         rawDate: v.created_at,
+        createdRawDate: v.created_at,   // ← NEW
+        updatedRawDate: updatedAt,      // ← NEW
         icon: 'folder_special',
         iconBg: 'bg-indigo-100',
         iconColor: 'text-indigo-600',
@@ -691,7 +819,7 @@ export class VendorsHistory implements OnInit {
       });
     }
 
-
+    // ── Budget exceeded ───────────────────────────────────────────────────
     if (allocated > 0 && rec.totalBilled > allocated) {
       const exceededBy = rec.totalBilled - allocated;
       const latestInvDate = this.getLatestInvoiceDate(rec);
@@ -713,6 +841,7 @@ export class VendorsHistory implements OnInit {
       });
     }
 
+    // ── History events (from DB) — deduplicated ───────────────────────────
     const invoiceHistoryMap = new Map<string, VendorHistoryEvent>();
     rec.historyEvents
       .filter(h => h.entity_type === 'invoice' && h.entity_id != null)
@@ -737,6 +866,7 @@ export class VendorsHistory implements OnInit {
       });
     const laborIdsWithHistory = new Set(laborHistoryMap.keys());
 
+    // ── Synthetic invoice events (no DB history entry exists) ────────────
     rec.invoices.forEach((inv, idx) => {
       if (invoiceIdsWithHistory.has(String(inv.id))) return;
 
@@ -771,6 +901,8 @@ export class VendorsHistory implements OnInit {
 
       this.addEvent(events, v, {
         rawDate: inv.invoice_date || v.created_at,
+        createdRawDate: invCreatedAt,   // ← NEW
+        updatedRawDate: invUpdatedAt,   // ← NEW
         icon, iconBg, iconColor,
         description: `Invoice ${inv.invoice_number} (${inv.status}) — ${this.formatAmount(inv.grand_total)} for Vendor "${v.name}".`,
         idSuffix: `inv-synthetic-${inv.id ?? idx}`,
@@ -781,6 +913,7 @@ export class VendorsHistory implements OnInit {
       });
     });
 
+    // ── Synthetic labor events (no DB history entry exists) ──────────────
     rec.laborWorkers.forEach((w, idx) => {
       if (laborIdsWithHistory.has(String((w as any).id))) return;
 
@@ -812,6 +945,8 @@ export class VendorsHistory implements OnInit {
 
       this.addEvent(events, v, {
         rawDate: lCreatedAt,
+        createdRawDate: lCreatedAt,     // ← NEW
+        updatedRawDate: lUpdatedAt,     // ← NEW
         icon: 'engineering',
         iconBg: 'bg-teal-100',
         iconColor: 'text-teal-600',
@@ -823,6 +958,7 @@ export class VendorsHistory implements OnInit {
       });
     });
 
+    // ── DB history events ─────────────────────────────────────────────────
     const deduplicatedHistoryEvents: VendorHistoryEvent[] = [
       ...rec.historyEvents.filter(h => h.entity_type !== 'labor' && h.entity_type !== 'invoice'),
       ...Array.from(invoiceHistoryMap.values()),
@@ -835,9 +971,7 @@ export class VendorsHistory implements OnInit {
       const isAudit = h.entity_type === 'audit';
       const isVendor = h.entity_type === 'vendor';
 
-      let icon = 'history';
-      let iconBg = 'bg-slate-100';
-      let iconColor = 'text-slate-600';
+      let icon = 'history', iconBg = 'bg-slate-100', iconColor = 'text-slate-600';
       let categories: ConcreteCategory[] = ['vendor'];
       let viewAction: (() => void) | undefined;
       const subDetails: EventSubDetail[] = [];
@@ -879,25 +1013,20 @@ export class VendorsHistory implements OnInit {
         const newPan = h.new_values?.kyc?.pan || h.meta?.pan;
         const newAddress = h.new_values?.address || h.meta?.address;
 
-        const mainLine = `Vendor "${nameChanged ? oldName : v.name}" was ${actionLabel}` +
-          `${h.changed_by_name ? ` by ${h.changed_by_name}` : ''}.`;
-
+        const mainLine = `Vendor "${nameChanged ? oldName : v.name}" was ${actionLabel}.`;
         const extraLines: string[] = [];
-        if (nameChanged) extraLines.push(`Name changed from "${oldName}" to "${newName}".`);
-        if (statusChanged) extraLines.push(`Status changed from "${oldStatus}" to "${newStatus}".`);
-        if (newBudget != null) extraLines.push(`Budget updated to ${this.formatAmount(newBudget)}.`);
-        if (newEmail) extraLines.push(`Email updated to ${newEmail}.`);
-        if (newGst) extraLines.push(`GST updated to ${newGst}.`);
-        if (newPan) extraLines.push(`PAN updated to ${newPan}.`);
+        if (nameChanged) extraLines.push(`Vendor name changed from "${oldName}" to "${newName}".`);
+        if (statusChanged) extraLines.push(`Status of Vendor "${v.name}" changed from "${oldStatus}" to "${newStatus}".`);
+        if (newBudget != null) extraLines.push(`Budget for Vendor "${v.name}" updated to ${this.formatAmount(newBudget)}.`);
+        if (newEmail) extraLines.push(`Email for Vendor "${v.name}" updated to ${newEmail}.`);
+        if (newGst) extraLines.push(`GST for Vendor "${v.name}" updated to ${newGst}.`);
+        if (newPan) extraLines.push(`PAN for Vendor "${v.name}" updated to ${newPan}.`);
 
-        eventDescription = extraLines.length > 0
-          ? `${mainLine}\n${extraLines.join('\n')}`
-          : mainLine;
+        eventDescription = extraLines.length > 0 ? extraLines.join('\n') : mainLine;
 
         subDetails.push({ label: 'Action', value: actionLabel, valueColor: 'text-pink-600' });
         subDetails.push({ label: 'Date', value: this.dateObjToStmt(hDateObj), valueColor: 'text-slate-500' });
-        if (h.changed_by_name)
-          subDetails.push({ label: 'By', value: h.changed_by_name, valueColor: 'text-slate-500' });
+        if (h.changed_by_name) subDetails.push({ label: 'By', value: h.changed_by_name, valueColor: 'text-slate-500' });
         if (nameChanged) {
           subDetails.push({ label: 'Old Name', value: oldName, valueColor: 'text-red-400' });
           subDetails.push({ label: 'New Name', value: newName, valueColor: 'text-green-600' });
@@ -906,23 +1035,18 @@ export class VendorsHistory implements OnInit {
           subDetails.push({ label: 'Old Status', value: oldStatus, valueColor: 'text-red-400' });
           subDetails.push({ label: 'New Status', value: newStatus, valueColor: 'text-green-600' });
         }
-        if (newBudget != null)
-          subDetails.push({ label: 'Budget', value: this.formatAmount(newBudget), valueColor: 'text-violet-600' });
-        if (newEmail)
-          subDetails.push({ label: 'Email', value: newEmail, valueColor: 'text-slate-600' });
-        if (newGst)
-          subDetails.push({ label: 'GST', value: newGst, valueColor: 'text-slate-500' });
-        if (newPan)
-          subDetails.push({ label: 'PAN', value: newPan, valueColor: 'text-slate-500' });
-        if (newAddress)
-          subDetails.push({
-            label: 'Address',
-            value: typeof newAddress === 'string'
-              ? newAddress
-              : [newAddress?.street, newAddress?.city, newAddress?.state, newAddress?.pincode]
-                .filter(Boolean).join(', '),
-            valueColor: 'text-slate-600',
-          });
+        if (newBudget != null) subDetails.push({ label: 'Budget', value: this.formatAmount(newBudget), valueColor: 'text-violet-600' });
+        if (newEmail) subDetails.push({ label: 'Email', value: newEmail, valueColor: 'text-slate-600' });
+        if (newGst) subDetails.push({ label: 'GST', value: newGst, valueColor: 'text-slate-500' });
+        if (newPan) subDetails.push({ label: 'PAN', value: newPan, valueColor: 'text-slate-500' });
+        if (newAddress) subDetails.push({
+          label: 'Address',
+          value: typeof newAddress === 'string'
+            ? newAddress
+            : [newAddress?.street, newAddress?.city, newAddress?.state, newAddress?.pincode]
+              .filter(Boolean).join(', '),
+          valueColor: 'text-slate-600',
+        });
       }
 
       if (isInvoice) {
@@ -939,10 +1063,8 @@ export class VendorsHistory implements OnInit {
           icon = 'receipt_long'; iconBg = 'bg-blue-100'; iconColor = 'text-blue-600';
         }
 
-        if (h.meta?.invoice_number)
-          subDetails.push({ label: 'Invoice', value: h.meta.invoice_number, valueColor: 'text-slate-700' });
-        if (h.meta?.grand_total)
-          subDetails.push({ label: 'Amount', value: this.formatAmount(h.meta.grand_total), valueColor: 'text-amber-700' });
+        if (h.meta?.invoice_number) subDetails.push({ label: 'Invoice', value: h.meta.invoice_number, valueColor: 'text-slate-700' });
+        if (h.meta?.grand_total) subDetails.push({ label: 'Amount', value: this.formatAmount(h.meta.grand_total), valueColor: 'text-amber-700' });
 
         const matchedInv = rec.invoices.find(i => String(i.id) === String(h.entity_id));
         if (matchedInv) viewAction = () => this.viewInvoice(rec, matchedInv);
@@ -975,12 +1097,9 @@ export class VendorsHistory implements OnInit {
         iconBg = 'bg-teal-100';
         iconColor = 'text-teal-600';
 
-        if (h.meta?.skill)
-          subDetails.push({ label: 'Skill', value: String(h.meta.skill).replace(/_/g, ' '), valueColor: 'text-teal-600' });
-        if (h.meta?.labor_count != null)
-          subDetails.push({ label: 'Count', value: String(h.meta.labor_count), valueColor: 'text-slate-700' });
-        if (h.meta?.daily_rate != null)
-          subDetails.push({ label: 'Daily Rate', value: this.formatAmount(h.meta.daily_rate), valueColor: 'text-teal-700' });
+        if (h.meta?.skill) subDetails.push({ label: 'Skill', value: String(h.meta.skill).replace(/_/g, ' '), valueColor: 'text-teal-600' });
+        if (h.meta?.labor_count != null) subDetails.push({ label: 'Count', value: String(h.meta.labor_count), valueColor: 'text-slate-700' });
+        if (h.meta?.daily_rate != null) subDetails.push({ label: 'Daily Rate', value: this.formatAmount(h.meta.daily_rate), valueColor: 'text-teal-700' });
 
         const laborCount = Number(h.meta?.labor_count) || 0;
         const dailyRate = Number(h.meta?.daily_rate) || 0;
@@ -1058,6 +1177,8 @@ export class VendorsHistory implements OnInit {
 
       this.addEvent(events, v, {
         rawDate: h.createdAt,
+        createdRawDate: entityCreatedAtRaw || h.createdAt,   // ← NEW
+        updatedRawDate: h.createdAt,                          // ← NEW
         icon, iconBg, iconColor,
         description: eventDescription,
         idSuffix: `hist-${h.id}`,
@@ -1068,6 +1189,7 @@ export class VendorsHistory implements OnInit {
       });
     });
 
+    // ── Tasks ─────────────────────────────────────────────────────────────
     rec.tasks.forEach((t: any) => {
       const taskRawDate = this.resolveDate(
         t, 'updated_at', 'updatedAt', 'created_at', 'createdAt',
@@ -1083,6 +1205,8 @@ export class VendorsHistory implements OnInit {
 
       this.addEvent(events, v, {
         rawDate: taskRawDate,
+        createdRawDate: tCreatedAt,   // ← NEW
+        updatedRawDate: tUpdatedAt,   // ← NEW
         icon: 'checklist',
         iconBg: 'bg-blue-100',
         iconColor: 'text-blue-600',
@@ -1101,6 +1225,7 @@ export class VendorsHistory implements OnInit {
       });
     });
 
+    // ── Milestones ────────────────────────────────────────────────────────
     rec.milestones.forEach(m => {
       const mRawDate = this.resolveDate(
         m, 'updated_at', 'updatedAt', 'end_date', 'endDate',
@@ -1115,6 +1240,8 @@ export class VendorsHistory implements OnInit {
 
       this.addEvent(events, v, {
         rawDate: mRawDate,
+        createdRawDate: mCreatedAt,   // ← NEW
+        updatedRawDate: mUpdatedAt,   // ← NEW
         icon: 'flag',
         iconBg: 'bg-purple-100',
         iconColor: 'text-purple-600',
@@ -1146,6 +1273,8 @@ export class VendorsHistory implements OnInit {
 
         this.addEvent(events, v, {
           rawDate: cRawDate,
+          createdRawDate: cCreatedAt,   // ← NEW
+          updatedRawDate: cUpdatedAt,   // ← NEW
           icon: 'subdirectory_arrow_right',
           iconBg: 'bg-purple-50',
           iconColor: 'text-purple-500',
@@ -1162,11 +1291,14 @@ export class VendorsHistory implements OnInit {
       });
     });
 
+    // ── Documents ─────────────────────────────────────────────────────────
     (v.contract_files || []).forEach((file, idx) => {
       const docDate = updatedAt || v.created_at;
       const fileName = this.getFileName(file);
       this.addEvent(events, v, {
         rawDate: docDate,
+        createdRawDate: v.created_at,   // ← NEW
+        updatedRawDate: updatedAt,      // ← NEW
         icon: 'description',
         iconBg: 'bg-slate-100',
         iconColor: 'text-slate-600',
@@ -1244,6 +1376,7 @@ export class VendorsHistory implements OnInit {
             rec.loaded = true;
             rec.loading = false;
             this._timelineCache = null;
+            this._flatCache = null;   // ← also invalidate flat cache
             this.records = { ...this.records, [vendor.id]: { ...rec } };
             resolve(rec);
           },
@@ -1252,6 +1385,7 @@ export class VendorsHistory implements OnInit {
             rec.loaded = true;
             rec.loading = false;
             this._timelineCache = null;
+            this._flatCache = null;
             this.records = { ...this.records, [vendor.id]: { ...rec } };
             resolve(rec);
           },

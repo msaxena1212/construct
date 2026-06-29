@@ -145,9 +145,9 @@ export class Vendors implements OnInit {
   editingLaborId: number | null = null;
   editLaborForm: any = {};
 
-  team = [{ name: 'All Members' }, { name: 'Marcus Thorne' }, { name: 'Sarah Chen' }];
+  team: { name: string }[] = [];
+  assignableTeam: { name: string }[] = [];
   selectedMember = 'All Members';
-
   readonly statusOptions = [
     { value: 'active', label: 'Active' },
     { value: 'on_site', label: 'On Site' },
@@ -192,6 +192,7 @@ export class Vendors implements OnInit {
     this.invoiceService.invoices$.subscribe(inv => (this.invoices = inv));
     this.auditService.audits$.subscribe(audits => (this.vendorAudits = audits));
     this.loadProjects();
+    this.loadTeamMembers();
   }
 
   private loadVendorSubData(vendorId: string): void {
@@ -318,6 +319,32 @@ export class Vendors implements OnInit {
         error: () => this.router.navigate(['/master/resources/vendors']),
       });
     }
+  }
+
+  private loadTeamMembers(): void {
+    this.projectService.getTeamMembers().subscribe({
+      next: (res: any) => {
+        const members = Array.isArray(res?.data) ? res.data : [];
+        const mapped = members
+          .map((m: any) => {
+            const fullName =
+              m.name ??
+              m.full_name ??
+              m.username ??
+              [m.firstname, m.lastname].filter(Boolean).join(' ').trim();
+            return { name: fullName };
+          })
+          .filter((m: any) => !!m.name);
+
+        this.assignableTeam = [...mapped];
+        this.team = [{ name: 'All Members' }, ...mapped];
+      },
+      error: (err) => {
+        console.error('[loadTeamMembers]', err);
+        this.assignableTeam = [];
+        this.team = [{ name: 'All Members' }];
+      },
+    });
   }
 
   get filteredVendors(): Vendor[] {

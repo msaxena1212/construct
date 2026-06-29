@@ -13,7 +13,7 @@ export interface LaborWorker {
   statusColor: string;
   daily_rate: number;
   labor_count: number;
-  assign_worker?: string | number;
+  assign_worker?: string | null;
 }
 
 export interface LaborStats {
@@ -84,7 +84,7 @@ export class VendorsLaborServices {
           const list = this.workersSubject.value;
           const idx = list.findIndex(w => w.id === id);
           if (idx !== -1) {
-            list[idx] = res.data;
+            list[idx] = { ...list[idx], ...res.data };
             this.workersSubject.next([...list]);
           }
           this.recalcStats();

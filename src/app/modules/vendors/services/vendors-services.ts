@@ -6,7 +6,7 @@ import { environment } from '../../../../environments/environment';
 interface BackendVendor {
   id: string;
   project_id: number | null;
-  project_ids: number[] | string | null; // 🔁 NEW: backend now sends multi-select project ids
+  project_ids: number[] | string | null;
   company_id: string;
   name: string;
   spoc_name: string;
@@ -141,7 +141,7 @@ export class VendorsServices {
     }
   }
 
-  // 🔁 NEW: safely normalize project_ids coming as array, JSON string, or comma-separated string
+
   private parseProjectIds(raw: number[] | string | null | undefined, fallbackProjectId: number | null): number[] {
     if (Array.isArray(raw)) {
       return raw.map(Number).filter((v) => !isNaN(v));
