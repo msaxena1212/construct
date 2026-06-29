@@ -149,7 +149,7 @@ db.project_sub_task.belongsTo(db.vendors_labor, { foreignKey: "labor_id", as: "v
 
 db.project_task.hasMany(db.project_task_dependency, { foreignKey: "task_id", as: "dependencies", onDelete: 'CASCADE' });
 db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "task_id" });
-db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "predecessor_id", as: "predecessor" });
+db.project_task_dependency.belongsTo(db.project_task, { foreignKey: "predecessor_id", as: "predecessor", onDelete: 'CASCADE' });
 
 db.company.hasMany(db.vendors, { foreignKey: "company_id", as: "vendors" });
 db.vendors.belongsTo(db.company, { foreignKey: "company_id", as: "company" });

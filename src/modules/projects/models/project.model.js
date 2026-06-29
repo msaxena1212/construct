@@ -40,6 +40,47 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
+
+      material_total: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
+      material_used: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
+      equipment_total: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
+      equipment_used: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
+      labor_total: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
+      labor_used: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
+      other_total: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
+      other_used: {
+        type: Sequelize.DECIMAL(15, 2),
+        defaultValue: 0.0,
+      },
+
       progress: {
         type: Sequelize.INTEGER,
         defaultValue: 0,
