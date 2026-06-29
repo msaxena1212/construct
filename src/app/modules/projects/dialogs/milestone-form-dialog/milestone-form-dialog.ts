@@ -39,6 +39,16 @@ export class MilestoneFormDialog implements OnInit {
     }
   }
 
+  private formatDate(date: Date): string {
+    const d = new Date(date);
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
   saveMilestone() {
     if (this.form.invalid) {
       this.toastr.error('Please fill in all required fields correctly');
@@ -48,6 +58,8 @@ export class MilestoneFormDialog implements OnInit {
 
     const payload = {
       ...this.form.value,
+      startDate: this.formatDate(this.form.value.startDate),
+      endDate: this.formatDate(this.form.value.endDate),
       parent_id: this.data.parent_id || null
     };
 
