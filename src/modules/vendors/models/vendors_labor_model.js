@@ -22,10 +22,10 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
     assign_worker: {
-  type: Sequelize.STRING(255),
-  allowNull: true,
-  defaultValue: null,
-},
+      type: Sequelize.STRING(255),
+      allowNull: true,
+      defaultValue: null,
+    },
     daily_rate: {
       type: Sequelize.DECIMAL(10, 2),
       defaultValue: 0,
