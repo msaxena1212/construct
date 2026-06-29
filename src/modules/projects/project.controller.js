@@ -763,6 +763,7 @@ class ProjectController {
   /**
    * Update an existing project
    */
+  
   async updateProject(req, res) {
     let t;
     try {
