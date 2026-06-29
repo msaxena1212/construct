@@ -23,6 +23,14 @@ const STATUS_COLOR = {
   inactive: 'bg-slate-100 text-slate-500',
 };
 
+const safeLogHistory = async (payload) => {
+  try {
+    await logVendorHistory(payload);
+  } catch (historyErr) {
+    console.error('[logVendorHistory failed]', historyErr);
+  }
+};
+
 const getSkillLabels = async (company_id) => {
   const skills = await SkillModel.findAll({
     where: { company_id },
@@ -94,6 +102,7 @@ const getLaborByVendor = async (req, res) => {
       labor_count: w.labor_count,
       vendor_id: w.vendor_id,
       company_id: w.company_id,
+      assign_worker: w.assign_worker,
     }));
 
     return res.status(200).json({
@@ -145,6 +154,7 @@ const getAllLabor = async (req, res) => {
       vendor_id: w.vendor_id,
       company_id: w.company_id,
       vendor: w.vendor,
+      assign_worker: w.assign_worker,
     }));
 
     return res.status(200).json({ success: true, count: data.length, data });
@@ -183,6 +193,7 @@ const getLaborById = async (req, res) => {
         vendor_id: worker.vendor_id,
         company_id: worker.company_id,
         vendor: worker.vendor,
+        assign_worker: worker.assign_worker,
       },
     });
   } catch (err) {
@@ -199,7 +210,7 @@ const createLabor = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { vendor_id, skill, status, daily_rate, labor_count } = req.body;
+    const { vendor_id, skill, status, daily_rate, labor_count, assign_worker } = req.body;
 
     if (!vendor_id || !skill) {
       return res.status(400).json({
@@ -238,8 +249,10 @@ const createLabor = async (req, res) => {
       daily_rate: parseFloat(daily_rate) || 0,
       labor_count: parsedCount,
       count: parsedCount,
+      assign_worker: assign_worker || null,
     });
-    await logVendorHistory({
+
+    await safeLogHistory({
       req, vendor_id, company_id,
       project_id: vendor.project_id || null,
       entity_type: 'labor', entity_id: worker.id, action: 'created',
@@ -261,11 +274,12 @@ const createLabor = async (req, res) => {
         labor_count: worker.labor_count,
         vendor_id: worker.vendor_id,
         company_id: worker.company_id,
+        assign_worker: worker.assign_worker,
       },
     });
   } catch (err) {
     console.error('[createLabor]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };
 
@@ -274,6 +288,10 @@ const updateLabor = async (req, res) => {
     if (req.body.labor_count !== undefined) {
       req.body.labor_count = Math.max(1, parseInt(req.body.labor_count) || 1);
       req.body.count = req.body.labor_count;
+    }
+
+    if (req.body.assign_worker !== undefined && req.body.assign_worker === '') {
+      req.body.assign_worker = null;
     }
 
     const company_id = getCompanyId(req);
@@ -294,7 +312,7 @@ const updateLabor = async (req, res) => {
 
     const vendor = await VendorModel.findOne({ where: { id: worker.vendor_id, company_id } });
 
-    await logVendorHistory({
+    await safeLogHistory({
       req, vendor_id: worker.vendor_id, company_id,
       project_id: vendor?.project_id || null,
       entity_type: 'labor', entity_id: worker.id, action: 'updated',
@@ -316,11 +334,12 @@ const updateLabor = async (req, res) => {
         labor_count: worker.labor_count,
         vendor_id: worker.vendor_id,
         company_id: worker.company_id,
+        assign_worker: worker.assign_worker,
       },
     });
   } catch (err) {
     console.error('[updateLabor]', err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error', error: err.message });
   }
 };
 
@@ -335,7 +354,7 @@ const deleteLabor = async (req, res) => {
 
     await worker.destroy();
 
-    await logVendorHistory({
+    await safeLogHistory({
       req, vendor_id: snapshot.vendor_id, company_id,
       project_id: vendor?.project_id || null,
       entity_type: 'labor', entity_id: snapshot.id, action: 'deleted',
