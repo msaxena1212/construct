@@ -48,7 +48,7 @@ export class NewProjectWizard implements OnInit {
       address: ['', Validators.required],
       thumbnail: [null],
       team: this.fb.array([]),
-      budgetTotal: [null, [Validators.required, Validators.min(1000)]],
+      budgetTotal: [null, [Validators.required, Validators.min(0)]],
       milestones: this.fb.array([]),
       documents: this.fb.array([])
     });
@@ -99,9 +99,9 @@ export class NewProjectWizard implements OnInit {
         });
 
         this.budgetBreakdown.valueChanges.subscribe(() => {
-      const total = this.budgetBreakdownTotal;
-      this.projectForm.get('budgetTotal')?.setValue(total , { emitEvent: false });
-    });
+          const total = this.budgetBreakdownTotal;
+          this.projectForm.get('budgetTotal')?.setValue(total, { emitEvent: false });
+        });
 
         this.budgetBreakdown.patchValue({
           material: t.material || 0,
@@ -200,7 +200,6 @@ export class NewProjectWizard implements OnInit {
 
   // --- Step Logic ---
   nextStep() {
-    console.log('Current Step:', this.currentStep,this.isStepValid(this.currentStep));
     if (this.isStepValid(this.currentStep)) {
       if (this.currentStep < 4) {
         this.currentStep++;
@@ -289,7 +288,7 @@ export class NewProjectWizard implements OnInit {
   }
 
   getMilestoneChildren(milestone: AbstractControl): FormArray {
-    
+
     return milestone.get('children') as FormArray;
   }
 
@@ -344,101 +343,101 @@ export class NewProjectWizard implements OnInit {
   }
 
   // --- Final Execution ---
- saveProject() {
+  saveProject() {
 
-  if (this.projectForm.invalid) {
-    this.toastr.error('Please fix the errors in the form before saving.');
-    return;
-  }
+    if (this.projectForm.invalid) {
+      this.toastr.error('Please fix the errors in the form before saving.');
+      return;
+    }
 
-  this.loading = true;
+    this.loading = true;
 
-  const formData = new FormData();
+    const formData = new FormData();
 
- const milestones: any[] = [];
+    const milestones: any[] = [];
 
-this.milestoneTree.value.forEach((parent: any) => {
-
-  milestones.push({
-    id: parent.id,
-    name: parent.name,
-    phase: parent.phase,
-    progress: parent.progress,
-    color: parent.color,
-    status: parent.status,
-    startDate: parent.startDate,
-    endDate: parent.endDate,
-    parent_id: null
-  });
-
-  if (parent.children?.length) {
-
-    parent.children.forEach((child: any) => {
+    this.milestoneTree.value.forEach((parent: any) => {
 
       milestones.push({
-        id: child.id,
-        name: child.name,
-        phase: child.phase,
-        progress: child.submilestone_progress || child.submilestone_progress,
-        color: child.color,
-        status: child.status,
-        startDate: child.startDate,
-        endDate: child.endDate,
-        parent_id: parent.id
+        id: parent.id,
+        name: parent.name,
+        phase: parent.phase,
+        progress: parent.progress,
+        color: parent.color,
+        status: parent.status,
+        startDate: parent.startDate,
+        endDate: parent.endDate,
+        parent_id: null
       });
+
+      if (parent.children?.length) {
+
+        parent.children.forEach((child: any) => {
+
+          milestones.push({
+            id: child.id,
+            name: child.name,
+            phase: child.phase,
+            progress: child.submilestone_progress || child.submilestone_progress,
+            color: child.color,
+            status: child.status,
+            startDate: child.startDate,
+            endDate: child.endDate,
+            parent_id: parent.id
+          });
+
+        });
+
+      }
 
     });
 
-  }
+    const payload = {
+      name: this.projectForm.value.name,
+      type: this.projectForm.value.type,
+      address: this.projectForm.value.address,
+      completionDate: this.projectForm.value.completionDate,
+      budgetTotal: this.projectForm.value.budgetTotal,
+      material_total: this.budgetBreakdown.value.material,
+      equipment_total: this.budgetBreakdown.value.equipment,
+      labor_total: this.budgetBreakdown.value.labor,
+      other_total: this.budgetBreakdown.value.other,
+      milestones: milestones,
+      team: this.projectForm.value.team.map((m: any) => ({
+        user_id: m.user_id,
+        role: m.role
+      }))
+    };
 
-});
+    formData.append('data', JSON.stringify(payload));
 
-  const payload = {
-    name: this.projectForm.value.name,
-    type: this.projectForm.value.type,
-    address: this.projectForm.value.address,
-    completionDate: this.projectForm.value.completionDate,
-    budgetTotal: this.projectForm.value.budgetTotal,
-    material: this.budgetBreakdown.value.material,
-    equipment: this.budgetBreakdown.value.equipment,
-    labor: this.budgetBreakdown.value.labor,
-    other: this.budgetBreakdown.value.other,
-    milestones: milestones,
-    team: this.projectForm.value.team.map((m: any) => ({
-      user_id: m.user_id,
-      role: m.role
-    }))
-  };
-
-  formData.append('data', JSON.stringify(payload));
-
-  if (this.thumbnailFile) {
-    formData.append('thumbnail', this.thumbnailFile);
-  }
-
-  this.selectedFiles.forEach((file) => {
-    formData.append('blueprints', file);
-  });
-
-  const request =
-    this.editMode && this.projectId
-      ? this.projectService.updateProject(this.projectId, formData)
-      : this.projectService.createProject(formData);
-
-  request.subscribe({
-    next: () => {
-      this.loading = false;
-      this.toastr.success(
-        this.editMode ? 'Project updated!' : 'Project initialized!'
-      );
-      this.router.navigate(['/master/projects']);
-    },
-    error: (err) => {
-      this.loading = false;
-      this.toastr.error(err.error?.message || 'Error saving project');
+    if (this.thumbnailFile) {
+      formData.append('thumbnail', this.thumbnailFile);
     }
-  });
-}
+
+    this.selectedFiles.forEach((file) => {
+      formData.append('blueprints', file);
+    });
+
+    const request =
+      this.editMode && this.projectId
+        ? this.projectService.updateProject(this.projectId, formData)
+        : this.projectService.createProject(formData);
+
+    request.subscribe({
+      next: () => {
+        this.loading = false;
+        this.toastr.success(
+          this.editMode ? 'Project updated!' : 'Project initialized!'
+        );
+        this.router.navigate(['/master/projects']);
+      },
+      error: (err) => {
+        this.loading = false;
+        this.toastr.error(err.error?.message || 'Error saving project');
+      }
+    });
+  }
 
   cancel() {
     this.location.back();

@@ -442,7 +442,7 @@
                                 Fund (%)</label>
                             <input
                                 class="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl p-5 text-sm font-bold text-slate-900 dark:text-slate-50 ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-300"
-                                placeholder="5%" type="number" />
+                                placeholder="5%" [max]="100" type="number" />
                         </div>
                     </div>
 
@@ -486,9 +486,9 @@
 
                                     </div>
                                     <div class="text-sm">
-                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
-                                        <span class="text-slate-300">|</span> -->
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_material}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.material_total || 0.00}}</strong></span>
+                                        <span class="text-slate-300"> | </span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.material_used || 0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
@@ -523,9 +523,9 @@
 
                                     </div>
                                     <div class="text-sm">
-                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
-                                        <span class="text-slate-300">|</span> -->
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_equipment}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.equipment_total || 0.00}}</strong></span>
+                                        <span class="text-slate-300"> | </span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.equipment_used || 0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
@@ -559,9 +559,9 @@
 
                                     </div>
                                     <div class="text-sm">
-                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
-                                        <span class="text-slate-300">|</span> -->
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_labor}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.labor_total || 0.00}}</strong></span>
+                                        <span class="text-slate-300"> | </span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.labor_used || 0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
@@ -597,9 +597,9 @@
 
 
                                     <div class="text-sm">
-                                        <!-- <span>Total: <strong class="text-slate-900">₹200</strong></span>
-                                        <span class="text-slate-300">|</span> -->
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails.total_others}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.other_total || 0.00}}</strong></span>
+                                        <span class="text-slate-300"> | </span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.other_used || 0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
