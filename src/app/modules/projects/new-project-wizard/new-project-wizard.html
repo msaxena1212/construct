@@ -448,10 +448,12 @@
 
                     <app-common-dialog [open]="showBudgetBreakdownDialog" title="Allocate Project Budget"
                         subtitle="Break down the total budget into Material, Equipment, Labor and Other Costs"
-                        [showCloseButton]="true" [showFooter]="true" [showDefaultFooterButtons]="true" sh
+                        [showCloseButton]="false" [showFooter]="true" [showDefaultFooterButtons]="true"
+                        [cancelLabel]="'Clear Allocation'"
                         [primaryLabel]="'Save Allocation'" (closed)="closeBudgetBreakdownDialog()"
                         (cancelled)="closeBudgetBreakdownDialog()" (primary)="saveBudgetBreakdown()"
-                        panelClass="max-w-3xl p-0 overflow-hidden rounded-3xl">
+                        panelClass="max-w-3xl p-0 overflow-hidden rounded-3xl" [closeOnBackdrop]="false">
+
 
                         <div [formGroup]="budgetBreakdown"
                             class="p-8 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
@@ -486,9 +488,11 @@
 
                                     </div>
                                     <div class="text-sm">
-                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.material_total || 0.00}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.material_total ||
+                                                0.00}}</strong></span>
                                         <span class="text-slate-300"> | </span>
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.material_used || 0.00}}</strong></span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.material_used ||
+                                                0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
@@ -523,9 +527,11 @@
 
                                     </div>
                                     <div class="text-sm">
-                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.equipment_total || 0.00}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.equipment_total ||
+                                                0.00}}</strong></span>
                                         <span class="text-slate-300"> | </span>
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.equipment_used || 0.00}}</strong></span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.equipment_used ||
+                                                0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
@@ -559,9 +565,11 @@
 
                                     </div>
                                     <div class="text-sm">
-                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.labor_total || 0.00}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.labor_total ||
+                                                0.00}}</strong></span>
                                         <span class="text-slate-300"> | </span>
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.labor_used || 0.00}}</strong></span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.labor_used ||
+                                                0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
@@ -597,9 +605,11 @@
 
 
                                     <div class="text-sm">
-                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.other_total || 0.00}}</strong></span>
+                                        <span>Total: <strong class="text-slate-900">₹{{allDetails?.other_total ||
+                                                0.00}}</strong></span>
                                         <span class="text-slate-300"> | </span>
-                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.other_used || 0.00}}</strong></span>
+                                        <span>Used: <strong class="text-green-600">₹{{allDetails?.other_used ||
+                                                0.00}}</strong></span>
                                         <!-- <span class=" text-slate-300">|</span>
                                         <span>Remaining: <strong class="text-orange-500">₹100</strong></span> -->
                                     </div>
