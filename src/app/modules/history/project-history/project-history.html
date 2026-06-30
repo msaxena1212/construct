@@ -1,0 +1,176 @@
+<div class="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-black text-slate-900 dark:text-white">Project History</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Complete activity timeline — milestones, tasks, documents, budget & team changes.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <!-- Project Selector (used when this page is opened standalone, not via [projectId] input) -->
+      @if (projects.length > 0) {
+      <div class="relative">
+        <select [(ngModel)]="selectedProjectId" (ngModelChange)="onProjectChange($event)"
+          class="appearance-none px-4 py-2.5 pr-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+          @for (p of projects; track p.id) {
+          <option [value]="p.id">{{ p.name }}</option>
+          }
+        </select>
+        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">
+          expand_more
+        </span>
+      </div>
+      }
+
+      <button (click)="exportCsv()"
+        class="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md hover:scale-[1.02] active:scale-95 transition-all cursor-pointer border-none">
+        <span class="material-symbols-outlined text-[18px]">download</span>
+        Export All (CSV)
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-2 mb-6">
+    @for (tab of tabs; track tab.key) {
+    <button (click)="setActiveTab(tab.key)"
+      class="px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border-none"
+      [ngClass]="activeTab === tab.key
+        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+        : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'">
+      {{ tab.label }}
+      <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black"
+        [ngClass]="activeTab === tab.key ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'">
+        {{ tab.count }}
+      </span>
+    </button>
+    }
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="rounded-2xl p-5 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg">
+      <p class="text-[10px] font-black uppercase tracking-widest opacity-80">Total Events</p>
+      <h2 class="text-3xl font-black mt-2">{{ totalEntries }}</h2>
+    </div>
+    <div class="rounded-2xl p-5 bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg">
+      <p class="text-[10px] font-black uppercase tracking-widest opacity-80">Milestones</p>
+      <h2 class="text-3xl font-black mt-2">{{ totalMilestoneEvents }}</h2>
+    </div>
+    <div class="rounded-2xl p-5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
+      <p class="text-[10px] font-black uppercase tracking-widest opacity-80">Tasks</p>
+      <h2 class="text-3xl font-black mt-2">{{ totalTaskEvents }}</h2>
+    </div>
+    <div class="rounded-2xl p-5 bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg">
+      <p class="text-[10px] font-black uppercase tracking-widest opacity-80">Documents</p>
+      <h2 class="text-3xl font-black mt-2">{{ totalDocumentEvents }}</h2>
+    </div>
+  </div>
+
+  <!-- Loading Projects (standalone mode, fetching project list first) -->
+  @if (loadingProjects) {
+  <div class="flex flex-col items-center justify-center h-64">
+    <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    <p class="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Loading projects...</p>
+  </div>
+  }
+
+  <!-- No project selected yet -->
+  @else if (!projectId) {
+  <div class="py-16 text-center">
+    <span class="material-symbols-outlined text-5xl text-slate-200 dark:text-slate-800 mb-3">folder_off</span>
+    <p class="text-sm font-bold text-slate-400">Select a project to view its history.</p>
+  </div>
+  }
+
+  <!-- Loading History -->
+  @else if (loading) {
+  <div class="flex flex-col items-center justify-center h-64">
+    <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    <p class="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Loading history...</p>
+  </div>
+  }
+
+  <!-- Error -->
+  @else if (error) {
+  <div class="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-8 rounded-2xl text-center">
+    <span class="material-symbols-outlined text-red-600 text-4xl mb-3">warning_amber</span>
+    <p class="text-sm font-bold text-red-700 dark:text-red-400">{{ error }}</p>
+    <button (click)="fetchHistory()"
+      class="mt-4 px-6 py-2.5 bg-red-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all border-none cursor-pointer">
+      Retry
+    </button>
+  </div>
+  }
+
+  <!-- Timeline -->
+  @else {
+  <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 mb-4">
+    {{ activeTab }} — Activity History
+  </h3>
+
+  <div class="space-y-8">
+    @for (group of groupedHistory; track group.date) {
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+        </div>
+        <p class="text-sm font-black text-slate-700 dark:text-slate-300">{{ group.date }}</p>
+        <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-400">
+          {{ group.entries.length }}
+        </span>
+      </div>
+
+      <div class="relative pl-6 border-l-2 border-slate-100 dark:border-slate-800 space-y-4">
+        @for (entry of group.entries; track entry.id) {
+        <div class="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all">
+
+          <div class="absolute -left-[33px] top-5 w-7 h-7 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-950"
+            [ngClass]="entry.colorClass">
+            <span class="material-symbols-outlined text-[14px]">{{ entry.icon }}</span>
+          </div>
+
+          <div class="flex items-start justify-between gap-4 mb-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+                [ngClass]="entry.colorClass">
+                {{ entry.category }}
+              </span>
+              <span class="font-bold text-sm text-slate-900 dark:text-slate-50">
+                {{ getActionLabel(entry.action_type) }}
+              </span>
+            </div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest shrink-0">
+              {{ entry.timeLabel }}
+            </span>
+          </div>
+
+          <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+            {{ entry.detail }}
+          </p>
+
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <span class="material-symbols-outlined text-[12px] text-slate-400">person</span>
+            </div>
+            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ entry.userName }}</span>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    @if (groupedHistory.length === 0) {
+    <div class="py-16 text-center">
+      <span class="material-symbols-outlined text-5xl text-slate-200 dark:text-slate-800 mb-3">history</span>
+      <p class="text-sm font-bold text-slate-400">No "{{ activeTab }}" entries found.</p>
+    </div>
+    }
+  </div>
+  }
+</div>
