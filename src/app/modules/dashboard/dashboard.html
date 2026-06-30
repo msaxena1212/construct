@@ -12,7 +12,7 @@
         </p>
 
         <h2 class="text-4xl font-black text-slate-900 dark:text-white mt-2">
-          24
+          {{ stats.projects.total }}
         </h2>
       </div>
 
@@ -25,7 +25,7 @@
     </div>
 
     <p class="text-emerald-500 font-bold text-sm">
-      +12% This Month
+      +{{ stats.projects.thisMonth }} This Month
     </p>
 
   </div>
@@ -41,7 +41,7 @@
         </p>
 
         <h2 class="text-4xl font-black text-slate-900 dark:text-white mt-2">
-          1,248
+          {{ stats.materials.total }}
         </h2>
       </div>
 
@@ -54,7 +54,7 @@
     </div>
 
     <p class="text-emerald-500 font-bold text-sm">
-      +32 New Added
+      +{{ stats.materials.newAdded }} New Added
     </p>
 
   </div>
@@ -70,7 +70,7 @@
         </p>
 
         <h2 class="text-4xl font-black text-slate-900 dark:text-white mt-2">
-          184
+          {{ stats.equipment.total }}
         </h2>
       </div>
 
@@ -83,7 +83,7 @@
     </div>
 
     <p class="text-emerald-500 font-bold text-sm">
-      98 Active
+      {{ stats.equipment.active }} Active
     </p>
 
   </div>
