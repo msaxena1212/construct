@@ -1,5 +1,5 @@
 const db = require("../../models");
-const { syncTaskProgress, syncProjectProgress, syncMilestoneProgress } = require("./project.utils");
+const { syncTaskProgress, syncProjectProgress, syncMilestoneProgress, logProjectHistory } = require("./project.utils");
 
 const { Sequelize } = require("sequelize");
 
@@ -224,6 +224,12 @@ class ProjectTaskController {
         detail: `initialized the task: "${title}"`
       }, { transaction: t });
 
+      await logProjectHistory({
+        project_id: projectId,
+        user_id,
+        action_type: "TASK_CREATED",
+        detail: `created task "${title}"`,
+      }, t);
       // Trigger Progress Sync (Inside transaction)
       await syncTaskProgress(task.id, t);
 
@@ -300,6 +306,21 @@ class ProjectTaskController {
           action_type: 'STATUS_CHANGE',
           detail: `moved task from "${oldStatus}" to "${status}"`
         }, { transaction: t });
+        await logProjectHistory({
+          project_id: task.project_id,
+          user_id,
+          action_type: "TASK_STATUS_CHANGED",
+          detail: `task "${task.title}" moved from "${oldStatus}" to "${status}"`,
+        }, t);
+      }
+
+      if (Object.keys(updateData).some(k => k !== 'status')) {
+        await logProjectHistory({
+          project_id: task.project_id,
+          user_id,
+          action_type: "TASK_UPDATED",
+          detail: `task "${task.title}" details updated`,
+        }, t);
       }
 
       // Trigger Progress Sync (Inside transaction)
@@ -320,13 +341,23 @@ class ProjectTaskController {
     let t;
     try {
       const { taskId } = req.params;
+      const user_id = req.user.id;   // ✅ ADD — user_id nikalna padega
       const task = await db.project_task.findByPk(taskId);
       if (task) {
         const milestoneId = task.milestone_id;
         const projectId = task.project_id;
+        const taskTitle = task.title;   // ✅ ADD
 
         t = await db.sequelize.transaction();
         await task.destroy({ transaction: t });
+
+        // ✅ ADD THIS
+        await logProjectHistory({
+          project_id: projectId,
+          user_id,
+          action_type: "TASK_DELETED",
+          detail: `deleted task "${taskTitle}"`,
+        }, t);
 
         // Trigger Progress Sync
         if (milestoneId) await syncMilestoneProgress(milestoneId, t);
@@ -336,6 +367,7 @@ class ProjectTaskController {
       }
       res.status(200).json({ message: "Task deleted." });
     } catch (error) {
+      if (t) await t.rollback();   // ✅ note: aapke original code me rollback missing tha, add kar diya
       res.status(500).json({ message: "Error deleting task.", error: error.message });
     }
   }
@@ -358,6 +390,17 @@ class ProjectTaskController {
         action_type: 'COMMENT',
         detail: 'posted a new comment'
       });
+
+      // ✅ ADD THIS — optional, comments par bhi history chahiye to
+      const task = await db.project_task.findByPk(taskId);
+      if (task) {
+        await logProjectHistory({
+          project_id: task.project_id,
+          user_id,
+          action_type: "TASK_COMMENT_ADDED",
+          detail: `commented on task "${task.title}"`,
+        });
+      }
 
       res.status(201).json({ data: comment });
     } catch (error) {
@@ -383,7 +426,7 @@ class ProjectTaskController {
         size: (file.size / 1024).toFixed(2) + " KB",
         url: `/uploads/tasks/${file.filename}`,
         mimetype: file.mimetype
-      }));
+      }));   // ✅ fixed
 
       const attachments = await db.task_attachment.bulkCreate(documentData);
 
@@ -395,12 +438,21 @@ class ProjectTaskController {
         detail: `uploaded ${attachments.length} attachment(s)`
       });
 
+      const task = await db.project_task.findByPk(taskId);
+      if (task) {
+        await logProjectHistory({
+          project_id: task.project_id,
+          user_id,
+          action_type: "TASK_DOCUMENT_UPLOADED",
+          detail: `uploaded ${attachments.length} file(s) to task "${task.title}"`,
+        });
+      }
+
       res.status(201).json({ data: attachments });
     } catch (error) {
       res.status(500).json({ message: "Error uploading attachments.", error: error.message });
     }
   }
-
   /**
    * Sub-task Management
    */

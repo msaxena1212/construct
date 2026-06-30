@@ -36,6 +36,8 @@ db.project = require("../modules/projects/models/project.model.js")(sequelize, S
 db.milestone = require("../modules/projects/models/milestone.model.js")(sequelize, Sequelize);
 db.project_team = require("../modules/projects/models/team.model.js")(sequelize, Sequelize);
 db.project_document = require("../modules/projects/models/document.model.js")(sequelize, Sequelize);
+// PROJECT HISTORY START
+db.project_history = require("../modules/projects/models/project-history.model.js")(sequelize, Sequelize);
 
 // Task Management Models
 db.project_task = require("../modules/projects/models/task.model.js")(sequelize, Sequelize);
@@ -101,6 +103,13 @@ db.project_document.belongsTo(db.project, { foreignKey: "project_id" });
 
 db.project.belongsToMany(db.user, { through: db.project_team, foreignKey: "project_id", as: "team_members" });
 db.user.belongsToMany(db.project, { through: db.project_team, foreignKey: "user_id", as: "projects" });
+
+// Project ↔ History
+db.project.hasMany(db.project_history, { foreignKey: "project_id", as: "history", onDelete: 'CASCADE' });
+db.project_history.belongsTo(db.project, { foreignKey: "project_id" });
+
+db.user.hasMany(db.project_history, { foreignKey: "user_id", as: "project_history_logs" });
+db.project_history.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
 
 // Task Management Associations
 db.project.hasMany(db.project_task, { foreignKey: "project_id", as: "tasks", onDelete: 'CASCADE' });
