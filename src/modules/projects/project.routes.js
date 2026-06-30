@@ -98,5 +98,6 @@ router.post("/projects/backfill-history", checkPermission("projects", "can_updat
   router.get("/getBudgetall_vendorProjectById/:id", checkPermission("projects", "can_read"), projectCtrl.getBudgetall_vendorProjectById);
 
 
+  router.get("/get_companywise_ProjectById/:id", checkPermission("projects", "can_read"), projectCtrl.get_companywise_ProjectById);
 
 };

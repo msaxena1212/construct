@@ -779,7 +779,7 @@ class ProjectController {
   /**
    * Update an existing project
    */
-  
+
   async updateProject(req, res) {
     let t;
     try {
@@ -1589,6 +1589,258 @@ async backfillProjectHistory(req, res) {
     return res.status(500).json({ message: "Error backfilling history.", error: error.message });
   }
 }
+
+  async get_companywise_ProjectById(req, res) {
+    try {
+      const { id } = req.params;
+      const company_id = req.user.company_id;
+
+      const project = await db.project.findOne({
+        where: { id, company_id },
+        include: [
+          { model: db.milestone, as: 'milestones' },
+          { model: db.project_document, as: 'documents' },
+          {
+            model: db.user,
+            as: 'team_members',
+            attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
+            through: { attributes: ['role'] }
+          },
+          {
+            model: db.project_task,
+            as: "tasks",
+            include: [
+              {
+                model: db.user,
+                as: "assignees",
+                attributes: ["id", "firstname", "lastname", "avatar"]
+              },
+              {
+                model: db.project_sub_task,
+                as: "sub_tasks"
+              }
+            ]
+          }
+        ]
+      });
+
+
+
+      if (!project) {
+        return res.status(404).json({
+          message: "Project not found or unauthorized."
+        });
+      }
+
+      const projectData = project.toJSON();
+
+      const milestones = projectData.milestones || [];
+      const tasks = projectData.tasks || [];
+
+      // Group tasks by submilestone_id
+      const taskMap = Object.create(null);
+
+      ////////////////
+
+      projectData.milestones_with_child = milestones
+
+        .filter(m => m.parent_id === null)
+
+        .map(parent => ({
+
+          ...parent,
+          children: milestones.filter(
+            child => child.parent_id === parent.id
+
+          )
+        }));
+
+      const invoices = await db.vendors_invoice.findAll({
+        where: {
+          project_id: id,
+          company_id,
+
+        },
+        order: [['createdAt', 'DESC']],
+      });
+
+
+      let total_material = 0;
+      let total_equipment = 0;
+      let total_labor = 0;
+      let total_others = 0;
+
+      invoices.forEach(invoice => {
+        (invoice.items || []).forEach(item => {
+          const total = parseFloat(item.total || 0);
+
+          if (item.type === "material") {
+            total_material += total;
+          } else if (item.type === "equipment") {
+            total_equipment += total;
+          } else if (item.type === "labor") {
+            total_labor += total;
+          } else if (item.type === "others") {
+            total_others += total;
+          }
+
+        });
+      });
+
+
+      let updateData = {
+        material_used: total_material,
+
+        equipment_used: total_equipment,
+
+        labor_used: total_labor,
+
+        other_used: total_others,
+
+      };
+
+      await db.project.update(updateData, {
+        where: { id, company_id },
+
+      });
+
+      const totalSpend = invoices.reduce((sum, invoice) => {
+
+        return sum + parseFloat(invoice.paid_amount || 0);
+
+      }, 0);
+
+      const grand_total = invoices.reduce((sum, invoice) => {
+
+        return sum + parseFloat(invoice.grand_total || 0);
+
+      }, 0);
+
+
+      const on_hold = (grand_total - totalSpend);
+
+      const remaining_budget = (projectData.budget_total - grand_total);
+
+      ////////////////extra logic
+
+      for (const task of tasks) {
+        if (!taskMap[task.submilestone_id]) {
+          taskMap[task.submilestone_id] = [];
+        }
+
+        taskMap[task.submilestone_id].push(task);
+      }
+
+      const parentMilestones = [];
+      const subMilestoneMap = Object.create(null);
+
+      for (const milestone of milestones) {
+        if (!milestone.parent_id) {
+          parentMilestones.push(milestone);
+        } else {
+          if (!subMilestoneMap[milestone.parent_id]) {
+            subMilestoneMap[milestone.parent_id] = [];
+          }
+
+          const milestoneTasks = taskMap[milestone.id] || [];
+
+          // TASK PROGRESS
+          const tasksWithProgress = milestoneTasks.map(task => {
+            const totalSubTasks = task.sub_tasks?.length || 0;
+
+            const completedSubTasks =
+              task.sub_tasks?.filter(st => st.completed === true).length || 0;
+
+            const task_progress =
+              totalSubTasks > 0
+                ? Math.round(
+                  (completedSubTasks / totalSubTasks) * 100
+                )
+                : 0;
+
+            return {
+              ...task,
+              task_progress
+            };
+          });
+
+          // SUB MILESTONE PROGRESS
+          const submilestone_progress =
+            tasksWithProgress.length > 0
+              ? Math.round(
+                tasksWithProgress.reduce(
+                  (sum, task) => sum + task.task_progress,
+                  0
+                ) / tasksWithProgress.length
+              )
+              : 0;
+
+          subMilestoneMap[milestone.parent_id].push({
+            ...milestone,
+            tasks: tasksWithProgress,
+            submilestone_progress
+          });
+        }
+      }
+
+      projectData.milestones_with_child = parentMilestones.map(parent => {
+        const children = subMilestoneMap[parent.id] || [];
+
+        // MILESTONE PROGRESS
+        const milestone_progress =
+          children.length > 0
+            ? Math.round(
+              children.reduce(
+                (sum, sm) => sum + sm.submilestone_progress,
+                0
+              ) / children.length
+            )
+            : 0;
+
+        return {
+          ...parent,
+          children,
+          milestone_progress
+        };
+      });
+
+      // PROJECT PROGRESS
+      projectData.project_progress =
+        projectData.milestones_with_child.length > 0
+          ? Math.round(
+            projectData.milestones_with_child.reduce(
+              (sum, milestone) =>
+                sum + milestone.milestone_progress,
+              0
+            ) / projectData.milestones_with_child.length
+          )
+          : 0;
+
+      return res.status(200).json({
+        success: true,
+        // data: projectData
+        data: {
+          ...projectData,
+          invoice: invoices,
+          totalSpend: totalSpend.toFixed(2),
+          grand_total: grand_total.toFixed(2),
+          on_hold: on_hold.toFixed(2),
+          remaining_budget: remaining_budget.toFixed(2),
+          total_material: total_material.toFixed(2),
+          total_equipment: total_equipment.toFixed(2),
+          total_labor: total_labor.toFixed(2),
+          total_others: total_others.toFixed(2),
+        }
+      });
+
+    } catch (error) {
+      return res.status(500).json({
+        message: "Error fetching project details.",
+        error: error.message
+      });
+    }
+  }
+
 
 }
 
