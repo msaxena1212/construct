@@ -1,5 +1,5 @@
 const db = require("../../models");
-
+const { logProjectHistory } = require("./project.utils");
 class ProjectController {
   constructor() {
     this.createProject = this.createProject.bind(this);
@@ -8,6 +8,8 @@ class ProjectController {
     this.getProjectTimeline = this.getProjectTimeline.bind(this);
     this.createMilestone = this.createMilestone.bind(this);
     this.updateMilestone = this.updateMilestone.bind(this);
+    this.getProjectHistory = this.getProjectHistory.bind(this);
+    this.backfillProjectHistory = this.backfillProjectHistory.bind(this); 
   }
 
   /**
@@ -287,7 +289,14 @@ class ProjectController {
           ...ms,
           project_id: project.id
         }));
+
         await db.milestone.bulkCreate(milestoneData, { transaction: t });
+        await logProjectHistory({
+          project_id: project.id,
+          user_id: req.user.id,
+          action_type: "MILESTONE_UPDATED",
+          detail: `milestones updated (${milestones.length} milestone(s))`,
+        }, t);
       }
 
       // 5. Create Team Assignments
@@ -311,6 +320,13 @@ class ProjectController {
         }));
         await db.project_document.bulkCreate(documentData, { transaction: t });
       }
+
+      await logProjectHistory({
+        project_id: project.id,
+        user_id: req.user.id,
+        action_type: "CREATED",
+        detail: `created project "${name}"`,
+      }, t);
 
       await t.commit();
 
@@ -863,11 +879,26 @@ class ProjectController {
         transaction: t
       });
 
+      await logProjectHistory({
+        project_id: id,
+        user_id: req.user.id,
+        action_type: "UPDATED",
+        detail: `updated project details`,
+        meta: { updated_fields: Object.keys(updateData).filter(k => updateData[k] !== undefined) }
+      }, t);
+
       // 3. Update Milestones (Delete and Recreate)
       await db.milestone.destroy({ where: { project_id: id }, transaction: t });
       if (milestones && milestones.length > 0) {
         const milestoneData = milestones.map(ms => ({ ...ms, project_id: id }));
         await db.milestone.bulkCreate(milestoneData, { transaction: t });
+
+        await logProjectHistory({
+          project_id: id,
+          user_id: req.user.id,
+          action_type: "MILESTONE_UPDATED",
+          detail: `milestones updated (${milestones.length} milestone(s))`,
+        }, t);
       }
 
       // 4. Update Team Assignments (Delete and Recreate)
@@ -879,6 +910,13 @@ class ProjectController {
           role: member.role
         }));
         await db.project_team.bulkCreate(teamData, { transaction: t });
+
+        await logProjectHistory({
+          project_id: id,
+          user_id: req.user.id,
+          action_type: "TEAM_UPDATED",
+          detail: `team reassigned (${team.length} member(s))`,
+        }, t);
       }
 
       // 5. Handle New Documents (Blueprints)
@@ -903,7 +941,7 @@ class ProjectController {
     }
   }
 
-  
+
   /**
    * Upload additional documents/media to an existing project
    */
@@ -935,6 +973,13 @@ class ProjectController {
       }));
 
       const createdDocs = await db.project_document.bulkCreate(documentData, { transaction: t });
+
+      await logProjectHistory({
+        project_id: id,
+        user_id: req.user.id,
+        action_type: "DOCUMENT_UPLOADED",
+        detail: `uploaded ${createdDocs.length} document(s)`,
+      }, t);
 
       await t.commit();
       res.status(201).json({
@@ -971,6 +1016,13 @@ class ProjectController {
         endDate,
         parent_id,
         is_completed: progress === 100
+      });
+
+      await logProjectHistory({
+        project_id: projectId,
+        user_id: req.user.id,
+        action_type: "MILESTONE_ADDED",
+        detail: `added milestone "${name}"`,
       });
 
       res.status(201).json({ message: "Milestone created successfully.", data: milestone });
@@ -1481,7 +1533,69 @@ class ProjectController {
     }
   }
 
+async getProjectHistory(req, res) {
+  try {
+    const { projectId } = req.params;
+    const company_id = req.user.company_id;
 
+    const project = await db.project.findOne({ where: { id: projectId, company_id } });
+    if (!project) {
+      return res.status(404).json({ message: "Project not found or unauthorized." });
+    }
+
+    const history = await db.project_history.findAll({
+      where: { project_id: projectId },
+      include: [
+        { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "avatar"] }
+      ],
+      order: [["createdAt", "DESC"]]
+    });
+
+    return res.status(200).json({ success: true, data: history });
+  } catch (error) {
+    console.error("[GET_PROJECT_HISTORY_ERROR]", error);
+    return res.status(500).json({ message: "Error fetching project history.", error: error.message });
+  }
+}
+
+async backfillProjectHistory(req, res) {
+  try {
+    const company_id = req.user.company_id;
+
+    const projects = await db.project.findAll({ where: { company_id } });
+
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    for (const p of projects) {
+      const existing = await db.project_history.findOne({
+        where: { project_id: p.id }
+      });
+
+      if (!existing) {
+        await db.project_history.create({
+          project_id: p.id,
+          user_id: null,
+          action_type: "CREATED",
+          detail: `project "${p.name}" existed before history tracking was enabled`,
+          createdAt: p.createdAt,
+          updatedAt: p.createdAt
+        });
+        createdCount++;
+      } else {
+        skippedCount++;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Backfill complete. Created: ${createdCount}, Skipped (already had history): ${skippedCount}`
+    });
+  } catch (error) {
+    console.error("[BACKFILL_PROJECT_HISTORY_ERROR]", error);
+    return res.status(500).json({ message: "Error backfilling history.", error: error.message });
+  }
+}
 
 }
 

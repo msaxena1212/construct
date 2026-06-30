@@ -118,8 +118,21 @@ const syncTaskProgress = async (taskId, transaction = null) => {
   }
 };
 
+
+const logProjectHistory = async ({ project_id, user_id = null, action_type, detail, meta = null }, transaction = null) => {
+  try {
+    await db.project_history.create(
+      { project_id, user_id, action_type, detail, meta },
+      { transaction }
+    );
+  } catch (error) {
+    console.error("[ProjectHistory] Error logging history:", error);
+  }
+};
+
 module.exports = {
   syncTaskProgress,
   syncMilestoneProgress,
-  syncProjectProgress
+  syncProjectProgress,
+  logProjectHistory
 };
