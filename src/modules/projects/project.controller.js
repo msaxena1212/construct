@@ -241,7 +241,9 @@ class ProjectController {
       // Parse JSON from req.body (assuming it's sent along with files)
       // If using multipart/form-data, json data might be in a string field 'data'
       const projectData = req.body.data ? JSON.parse(req.body.data) : req.body;
-      const { name, type, address, completionDate, budgetTotal, milestones, team } = projectData;
+      const { name, type, address, completionDate, budgetTotal, milestones, team,
+        material_total, equipment_total, labor_total, other_total
+      } = projectData;
 
       if (!name || !type) {
         return res.status(400).json({ message: "Project Name and Type are required." });
@@ -279,6 +281,10 @@ class ProjectController {
         address,
         completion_date: completionDate,
         budget_total: budgetTotal || 0,
+        material_total: material_total || 0,
+        equipment_total: equipment_total || 0,
+        labor_total: labor_total || 0,
+        other_total: other_total || 0,
         company_id,
         thumbnail: thumbnailPath
       }, { transaction: t });
@@ -617,6 +623,22 @@ class ProjectController {
       });
 
 
+      let updateData = {
+        material_used: total_material,
+
+        equipment_used: total_equipment,
+
+        labor_used: total_labor,
+
+        other_used: total_others,
+
+      };
+
+      await db.project.update(updateData, {
+        where: { id, company_id },
+
+      });
+
       const totalSpend = invoices.reduce((sum, invoice) => {
 
         return sum + parseFloat(invoice.paid_amount || 0);
@@ -635,73 +657,6 @@ class ProjectController {
       const remaining_budget = (projectData.budget_total - grand_total);
 
       ////////////////extra logic
-
-
-      //       projectData.milestones_with_child = milestones
-
-      //   .filter(m => m.parent_id === null)
-
-      //   .map(parent => ({
-
-      //     ...parent,
-      //     children: milestones.filter(
-      //       child => child.parent_id === parent.id
-
-      //     )
-      //   }));
-
-      // const invoices = await db.vendors_invoice.findAll({
-      //   where: {
-      //     project_id: id,
-      //     company_id,
-
-      //   },
-      //   order: [['createdAt', 'DESC']],
-      // });
-
-
-      // let total_material = 0;
-      // let total_equipment = 0;
-      // let total_labor = 0;
-      // let total_others = 0;
-
-      // invoices.forEach(invoice => {
-      //   (invoice.items || []).forEach(item => {
-      //     const total = parseFloat(item.total || 0);
-
-      //     if (item.type === "material") {
-      //       total_material += total;
-      //     } else if (item.type === "equipment") {
-      //       total_equipment += total;
-      //     } else if (item.type === "labor") {
-      //       total_labor += total;
-      //     } else if (item.type === "others") {
-      //       total_others += total;
-      //     }
-
-      //   });
-      // });
-
-
-      // const totalSpend = invoices.reduce((sum, invoice) => {
-
-      //   return sum + parseFloat(invoice.paid_amount || 0);
-
-      // }, 0);
-
-      // const grand_total = invoices.reduce((sum, invoice) => {
-
-      //   return sum + parseFloat(invoice.grand_total || 0);
-
-      // }, 0);
-
-
-      // const on_hold = (grand_total - totalSpend);
-
-      // const remaining_budget = (projectData.budget_total - grand_total);
-
-      /////////////////extra2
-
 
       for (const task of tasks) {
         if (!taskMap[task.submilestone_id]) {
@@ -824,6 +779,7 @@ class ProjectController {
   /**
    * Update an existing project
    */
+  
   async updateProject(req, res) {
     let t;
     try {
@@ -842,6 +798,9 @@ class ProjectController {
         other_used
       } = projectData;
 
+
+      const project_data = await db.project.findOne({ where: { id, company_id } });
+
       // 1. Team Validation
       if (team && team.length > 0) {
         const userIds = team.map(member => member.user_id);
@@ -859,15 +818,15 @@ class ProjectController {
       let updateData = {
         name, type, address,
         completion_date: completionDate,
-        material_total,
+        material_total: Number(project_data.material_total || 0) + Number(material_total || 0),
         material_used,
-        equipment_total,
+        equipment_total: Number(project_data.equipment_total || 0) + Number(equipment_total || 0),
         equipment_used,
-        labor_total,
+        labor_total: Number(project_data.labor_total || 0) + Number(labor_total || 0),
         labor_used,
-        other_total,
+        other_total: Number(project_data.other_total || 0) + Number(other_total || 0),
         other_used,
-        budget_total: budgetTotal || 0,
+        budget_total: Number(project_data.budget_total || 0) + Number(budgetTotal || 0),
       };
 
       if (req.files && req.files['thumbnail'] && req.files['thumbnail'].length > 0) {
@@ -1359,6 +1318,22 @@ class ProjectController {
       });
 
 
+      let updateData = {
+        material_used: total_material,
+
+        equipment_used: total_equipment,
+
+        labor_used: total_labor,
+
+        other_used: total_others,
+
+      };
+
+      await db.project.update(updateData, {
+        where: { id, company_id },
+      });
+
+
       const totalSpend = invoices.reduce((sum, invoice) => {
 
         return sum + parseFloat(invoice.paid_amount || 0);
@@ -1474,6 +1449,7 @@ class ProjectController {
       let total_material = 0;
       let total_equipment = 0;
       let total_labor = 0;
+      let total_others = 0;
 
       invoices.forEach(invoice => {
         (invoice.items || []).forEach(item => {
@@ -1485,9 +1461,26 @@ class ProjectController {
             total_equipment += total;
           } else if (item.type === "labor") {
             total_labor += total;
+          } else if (item.type === "others") {
+            total_others += total;
           }
 
         });
+      });
+
+      let updateData = {
+        material_used: total_material,
+
+        equipment_used: total_equipment,
+
+        labor_used: total_labor,
+
+        other_used: total_others,
+
+      };
+
+      await db.project.update(updateData, {
+        where: { id, company_id },
       });
 
 
