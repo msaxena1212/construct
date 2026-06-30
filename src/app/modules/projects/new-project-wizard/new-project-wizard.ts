@@ -11,7 +11,7 @@ import { environment } from '../../../../environments/environment';
   selector: 'app-new-project-wizard',
   standalone: false,
   templateUrl: './new-project-wizard.html',
-  styleUrl: './new-project-wizard.scss',
+  styleUrls: ['./new-project-wizard.scss'],
 })
 export class NewProjectWizard implements OnInit {
   currentStep: number = 1;
@@ -48,7 +48,7 @@ export class NewProjectWizard implements OnInit {
       address: ['', Validators.required],
       thumbnail: [null],
       team: this.fb.array([]),
-      budgetTotal: [null, [Validators.required, Validators.min(0)]],
+      budgetTotal: [0, [Validators.required, Validators.min(0)]],
       milestones: this.fb.array([]),
       documents: this.fb.array([])
     });
@@ -177,9 +177,20 @@ export class NewProjectWizard implements OnInit {
     this.showBudgetBreakdownDialog = true;
   }
 
-  closeBudgetBreakdownDialog() {
-    this.showBudgetBreakdownDialog = false;
-  }
+closeBudgetBreakdownDialog(): void {
+  this.showBudgetBreakdownDialog = false;
+
+  // Clear Budget Breakdown Form
+  this.budgetBreakdown.reset({
+    material: null,
+    equipment: null,
+    labor: null,
+    other: null
+  });
+
+  // Clear Main Project Form Budget
+  this.projectForm.get('budgetTotal')?.setValue(0);
+}
 
   saveBudgetBreakdown() {
     this.projectForm.get('budgetTotal')?.setValue(this.budgetBreakdownTotal);

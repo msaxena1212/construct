@@ -35,6 +35,8 @@ export class CommonDialogComponent {
   @Input() cancelLabel = 'Cancel';
   @Input() primaryLabel = 'Save';
   @Input() primaryDisabled = false;
+  @Input() closeOnOutsideClick: boolean | null = null;
+  @Input() disableClose = false;
 
   @Output() closed = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
@@ -124,12 +126,21 @@ export class CommonDialogComponent {
   }
 
   onBackdropClick(): void {
-    if (this.closeOnBackdrop) {
+    if (this.disableClose) {
+      return;
+    }
+
+    const shouldClose = this.closeOnOutsideClick ?? this.closeOnBackdrop;
+    if (shouldClose) {
       this.closed.emit();
     }
   }
 
   onCancel(): void {
+    if (this.disableClose) {
+      return;
+    }
+
     this.cancelled.emit();
     this.closed.emit();
   }
