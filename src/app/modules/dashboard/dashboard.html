@@ -273,6 +273,7 @@
     <div class="grid grid-cols-2 gap-4">
 
       <button
+        (click)="goToAddMaterial()"
         class="p-5 rounded-3xl bg-blue-50 hover:bg-blue-100 transition-all text-blue-600 flex flex-col items-center gap-3">
         <span class="material-symbols-outlined text-4xl">
           add_box
@@ -284,6 +285,7 @@
       </button>
 
       <button
+        (click)="goToAddQuote()"
         class="p-5 rounded-3xl bg-violet-50 hover:bg-violet-100 transition-all text-violet-600 flex flex-col items-center gap-3">
         <span class="material-symbols-outlined text-4xl">
           receipt_long
@@ -295,17 +297,19 @@
       </button>
 
       <button
+        (click)="goToAddVendor()"
         class="p-5 rounded-3xl bg-emerald-50 hover:bg-emerald-100 transition-all text-emerald-600 flex flex-col items-center gap-3">
         <span class="material-symbols-outlined text-4xl">
           groups
         </span>
 
         <span class="font-black text-sm">
-          Employees
+          Vendors
         </span>
       </button>
 
       <button
+       (click)="goToAddEquipment()"
         class="p-5 rounded-3xl bg-amber-50 hover:bg-amber-100 transition-all text-amber-600 flex flex-col items-center gap-3">
         <span class="material-symbols-outlined text-4xl">
           precision_manufacturing

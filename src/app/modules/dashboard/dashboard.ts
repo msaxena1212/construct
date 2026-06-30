@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-
+import { Router } from '@angular/router';
 import { DashboardService } from './services/dashboard.service';
 
 interface DashboardStats {
@@ -21,11 +21,27 @@ export class Dashboard implements OnInit {
     equipment: { total: 0, active: 0 },
   };
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(private dashboardService: DashboardService,   private router: Router) {}
 
   ngOnInit(): void {
     this.loadDashboardStats();
   }
+
+  goToAddMaterial(): void {
+  this.router.navigate(['/master/masters/material']);
+}
+
+  goToAddEquipment(): void {
+  this.router.navigate(['/master/masters/equipment']);
+}
+
+  goToAddQuote(): void {
+  this.router.navigate(['/master/resources/quotations']);
+}
+
+  goToAddVendor(): void {
+  this.router.navigate(['/master/resources/vendors']);
+}
 
   private loadDashboardStats(): void {
     this.dashboardService.getDashboardStats().subscribe({
