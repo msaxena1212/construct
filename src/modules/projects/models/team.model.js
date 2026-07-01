@@ -11,7 +11,6 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      // Note: project_id and user_id will be added via associations in models/index.js
     },
     {
       freezeTableName: true,

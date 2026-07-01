@@ -32,7 +32,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     created_by: {
       type: Sequelize.INTEGER,
-      allowNull: true, // Allow for existing tasks, but should be set for new ones
+      allowNull: true,
     },
   }, {
     freezeTableName: true,

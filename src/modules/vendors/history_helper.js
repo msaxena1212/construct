@@ -9,7 +9,19 @@ const logVendorHistory = async (opts) => {
 
     const user = req?.user;
     const changed_by = user?.id || user?.userId || null;
-    const changed_by_name = user?.name || user?.fullName || user?.email || null;
+
+    const fullName =
+      (user?.firstname || user?.lastname)
+        ? `${user?.firstname || ''} ${user?.lastname || ''}`.trim()
+        : null;
+
+    const changed_by_name =
+      fullName ||
+      user?.name ||
+      user?.fullName ||
+      user?.username ||
+      user?.email ||
+      null;
 
     await HistoryModel.create({
       company_id, vendor_id, project_id, entity_type, entity_id,

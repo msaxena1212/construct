@@ -1,8 +1,5 @@
 const db = require("../../models");
 
-/**
- * Reusable utility to synchronize progress across Task -> Milestone -> Project
- */
 const syncProjectProgress = async (projectId, transaction = null) => {
   try {
     console.log(`[ProgressSync] Syncing Project: ${projectId}`);
@@ -47,7 +44,6 @@ const syncMilestoneProgress = async (milestoneId, transaction = null) => {
     let totalProgressItems = 0;
     let sumProgress = 0;
 
-    // Add sub-milestones to calculation
     if (subMilestones.length > 0) {
       for (const sm of subMilestones) {
         sumProgress += (sm.progress || 0);
@@ -55,7 +51,6 @@ const syncMilestoneProgress = async (milestoneId, transaction = null) => {
       }
     }
 
-    // Add direct tasks to calculation
     const tasks = await db.project_task.findAll({
       where: { milestone_id: milestoneId },
       transaction
