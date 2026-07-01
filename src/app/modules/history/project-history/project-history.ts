@@ -1,22 +1,33 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { ActivatedRoute } from '@angular/router';
+import { finalize } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 import { ProjectHistoryServices, IProjectHistory } from './project-history-services';
 import { ProjectService } from '../../projects/services/project-service';
 
-interface ITabConfig {
-  key: string;
-  label: string;
-  count: number;
+interface IProjectOption {
+  id: number;
+  name: string;
 }
 
-interface IHistoryDisplay extends IProjectHistory {
+interface IHistoryEntry {
+  id: number;
   category: string;
+  action_type: string;
+  statement: string;
   icon: string;
   colorClass: string;
-  dateLabel: string;
-  timeLabel: string;
-  userName: string;
+  metaCreatedBy?: string;
+  metaCreatedAt?: string;
+  metaUpdatedBy?: string;
+  metaUpdatedAt?: string;
+  createdAt: string;
+}
+
+interface IGroupedHistory {
+  date: string;
+  entries: IHistoryEntry[];
 }
 
 @Component({
@@ -25,223 +36,299 @@ interface IHistoryDisplay extends IProjectHistory {
   templateUrl: './project-history.html',
   styleUrl: './project-history.scss',
 })
-export class ProjectHistory implements OnInit, OnChanges {
-  @Input() projectId?: string | number;
+export class ProjectHistory implements OnInit {
+  projects: IProjectOption[] = [];
+  selectedProjectIds: number[] = [];
+  projectSearchTerm = '';
+  isProjectDropdownOpen = false;
+  loadingProjects = false;
 
+  get projectId(): number | null {
+    return this.selectedProjectIds.length > 0 ? this.selectedProjectIds[0] : null;
+  }
+
+  allHistory: IHistoryEntry[] = [];
+  groupedHistory: IGroupedHistory[] = [];
   loading = false;
   error: string | null = null;
 
-  rawHistory: IProjectHistory[] = [];
-  displayHistory: IHistoryDisplay[] = [];
-  groupedHistory: { date: string; entries: IHistoryDisplay[] }[] = [];
-
-  projects: any[] = [];
-  selectedProjectId: string | number | null = null;
-  loadingProjects = false; // ✅ FIX: true tha, false kiya
-
-  activeTab = 'All';
-  tabs: ITabConfig[] = [
+  tabs = [
     { key: 'All', label: 'All', count: 0 },
-    { key: 'Project', label: 'Project', count: 0 },
-    { key: 'Task', label: 'Task', count: 0 },
-    { key: 'Timeline', label: 'Timeline', count: 0 },
-    { key: 'Milestone', label: 'Milestone', count: 0 },
+    { key: 'Milestone', label: 'Milestones', count: 0 },
+    { key: 'Task', label: 'Tasks', count: 0 },
+    { key: 'Document', label: 'Documents', count: 0 },
     { key: 'Budget', label: 'Budget', count: 0 },
-    { key: 'Document', label: 'Document', count: 0 },
+    { key: 'Team', label: 'Team', count: 0 },
   ];
+  activeTab = 'All';
 
   constructor(
     private historyService: ProjectHistoryServices,
     private projectService: ProjectService,
-    private toastr: ToastrService,
-    private route: ActivatedRoute
-  ) {}
+    private elRef: ElementRef
+  ) { }
 
-  ngOnInit() {
-    // Case 1: projectId parent component se [projectId] input ke zariye aaya
-    if (this.projectId) {
-      this.loadingProjects = false; // ✅ FIX: spinner rok do
-      this.fetchHistory();
-      return;
-    }
-
-    // Case 2: projectId route param/query se aaya
-    const routeProjectId =
-      this.route.snapshot.queryParamMap.get('projectId') ||
-      this.route.snapshot.paramMap.get('projectId');
-
-    if (routeProjectId) {
-      this.projectId = routeProjectId;
-      this.selectedProjectId = routeProjectId;
-      this.loadingProjects = false; // ✅ FIX
-      this.fetchHistory();
-      return;
-    }
-
-    // Case 3: standalone page — project picker dikhao
-    this.loadProjectList();
+  ngOnInit(): void {
+    this.loadProjects();
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['projectId'] && !changes['projectId'].firstChange && this.projectId) {
-      this.loadingProjects = false; // ✅ FIX
-      this.fetchHistory();
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isProjectDropdownOpen = false;
     }
   }
 
-  loadProjectList() {
+  loadProjects(): void {
     this.loadingProjects = true;
-    this.projectService.getProjects().subscribe({
-      next: (res: any) => {
-        this.projects = res.data || [];
-        this.loadingProjects = false;
-        if (this.projects.length > 0) {
-          this.selectedProjectId = this.projects[0].id;
-          this.onProjectChange(this.selectedProjectId);
-        }
-      },
-      error: () => {
-        this.loadingProjects = false;
-        this.toastr.error('Failed to load projects list');
-      }
-    });
+    this.projectService
+      .getProjects()
+      .pipe(finalize(() => (this.loadingProjects = false)))
+      .subscribe({
+        next: (res: any) => {
+          this.projects = (res?.data ?? res ?? []).map((p: any) => ({ id: p.id, name: p.name }));
+          this.selectedProjectIds = this.projects.map((p) => p.id);
+          if (this.selectedProjectIds.length > 0) {
+            this.fetchHistory();
+          }
+        },
+        error: () => {
+          this.error = 'Failed to load projects.';
+        },
+      });
   }
 
-  onProjectChange(id: string | number | null) {
-    if (!id) return;
-    this.selectedProjectId = id;
-    this.projectId = id;
+  get filteredProjects(): IProjectOption[] {
+    const term = this.projectSearchTerm.trim().toLowerCase();
+    if (!term) return this.projects;
+    return this.projects.filter((p) => p.name.toLowerCase().includes(term));
+  }
+
+  get isAllSelected(): boolean {
+    return this.projects.length > 0 && this.selectedProjectIds.length === this.projects.length;
+  }
+
+  get selectedCountLabel(): string {
+    if (this.projects.length === 0) return 'No Projects';
+    if (this.isAllSelected) return 'All Projects';
+    if (this.selectedProjectIds.length === 1) {
+      const p = this.projects.find((pr) => pr.id === this.selectedProjectIds[0]);
+      return p ? p.name : '1 Selected';
+    }
+    if (this.selectedProjectIds.length === 0) return 'Select Project';
+    return `${this.selectedProjectIds.length} Projects`;
+  }
+
+  toggleProjectDropdown(): void {
+    this.isProjectDropdownOpen = !this.isProjectDropdownOpen;
+  }
+
+  toggleSelectAllProjects(): void {
+    this.selectedProjectIds = this.isAllSelected ? [] : this.projects.map((p) => p.id);
+  }
+
+  toggleProjectSelection(id: number): void {
+    const idx = this.selectedProjectIds.indexOf(id);
+    if (idx > -1) {
+      this.selectedProjectIds.splice(idx, 1);
+    } else {
+      this.selectedProjectIds.push(id);
+    }
+  }
+
+  isProjectChecked(id: number): boolean {
+    return this.selectedProjectIds.includes(id);
+  }
+
+  applyProjectSelection(): void {
+    this.isProjectDropdownOpen = false;
+    if (this.selectedProjectIds.length === 0) {
+      this.allHistory = [];
+      this.groupedHistory = [];
+      this.recomputeTabCounts();
+      return;
+    }
     this.fetchHistory();
   }
 
-  fetchHistory() {
-    if (!this.projectId) return;
+  onProjectChange(id: number): void {
+    this.selectedProjectIds = [id];
+    this.fetchHistory();
+  }
+
+
+  fetchHistory(): void {
+    if (this.selectedProjectIds.length === 0) return;
 
     this.loading = true;
     this.error = null;
-    this.historyService.getProjectHistory(this.projectId).subscribe({
-      next: (res) => {
-        this.rawHistory = res.data || [];
-        this.processHistory();
-        this.loading = false;
-      },
-      error: () => {
-        this.error = 'Failed to load project history.';
-        this.loading = false;
-        this.toastr.error(this.error);
-      }
-    });
+
+    const requests = this.selectedProjectIds.map((id) => this.historyService.getProjectHistory(id));
+
+    forkJoin(requests)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (responses) => {
+          const merged: IProjectHistory[] = ([] as IProjectHistory[]).concat(
+            ...responses.map((r: any) => r?.data ?? [])
+          );
+          this.allHistory = merged.map((item) => this.mapToEntry(item));
+          this.recomputeTabCounts();
+          this.rebuildGroups();
+        },
+        error: () => {
+          this.error = 'Failed to load project history. Please try again.';
+        },
+      });
   }
 
-  private mapCategory(actionType: string): string {
-    const type = (actionType || '').toUpperCase();
-    if (type.includes('MILESTONE')) return 'Milestone';
-    if (type.includes('SUBTASK') || type.includes('TASK')) return 'Task';
-    if (type.includes('DOCUMENT') || type.includes('BLUEPRINT') || type.includes('FILE') || type.includes('UPLOAD')) return 'Document';
-    if (type.includes('BUDGET')) return 'Budget';
-    if (type.includes('TIMELINE') || type.includes('PROGRESS') || type.includes('SCHEDULE')) return 'Timeline';
-    return 'Project';
+  setActiveTab(key: string): void {
+    this.activeTab = key;
+    this.rebuildGroups();
   }
 
-  private mapIcon(category: string): string {
-    switch (category) {
-      case 'Milestone': return 'flag';
-      case 'Task': return 'task_alt';
-      case 'Document': return 'description';
-      case 'Budget': return 'payments';
-      case 'Timeline': return 'schedule';
-      default: return 'rocket_launch';
-    }
+  get totalEntries(): number {
+    return this.allHistory.length;
   }
-
-  private mapColor(category: string): string {
-    switch (category) {
-      case 'Milestone': return 'text-purple-600 bg-purple-100';
-      case 'Task': return 'text-emerald-600 bg-emerald-100';
-      case 'Document': return 'text-amber-600 bg-amber-100';
-      case 'Budget': return 'text-orange-600 bg-orange-100';
-      case 'Timeline': return 'text-cyan-600 bg-cyan-100';
-      default: return 'text-blue-600 bg-blue-100';
-    }
+  get totalMilestoneEvents(): number {
+    return this.allHistory.filter((e) => e.category === 'Milestone').length;
+  }
+  get totalTaskEvents(): number {
+    return this.allHistory.filter((e) => e.category === 'Task').length;
+  }
+  get totalDocumentEvents(): number {
+    return this.allHistory.filter((e) => e.category === 'Document').length;
+  }
+  get activeTabCount(): number {
+    return this.activeTab === 'All'
+      ? this.allHistory.length
+      : this.allHistory.filter((e) => e.category === this.activeTab).length;
   }
 
   getActionLabel(actionType: string): string {
-    return (actionType || '')
-      .toLowerCase()
-      .split('_')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
+    if (!actionType) return '';
+    const t = actionType.toLowerCase();
+    if (t.includes('create')) return 'Created';
+    if (t.includes('update')) return 'Updated';
+    if (t.includes('delete')) return 'Deleted';
+    const parts = actionType.split('_');
+    const last = parts[parts.length - 1];
+    return last ? last.charAt(0).toUpperCase() + last.slice(1) : actionType;
   }
 
-  private processHistory() {
-    this.displayHistory = this.rawHistory
-      .map(h => {
-        const category = this.mapCategory(h.action_type);
-        const date = new Date(h.createdAt);
-        return {
-          ...h,
-          category,
-          icon: this.mapIcon(category),
-          colorClass: this.mapColor(category),
-          dateLabel: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-          timeLabel: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          userName: h.user ? `${h.user.firstname} ${h.user.lastname}` : 'System'
-        } as IHistoryDisplay;
-      })
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  exportCsv(): void {
+    if (!this.allHistory.length) return;
 
-    this.tabs.forEach(tab => {
-      tab.count = tab.key === 'All'
-        ? this.displayHistory.length
-        : this.displayHistory.filter(h => h.category === tab.key).length;
-    });
+    const headers = ['Date', 'Category', 'Action', 'Detail', 'Created By', 'Created At', 'Updated By', 'Updated At'];
+    const rows = this.allHistory.map((e) => [
+      new Date(e.createdAt).toLocaleString(),
+      e.category,
+      this.getActionLabel(e.action_type),
+      (e.statement || '').replace(/\n/g, ' '),
+      e.metaCreatedBy || '',
+      e.metaCreatedAt || '',
+      e.metaUpdatedBy || '',
+      e.metaUpdatedAt || '',
+    ]);
 
-    this.applyFilterAndGroup();
-  }
-
-  get totalEntries() { return this.rawHistory.length; }
-  get totalMilestoneEvents() { return this.tabs.find(t => t.key === 'Milestone')?.count || 0; }
-  get totalTaskEvents() { return this.tabs.find(t => t.key === 'Task')?.count || 0; }
-  get totalDocumentEvents() { return this.tabs.find(t => t.key === 'Document')?.count || 0; }
-
-  setActiveTab(tab: string) {
-    this.activeTab = tab;
-    this.applyFilterAndGroup();
-  }
-
-  private applyFilterAndGroup() {
-    const filtered = this.activeTab === 'All'
-      ? this.displayHistory
-      : this.displayHistory.filter(h => h.category === this.activeTab);
-
-    const groups: { [key: string]: IHistoryDisplay[] } = {};
-    filtered.forEach(h => {
-      if (!groups[h.dateLabel]) groups[h.dateLabel] = [];
-      groups[h.dateLabel].push(h);
-    });
-
-    this.groupedHistory = Object.keys(groups).map(date => ({ date, entries: groups[date] }));
-  }
-
-  exportCsv() {
-    const rows = [
-      ['Date', 'Time', 'Category', 'Action', 'Detail', 'User'],
-      ...this.displayHistory.map(h => [
-        h.dateLabel, h.timeLabel, h.category,
-        this.getActionLabel(h.action_type), h.detail || '', h.userName
-      ])
-    ];
-
-    const csvContent = rows
-      .map(r => r.map(c => `"${(c || '').toString().replace(/"/g, '""')}"`).join(','))
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `project-history-${this.projectId}.csv`;
+    link.download = `project-history-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+
+  private mapToEntry(item: IProjectHistory): IHistoryEntry {
+    const category = this.getCategoryFromActionType(item.action_type);
+    const userName = item.user ? `${item.user.firstname} ${item.user.lastname}`.trim() : undefined;
+    const isCreate = item.action_type?.toLowerCase().includes('create');
+    const isUpdate = item.action_type?.toLowerCase().includes('update');
+
+    return {
+      id: item.id,
+      category,
+      action_type: item.action_type,
+      statement: item.detail,
+      icon: this.getIconForCategory(category),
+      colorClass: this.getColorClassForCategory(category),
+      metaCreatedBy: item.meta?.createdBy ?? (isCreate ? userName : undefined),
+      metaCreatedAt: item.meta?.createdAt ?? (isCreate ? item.createdAt : undefined),
+      metaUpdatedBy: item.meta?.updatedBy ?? (isUpdate ? userName : undefined),
+      metaUpdatedAt: item.meta?.updatedAt ?? (isUpdate ? item.createdAt : undefined),
+      createdAt: item.createdAt,
+    };
+  }
+
+  private getCategoryFromActionType(actionType: string): string {
+    const t = (actionType || '').toLowerCase();
+    if (t.includes('milestone')) return 'Milestone';
+    if (t.includes('task')) return 'Task';
+    if (t.includes('document') || t.includes('file')) return 'Document';
+    if (t.includes('budget') || t.includes('cost')) return 'Budget';
+    if (t.includes('team') || t.includes('member') || t.includes('vendor')) return 'Team';
+    return 'Other';
+  }
+
+  private getIconForCategory(category: string): string {
+    const map: Record<string, string> = {
+      Milestone: 'flag',
+      Task: 'task_alt',
+      Document: 'description',
+      Budget: 'payments',
+      Team: 'group',
+      Other: 'history',
+    };
+    return map[category] ?? 'history';
+  }
+
+  private getColorClassForCategory(category: string): string {
+    const map: Record<string, string> = {
+      Milestone: 'bg-fuchsia-100 text-fuchsia-600',
+      Task: 'bg-emerald-100 text-emerald-600',
+      Document: 'bg-amber-100 text-amber-600',
+      Budget: 'bg-orange-100 text-orange-600',
+      Team: 'bg-blue-100 text-blue-600',
+      Other: 'bg-slate-100 text-slate-600',
+    };
+    return map[category] ?? 'bg-slate-100 text-slate-600';
+  }
+
+  private recomputeTabCounts(): void {
+    const counts: Record<string, number> = {};
+    this.allHistory.forEach((e) => {
+      counts[e.category] = (counts[e.category] || 0) + 1;
+    });
+    this.tabs.forEach((tab) => {
+      tab.count = tab.key === 'All' ? this.allHistory.length : counts[tab.key] || 0;
+    });
+  }
+
+  private rebuildGroups(): void {
+    const filtered =
+      this.activeTab === 'All' ? this.allHistory : this.allHistory.filter((e) => e.category === this.activeTab);
+
+    const map = new Map<string, IHistoryEntry[]>();
+    filtered
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .forEach((e) => {
+        const dateKey = new Date(e.createdAt).toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+        if (!map.has(dateKey)) map.set(dateKey, []);
+        map.get(dateKey)!.push(e);
+      });
+
+    this.groupedHistory = Array.from(map.entries()).map(([date, entries]) => ({ date, entries }));
   }
 }

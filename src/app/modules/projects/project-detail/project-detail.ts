@@ -36,7 +36,27 @@ export class ProjectDetail implements OnInit {
   auditFilter = 'All';
   auditFilterOptions = ['All', 'Project', 'Task', 'Milestone', 'Document', 'Safety', 'Budget', 'Team'];
   auditTrail: IAuditEntry[] = [];
+  auditLoading = false;
   serverUrl = environment.serverUrl;
+
+  // Maps backend action_type -> UI display metadata for the audit trail
+  private historyMeta: Record<string, { type: string; icon: string; color: string }> = {
+    CREATED:                { type: 'Project',   icon: 'rocket_launch', color: 'text-blue-600 bg-blue-100' },
+    UPDATED:                { type: 'Project',   icon: 'edit',          color: 'text-blue-600 bg-blue-100' },
+    MILESTONE_ADDED:        { type: 'Milestone', icon: 'flag',          color: 'text-indigo-600 bg-indigo-100' },
+    MILESTONE_UPDATED:      { type: 'Milestone', icon: 'flag',          color: 'text-indigo-600 bg-indigo-100' },
+    TEAM_UPDATED:           { type: 'Team',      icon: 'group_add',     color: 'text-indigo-600 bg-indigo-100' },
+    DOCUMENT_UPLOADED:      { type: 'Document',  icon: 'upload_file',   color: 'text-purple-600 bg-purple-100' },
+    TASK_CREATED:           { type: 'Task',      icon: 'task_alt',      color: 'text-emerald-600 bg-emerald-100' },
+    TASK_STATUS_CHANGED:    { type: 'Task',      icon: 'sync_alt',      color: 'text-amber-600 bg-amber-100' },
+    TASK_UPDATED:           { type: 'Task',      icon: 'edit_note',     color: 'text-emerald-600 bg-emerald-100' },
+    TASK_DELETED:           { type: 'Task',      icon: 'delete',        color: 'text-red-600 bg-red-100' },
+    TASK_COMMENT_ADDED:     { type: 'Task',      icon: 'chat_bubble',   color: 'text-slate-600 bg-slate-100' },
+    TASK_DOCUMENT_UPLOADED: { type: 'Document',  icon: 'attach_file',   color: 'text-purple-600 bg-purple-100' },
+    TASK_SUBTASK_ADDED:     { type: 'Task',      icon: 'checklist',     color: 'text-emerald-600 bg-emerald-100' },
+    TASK_SUBTASK_UPDATED:   { type: 'Task',      icon: 'check_circle',  color: 'text-amber-600 bg-amber-100' },
+    TASK_SUBTASK_DELETED:   { type: 'Task',      icon: 'remove_circle', color: 'text-red-600 bg-red-100' },
+  };
 
   constructor(
     private route: ActivatedRoute,
@@ -50,10 +70,9 @@ export class ProjectDetail implements OnInit {
       const id = params.get('id');
       if (id) {
         this.fetchProjectDetails(id);
+        this.fetchProjectHistory(id);
       }
     });
-
-    this.mockAuditTrail();
   }
 
   fetchProjectDetails(id: string) {
@@ -70,6 +89,57 @@ export class ProjectDetail implements OnInit {
         this.toastr.error(this.error);
       }
     });
+  }
+
+  /**
+   * Fetches real project history/audit trail from the backend
+   * (replaces the previous hardcoded mockAuditTrail()).
+   */
+  fetchProjectHistory(id: string) {
+    this.auditLoading = true;
+    this.projectService.getProjectHistory(id, { limit: 100 }).subscribe({
+      next: (res: any) => {
+        const rows = res.data || [];
+        this.auditTrail = rows.map((h: any) => this.mapHistoryToAuditEntry(h));
+        this.auditLoading = false;
+      },
+      error: () => {
+        this.auditLoading = false;
+        this.toastr.error('Failed to load project history');
+      }
+    });
+  }
+
+  private mapHistoryToAuditEntry(h: any): IAuditEntry {
+    const meta = this.historyMeta[h.action_type] || {
+      type: 'Project',
+      icon: 'info',
+      color: 'text-slate-600 bg-slate-100'
+    };
+
+    return {
+      id: h.id,
+      type: meta.type,
+      action: (h.action_type || '').replace(/_/g, ' '),
+      detail: h.detail,
+      user: h.user ? `${h.user.firstname} ${h.user.lastname}` : 'System',
+      time: this.timeAgo(h.createdAt),
+      icon: meta.icon,
+      color: meta.color
+    };
+  }
+
+  private timeAgo(dateStr: string): string {
+    if (!dateStr) return '';
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hour${hrs > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days} day${days > 1 ? 's' : ''} ago`;
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   }
 
   private mapProjectData(p: IProject): IProject {
@@ -235,19 +305,14 @@ export class ProjectDetail implements OnInit {
         this.selectedFiles = [];
         // Refresh project details to show new files in gallery
         this.fetchProjectDetails(this.project!.id.toString());
+        // Refresh history too, since a DOCUMENT_UPLOADED entry was just logged
+        this.fetchProjectHistory(this.project!.id.toString());
       },
       error: (err) => {
         this.toastr.error('Failed to upload files.');
         console.error(err);
       }
     });
-  }
-
-  private mockAuditTrail() {
-    this.auditTrail = [
-      { id: 'a1', type: 'Project', action: 'Project Initialized', detail: 'Project created in system.', user: 'System', time: 'Just now', icon: 'rocket_launch', color: 'text-blue-600 bg-blue-100' },
-      { id: 'a2', type: 'Team', action: 'Team Assigned', detail: 'Resource allocation completed.', user: 'Admin', time: '2 hours ago', icon: 'group_add', color: 'text-indigo-600 bg-indigo-100' }
-    ];
   }
 
   get filteredAudit(): IAuditEntry[] {
@@ -269,6 +334,7 @@ export class ProjectDetail implements OnInit {
 
     dialogRef.afterClosed().subscribe((result: any) => {
       this.fetchProjectDetails(this.project!.id.toString());
+      this.fetchProjectHistory(this.project!.id.toString());
     });
   }
 
@@ -287,6 +353,7 @@ export class ProjectDetail implements OnInit {
     dialogRef.afterClosed().subscribe((result: any) => {
       if (result) {
         this.fetchProjectDetails(this.project!.id.toString());
+        this.fetchProjectHistory(this.project!.id.toString());
       }
     });
   }
@@ -307,6 +374,7 @@ export class ProjectDetail implements OnInit {
     dialogRef.afterClosed().subscribe((result: any) => {
       if (result) {
         this.fetchProjectDetails(this.project!.id.toString());
+        this.fetchProjectHistory(this.project!.id.toString());
       }
     });
   }
@@ -326,6 +394,7 @@ export class ProjectDetail implements OnInit {
     dialogRef.afterClosed().subscribe((result: any) => {
       if (result) {
         this.fetchProjectDetails(this.project!.id.toString());
+        this.fetchProjectHistory(this.project!.id.toString());
       }
     });
   }

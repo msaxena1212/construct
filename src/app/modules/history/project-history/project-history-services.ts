@@ -7,7 +7,7 @@ import { ApiResponse } from '../../../shared/interfaces/core.interface';
 export interface IProjectHistory {
   id: number;
   project_id: number;
-  company_id?: number | null; // ✅ ADD
+  company_id?: number | null;
   user_id: number | null;
   action_type: string;
   detail: string;
@@ -22,7 +22,7 @@ export interface IProjectHistory {
 export class ProjectHistoryServices {
   private apiUrl = environment.serverUrl + '/api/v1';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getProjectHistory(projectId: string | number): Observable<ApiResponse<IProjectHistory[]>> {
     return this.http.get<ApiResponse<IProjectHistory[]>>(

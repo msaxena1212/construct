@@ -22,7 +22,17 @@ export class ProjectService {
   getProjectById(id: string | number): Observable<ApiResponse<IProject>> {
     return this.http.get<ApiResponse<IProject>>(`${this.apiUrl}/projects/${id}`);
   }
-
+  getProjectHistory(projectId: string | number, params?: { action_type?: string; limit?: number; offset?: number }): Observable<ApiResponse<any[]>> {
+    let query = '';
+    if (params) {
+      const parts: string[] = [];
+      if (params.action_type) parts.push(`action_type=${params.action_type}`);
+      if (params.limit) parts.push(`limit=${params.limit}`);
+      if (params.offset) parts.push(`offset=${params.offset}`);
+      if (parts.length) query = `?${parts.join('&')}`;
+    }
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/projects/${projectId}/history${query}`);
+  }
   getTeamMembers(): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/team`);
   }

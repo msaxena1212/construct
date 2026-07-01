@@ -179,6 +179,7 @@ function cleanNameStandalone(val: any): string | null {
   const str = String(val).trim();
   if (!str) return null;
   if (str.toLowerCase() === 'unknown') return null;
+  if (str.includes('@')) return null;
   return str;
 }
 
@@ -260,6 +261,7 @@ export class VendorsHistory implements OnInit {
     const str = String(val).trim();
     if (!str) return null;
     if (str.toLowerCase() === 'unknown') return null;
+    if (str.includes('@')) return null;
     return str;
   }
 
@@ -268,7 +270,7 @@ export class VendorsHistory implements OnInit {
       const raw = localStorage.getItem('auth_user');
       if (raw) {
         const user = JSON.parse(raw);
-        return user?.email || user?.name || user?.username || 'Unknown';
+        return `${user?.firstname} ${user?.lastname}` || user?.username || 'Unknown';
       }
     } catch {
 
