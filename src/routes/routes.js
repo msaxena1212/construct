@@ -51,7 +51,8 @@ class Routes {
       require("../modules/skill/routes/skill_routes")
     );
     app.use("/api/v1/meetings", require("../modules/meeting/routes/meeting.routes"));
-
+    // app.use("/api/v1/dashboard", require("../modules/dashboard/routes/dashboard.routes"));
+    require("../modules/dashboard/routes/dashboard.routes")(router);
   }
 }
 
