@@ -14,11 +14,11 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
     action_type: {
-      type: Sequelize.STRING, // e.g., 'STATUS_CHANGE', 'ASSIGNMENT', 'COMMENT', 'FILE_UPLOAD'
+      type: Sequelize.STRING, 
       allowNull: false,
     },
     detail: {
-      type: Sequelize.TEXT, // e.g., 'moved task to In Progress'
+      type: Sequelize.TEXT,
     },
   }, {
     freezeTableName: true,

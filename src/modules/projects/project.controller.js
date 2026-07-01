@@ -9,66 +9,8 @@ class ProjectController {
     this.createMilestone = this.createMilestone.bind(this);
     this.updateMilestone = this.updateMilestone.bind(this);
     this.getProjectHistory = this.getProjectHistory.bind(this);
-    this.backfillProjectHistory = this.backfillProjectHistory.bind(this); 
+    this.backfillProjectHistory = this.backfillProjectHistory.bind(this);
   }
-
-  /**
-   * Get timeline data for a project (tasks and milestones)
-   */
-  // async getProjectTimeline(req, res) {
-  //   try {
-  //     const { projectId } = req.params;
-  //     const company_id = req.user.company_id;
-
-  //     const project = await db.project.findOne({
-  //       where: { id: projectId, company_id },
-  //       include: [
-  //         {
-  //           model: db.milestone,
-  //           as: 'milestones',
-  //           // attributes: ['id', 'name', 'phase', 'color', 'createdAt']
-  //         },
-  //         {
-  //           model: db.project_task,
-  //           as: 'tasks',
-  //           // attributes: ['id', 'title', 'status', 'priority', 'due_date', 'createdAt'],
-  //           include: [
-  //             { model: db.user, as: 'assignees', attributes: ['id', 'firstname', 'lastname', 'avatar'] }
-  //           ]
-  //         }
-  //       ]
-  //     });
-
-  //     if (!project) {
-  //       return res.status(404).json({ message: "Project not found or unauthorized." });
-  //     }
-
-  //     // res.status(200).json({ data: project });
-
-  //     const projectData = project.toJSON();
-
-  //     const milestones = projectData.milestones || [];
-
-  //     projectData.milestones_with_child = milestones
-
-  //       .filter(m => m.parent_id === null)
-
-  //       .map(parent => ({
-  //         ...parent,
-  //         children: milestones.filter(
-  //           child => child.parent_id === parent.id
-  //         )
-  //       }));
-
-  //     return res.status(200).json({
-  //       data: projectData
-  //     });
-
-  //   } catch (error) {
-  //     console.error("[GET_PROJECT_TIMELINE_ERROR]", error);
-  //     res.status(500).json({ message: "Error fetching timeline data.", error: error.message });
-  //   }
-  // }
 
   async getProjectTimeline(req, res) {
     try {
@@ -114,7 +56,6 @@ class ProjectController {
       const milestones = projectData.milestones || [];
       const tasks = projectData.tasks || [];
 
-      // Group tasks by submilestone_id
       const taskMap = Object.create(null);
 
       for (const task of tasks) {
@@ -138,7 +79,6 @@ class ProjectController {
 
           const milestoneTasks = taskMap[milestone.id] || [];
 
-          // TASK PROGRESS
           const tasksWithProgress = milestoneTasks.map(task => {
             const totalSubTasks = task.sub_tasks?.length || 0;
 
@@ -158,7 +98,6 @@ class ProjectController {
             };
           });
 
-          // SUB MILESTONE PROGRESS
           const submilestone_progress =
             tasksWithProgress.length > 0
               ? Math.round(
@@ -180,7 +119,6 @@ class ProjectController {
       projectData.milestones_with_child = parentMilestones.map(parent => {
         const children = subMilestoneMap[parent.id] || [];
 
-        // MILESTONE PROGRESS
         const milestone_progress =
           children.length > 0
             ? Math.round(
@@ -198,7 +136,6 @@ class ProjectController {
         };
       });
 
-      // PROJECT PROGRESS
       projectData.project_progress =
         projectData.milestones_with_child.length > 0
           ? Math.round(
@@ -226,10 +163,6 @@ class ProjectController {
     }
   }
 
-  /**
-   * Create a new project with milestones and team members
-   * Matches the 4-step wizard flow in UI
-   */
   async createProject(req, res) {
     let t;
     try {
@@ -238,8 +171,6 @@ class ProjectController {
         return res.status(401).json({ message: "Unauthorized. Company context missing." });
       }
 
-      // Parse JSON from req.body (assuming it's sent along with files)
-      // If using multipart/form-data, json data might be in a string field 'data'
       const projectData = req.body.data ? JSON.parse(req.body.data) : req.body;
       const { name, type, address, completionDate, budgetTotal, milestones, team,
         material_total, equipment_total, labor_total, other_total
@@ -249,7 +180,6 @@ class ProjectController {
         return res.status(400).json({ message: "Project Name and Type are required." });
       }
 
-      // 1. Team Validation: Ensure all assigned users belong to the same company
       if (team && team.length > 0) {
         const userIds = team.map(member => member.user_id);
         const validUsers = await db.user.findAll({
@@ -266,10 +196,8 @@ class ProjectController {
         }
       }
 
-      // 2. Start Transaction
       t = await db.sequelize.transaction();
 
-      // 3. Create Project
       let thumbnailPath = null;
       if (req.files && req.files['thumbnail'] && req.files['thumbnail'].length > 0) {
         thumbnailPath = `/uploads/projects/${req.files['thumbnail'][0].filename}`;
@@ -289,7 +217,6 @@ class ProjectController {
         thumbnail: thumbnailPath
       }, { transaction: t });
 
-      // 4. Create Milestones
       if (milestones && milestones.length > 0) {
         const milestoneData = milestones.map(ms => ({
           ...ms,
@@ -299,14 +226,13 @@ class ProjectController {
         await db.milestone.bulkCreate(milestoneData, { transaction: t });
         await logProjectHistory({
           project_id: project.id,
-          company_id,  
+          company_id,
           user_id: req.user.id,
           action_type: "MILESTONE_UPDATED",
           detail: `milestones updated (${milestones.length} milestone(s))`,
         }, t);
       }
 
-      // 5. Create Team Assignments
       if (team && team.length > 0) {
         const teamData = team.map(member => ({
           project_id: project.id,
@@ -316,7 +242,7 @@ class ProjectController {
         await db.project_team.bulkCreate(teamData, { transaction: t });
       }
 
-      // 6. Handle Documents (Files uploaded via Multer - specifically blueprints)
+
       if (req.files && req.files['blueprints'] && req.files['blueprints'].length > 0) {
         const documentData = req.files['blueprints'].map(file => ({
           project_id: project.id,
@@ -326,11 +252,31 @@ class ProjectController {
           mimetype: file.mimetype
         }));
         await db.project_document.bulkCreate(documentData, { transaction: t });
+
+
+        await logProjectHistory({
+          project_id: project.id,
+          company_id,
+          user_id: req.user.id,
+          action_type: "DOCUMENT_UPLOADED",
+          detail: `uploaded ${documentData.length} document(s) during project creation`,
+        }, t);
+      }
+
+
+      if (Number(budgetTotal) > 0) {
+        await logProjectHistory({
+          project_id: project.id,
+          company_id,
+          user_id: req.user.id,
+          action_type: "BUDGET_UPDATED",
+          detail: `initial budget set to ₹${budgetTotal} (Material: ₹${material_total || 0}, Equipment: ₹${equipment_total || 0}, Labor: ₹${labor_total || 0}, Other: ₹${other_total || 0})`,
+        }, t);
       }
 
       await logProjectHistory({
         project_id: project.id,
-        company_id,  
+        company_id,
         user_id: req.user.id,
         action_type: "CREATED",
         detail: `created project "${name}"`,
@@ -338,7 +284,6 @@ class ProjectController {
 
       await t.commit();
 
-      // Fetch the created project with all relations to return
       const fullProject = await db.project.findByPk(project.id, {
         include: [
           { model: db.milestone, as: 'milestones' },
@@ -407,7 +352,6 @@ class ProjectController {
         order: [["createdAt", "DESC"]]
       });
 
-      // Group tasks by submilestone_id
       const taskMap = Object.create(null);
 
       for (const task of allTasks) {
@@ -417,8 +361,6 @@ class ProjectController {
 
         taskMap[task.submilestone_id].push(task);
       }
-
-
 
       const formattedProjects = projects.map(project => {
         const projectData = project.toJSON();
@@ -436,7 +378,6 @@ class ProjectController {
 
             const tasks = taskMap[milestone.id] || [];
 
-            // TASK PROGRESS
             const tasksWithProgress = tasks.map(task => {
               const totalSubTasks = task.sub_tasks?.length || 0;
 
@@ -454,7 +395,6 @@ class ProjectController {
               };
             });
 
-            // SUB MILESTONE PROGRESS
             const submilestone_progress =
               tasksWithProgress.length > 0
                 ? Math.round(
@@ -476,7 +416,6 @@ class ProjectController {
         projectData.milestone_with_sub = parentMilestones.map(parent => {
           const subMilestones = subMilestoneMap[parent.id] || [];
 
-          // MILESTONE PROGRESS
           const milestone_progress =
             subMilestones.length > 0
               ? Math.round(
@@ -494,7 +433,6 @@ class ProjectController {
           };
         });
 
-        // PROJECT PROGRESS
         projectData.project_progress =
           projectData.milestone_with_sub.length > 0
             ? Math.round(
@@ -561,8 +499,6 @@ class ProjectController {
         ]
       });
 
-
-
       if (!project) {
         return res.status(404).json({
           message: "Project not found or unauthorized."
@@ -574,21 +510,14 @@ class ProjectController {
       const milestones = projectData.milestones || [];
       const tasks = projectData.tasks || [];
 
-      // Group tasks by submilestone_id
       const taskMap = Object.create(null);
 
-      ////////////////
-
       projectData.milestones_with_child = milestones
-
         .filter(m => m.parent_id === null)
-
         .map(parent => ({
-
           ...parent,
           children: milestones.filter(
             child => child.parent_id === parent.id
-
           )
         }));
 
@@ -596,11 +525,9 @@ class ProjectController {
         where: {
           project_id: id,
           company_id,
-
         },
         order: [['createdAt', 'DESC']],
       });
-
 
       let total_material = 0;
       let total_equipment = 0;
@@ -620,45 +547,30 @@ class ProjectController {
           } else if (item.type === "others") {
             total_others += total;
           }
-
         });
       });
 
-
       let updateData = {
         material_used: total_material,
-
         equipment_used: total_equipment,
-
         labor_used: total_labor,
-
         other_used: total_others,
-
       };
 
       await db.project.update(updateData, {
         where: { id, company_id },
-
       });
 
       const totalSpend = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.paid_amount || 0);
-
       }, 0);
 
       const grand_total = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.grand_total || 0);
-
       }, 0);
 
-
       const on_hold = (grand_total - totalSpend);
-
       const remaining_budget = (projectData.budget_total - grand_total);
-
-      ////////////////extra logic
 
       for (const task of tasks) {
         if (!taskMap[task.submilestone_id]) {
@@ -681,7 +593,6 @@ class ProjectController {
 
           const milestoneTasks = taskMap[milestone.id] || [];
 
-          // TASK PROGRESS
           const tasksWithProgress = milestoneTasks.map(task => {
             const totalSubTasks = task.sub_tasks?.length || 0;
 
@@ -701,7 +612,6 @@ class ProjectController {
             };
           });
 
-          // SUB MILESTONE PROGRESS
           const submilestone_progress =
             tasksWithProgress.length > 0
               ? Math.round(
@@ -723,7 +633,6 @@ class ProjectController {
       projectData.milestones_with_child = parentMilestones.map(parent => {
         const children = subMilestoneMap[parent.id] || [];
 
-        // MILESTONE PROGRESS
         const milestone_progress =
           children.length > 0
             ? Math.round(
@@ -741,7 +650,6 @@ class ProjectController {
         };
       });
 
-      // PROJECT PROGRESS
       projectData.project_progress =
         projectData.milestones_with_child.length > 0
           ? Math.round(
@@ -755,7 +663,6 @@ class ProjectController {
 
       return res.status(200).json({
         success: true,
-        // data: projectData
         data: {
           ...projectData,
           invoice: invoices,
@@ -778,9 +685,6 @@ class ProjectController {
     }
   }
 
-  /**
-   * Update an existing project
-   */
 
   async updateProject(req, res) {
     let t;
@@ -800,10 +704,8 @@ class ProjectController {
         other_used
       } = projectData;
 
-
       const project_data = await db.project.findOne({ where: { id, company_id } });
 
-      // 1. Team Validation
       if (team && team.length > 0) {
         const userIds = team.map(member => member.user_id);
         const validUsers = await db.user.findAll({
@@ -816,7 +718,14 @@ class ProjectController {
 
       t = await db.sequelize.transaction();
 
-      // 2. Update Project Header
+      const oldBudget = {
+        budget_total: Number(project_data.budget_total || 0),
+        material_total: Number(project_data.material_total || 0),
+        equipment_total: Number(project_data.equipment_total || 0),
+        labor_total: Number(project_data.labor_total || 0),
+        other_total: Number(project_data.other_total || 0),
+      };
+
       let updateData = {
         name, type, address,
         completion_date: completionDate,
@@ -842,14 +751,30 @@ class ProjectController {
 
       await logProjectHistory({
         project_id: id,
-        company_id,  
+        company_id,
         user_id: req.user.id,
         action_type: "UPDATED",
         detail: `updated project details`,
         meta: { updated_fields: Object.keys(updateData).filter(k => updateData[k] !== undefined) }
       }, t);
 
-      // 3. Update Milestones (Delete and Recreate)
+      const budgetChanged =
+        Number(updateData.budget_total) !== oldBudget.budget_total ||
+        Number(updateData.material_total) !== oldBudget.material_total ||
+        Number(updateData.equipment_total) !== oldBudget.equipment_total ||
+        Number(updateData.labor_total) !== oldBudget.labor_total ||
+        Number(updateData.other_total) !== oldBudget.other_total;
+
+      if (budgetChanged) {
+        await logProjectHistory({
+          project_id: id,
+          company_id,
+          user_id: req.user.id,
+          action_type: "BUDGET_UPDATED",
+          detail: `budget updated — total ₹${oldBudget.budget_total} → ₹${updateData.budget_total} (Material: ₹${updateData.material_total}, Equipment: ₹${updateData.equipment_total}, Labor: ₹${updateData.labor_total}, Other: ₹${updateData.other_total})`,
+        }, t);
+      }
+
       await db.milestone.destroy({ where: { project_id: id }, transaction: t });
       if (milestones && milestones.length > 0) {
         const milestoneData = milestones.map(ms => ({ ...ms, project_id: id }));
@@ -857,14 +782,26 @@ class ProjectController {
 
         await logProjectHistory({
           project_id: id,
-          company_id,  
+          company_id,
           user_id: req.user.id,
           action_type: "MILESTONE_UPDATED",
           detail: `milestones updated (${milestones.length} milestone(s))`,
         }, t);
+
+        const scheduledCount = milestones.filter(ms => ms.startDate || ms.endDate).length;
+        if (scheduledCount > 0) {
+          await logProjectHistory({
+            project_id: id,
+            company_id,
+            user_id: req.user.id,
+            action_type: "TIMELINE_UPDATED",
+            detail: `schedule updated for ${scheduledCount} milestone(s)`,
+            meta: { count: scheduledCount }
+          }, t);
+        }
       }
 
-      // 4. Update Team Assignments (Delete and Recreate)
+
       await db.project_team.destroy({ where: { project_id: id }, transaction: t });
       if (team && team.length > 0) {
         const teamData = team.map(member => ({
@@ -876,14 +813,14 @@ class ProjectController {
 
         await logProjectHistory({
           project_id: id,
-          company_id,  
+          company_id,
           user_id: req.user.id,
           action_type: "TEAM_UPDATED",
           detail: `team reassigned (${team.length} member(s))`,
         }, t);
       }
 
-      // 5. Handle New Documents (Blueprints)
+
       if (req.files && req.files['blueprints'] && req.files['blueprints'].length > 0) {
         const documentData = req.files['blueprints'].map(file => ({
           project_id: id,
@@ -893,6 +830,15 @@ class ProjectController {
           mimetype: file.mimetype
         }));
         await db.project_document.bulkCreate(documentData, { transaction: t });
+
+
+        await logProjectHistory({
+          project_id: id,
+          company_id,
+          user_id: req.user.id,
+          action_type: "DOCUMENT_UPLOADED",
+          detail: `uploaded ${documentData.length} document(s)`,
+        }, t);
       }
 
       await t.commit();
@@ -906,17 +852,12 @@ class ProjectController {
   }
 
 
-  /**
-   * Upload additional documents/media to an existing project
-   */
-
   async uploadDocuments(req, res) {
     let t;
     try {
       const { id } = req.params;
       const company_id = req.user.company_id;
 
-      // Verify project ownership
       const project = await db.project.findOne({ where: { id, company_id } });
       if (!project) {
         return res.status(404).json({ message: "Project not found or unauthorized." });
@@ -938,13 +879,16 @@ class ProjectController {
 
       const createdDocs = await db.project_document.bulkCreate(documentData, { transaction: t });
 
-      await logProjectHistory({
-        project_id: id,
-        company_id,  
-        user_id: req.user.id,
-        action_type: "DOCUMENT_UPLOADED",
-        detail: `uploaded ${createdDocs.length} document(s)`,
-      }, t);
+      for (const doc of createdDocs) {
+        await logProjectHistory({
+          project_id: id,
+          company_id,
+          user_id: req.user.id,
+          action_type: "DOCUMENT_UPLOADED",
+          detail: `uploaded document "${doc.name}"`,
+          meta: { file_name: doc.name }
+        }, t);
+      }
 
       await t.commit();
       res.status(201).json({
@@ -958,10 +902,8 @@ class ProjectController {
     }
   }
 
-  /**
-   * Create a milestone for a project
-   */
   async createMilestone(req, res) {
+    let t;
     try {
       const { projectId } = req.params;
       const company_id = req.user.company_id;
@@ -972,6 +914,8 @@ class ProjectController {
         return res.status(404).json({ message: "Project not found or unauthorized." });
       }
 
+      t = await db.sequelize.transaction();
+
       const milestone = await db.milestone.create({
         project_id: projectId,
         name,
@@ -981,96 +925,148 @@ class ProjectController {
         endDate,
         parent_id,
         is_completed: progress === 100
-      });
+      }, { transaction: t });
 
       await logProjectHistory({
         project_id: projectId,
-        company_id,  
+        company_id,
         user_id: req.user.id,
         action_type: "MILESTONE_ADDED",
         detail: `added milestone "${name}"`,
-      });
+      }, t);
+
+
+      if (startDate || endDate) {
+        await logProjectHistory({
+          project_id: projectId,
+          company_id,
+          user_id: req.user.id,
+          action_type: "TIMELINE_UPDATED",
+          detail: `milestone "${name}" scheduled from ${startDate || 'N/A'} to ${endDate || 'N/A'}`,
+        }, t);
+      }
+
+      await t.commit();
 
       res.status(201).json({ message: "Milestone created successfully.", data: milestone });
     } catch (error) {
+      if (t) await t.rollback();
       console.error("[CREATE_MILESTONE_ERROR]", error);
       res.status(500).json({ message: "Error creating milestone.", error: error.message });
     }
   }
 
-async updateMilestone(req, res) {
-  try {
-    const { projectId, milestoneId } = req.params;
-    const company_id = req.user.company_id;
-    const { name, progress, color, startDate, endDate, parent_id } = req.body;
+  async updateMilestone(req, res) {
+    let t;
+    try {
+      const { projectId, milestoneId } = req.params;
+      const company_id = req.user.company_id;
+      const { name, progress, color, startDate, endDate, parent_id, status } = req.body;
 
-    const project = await db.project.findOne({ where: { id: projectId, company_id } });
-    if (!project) {
-      return res.status(404).json({ message: "Project not found or unauthorized." });
+      const project = await db.project.findOne({ where: { id: projectId, company_id } });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found or unauthorized." });
+      }
+
+      const milestone = await db.milestone.findOne({ where: { id: milestoneId, project_id: projectId } });
+      if (!milestone) {
+        return res.status(404).json({ message: "Milestone not found." });
+      }
+
+      t = await db.sequelize.transaction();
+
+      const oldProgress = milestone.progress;
+      const oldStartDate = milestone.startDate ? new Date(milestone.startDate).toISOString() : null;
+      const oldEndDate = milestone.endDate ? new Date(milestone.endDate).toISOString() : null;
+      const newStartDate = startDate ? new Date(startDate).toISOString() : oldStartDate;
+      const newEndDate = endDate ? new Date(endDate).toISOString() : oldEndDate;
+
+
+      const effectiveParentId = parent_id !== undefined ? parent_id : milestone.parent_id;
+      const isSubmilestone = !!effectiveParentId;
+
+      let parentMilestoneName = null;
+      if (isSubmilestone) {
+        const parentMilestone = await db.milestone.findByPk(effectiveParentId, { transaction: t });
+        parentMilestoneName = parentMilestone ? parentMilestone.name : null;
+      }
+
+      await milestone.update({
+        name,
+        progress: progress !== undefined ? progress : milestone.progress,
+        color,
+        startDate,
+        endDate,
+        parent_id,
+        status,
+        is_completed: progress === 100
+      }, { transaction: t });
+
+      const finalName = name || milestone.name;
+      const finalProgress = progress !== undefined ? progress : milestone.progress;
+      const finalStatus = status || milestone.status;
+
+      await logProjectHistory({
+        project_id: projectId,
+        company_id,
+        user_id: req.user.id,
+        action_type: "MILESTONE_UPDATED",
+        detail: `milestone "${finalName}" updated${progress !== undefined && progress !== oldProgress ? ` (progress ${oldProgress}% → ${progress}%)` : ''}`,
+        meta: isSubmilestone
+          ? {
+            submilestone_name: finalName,
+            parent_milestone_name: parentMilestoneName,
+            status: finalStatus
+          }
+          : {
+            milestone_name: finalName,
+            progress: finalProgress,
+            status: finalStatus
+          }
+      }, t);
+
+      if (newStartDate !== oldStartDate || newEndDate !== oldEndDate) {
+        await logProjectHistory({
+          project_id: projectId,
+          company_id,
+          user_id: req.user.id,
+          action_type: "TIMELINE_UPDATED",
+          detail: `milestone "${finalName}" schedule updated`,
+          meta: isSubmilestone
+            ? {
+              submilestone_name: finalName,
+              parent_milestone_name: parentMilestoneName
+            }
+            : {
+              milestone_name: finalName
+            }
+        }, t);
+      }
+
+      await t.commit();
+
+      res.status(200).json({ message: "Milestone updated successfully.", data: milestone });
+    } catch (error) {
+      if (t) await t.rollback();
+      console.error("[UPDATE_MILESTONE_ERROR]", error);
+      res.status(500).json({ message: "Error updating milestone.", error: error.message });
     }
-
-    const milestone = await db.milestone.findOne({ where: { id: milestoneId, project_id: projectId } });
-    if (!milestone) {
-      return res.status(404).json({ message: "Milestone not found." });
-    }
-
-    const oldProgress = milestone.progress; // ✅ ADD
-
-    await milestone.update({
-      name,
-      progress: progress !== undefined ? progress : milestone.progress,
-      color,
-      startDate,
-      endDate,
-      parent_id,
-      is_completed: progress === 100
-    });
-
-    // ✅ ADD THIS — yahi missing tha
-    await logProjectHistory({
-      project_id: projectId,
-      company_id,  
-      user_id: req.user.id,
-      action_type: "MILESTONE_UPDATED",
-      detail: `milestone "${milestone.name}" updated${progress !== undefined && progress !== oldProgress ? ` (progress ${oldProgress}% → ${progress}%)` : ''}`,
-    });
-
-    res.status(200).json({ message: "Milestone updated successfully.", data: milestone });
-  } catch (error) {
-    console.error("[UPDATE_MILESTONE_ERROR]", error);
-    res.status(500).json({ message: "Error updating milestone.", error: error.message });
   }
-}
 
-  //Budgets
   async getBudget_ProjectById(req, res) {
     try {
-
       const { id } = req.params;
-
       const company_id = req.user.company_id;
 
       const project = await db.project.findOne({
         where: { id, company_id },
         include: [
-          {
-            model: db.milestone,
-            as: 'milestones'
-          },
-          {
-            model: db.project_document,
-            as: 'documents'
-          },
+          { model: db.milestone, as: 'milestones' },
+          { model: db.project_document, as: 'documents' },
           {
             model: db.user,
             as: 'team_members',
-            attributes: [
-              'id',
-              'firstname',
-              'lastname',
-              'email',
-              'avatar'
-            ],
+            attributes: ['id', 'firstname', 'lastname', 'email', 'avatar'],
             through: { attributes: ['role'] }
           }
         ]
@@ -1083,13 +1079,10 @@ async updateMilestone(req, res) {
       }
 
       const projectData = project.toJSON();
-
       const milestones = projectData.milestones || [];
 
       projectData.milestones_with_child = milestones
-
         .filter(m => m.parent_id === null)
-
         .map(parent => ({
           ...parent,
           children: milestones.filter(
@@ -1110,7 +1103,6 @@ async updateMilestone(req, res) {
   }
 
 
-  //Budgets total spent
   async getBudget_total_spent_ProjectById(req, res) {
     try {
       const { id } = req.params;
@@ -1119,14 +1111,8 @@ async updateMilestone(req, res) {
       const project = await db.project.findOne({
         where: { id, company_id },
         include: [
-          {
-            model: db.milestone,
-            as: 'milestones'
-          },
-          {
-            model: db.project_document,
-            as: 'documents'
-          },
+          { model: db.milestone, as: 'milestones' },
+          { model: db.project_document, as: 'documents' },
           {
             model: db.user,
             as: 'team_members',
@@ -1156,10 +1142,7 @@ async updateMilestone(req, res) {
           children: milestones.filter(child => child.parent_id === parent.id)
         }));
 
-      // Attach vendor invoice info
       projectData.vendor_invoice = vendor_invoice ? vendor_invoice.toJSON() : null;
-
-      // If you only want paid_amount
       projectData.total_spent = vendor_invoice ? vendor_invoice.paid_amount : 0;
 
       return res.status(200).json({
@@ -1175,9 +1158,6 @@ async updateMilestone(req, res) {
   }
 
 
-
-
-  //Budgets total ALL spent
   async getBudget_total_spent_ProjectALL(req, res) {
     try {
       const { id } = req.params;
@@ -1186,14 +1166,8 @@ async updateMilestone(req, res) {
       const project = await db.project.findOne({
         where: { id, company_id },
         include: [
-          {
-            model: db.milestone,
-            as: 'milestones'
-          },
-          {
-            model: db.project_document,
-            as: 'documents'
-          },
+          { model: db.milestone, as: 'milestones' },
+          { model: db.project_document, as: 'documents' },
           {
             model: db.user,
             as: 'team_members',
@@ -1223,10 +1197,7 @@ async updateMilestone(req, res) {
           children: milestones.filter(child => child.parent_id === parent.id)
         }));
 
-      // Attach vendor invoice info
       projectData.vendor_invoice = vendor_invoice ? vendor_invoice.toJSON() : null;
-
-      // If you only want paid_amount
       projectData.total_spent = vendor_invoice ? vendor_invoice.paid_amount : 0;
 
       return res.status(200).json({
@@ -1242,34 +1213,21 @@ async updateMilestone(req, res) {
   }
 
 
-  //Budgets
   async getBudget_vendorProjectById(req, res) {
     try {
-
       const { id } = req.params;
-
       const company_id = req.user.company_id;
 
       const project = await db.project.findOne({
         where: { id, company_id },
         include: [
-          {
-            model: db.milestone,
-            as: 'milestones'
-          },
-          {
-            model: db.project_document,
-            as: 'documents'
-          },
+          { model: db.milestone, as: 'milestones' },
+          { model: db.project_document, as: 'documents' },
           {
             model: db.user,
             as: 'team_members',
             attributes: [
-              'id',
-              'firstname',
-              'lastname',
-              'email',
-              'avatar'
+              'id', 'firstname', 'lastname', 'email', 'avatar'
             ],
             through: { attributes: ['role'] }
           }
@@ -1283,19 +1241,14 @@ async updateMilestone(req, res) {
       }
 
       const projectData = project.toJSON();
-
       const milestones = projectData.milestones || [];
 
       projectData.milestones_with_child = milestones
-
         .filter(m => m.parent_id === null)
-
         .map(parent => ({
-
           ...parent,
           children: milestones.filter(
             child => child.parent_id === parent.id
-
           )
         }));
 
@@ -1303,11 +1256,9 @@ async updateMilestone(req, res) {
         where: {
           project_id: id,
           company_id,
-
         },
         order: [['createdAt', 'DESC']],
       });
-
 
       let total_material = 0;
       let total_equipment = 0;
@@ -1327,46 +1278,32 @@ async updateMilestone(req, res) {
           } else if (item.type === "others") {
             total_others += total;
           }
-
         });
       });
 
-
       let updateData = {
         material_used: total_material,
-
         equipment_used: total_equipment,
-
         labor_used: total_labor,
-
         other_used: total_others,
-
       };
 
       await db.project.update(updateData, {
         where: { id, company_id },
       });
 
-
       const totalSpend = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.paid_amount || 0);
-
       }, 0);
 
       const grand_total = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.grand_total || 0);
-
       }, 0);
 
-
       const on_hold = (grand_total - totalSpend);
-
       const remaining_budget = (projectData.budget_total - grand_total);
 
       return res.status(200).json({
-
         data: {
           ...projectData,
           invoice: invoices,
@@ -1379,9 +1316,7 @@ async updateMilestone(req, res) {
           total_labor: total_labor.toFixed(2),
           total_others: total_others.toFixed(2),
         }
-
       });
-
 
     } catch (error) {
       return res.status(500).json({
@@ -1392,34 +1327,21 @@ async updateMilestone(req, res) {
   }
 
 
-  //Budgetsall
   async getBudgetall_vendorProjectById(req, res) {
     try {
-
       const { id } = req.params;
-
       const company_id = req.user.company_id;
 
       const project = await db.project.findOne({
         where: { id, company_id },
         include: [
-          {
-            model: db.milestone,
-            as: 'milestones'
-          },
-          {
-            model: db.project_document,
-            as: 'documents'
-          },
+          { model: db.milestone, as: 'milestones' },
+          { model: db.project_document, as: 'documents' },
           {
             model: db.user,
             as: 'team_members',
             attributes: [
-              'id',
-              'firstname',
-              'lastname',
-              'email',
-              'avatar'
+              'id', 'firstname', 'lastname', 'email', 'avatar'
             ],
             through: { attributes: ['role'] }
           }
@@ -1433,32 +1355,24 @@ async updateMilestone(req, res) {
       }
 
       const projectData = project.toJSON();
-
       const milestones = projectData.milestones || [];
 
       projectData.milestones_with_child = milestones
-
         .filter(m => m.parent_id === null)
-
         .map(parent => ({
-
           ...parent,
           children: milestones.filter(
             child => child.parent_id === parent.id
-
           )
         }));
-
 
       const invoices = await db.vendors_invoice.findAll({
         where: {
           project_id: id,
           company_id,
-          //  status: "Partially Paid"
         },
         order: [['createdAt', 'DESC']],
       });
-
 
       let total_material = 0;
       let total_equipment = 0;
@@ -1478,45 +1392,32 @@ async updateMilestone(req, res) {
           } else if (item.type === "others") {
             total_others += total;
           }
-
         });
       });
 
       let updateData = {
         material_used: total_material,
-
         equipment_used: total_equipment,
-
         labor_used: total_labor,
-
         other_used: total_others,
-
       };
 
       await db.project.update(updateData, {
         where: { id, company_id },
       });
 
-
       const totalSpend = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.paid_amount || 0);
-
       }, 0);
 
-
       const grand_total = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.grand_total || 0);
-
       }, 0);
 
       const on_hold = (grand_total - totalSpend);
-
       const remaining_budget = (projectData.budget_total - grand_total);
 
       return res.status(200).json({
-
         data: {
           ...projectData,
           invoice: invoices,
@@ -1528,9 +1429,7 @@ async updateMilestone(req, res) {
           total_equipment: total_equipment.toFixed(2),
           total_labor: total_labor.toFixed(2),
         }
-
       });
-
 
     } catch (error) {
       return res.status(500).json({
@@ -1540,70 +1439,70 @@ async updateMilestone(req, res) {
     }
   }
 
-async getProjectHistory(req, res) {
-  try {
-    const { projectId } = req.params;
-    const company_id = req.user.company_id;
+  async getProjectHistory(req, res) {
+    try {
+      const { projectId } = req.params;
+      const company_id = req.user.company_id;
 
-    const project = await db.project.findOne({ where: { id: projectId, company_id } });
-    if (!project) {
-      return res.status(404).json({ message: "Project not found or unauthorized." });
-    }
+      const project = await db.project.findOne({ where: { id: projectId, company_id } });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found or unauthorized." });
+      }
 
-    const history = await db.project_history.findAll({
-      where: { project_id: projectId },
-      include: [
-        { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "avatar"] }
-      ],
-      order: [["createdAt", "DESC"]]
-    });
-
-    return res.status(200).json({ success: true, data: history });
-  } catch (error) {
-    console.error("[GET_PROJECT_HISTORY_ERROR]", error);
-    return res.status(500).json({ message: "Error fetching project history.", error: error.message });
-  }
-}
-
-async backfillProjectHistory(req, res) {
-  try {
-    const company_id = req.user.company_id;
-
-    const projects = await db.project.findAll({ where: { company_id } });
-
-    let createdCount = 0;
-    let skippedCount = 0;
-
-    for (const p of projects) {
-      const existing = await db.project_history.findOne({
-        where: { project_id: p.id }
+      const history = await db.project_history.findAll({
+        where: { project_id: projectId },
+        include: [
+          { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "avatar"] }
+        ],
+        order: [["createdAt", "DESC"]]
       });
 
-      if (!existing) {
-        await db.project_history.create({
-          project_id: p.id,
-           company_id: p.company_id,
-          user_id: null,
-          action_type: "CREATED",
-          detail: `project "${p.name}" existed before history tracking was enabled`,
-          createdAt: p.createdAt,
-          updatedAt: p.createdAt
-        });
-        createdCount++;
-      } else {
-        skippedCount++;
-      }
+      return res.status(200).json({ success: true, data: history });
+    } catch (error) {
+      console.error("[GET_PROJECT_HISTORY_ERROR]", error);
+      return res.status(500).json({ message: "Error fetching project history.", error: error.message });
     }
-
-    return res.status(200).json({
-      success: true,
-      message: `Backfill complete. Created: ${createdCount}, Skipped (already had history): ${skippedCount}`
-    });
-  } catch (error) {
-    console.error("[BACKFILL_PROJECT_HISTORY_ERROR]", error);
-    return res.status(500).json({ message: "Error backfilling history.", error: error.message });
   }
-}
+
+  async backfillProjectHistory(req, res) {
+    try {
+      const company_id = req.user.company_id;
+
+      const projects = await db.project.findAll({ where: { company_id } });
+
+      let createdCount = 0;
+      let skippedCount = 0;
+
+      for (const p of projects) {
+        const existing = await db.project_history.findOne({
+          where: { project_id: p.id }
+        });
+
+        if (!existing) {
+          await db.project_history.create({
+            project_id: p.id,
+            company_id: p.company_id,
+            user_id: null,
+            action_type: "CREATED",
+            detail: `project "${p.name}" existed before history tracking was enabled`,
+            createdAt: p.createdAt,
+            updatedAt: p.createdAt
+          });
+          createdCount++;
+        } else {
+          skippedCount++;
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Backfill complete. Created: ${createdCount}, Skipped (already had history): ${skippedCount}`
+      });
+    } catch (error) {
+      console.error("[BACKFILL_PROJECT_HISTORY_ERROR]", error);
+      return res.status(500).json({ message: "Error backfilling history.", error: error.message });
+    }
+  }
 
   async get_companywise_ProjectById(req, res) {
     try {
@@ -1639,8 +1538,6 @@ async backfillProjectHistory(req, res) {
         ]
       });
 
-
-
       if (!project) {
         return res.status(404).json({
           message: "Project not found or unauthorized."
@@ -1652,21 +1549,14 @@ async backfillProjectHistory(req, res) {
       const milestones = projectData.milestones || [];
       const tasks = projectData.tasks || [];
 
-      // Group tasks by submilestone_id
       const taskMap = Object.create(null);
 
-      ////////////////
-
       projectData.milestones_with_child = milestones
-
         .filter(m => m.parent_id === null)
-
         .map(parent => ({
-
           ...parent,
           children: milestones.filter(
             child => child.parent_id === parent.id
-
           )
         }));
 
@@ -1674,11 +1564,9 @@ async backfillProjectHistory(req, res) {
         where: {
           project_id: id,
           company_id,
-
         },
         order: [['createdAt', 'DESC']],
       });
-
 
       let total_material = 0;
       let total_equipment = 0;
@@ -1698,45 +1586,30 @@ async backfillProjectHistory(req, res) {
           } else if (item.type === "others") {
             total_others += total;
           }
-
         });
       });
 
-
       let updateData = {
         material_used: total_material,
-
         equipment_used: total_equipment,
-
         labor_used: total_labor,
-
         other_used: total_others,
-
       };
 
       await db.project.update(updateData, {
         where: { id, company_id },
-
       });
 
       const totalSpend = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.paid_amount || 0);
-
       }, 0);
 
       const grand_total = invoices.reduce((sum, invoice) => {
-
         return sum + parseFloat(invoice.grand_total || 0);
-
       }, 0);
 
-
       const on_hold = (grand_total - totalSpend);
-
       const remaining_budget = (projectData.budget_total - grand_total);
-
-      ////////////////extra logic
 
       for (const task of tasks) {
         if (!taskMap[task.submilestone_id]) {
@@ -1759,7 +1632,6 @@ async backfillProjectHistory(req, res) {
 
           const milestoneTasks = taskMap[milestone.id] || [];
 
-          // TASK PROGRESS
           const tasksWithProgress = milestoneTasks.map(task => {
             const totalSubTasks = task.sub_tasks?.length || 0;
 
@@ -1779,7 +1651,6 @@ async backfillProjectHistory(req, res) {
             };
           });
 
-          // SUB MILESTONE PROGRESS
           const submilestone_progress =
             tasksWithProgress.length > 0
               ? Math.round(
@@ -1801,7 +1672,6 @@ async backfillProjectHistory(req, res) {
       projectData.milestones_with_child = parentMilestones.map(parent => {
         const children = subMilestoneMap[parent.id] || [];
 
-        // MILESTONE PROGRESS
         const milestone_progress =
           children.length > 0
             ? Math.round(
@@ -1819,7 +1689,6 @@ async backfillProjectHistory(req, res) {
         };
       });
 
-      // PROJECT PROGRESS
       projectData.project_progress =
         projectData.milestones_with_child.length > 0
           ? Math.round(
@@ -1833,7 +1702,6 @@ async backfillProjectHistory(req, res) {
 
       return res.status(200).json({
         success: true,
-        // data: projectData
         data: {
           ...projectData,
           invoice: invoices,

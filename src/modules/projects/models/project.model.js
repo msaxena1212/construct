@@ -35,7 +35,6 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.ENUM("On Track", "Delayed", "Completed"),
         defaultValue: "On Track",
       },
-      // Thumbnail/Image URL for the project card
       thumbnail: {
         type: Sequelize.STRING,
         allowNull: true,
