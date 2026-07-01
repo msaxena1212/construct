@@ -6,7 +6,9 @@
   grid-template-columns: 270px 1fr;
   height: 100vh;
   overflow: hidden;
-  transition: grid-template-columns 0.3s ease, background 0.3s ease;
+  transition:
+    grid-template-columns 0.3s ease,
+    background 0.3s ease;
   position: relative;
   background: #ffffff;
 }
@@ -147,7 +149,9 @@
   border: none;
   border-radius: 14px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sidebar-cta:hover {
@@ -191,22 +195,22 @@
 }
 
 /* Sidebar scrollbar */
-  .sidebar-nav::-webkit-scrollbar {
-    width: 2px;
-  }
-    
-  .sidebar-nav::-webkit-scrollbar-track {
-    background: #f1f5f9;
-  }
-    
-  .sidebar-nav::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
-  }
-    
-  .sidebar-nav::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
+.sidebar-nav::-webkit-scrollbar {
+  width: 2px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 
 /* Menu */
 .sidebar-nav ul {
@@ -262,7 +266,9 @@
   margin-right: 12px;
   flex-shrink: 0;
   color: #475569;
-  transition: color 0.22s ease, transform 0.22s ease;
+  transition:
+    color 0.22s ease,
+    transform 0.22s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -313,7 +319,9 @@
   text-decoration: none;
   padding: 8px 12px;
   border-radius: 8px;
-  transition: background 0.22s ease, transform 0.22s ease;
+  transition:
+    background 0.22s ease,
+    transform 0.22s ease;
 }
 
 .sidebar-nav ul li .submenu a:hover {
@@ -408,7 +416,10 @@
   background: linear-gradient(135deg, var(--accent-start) 0%, var(--accent-end) 100%);
   color: #ffffff;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
 }
 
 .profile-trigger:hover {
@@ -723,3 +734,5 @@
     grid-template-columns: 0 1fr;
   }
 }
+
+
