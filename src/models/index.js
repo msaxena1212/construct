@@ -111,6 +111,9 @@ db.project_history.belongsTo(db.project, { foreignKey: "project_id" });
 db.user.hasMany(db.project_history, { foreignKey: "user_id", as: "project_history_logs" });
 db.project_history.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
 
+db.company.hasMany(db.project_history, { foreignKey: "company_id", as: "project_history_logs" });
+db.project_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
 // Task Management Associations
 db.project.hasMany(db.project_task, { foreignKey: "project_id", as: "tasks", onDelete: 'CASCADE' });
 db.project_task.belongsTo(db.project, { foreignKey: "project_id" });

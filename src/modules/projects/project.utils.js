@@ -119,10 +119,10 @@ const syncTaskProgress = async (taskId, transaction = null) => {
 };
 
 
-const logProjectHistory = async ({ project_id, user_id = null, action_type, detail, meta = null }, transaction = null) => {
+const logProjectHistory = async ({ project_id, company_id = null, user_id = null, action_type, detail, meta = null }, transaction = null) => {
   try {
     await db.project_history.create(
-      { project_id, user_id, action_type, detail, meta },
+      { project_id, company_id, user_id, action_type, detail, meta },
       { transaction }
     );
   } catch (error) {

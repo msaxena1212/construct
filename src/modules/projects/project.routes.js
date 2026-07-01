@@ -1,6 +1,7 @@
 const projectCtrl = require("./project.controller");
 const upload = require("../../shared/middlewares/upload.middleware");
 const checkPermission = require("../../core/middleware/permission.middleware");
+const { getProjectHistory, getProjectHistorySummary } = require("./project-history.controller");
 
 module.exports = (router) => {
   // Create Project (with milestones, team members, and file uploads)
@@ -23,11 +24,9 @@ module.exports = (router) => {
   router.get("/projects/:id", checkPermission("projects", "can_read"), projectCtrl.getProjectById);
 
 // Project History routes  ──────────────────────
-router.get("/projects/:projectId/history", checkPermission("projects", "can_read"), projectCtrl.getProjectHistory);
-
-// TEMPORARY — run once, then remove this route
+router.get("/projects/:projectId/history", checkPermission("projects", "can_read"), getProjectHistory);
+router.get("/projects/:projectId/history/summary", checkPermission("projects", "can_read"), getProjectHistorySummary);;
 router.post("/projects/backfill-history", checkPermission("projects", "can_update"), projectCtrl.backfillProjectHistory);
-
   // Get project timeline data
   router.get("/projects/:projectId/timeline", checkPermission("projects", "can_read"), projectCtrl.getProjectTimeline);
 
