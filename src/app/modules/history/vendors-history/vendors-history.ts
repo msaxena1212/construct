@@ -90,9 +90,8 @@ export interface BudgetEventMeta {
   exceededBy: number;
 }
 
-// ── NEW: flat date-keyed group used in the template ──────────────────────────
 export interface FlatDateGroup {
-  dateKey: string;   // "YYYY-MM-DD" for tracking
+  dateKey: string;
   date: Date;
   events: HistoryEvent[];
 }
@@ -159,8 +158,8 @@ interface AddEventOptions {
   viewAction?: () => void;
   budgetMeta?: BudgetEventMeta;
   meta?: EventMeta;
-  createdRawDate?: any;   // ← NEW
-  updatedRawDate?: any;   // ← NEW
+  createdRawDate?: any;
+  updatedRawDate?: any;
 }
 
 const CATEGORY_META: Record<ConcreteCategory, { label: string; badgeClass: string }> = {
@@ -175,19 +174,28 @@ const CATEGORY_META: Record<ConcreteCategory, { label: string; badgeClass: strin
   budget: { label: 'Budget', badgeClass: 'bg-violet-100 text-violet-700' },
 };
 
+function cleanNameStandalone(val: any): string | null {
+  if (val === null || val === undefined) return null;
+  const str = String(val).trim();
+  if (!str) return null;
+  if (str.toLowerCase() === 'unknown') return null;
+  return str;
+}
+
 function buildHistoryMeta(
   action: string,
   formattedDateTime: string,
   changedByName: string | null,
+  fallbackUser: string,
   entityCreatedAtFormatted?: string | null,
   entityCreatedByName?: string | null
 ): EventMeta {
-  const actor = changedByName || 'Admin';
+  const actor = cleanNameStandalone(changedByName) || fallbackUser;
   const meta: EventMeta = {};
 
   if (entityCreatedAtFormatted) {
     meta.createdAt = entityCreatedAtFormatted;
-    meta.createdBy = entityCreatedByName || 'Admin';
+    meta.createdBy = cleanNameStandalone(entityCreatedByName) || actor;
   }
 
   if (action === 'created') {
@@ -208,7 +216,6 @@ function buildHistoryMeta(
 
   return meta;
 }
-
 @Component({
   selector: 'app-vendors-history',
   standalone: false,
@@ -247,6 +254,27 @@ export class VendorsHistory implements OnInit {
     { key: 'invoice', label: 'Invoices' },
     { key: 'labor', label: 'Labor' },
   ];
+
+  private cleanName(val: any): string | null {
+    if (val === null || val === undefined) return null;
+    const str = String(val).trim();
+    if (!str) return null;
+    if (str.toLowerCase() === 'unknown') return null;
+    return str;
+  }
+
+  private get currentUserDisplayName(): string {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        return user?.email || user?.name || user?.username || 'Unknown';
+      }
+    } catch {
+
+    }
+    return 'Unknown';
+  }
 
   getCategoryBadgeClass(cat: ConcreteCategory): string {
     return CATEGORY_META[cat]?.badgeClass ?? 'bg-slate-100 text-slate-600';
@@ -291,7 +319,6 @@ export class VendorsHistory implements OnInit {
     }
   }
 
-  // ── Vendor dropdown helpers ──────────────────────────────────────────────
   get vendorDropdownLabel(): string {
     if (this.selectedVendorIds.size === 0 || this.isAllSelected) return 'All Vendors';
     if (this.selectedVendorIds.size === 1) {
@@ -339,7 +366,7 @@ export class VendorsHistory implements OnInit {
       this.selectedVendorIds = new Set(this.vendors.map(v => v.id));
       this.vendors.forEach(v => this.ensureVendorLoaded(v));
     }
-    this._flatCache = null; // invalidate flat cache
+    this._flatCache = null;
   }
 
   toggleVendorSelection(vendor: Vendor): void {
@@ -373,19 +400,24 @@ export class VendorsHistory implements OnInit {
   setActiveCategory(key: HistoryCategory): void { this.activeCategory = key; }
 
   getCategoryCount(key: HistoryCategory): number {
-    const allVendorEvents = this.timelineEvents;
-
     const matched = key === 'all'
-      ? allVendorEvents.filter(ev =>
-        ev.categories.some(c => this.categoryTabs.map(t => t.key).includes(c as HistoryCategory))
-      )
-      : allVendorEvents.filter(ev => ev.categories.includes(key as ConcreteCategory));
+      ? this.timelineEvents
+      : this.timelineEvents.filter(ev => ev.categories.includes(key as ConcreteCategory));
 
-    // ── De-duplicate split (-created / -updated) halves of same logical event ──
-    const uniqueBaseIds = new Set(
-      matched.map(ev => ev.id.replace(/-(created|updated)$/, ''))
-    );
-    return uniqueBaseIds.size;
+    const dateMap = new Map<string, HistoryEvent[]>();
+    matched.forEach(ev => {
+      const dk = this.dateKey(ev.date);
+      if (!dateMap.has(dk)) dateMap.set(dk, []);
+      dateMap.get(dk)!.push(ev);
+    });
+
+    let total = 0;
+    dateMap.forEach(evs => {
+      const fakeGroup = { events: evs } as any;
+      total += this.countEventsInDateGroup(fakeGroup);
+    });
+
+    return total;
   }
 
   get activeCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'active').length; }
@@ -484,11 +516,9 @@ export class VendorsHistory implements OnInit {
     return `${count} ${skill} ${noun} ${verb} added to Vendor "${vendorName}" at a daily rate of ${this.formatAmount(dailyRate)} per labor (total daily cost ${this.formatAmount(dailyCost)}). Current status: ${statusCap}.`;
   }
 
-  // ── Timeline cache — now invalidated when selectedVendorIds changes ─────
   private _timelineCache: { key: string; events: HistoryEvent[] } | null = null;
 
   get timelineEvents(): HistoryEvent[] {
-    // Cache key includes BOTH loaded vendors AND selected vendor ids
     const selectedKey = [...this.selectedVendorIds].sort().join(',');
     const loadedKey = this.displayVendors
       .filter(v => this.records[v.id]?.loaded)
@@ -514,7 +544,6 @@ export class VendorsHistory implements OnInit {
     );
   }
 
-  // ── FIX: flatDateGroups — date-wise grouping ACROSS all selected vendors ─
   private _flatCache: { key: string; cat: string; groups: FlatDateGroup[] } | null = null;
 
   get flatDateGroups(): FlatDateGroup[] {
@@ -526,10 +555,8 @@ export class VendorsHistory implements OnInit {
 
     if (this._flatCache?.key === cacheKey) return this._flatCache.groups;
 
-    // Get events filtered by active category
     const events = this.filteredTimelineEvents;
 
-    // Group by date across all vendors
     const dateMap = new Map<string, { date: Date; events: HistoryEvent[] }>();
     events.forEach(ev => {
       const dk = this.dateKey(ev.date);
@@ -551,7 +578,6 @@ export class VendorsHistory implements OnInit {
     return groups;
   }
 
-  // ── Kept for backward compat if template uses it ─────────────────────────
   get groupedTimelineEvents(): VendorGroup[] {
     const allEvents = this.timelineEvents;
 
@@ -589,12 +615,10 @@ export class VendorsHistory implements OnInit {
       .filter(g => g.events.length > 0);
   }
 
-  // ── Count events in a date group including implicit budget card ──────────
-  // FIX: count the implicit budget card that renders after '-onboard' event
   countEventsInDateGroup(dGroup: VendorDateGroup | FlatDateGroup): number {
     let count = dGroup.events.length;
     dGroup.events.forEach(ev => {
-      if (ev.budgetMeta && ev.id.includes('-onboard')) count++;   // ← endsWith → includes
+      if (ev.budgetMeta && ev.id.includes('-onboard')) count++;
     });
     return count;
   }
@@ -614,7 +638,7 @@ export class VendorsHistory implements OnInit {
     const hasUpdated = !!(opts.meta?.updatedAt || opts.meta?.updatedBy);
 
     if (hasCreated && hasUpdated) {
-      // ── Created card → apni asli "created" date ke group mein ──
+
       const createdDate = this.parseDate(opts.createdRawDate ?? opts.rawDate);
       if (createdDate) {
         events.push({
@@ -636,7 +660,6 @@ export class VendorsHistory implements OnInit {
         });
       }
 
-      // ── Updated card → apni asli "updated" date ke group mein ──
       const updatedDate = this.parseDate(opts.updatedRawDate ?? opts.rawDate);
       if (updatedDate) {
         events.push({
@@ -659,7 +682,6 @@ export class VendorsHistory implements OnInit {
       return;
     }
 
-    // ── Sirf Created YA sirf Updated (ya kuch nahi) → 1 hi card ──
     const d = this.parseDate(opts.rawDate);
     if (!d) return;
     events.push({
@@ -689,16 +711,19 @@ export class VendorsHistory implements OnInit {
     updatedAtRaw?: any,
     updatedByRaw?: any
   ): EventMeta {
+    const fallbackUser = this.currentUserDisplayName;
     const meta: EventMeta = {
       createdAt: createdAtRaw ? this.formatDateTime(createdAtRaw) : undefined,
-      createdBy: createdAtRaw ? (createdByRaw || 'Admin') : undefined,
+      createdBy: createdAtRaw
+        ? (this.cleanName(createdByRaw) || this.cleanName(updatedByRaw) || fallbackUser)
+        : undefined,
     };
 
     if (updatedAtRaw) {
       const updatedMs = new Date(updatedAtRaw).getTime();
       if (!isNaN(updatedMs)) {
         meta.updatedAt = this.formatDateTime(updatedAtRaw);
-        meta.updatedBy = updatedByRaw || 'Admin';
+        meta.updatedBy = this.cleanName(updatedByRaw) || fallbackUser;
       }
     }
 
@@ -766,13 +791,34 @@ export class VendorsHistory implements OnInit {
     const projectName = rec.projectData?.name || null;
     const updatedAt = (v as any).updated_at;
     const updatedBy = (v as any).updated_by_name || null;
-    const createdBy = (v as any).created_by_name || 'Admin';
 
-    // ── Vendor onboarded ─────────────────────────────────────────────────
+    const creationInfoMap = new Map<string, { name: string; at: string }>();
+    rec.historyEvents
+      .filter(h => h.action === 'created')
+      .forEach(h => {
+        const key = `${h.entity_type}-${h.entity_id ?? 'vendor'}`;
+        const cleanedName = this.cleanName(h.changed_by_name);
+        if (!creationInfoMap.has(key) && cleanedName) {
+          creationInfoMap.set(key, { name: cleanedName, at: h.createdAt });
+        }
+      });
+
+    const getCreator = (entityType: string, entityId: number | string | null): { name: string; at: string } | null => {
+      const key = `${entityType}-${entityId ?? 'vendor'}`;
+      return creationInfoMap.get(key) || null;
+    };
+
+    const vendorCreationInfo = getCreator('vendor', null);
+    const createdBy =
+      this.cleanName(vendorCreationInfo?.name) ||
+      this.cleanName((v as any).created_by_name) ||
+      this.cleanName(updatedBy) ||
+      this.currentUserDisplayName;
+
     this.addEvent(events, v, {
       rawDate: v.created_at,
-      createdRawDate: v.created_at,   // ← NEW
-      updatedRawDate: updatedAt,      // ← NEW
+      createdRawDate: vendorCreationInfo?.at || v.created_at,
+      updatedRawDate: updatedAt,
       icon: 'person_add',
       iconBg: 'bg-pink-100',
       iconColor: 'text-pink-600',
@@ -794,15 +840,15 @@ export class VendorsHistory implements OnInit {
         ...(projectName ? [{ label: 'Project', value: projectName, valueColor: 'text-indigo-600' }] : []),
       ],
       budgetMeta: allocated > 0 ? this.buildBudgetMeta(allocated, rec.totalBilled, rec.totalPaid) : undefined,
-      meta: this.buildMeta(v.created_at, createdBy, updatedAt, updatedBy),
+      meta: this.buildMeta(vendorCreationInfo?.at || v.created_at, createdBy, updatedAt, updatedBy),
     });
 
-    // ── Project linked ────────────────────────────────────────────────────
+
     if (projectName) {
       this.addEvent(events, v, {
         rawDate: v.created_at,
-        createdRawDate: v.created_at,   // ← NEW
-        updatedRawDate: updatedAt,      // ← NEW
+        createdRawDate: vendorCreationInfo?.at || v.created_at,
+        updatedRawDate: updatedAt,
         icon: 'folder_special',
         iconBg: 'bg-indigo-100',
         iconColor: 'text-indigo-600',
@@ -815,11 +861,11 @@ export class VendorsHistory implements OnInit {
           { label: 'Status', value: v.status, valueColor: v.status.toLowerCase() === 'active' ? 'text-green-600' : 'text-amber-600' },
           { label: 'Since', value: this.stmtDate(v.created_at), valueColor: 'text-slate-500' },
         ],
-        meta: this.buildMeta(v.created_at, createdBy, updatedAt, updatedBy),
+        meta: this.buildMeta(vendorCreationInfo?.at || v.created_at, createdBy, updatedAt, updatedBy),
       });
     }
 
-    // ── Budget exceeded ───────────────────────────────────────────────────
+
     if (allocated > 0 && rec.totalBilled > allocated) {
       const exceededBy = rec.totalBilled - allocated;
       const latestInvDate = this.getLatestInvoiceDate(rec);
@@ -841,7 +887,6 @@ export class VendorsHistory implements OnInit {
       });
     }
 
-    // ── History events (from DB) — deduplicated ───────────────────────────
     const invoiceHistoryMap = new Map<string, VendorHistoryEvent>();
     rec.historyEvents
       .filter(h => h.entity_type === 'invoice' && h.entity_id != null)
@@ -866,7 +911,6 @@ export class VendorsHistory implements OnInit {
       });
     const laborIdsWithHistory = new Set(laborHistoryMap.keys());
 
-    // ── Synthetic invoice events (no DB history entry exists) ────────────
     rec.invoices.forEach((inv, idx) => {
       if (invoiceIdsWithHistory.has(String(inv.id))) return;
 
@@ -894,15 +938,21 @@ export class VendorsHistory implements OnInit {
         subDetails.push({ label: 'Remaining', value: this.formatAmount(remainingAmt), valueColor: 'text-red-500' });
       }
 
-      const invCreatedAt = (inv as any).created_at || (inv as any).createdAt || inv.invoice_date;
-      const invCreatedBy = (inv as any).created_by_name || (inv as any).createdByName || 'Admin';
+      const invCreationInfo = getCreator('invoice', inv.id);
+      const invCreatedAt = invCreationInfo?.at || (inv as any).created_at || (inv as any).createdAt || inv.invoice_date;
       const invUpdatedAt = (inv as any).updated_at || (inv as any).updatedAt;
       const invUpdatedBy = (inv as any).updated_by_name || (inv as any).updatedByName;
+      const invCreatedBy =
+        this.cleanName(invCreationInfo?.name) ||
+        this.cleanName((inv as any).created_by_name) ||
+        this.cleanName((inv as any).createdByName) ||
+        this.cleanName(invUpdatedBy) ||
+        this.currentUserDisplayName;
 
       this.addEvent(events, v, {
         rawDate: inv.invoice_date || v.created_at,
-        createdRawDate: invCreatedAt,   // ← NEW
-        updatedRawDate: invUpdatedAt,   // ← NEW
+        createdRawDate: invCreatedAt,
+        updatedRawDate: invUpdatedAt,
         icon, iconBg, iconColor,
         description: `Invoice ${inv.invoice_number} (${inv.status}) — ${this.formatAmount(inv.grand_total)} for Vendor "${v.name}".`,
         idSuffix: `inv-synthetic-${inv.id ?? idx}`,
@@ -913,7 +963,7 @@ export class VendorsHistory implements OnInit {
       });
     });
 
-    // ── Synthetic labor events (no DB history entry exists) ──────────────
+
     rec.laborWorkers.forEach((w, idx) => {
       if (laborIdsWithHistory.has(String((w as any).id))) return;
 
@@ -938,15 +988,16 @@ export class VendorsHistory implements OnInit {
         subDetails.push({ label: 'Assigned To', value: String(w.assign_worker), valueColor: 'text-slate-600' });
       }
 
-      const lCreatedAt = (w as any).created_at || (w as any).createdAt || v.created_at;
-      const lCreatedBy = (w as any).created_by_name || (w as any).createdByName || 'Admin';
+      const laborCreationInfo = getCreator('labor', (w as any).id);
+      const lCreatedAt = laborCreationInfo?.at || (w as any).created_at || (w as any).createdAt || v.created_at;
       const lUpdatedAt = (w as any).updated_at || (w as any).updatedAt;
       const lUpdatedBy = (w as any).updated_by_name || (w as any).updatedByName;
+      const lCreatedBy = laborCreationInfo?.name || (w as any).created_by_name || (w as any).createdByName || lUpdatedBy || this.currentUserDisplayName;
 
       this.addEvent(events, v, {
         rawDate: lCreatedAt,
-        createdRawDate: lCreatedAt,     // ← NEW
-        updatedRawDate: lUpdatedAt,     // ← NEW
+        createdRawDate: lCreatedAt,
+        updatedRawDate: lUpdatedAt,
         icon: 'engineering',
         iconBg: 'bg-teal-100',
         iconColor: 'text-teal-600',
@@ -958,9 +1009,29 @@ export class VendorsHistory implements OnInit {
       });
     });
 
-    // ── DB history events ─────────────────────────────────────────────────
+
+    const vendorHistoryMap = new Map<string, VendorHistoryEvent>();
+    rec.historyEvents
+      .filter(h => h.entity_type === 'vendor')
+      .forEach(h => {
+
+        const minuteKey = new Date(h.createdAt).toISOString().slice(0, 16);
+        const valuesKey = JSON.stringify(h.new_values || {});
+        const key = `${h.action}|${valuesKey}|${minuteKey}`;
+
+        const existing = vendorHistoryMap.get(key);
+        if (!existing) {
+          vendorHistoryMap.set(key, h);
+        }
+
+      });
+
+
     const deduplicatedHistoryEvents: VendorHistoryEvent[] = [
-      ...rec.historyEvents.filter(h => h.entity_type !== 'labor' && h.entity_type !== 'invoice'),
+      ...rec.historyEvents.filter(h =>
+        h.entity_type !== 'labor' && h.entity_type !== 'invoice' && h.entity_type !== 'vendor'
+      ),
+      ...Array.from(vendorHistoryMap.values()),
       ...Array.from(invoiceHistoryMap.values()),
       ...Array.from(laborHistoryMap.values()),
     ];
@@ -989,7 +1060,7 @@ export class VendorsHistory implements OnInit {
         iconBg = 'bg-pink-100';
         iconColor = 'text-pink-600';
 
-        entityCreatedAtRaw = v.created_at;
+        entityCreatedAtRaw = vendorCreationInfo?.at || v.created_at;
         entityCreatedByVal = createdBy;
 
         const actionLabel =
@@ -1070,8 +1141,11 @@ export class VendorsHistory implements OnInit {
         if (matchedInv) viewAction = () => this.viewInvoice(rec, matchedInv);
 
         if (matchedInv) {
-          entityCreatedAtRaw = (matchedInv as any).created_at || (matchedInv as any).createdAt || matchedInv.invoice_date;
-          entityCreatedByVal = (matchedInv as any).created_by_name || (matchedInv as any).createdByName || 'Admin';
+
+          const invCreationInfo = getCreator('invoice', matchedInv.id);
+          const matchedInvUpdatedBy = (matchedInv as any).updated_by_name || (matchedInv as any).updatedByName;
+          entityCreatedAtRaw = invCreationInfo?.at || (matchedInv as any).created_at || (matchedInv as any).createdAt || matchedInv.invoice_date;
+          entityCreatedByVal = invCreationInfo?.name || (matchedInv as any).created_by_name || (matchedInv as any).createdByName || matchedInvUpdatedBy || this.currentUserDisplayName;
         }
 
         const invNumberVal = h.meta?.invoice_number ?? matchedInv?.invoice_number;
@@ -1113,8 +1187,10 @@ export class VendorsHistory implements OnInit {
         const matchedLabor = rec.laborWorkers.find(w => String((w as any).id) === String(h.entity_id));
 
         if (matchedLabor) {
-          entityCreatedAtRaw = (matchedLabor as any).created_at || (matchedLabor as any).createdAt;
-          entityCreatedByVal = (matchedLabor as any).created_by_name || (matchedLabor as any).createdByName || 'Admin';
+          const laborCreationInfo = getCreator('labor', (matchedLabor as any).id);
+          const matchedLaborUpdatedBy = (matchedLabor as any).updated_by_name || (matchedLabor as any).updatedByName;
+          entityCreatedAtRaw = laborCreationInfo?.at || (matchedLabor as any).created_at || (matchedLabor as any).createdAt;
+          entityCreatedByVal = laborCreationInfo?.name || (matchedLabor as any).created_by_name || (matchedLabor as any).createdByName || matchedLaborUpdatedBy || this.currentUserDisplayName;
         }
 
         const skillVal = h.meta?.skill ?? matchedLabor?.skill;
@@ -1147,8 +1223,10 @@ export class VendorsHistory implements OnInit {
         const matchedAudit: any = rec.audits.find((a: any) => String(a.id) === String(h.entity_id));
 
         if (matchedAudit) {
-          entityCreatedAtRaw = matchedAudit.created_at || matchedAudit.createdAt || matchedAudit.audit_date || matchedAudit.auditDate;
-          entityCreatedByVal = matchedAudit.created_by_name || matchedAudit.createdByName || 'Admin';
+          const auditCreationInfo = getCreator('audit', matchedAudit.id);
+          const matchedAuditUpdatedBy = matchedAudit.updated_by_name || matchedAudit.updatedByName;
+          entityCreatedAtRaw = auditCreationInfo?.at || matchedAudit.created_at || matchedAudit.createdAt || matchedAudit.audit_date || matchedAudit.auditDate;
+          entityCreatedByVal = auditCreationInfo?.name || matchedAudit.created_by_name || matchedAudit.createdByName || matchedAuditUpdatedBy || this.currentUserDisplayName;
         }
 
         const scoreVal = h.meta?.composite_score ?? matchedAudit?.composite_score ?? matchedAudit?.compositeScore;
@@ -1173,12 +1251,12 @@ export class VendorsHistory implements OnInit {
       }
 
       const entityCreatedFormatted = entityCreatedAtRaw ? this.formatDateTime(entityCreatedAtRaw) : null;
-      const hMeta = buildHistoryMeta(h.action, hFormatted, h.changed_by_name, entityCreatedFormatted, entityCreatedByVal);
+      const hMeta = buildHistoryMeta(h.action, hFormatted, h.changed_by_name, this.currentUserDisplayName, entityCreatedFormatted, entityCreatedByVal);
 
       this.addEvent(events, v, {
         rawDate: h.createdAt,
-        createdRawDate: entityCreatedAtRaw || h.createdAt,   // ← NEW
-        updatedRawDate: h.createdAt,                          // ← NEW
+        createdRawDate: entityCreatedAtRaw || h.createdAt,
+        updatedRawDate: h.createdAt,
         icon, iconBg, iconColor,
         description: eventDescription,
         idSuffix: `hist-${h.id}`,
@@ -1189,7 +1267,7 @@ export class VendorsHistory implements OnInit {
       });
     });
 
-    // ── Tasks ─────────────────────────────────────────────────────────────
+
     rec.tasks.forEach((t: any) => {
       const taskRawDate = this.resolveDate(
         t, 'updated_at', 'updatedAt', 'created_at', 'createdAt',
@@ -1199,14 +1277,14 @@ export class VendorsHistory implements OnInit {
 
       const statusHuman = this.humanizeStatus(t.status);
       const tCreatedAt = (t as any).created_at || (t as any).createdAt;
-      const tCreatedBy = (t as any).created_by_name || (t as any).createdByName || 'Admin';
       const tUpdatedAt = (t as any).updated_at || (t as any).updatedAt;
       const tUpdatedBy = (t as any).updated_by_name || (t as any).updatedByName;
+      const tCreatedBy = (t as any).created_by_name || (t as any).createdByName || tUpdatedBy || this.currentUserDisplayName;
 
       this.addEvent(events, v, {
         rawDate: taskRawDate,
-        createdRawDate: tCreatedAt,   // ← NEW
-        updatedRawDate: tUpdatedAt,   // ← NEW
+        createdRawDate: tCreatedAt,
+        updatedRawDate: tUpdatedAt,
         icon: 'checklist',
         iconBg: 'bg-blue-100',
         iconColor: 'text-blue-600',
@@ -1225,7 +1303,7 @@ export class VendorsHistory implements OnInit {
       });
     });
 
-    // ── Milestones ────────────────────────────────────────────────────────
+
     rec.milestones.forEach(m => {
       const mRawDate = this.resolveDate(
         m, 'updated_at', 'updatedAt', 'end_date', 'endDate',
@@ -1235,13 +1313,16 @@ export class VendorsHistory implements OnInit {
 
       const progress = m.milestone_progress ?? (m as any).milestoneProgress ?? m.progress ?? null;
       const mLabel = m.name || m.title || `Milestone #${m.id}`;
+
       const mCreatedAt = (m as any).created_at || (m as any).createdAt;
       const mUpdatedAt = (m as any).updated_at || (m as any).updatedAt;
+      const mUpdatedBy = (m as any).updated_by_name || (m as any).updatedByName || this.currentUserDisplayName;
+      const mCreatedBy = (m as any).created_by_name || (m as any).createdByName || mUpdatedBy || this.currentUserDisplayName;
 
       this.addEvent(events, v, {
         rawDate: mRawDate,
-        createdRawDate: mCreatedAt,   // ← NEW
-        updatedRawDate: mUpdatedAt,   // ← NEW
+        createdRawDate: mCreatedAt,
+        updatedRawDate: mUpdatedAt,
         icon: 'flag',
         iconBg: 'bg-purple-100',
         iconColor: 'text-purple-600',
@@ -1257,7 +1338,7 @@ export class VendorsHistory implements OnInit {
             : [{ label: 'Status', value: this.humanizeStatus(m.status), valueColor: 'text-purple-600' }]),
           ...(projectName ? [{ label: 'Project', value: projectName, valueColor: 'text-indigo-600' }] : []),
         ],
-        meta: this.buildMeta(mCreatedAt, 'Admin', mUpdatedAt, 'Admin'),
+        meta: this.buildMeta(mCreatedAt, mCreatedBy, mUpdatedAt, mUpdatedBy),
       });
 
       (m.children || []).forEach(c => {
@@ -1268,13 +1349,16 @@ export class VendorsHistory implements OnInit {
         if (!this.parseDate(cRawDate)) return;
 
         const cLabel = c.name || c.title || `Sub-Milestone #${c.id}`;
+
         const cCreatedAt = (c as any).created_at || (c as any).createdAt;
         const cUpdatedAt = (c as any).updated_at || (c as any).updatedAt;
+        const cUpdatedBy = (c as any).updated_by_name || (c as any).updatedByName || this.currentUserDisplayName;
+        const cCreatedBy = (c as any).created_by_name || (c as any).createdByName || cUpdatedBy || this.currentUserDisplayName;
 
         this.addEvent(events, v, {
           rawDate: cRawDate,
-          createdRawDate: cCreatedAt,   // ← NEW
-          updatedRawDate: cUpdatedAt,   // ← NEW
+          createdRawDate: cCreatedAt,
+          updatedRawDate: cUpdatedAt,
           icon: 'subdirectory_arrow_right',
           iconBg: 'bg-purple-50',
           iconColor: 'text-purple-500',
@@ -1286,19 +1370,19 @@ export class VendorsHistory implements OnInit {
             { label: 'Parent', value: mLabel, valueColor: 'text-purple-600' },
             { label: 'Status', value: this.humanizeStatus(c.status), valueColor: 'text-slate-600' },
           ],
-          meta: this.buildMeta(cCreatedAt, 'Admin', cUpdatedAt, 'Admin'),
+          meta: this.buildMeta(cCreatedAt, cCreatedBy, cUpdatedAt, cUpdatedBy),
         });
       });
     });
 
-    // ── Documents ─────────────────────────────────────────────────────────
+
     (v.contract_files || []).forEach((file, idx) => {
       const docDate = updatedAt || v.created_at;
       const fileName = this.getFileName(file);
       this.addEvent(events, v, {
         rawDate: docDate,
-        createdRawDate: v.created_at,   // ← NEW
-        updatedRawDate: updatedAt,      // ← NEW
+        createdRawDate: vendorCreationInfo?.at || v.created_at,
+        updatedRawDate: updatedAt,
         icon: 'description',
         iconBg: 'bg-slate-100',
         iconColor: 'text-slate-600',
@@ -1310,7 +1394,7 @@ export class VendorsHistory implements OnInit {
           { label: 'Vendor', value: v.name, valueColor: 'text-primary' },
           ...(projectName ? [{ label: 'Project', value: projectName, valueColor: 'text-indigo-600' }] : []),
         ],
-        meta: this.buildMeta(v.created_at, createdBy, updatedAt, updatedBy),
+        meta: this.buildMeta(vendorCreationInfo?.at || v.created_at, createdBy, updatedAt, updatedBy),
       });
     });
 
@@ -1376,7 +1460,7 @@ export class VendorsHistory implements OnInit {
             rec.loaded = true;
             rec.loading = false;
             this._timelineCache = null;
-            this._flatCache = null;   // ← also invalidate flat cache
+            this._flatCache = null;
             this.records = { ...this.records, [vendor.id]: { ...rec } };
             resolve(rec);
           },
@@ -1720,34 +1804,68 @@ table{width:100%;border-collapse:collapse;margin-top:6px;}th{background:#f1f5f9;
       const rows: string[] = [];
       rows.push('Vendor,Project,Record Type,Reference,Date,Amount,Status,Details,Created At,Created By,Updated At,Updated By');
       const esc = (val: any) => `"${String(val ?? '—').replace(/"/g, '""')}"`;
+      const fallbackUser = this.currentUserDisplayName;
       vendorsToExport.forEach(v => {
         const rec = this.records[v.id];
         if (!rec) return;
         const projectName = rec.projectData?.name || 'Not linked';
-        const createdBy = (v as any).created_by_name || 'Admin';
-        const updatedBy = (v as any).updated_by_name || 'Admin';
+
+        const creationInfoMap = new Map<string, { name: string; at: string }>();
+        rec.historyEvents
+          .filter(h => h.action === 'created')
+          .forEach(h => {
+            const key = `${h.entity_type}-${h.entity_id ?? 'vendor'}`;
+            const cleanedName = this.cleanName(h.changed_by_name);
+            if (!creationInfoMap.has(key) && cleanedName) {
+              creationInfoMap.set(key, { name: cleanedName, at: h.createdAt });
+            }
+          });
+        const getCreatorCsv = (entityType: string, entityId: number | string | null) => {
+          const key = `${entityType}-${entityId ?? 'vendor'}`;
+          return creationInfoMap.get(key) || null;
+        };
+
+        const updatedBy = (v as any).updated_by_name || fallbackUser;
+        const vendorCreator = getCreatorCsv('vendor', null);
+        const createdBy = vendorCreator?.name || (v as any).created_by_name || updatedBy;
+
         rec.invoices.forEach(inv => {
-          const iCreatedAt = (inv as any).created_at || (inv as any).createdAt || inv.invoice_date;
+          const invCreator = getCreatorCsv('invoice', inv.id);
+          const iCreatedAt = invCreator?.at || (inv as any).created_at || (inv as any).createdAt || inv.invoice_date;
           const iUpdatedAt = (inv as any).updated_at || (inv as any).updatedAt || '';
-          rows.push([esc(v.name), esc(projectName), esc('Invoice'), esc(inv.invoice_number), esc(this.formatDate(inv.invoice_date)), esc(this.toNumber(inv.grand_total)), esc(inv.status), esc(`Paid: ${this.formatAmount(inv.paid_amount)}`), esc(this.formatDateTime(iCreatedAt)), esc((inv as any).created_by_name || 'Admin'), esc(this.formatDateTime(iUpdatedAt)), esc((inv as any).updated_by_name || '—')].join(','));
+          const iUpdatedBy = (inv as any).updated_by_name || '';
+          const iCreatedBy = invCreator?.name || (inv as any).created_by_name || iUpdatedBy || fallbackUser;
+          rows.push([esc(v.name), esc(projectName), esc('Invoice'), esc(inv.invoice_number), esc(this.formatDate(inv.invoice_date)), esc(this.toNumber(inv.grand_total)), esc(inv.status), esc(`Paid: ${this.formatAmount(inv.paid_amount)}`), esc(this.formatDateTime(iCreatedAt)), esc(iCreatedBy), esc(this.formatDateTime(iUpdatedAt)), esc(iUpdatedBy || '—')].join(','));
           (inv.payment_history || []).forEach(p => {
             rows.push([esc(v.name), esc(projectName), esc('Payment'), esc(inv.invoice_number), esc(this.formatDate((p as any).paid_at || (p as any).payment_date)), esc(this.toNumber((p as any).amount)), esc((p as any).mode), esc((p as any).reference ? `Ref: ${(p as any).reference}` : '—'), esc('—'), esc('—'), esc('—'), esc('—')].join(','));
           });
         });
         rec.audits.forEach((a: any) => {
-          rows.push([esc(v.name), esc(projectName), esc('Audit'), esc('—'), esc(this.formatDate(a.audit_date || a.auditDate || a.createdAt || a.created_at)), esc('—'), esc(`${Math.round(Number(a.composite_score ?? a.compositeScore ?? 0))}%`), esc(a.observations || '—'), esc(this.formatDateTime(a.created_at || a.createdAt)), esc(a.created_by_name || 'Admin'), esc(this.formatDateTime(a.updated_at || a.updatedAt)), esc(a.updated_by_name || '—')].join(','));
+          const auditCreator = getCreatorCsv('audit', a.id);
+          const aCreatedAt = auditCreator?.at || a.created_at || a.createdAt;
+          const aUpdatedBy = a.updated_by_name || '';
+          const aCreatedBy = auditCreator?.name || a.created_by_name || aUpdatedBy || fallbackUser;
+          rows.push([esc(v.name), esc(projectName), esc('Audit'), esc('—'), esc(this.formatDate(a.audit_date || a.auditDate || a.createdAt || a.created_at)), esc('—'), esc(`${Math.round(Number(a.composite_score ?? a.compositeScore ?? 0))}%`), esc(a.observations || '—'), esc(this.formatDateTime(aCreatedAt)), esc(aCreatedBy), esc(this.formatDateTime(a.updated_at || a.updatedAt)), esc(aUpdatedBy || '—')].join(','));
         });
         rec.laborWorkers.forEach(w => {
-          rows.push([esc(v.name), esc(projectName), esc('Labor'), esc(w.skill), esc('—'), esc(this.toNumber(w.daily_rate) * (w.labor_count || 0)), esc((w as any).statusLabel || w.status), esc(`Count: ${w.labor_count} · Assigned: ${w.assign_worker || 'Unassigned'}`), esc(this.formatDateTime((w as any).created_at || (w as any).createdAt)), esc((w as any).created_by_name || 'Admin'), esc(this.formatDateTime((w as any).updated_at || (w as any).updatedAt)), esc((w as any).updated_by_name || '—')].join(','));
+          const laborCreator = getCreatorCsv('labor', (w as any).id);
+          const lCreatedAt = laborCreator?.at || (w as any).created_at || (w as any).createdAt;
+          const lUpdatedBy = (w as any).updated_by_name || '';
+          const lCreatedBy = laborCreator?.name || (w as any).created_by_name || lUpdatedBy || fallbackUser;
+          rows.push([esc(v.name), esc(projectName), esc('Labor'), esc(w.skill), esc('—'), esc(this.toNumber(w.daily_rate) * (w.labor_count || 0)), esc((w as any).statusLabel || w.status), esc(`Count: ${w.labor_count} · Assigned: ${w.assign_worker || 'Unassigned'}`), esc(this.formatDateTime(lCreatedAt)), esc(lCreatedBy), esc(this.formatDateTime((w as any).updated_at || (w as any).updatedAt)), esc(lUpdatedBy || '—')].join(','));
         });
         rec.tasks.forEach((t: any) => {
-          rows.push([esc(v.name), esc(projectName), esc('Task'), esc(t.title), esc(this.formatDate(t.due_date || t.dueDate)), esc('—'), esc(t.status), esc(`Subtasks: ${(t.subtasks || []).length}`), esc(this.formatDateTime(t.created_at || t.createdAt)), esc(t.created_by_name || 'Admin'), esc(this.formatDateTime(t.updated_at || t.updatedAt)), esc(t.updated_by_name || '—')].join(','));
+          const tUpdatedBy = t.updated_by_name || '';
+          const tCreatedBy = t.created_by_name || tUpdatedBy || fallbackUser;
+          rows.push([esc(v.name), esc(projectName), esc('Task'), esc(t.title), esc(this.formatDate(t.due_date || t.dueDate)), esc('—'), esc(t.status), esc(`Subtasks: ${(t.subtasks || []).length}`), esc(this.formatDateTime(t.created_at || t.createdAt)), esc(tCreatedBy), esc(this.formatDateTime(t.updated_at || t.updatedAt)), esc(tUpdatedBy || '—')].join(','));
         });
         rec.milestones.forEach(m => {
-          rows.push([esc(v.name), esc(projectName), esc('Milestone'), esc(m.name || m.title), esc(`${this.formatDate(m.start_date)} → ${this.formatDate(m.end_date)}`), esc('—'), esc(m.status || '—'), esc(`Sub-milestones: ${(m.children || []).length}`), esc(this.formatDateTime((m as any).created_at || (m as any).createdAt)), esc('Admin'), esc(this.formatDateTime(m.updated_at)), esc('—')].join(','));
+          const mUpdatedBy = (m as any).updated_by_name || '';
+          const mCreatedBy = (m as any).created_by_name || mUpdatedBy || fallbackUser;
+          rows.push([esc(v.name), esc(projectName), esc('Milestone'), esc(m.name || m.title), esc(`${this.formatDate(m.start_date)} → ${this.formatDate(m.end_date)}`), esc('—'), esc(m.status || '—'), esc(`Sub-milestones: ${(m.children || []).length}`), esc(this.formatDateTime((m as any).created_at || (m as any).createdAt)), esc(mCreatedBy), esc(this.formatDateTime(m.updated_at)), esc(mUpdatedBy || '—')].join(','));
         });
         const allocated = Number(v.budget_allocation) || 0;
-        rows.push([esc(v.name), esc(projectName), esc('Budget'), esc('Allocation Summary'), esc(this.formatDate(v.created_at)), esc(allocated), esc(allocated > 0 && rec.totalBilled > allocated ? 'Exceeded' : 'Within Budget'), esc(`Invoiced: ${this.formatAmount(rec.totalBilled)} | Paid: ${this.formatAmount(rec.totalPaid)} | Remaining: ${this.formatAmount(Math.max(0, allocated - rec.totalBilled))}`), esc(this.formatDateTime(v.created_at)), esc(createdBy), esc(this.formatDateTime((v as any).updated_at)), esc(updatedBy)].join(','));
+        rows.push([esc(v.name), esc(projectName), esc('Budget'), esc('Allocation Summary'), esc(this.formatDate(v.created_at)), esc(allocated), esc(allocated > 0 && rec.totalBilled > allocated ? 'Exceeded' : 'Within Budget'), esc(`Invoiced: ${this.formatAmount(rec.totalBilled)} | Paid: ${this.formatAmount(rec.totalPaid)} | Remaining: ${this.formatAmount(Math.max(0, allocated - rec.totalBilled))}`), esc(this.formatDateTime(vendorCreator?.at || v.created_at)), esc(createdBy), esc(this.formatDateTime((v as any).updated_at)), esc(updatedBy)].join(','));
       });
       if (rows.length <= 1) { alert('No data to export.'); return; }
       const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
