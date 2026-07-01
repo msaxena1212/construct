@@ -226,6 +226,7 @@ class ProjectTaskController {
 
       await logProjectHistory({
         project_id: projectId,
+        company_id,  
         user_id,
         action_type: "TASK_CREATED",
         detail: `created task "${title}"`,
@@ -308,6 +309,7 @@ class ProjectTaskController {
         }, { transaction: t });
         await logProjectHistory({
           project_id: task.project_id,
+          company_id,  
           user_id,
           action_type: "TASK_STATUS_CHANGED",
           detail: `task "${task.title}" moved from "${oldStatus}" to "${status}"`,
@@ -317,6 +319,7 @@ class ProjectTaskController {
       if (Object.keys(updateData).some(k => k !== 'status')) {
         await logProjectHistory({
           project_id: task.project_id,
+          company_id,  
           user_id,
           action_type: "TASK_UPDATED",
           detail: `task "${task.title}" details updated`,
@@ -354,6 +357,7 @@ class ProjectTaskController {
         // ✅ ADD THIS
         await logProjectHistory({
           project_id: projectId,
+          company_id,  
           user_id,
           action_type: "TASK_DELETED",
           detail: `deleted task "${taskTitle}"`,
@@ -367,7 +371,7 @@ class ProjectTaskController {
       }
       res.status(200).json({ message: "Task deleted." });
     } catch (error) {
-      if (t) await t.rollback();   // ✅ note: aapke original code me rollback missing tha, add kar diya
+      if (t) await t.rollback();   
       res.status(500).json({ message: "Error deleting task.", error: error.message });
     }
   }
@@ -391,11 +395,11 @@ class ProjectTaskController {
         detail: 'posted a new comment'
       });
 
-      // ✅ ADD THIS — optional, comments par bhi history chahiye to
       const task = await db.project_task.findByPk(taskId);
       if (task) {
         await logProjectHistory({
           project_id: task.project_id,
+          company_id,  
           user_id,
           action_type: "TASK_COMMENT_ADDED",
           detail: `commented on task "${task.title}"`,
@@ -442,6 +446,7 @@ class ProjectTaskController {
       if (task) {
         await logProjectHistory({
           project_id: task.project_id,
+          company_id,  
           user_id,
           action_type: "TASK_DOCUMENT_UPLOADED",
           detail: `uploaded ${attachments.length} file(s) to task "${task.title}"`,
