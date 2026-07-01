@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { ToastrService } from 'ngx-toastr';
 import { ActivatedRoute } from '@angular/router';
 import { ProjectHistoryServices, IProjectHistory } from './project-history-services';
-import { ProjectService } from '../../projects/services/project-service'; // adjust path as per your folder
+import { ProjectService } from '../../projects/services/project-service';
 
 interface ITabConfig {
   key: string;
@@ -28,17 +28,16 @@ interface IHistoryDisplay extends IProjectHistory {
 export class ProjectHistory implements OnInit, OnChanges {
   @Input() projectId?: string | number;
 
-  loading = false;          // ✅ FIX: start false, not true
+  loading = false;
   error: string | null = null;
 
   rawHistory: IProjectHistory[] = [];
   displayHistory: IHistoryDisplay[] = [];
   groupedHistory: { date: string; entries: IHistoryDisplay[] }[] = [];
 
-  // ✅ NEW — project selector for standalone route usage
   projects: any[] = [];
   selectedProjectId: string | number | null = null;
-  loadingProjects = true;
+  loadingProjects = false; // ✅ FIX: true tha, false kiya
 
   activeTab = 'All';
   tabs: ITabConfig[] = [
@@ -59,41 +58,43 @@ export class ProjectHistory implements OnInit, OnChanges {
   ) {}
 
   ngOnInit() {
-    // Case 1: projectId came from parent component via [projectId] input (e.g. project-detail.html)
+    // Case 1: projectId parent component se [projectId] input ke zariye aaya
     if (this.projectId) {
+      this.loadingProjects = false; // ✅ FIX: spinner rok do
       this.fetchHistory();
       return;
     }
 
-    // Case 2: projectId came from route param/query (e.g. /history/project?projectId=5)
-    const routeProjectId = this.route.snapshot.queryParamMap.get('projectId')
-      || this.route.snapshot.paramMap.get('projectId');
+    // Case 2: projectId route param/query se aaya
+    const routeProjectId =
+      this.route.snapshot.queryParamMap.get('projectId') ||
+      this.route.snapshot.paramMap.get('projectId');
 
     if (routeProjectId) {
       this.projectId = routeProjectId;
       this.selectedProjectId = routeProjectId;
+      this.loadingProjects = false; // ✅ FIX
       this.fetchHistory();
       return;
     }
 
-    // Case 3: standalone page, no projectId anywhere — show a project picker
+    // Case 3: standalone page — project picker dikhao
     this.loadProjectList();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['projectId'] && !changes['projectId'].firstChange && this.projectId) {
+      this.loadingProjects = false; // ✅ FIX
       this.fetchHistory();
     }
   }
 
-  // ✅ NEW — fetch all projects so user can pick one
   loadProjectList() {
     this.loadingProjects = true;
     this.projectService.getProjects().subscribe({
       next: (res: any) => {
         this.projects = res.data || [];
         this.loadingProjects = false;
-        // auto-select first project if available
         if (this.projects.length > 0) {
           this.selectedProjectId = this.projects[0].id;
           this.onProjectChange(this.selectedProjectId);
@@ -114,7 +115,7 @@ export class ProjectHistory implements OnInit, OnChanges {
   }
 
   fetchHistory() {
-    if (!this.projectId) return;   // ✅ guard
+    if (!this.projectId) return;
 
     this.loading = true;
     this.error = null;
@@ -132,7 +133,6 @@ export class ProjectHistory implements OnInit, OnChanges {
     });
   }
 
-  // --- Category mapping ---
   private mapCategory(actionType: string): string {
     const type = (actionType || '').toUpperCase();
     if (type.includes('MILESTONE')) return 'Milestone';
@@ -227,7 +227,8 @@ export class ProjectHistory implements OnInit, OnChanges {
     const rows = [
       ['Date', 'Time', 'Category', 'Action', 'Detail', 'User'],
       ...this.displayHistory.map(h => [
-        h.dateLabel, h.timeLabel, h.category, this.getActionLabel(h.action_type), h.detail || '', h.userName
+        h.dateLabel, h.timeLabel, h.category,
+        this.getActionLabel(h.action_type), h.detail || '', h.userName
       ])
     ];
 
