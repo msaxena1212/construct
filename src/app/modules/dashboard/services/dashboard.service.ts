@@ -4,10 +4,17 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
+interface Project {
+  id: number;
+  name: string;
+  address: string;
+  progress: number; 
+} 
 export interface DashboardApiResponse {
   success: boolean;
   data: {
-    projects: { total: number; thisMonth: number };
+    totalBudget: number;
+    projects: { total: number; thisMonth: number; projectList: Project[]; };
     materials: { total: number; newAdded: number };
     equipment: { total: number; active: number };
   };
