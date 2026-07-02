@@ -513,9 +513,9 @@ export class VendorsHistory implements OnInit {
   ): string {
     const dailyCost = dailyRate * count;
     const statusCap = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Active';
-    const noun = count === 1 ? 'labor' : 'labors';
+    const noun = count === 1 ? 'laborer' : 'laborers';
     const verb = count === 1 ? 'was' : 'were';
-    return `${count} ${skill} ${noun} ${verb} added to Vendor "${vendorName}" at a daily rate of ${this.formatAmount(dailyRate)} per labor (total daily cost ${this.formatAmount(dailyCost)}). Current status: ${statusCap}.`;
+    return `${count} ${skill} ${noun} ${verb} added to Vendor "${vendorName}" at a daily rate of ${this.formatAmount(dailyRate)} per laborer (total daily cost ${this.formatAmount(dailyCost)}). Current status: ${statusCap}.`;
   }
 
   private _timelineCache: { key: string; events: HistoryEvent[] } | null = null;
@@ -1068,7 +1068,7 @@ export class VendorsHistory implements OnInit {
         const actionLabel =
           h.action === 'deleted' ? 'removed' :
             h.action === 'updated' ? 'updated' :
-              h.action === 'status_changed' ? 'status changed' :
+              h.action === 'status_changed' ? 'updated' :
                 h.action === 'created' ? 'created' :
                   h.action.replace(/_/g, ' ');
 
@@ -1086,14 +1086,16 @@ export class VendorsHistory implements OnInit {
         const newPan = h.new_values?.kyc?.pan || h.meta?.pan;
         const newAddress = h.new_values?.address || h.meta?.address;
 
-        const mainLine = `Vendor "${nameChanged ? oldName : v.name}" was ${actionLabel}.`;
+        const mainLine = h.action === 'status_changed'
+          ? `Status of Vendor "${v.name}" was updated.`
+          : `Vendor "${nameChanged ? oldName : v.name}" was ${actionLabel}.`;
         const extraLines: string[] = [];
-        if (nameChanged) extraLines.push(`Vendor name changed from "${oldName}" to "${newName}".`);
-        if (statusChanged) extraLines.push(`Status of Vendor "${v.name}" changed from "${oldStatus}" to "${newStatus}".`);
-        if (newBudget != null) extraLines.push(`Budget for Vendor "${v.name}" updated to ${this.formatAmount(newBudget)}.`);
-        if (newEmail) extraLines.push(`Email for Vendor "${v.name}" updated to ${newEmail}.`);
-        if (newGst) extraLines.push(`GST for Vendor "${v.name}" updated to ${newGst}.`);
-        if (newPan) extraLines.push(`PAN for Vendor "${v.name}" updated to ${newPan}.`);
+        if (nameChanged) extraLines.push(`Vendor name was changed from "${oldName}" to "${newName}".`);
+        if (statusChanged) extraLines.push(`Status of Vendor "${v.name}" was changed from "${oldStatus}" to "${newStatus}".`);
+        if (newBudget != null) extraLines.push(`Budget for Vendor "${v.name}" was updated to ${this.formatAmount(newBudget)}.`);
+        if (newEmail) extraLines.push(`Email for Vendor "${v.name}" was updated to ${newEmail}.`);
+        if (newGst) extraLines.push(`GST for Vendor "${v.name}" was updated to ${newGst}.`);
+        if (newPan) extraLines.push(`PAN for Vendor "${v.name}" was updated to ${newPan}.`);
 
         eventDescription = extraLines.length > 0 ? extraLines.join('\n') : mainLine;
 
@@ -1159,10 +1161,10 @@ export class VendorsHistory implements OnInit {
             h.action === 'created' ? 'created' :
               h.action === 'deleted' ? 'deleted' :
                 h.action === 'payment_added' ? 'updated with a payment' :
-                  h.action === 'status_changed' ? 'status updated' : 'updated';
+                  h.action === 'status_changed' ? 'updated' : 'updated';
           eventDescription = `Invoice #${invNumberVal}${amountStr} was ${actionWord} for Vendor "${v.name}".`;
           if (h.action === 'payment_added' && h.meta?.amount) {
-            eventDescription += ` Payment of ${this.formatAmount(h.meta.amount)} recorded${h.meta?.mode ? ` via ${h.meta.mode}` : ''}.`;
+            eventDescription += ` Payment of ${this.formatAmount(h.meta.amount)} was recorded${h.meta?.mode ? ` via ${h.meta.mode}` : ''}.`;
           }
         }
       }
