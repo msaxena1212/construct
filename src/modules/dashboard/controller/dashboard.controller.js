@@ -4,7 +4,7 @@ const { project, material, equipment } = db;
 exports.getDashboardData = async (req, res) => {
 
   try {
-       const company_id = req.user.company_id;
+    const company_id = req.user.company_id;
     if (!company_id) {
       return res.status(401).json({
         success: false,
@@ -19,14 +19,37 @@ exports.getDashboardData = async (req, res) => {
     );
 
     // Total Projects
-       const totalProjects = await project.count({
+    const totalProjects = await project.count({
       where: { company_id },
+    });
+
+    // total budget
+    const totalBudget =
+      (await project.sum("budget_total", {
+        where: {
+          company_id,
+        },
+      })) || 0;
+
+     // project name and address
+    const projectList = await project.findAll({
+      where: {
+        company_id,
+      },
+      attributes: [
+        "id",
+        "name",
+        "address",
+        "progress",
+      ],
+      order: [["createdAt", "DESC"]],
+      limit: 3,
     });
 
     // Projects added this month
     const projectsThisMonth = await project.count({
       where: {
-          company_id,
+        company_id,
         createdAt: {
           [db.Sequelize.Op.gte]: startOfMonth,
         },
@@ -41,7 +64,7 @@ exports.getDashboardData = async (req, res) => {
     // Materials added this month
     const materialsThisMonth = await material.count({
       where: {
-           company_id,
+        company_id,
         createdAt: {
           [db.Sequelize.Op.gte]: startOfMonth,
         },
@@ -64,9 +87,11 @@ exports.getDashboardData = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
+        totalBudget: totalBudget,
         projects: {
           total: totalProjects,
           thisMonth: projectsThisMonth,
+          projectList: projectList,
         },
         materials: {
           total: totalMaterials,
