@@ -23,10 +23,10 @@ module.exports = (router) => {
   // Get single project details
   router.get("/projects/:id", checkPermission("projects", "can_read"), projectCtrl.getProjectById);
 
-// Project History routes  ──────────────────────
-router.get("/projects/:projectId/history", checkPermission("projects", "can_read"), getProjectHistory);
-router.get("/projects/:projectId/history/summary", checkPermission("projects", "can_read"), getProjectHistorySummary);;
-router.post("/projects/backfill-history", checkPermission("projects", "can_update"), projectCtrl.backfillProjectHistory);
+  // Project History routes  ──────────────────────
+  router.get("/projects/:projectId/history", checkPermission("projects", "can_read"), getProjectHistory);
+  router.get("/projects/:projectId/history/summary", checkPermission("projects", "can_read"), getProjectHistorySummary);;
+  router.post("/projects/backfill-history", checkPermission("projects", "can_update"), projectCtrl.backfillProjectHistory);
   // Get project timeline data
   router.get("/projects/:projectId/timeline", checkPermission("projects", "can_read"), projectCtrl.getProjectTimeline);
 

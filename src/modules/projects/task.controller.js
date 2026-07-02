@@ -203,8 +203,33 @@ class ProjectTaskController {
         user_id,
         action_type: "TASK_CREATED",
         detail: `created task "${title}"`,
-        meta: { task_name: title }
+        meta: { task_name: title, status: task.status }
       }, t);
+
+      if (milestone_id || submilestone_id) {
+        const targetMsId = submilestone_id || milestone_id;
+        const targetMilestone = await db.milestone.findByPk(targetMsId, { transaction: t });
+
+        if (targetMilestone) {
+          const isSub = !!submilestone_id;
+          let parentName = null;
+          if (isSub && targetMilestone.parent_id) {
+            const parentMs = await db.milestone.findByPk(targetMilestone.parent_id, { transaction: t });
+            parentName = parentMs?.name || null;
+          }
+
+          await logProjectHistory({
+            project_id: projectId,
+            company_id,
+            user_id,
+            action_type: "TIMELINE_UPDATED",
+            detail: `task "${title}" scheduled under ${isSub ? 'sub-milestone' : 'milestone'} "${targetMilestone.name}"`,
+            meta: isSub
+              ? { task_name: title, submilestone_name: targetMilestone.name, milestone_name: parentName }
+              : { task_name: title, milestone_name: targetMilestone.name }
+          }, t);
+        }
+      }
 
       await syncTaskProgress(task.id, t);
 
@@ -299,6 +324,7 @@ class ProjectTaskController {
           user_id,
           action_type: "TASK_UPDATED",
           detail: `task "${task.title}" details updated`,
+          meta: { task_name: task.title }
         }, t);
       }
 
@@ -374,6 +400,7 @@ class ProjectTaskController {
           user_id,
           action_type: "TASK_COMMENT_ADDED",
           detail: `commented on task "${task.title}"`,
+          meta: { task_name: task.title }
         });
       }
 
@@ -418,6 +445,7 @@ class ProjectTaskController {
           user_id,
           action_type: "TASK_DOCUMENT_UPLOADED",
           detail: `uploaded ${attachments.length} file(s) to task "${task.title}"`,
+          meta: { task_name: task.title }
         });
       }
 
@@ -542,9 +570,9 @@ class ProjectTaskController {
             user_id,
             action_type: "TASK_SUBTASK_DELETED",
             detail: `deleted sub-task "${subTaskTitle}" from task "${task.title}"`,
+            meta: { task_name: task.title, subtask_name: subTaskTitle }
           }, t);
         }
-
 
         await syncTaskProgress(taskId, t);
         await t.commit();
