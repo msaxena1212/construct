@@ -55,6 +55,24 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/master/projects']);
   }
 
+  formatBudget(value: number): string {
+  if (!value) return '0';
+
+  if (value >= 1000000) {
+    return (value / 1000000).toFixed(2).replace(/\.00$/, '') + ' M';
+  }
+
+  if (value >= 100000) {
+    return (value / 100000).toFixed(2).replace(/\.00$/, '') + ' L';
+  }
+
+  if (value >= 1000) {
+    return (value / 1000).toFixed(2).replace(/\.00$/, '') + ' K';
+  }
+
+  return value.toString();
+}
+
   private loadDashboardStats(): void {
     this.dashboardService.getDashboardStats().subscribe({
       next: (res) => {
