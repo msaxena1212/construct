@@ -132,6 +132,8 @@ export class TaskDetail implements OnInit {
   }
 
   toggleChecklist(item: IProjectSubTask) {
+    if (!this.isEditing) return;
+
     const newStatus = !item.completed;
     this.projectService.updateSubTask(item?.id!, { completed: newStatus }).subscribe({
       next: () => {
@@ -142,7 +144,7 @@ export class TaskDetail implements OnInit {
   }
 
   addSubTask() {
-    if (!this.newSubTaskTitle.trim()) return;
+    if (!this.isEditing || !this.newSubTaskTitle.trim()) return;
 
     this.projectService.createSubTask(this.task.id, this.newSubTaskTitle.trim()).subscribe({
       next: (res) => {
@@ -156,6 +158,8 @@ export class TaskDetail implements OnInit {
   }
 
   openDeleteSubTaskDialog(subTaskId: number) {
+    if (!this.isEditing) return;
+
     this.subTaskToDelete = subTaskId;
     this.showDeleteSubTaskModal = true;
   }
@@ -184,6 +188,8 @@ export class TaskDetail implements OnInit {
   }
 
   onSubTaskChange(item: IProjectSubTask, newTitle: string) {
+    if (!this.isEditing) return;
+
     if (item.title !== newTitle) {
       this.projectService.updateSubTask(item?.id!, { title: newTitle }).subscribe({
         next: () => item.title = newTitle,
@@ -193,9 +199,10 @@ export class TaskDetail implements OnInit {
   }
 
   postComment() {
-    if (!this.newComment.trim()) return;
+    const trimmedComment = this.newComment?.trim();
+    if (!trimmedComment) return;
 
-    this.projectService.addTaskComment(this.task.id, this.newComment).subscribe({
+    this.projectService.addTaskComment(this.task.id, trimmedComment).subscribe({
       next: (res) => {
         if (!this.task.comments) this.task.comments = [];
         this.task.comments.unshift(res.data);
@@ -213,7 +220,8 @@ export class TaskDetail implements OnInit {
 
         this.newComment = '';
         this.toastr.success('Comment posted');
-      }
+      },
+      error: () => this.toastr.error('Error posting comment')
     });
   }
 
