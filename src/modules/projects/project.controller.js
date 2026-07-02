@@ -231,6 +231,25 @@ class ProjectController {
           action_type: "MILESTONE_UPDATED",
           detail: `milestones updated (${milestones.length} milestone(s))`,
         }, t);
+        const topLevelCount = milestones.filter(ms => !ms.parent_id).length;
+        const subCount = milestones.filter(ms => ms.parent_id).length;
+        const starts = milestones.map(ms => ms.startDate).filter(Boolean).sort();
+        const ends = milestones.map(ms => ms.endDate).filter(Boolean).sort();
+
+        await logProjectHistory({
+          project_id: project.id,
+          company_id,
+          user_id: req.user.id,
+          action_type: "TIMELINE_UPDATED",
+          detail: `Timeline created for project "${name}" with ${topLevelCount} milestone(s) and ${subCount} sub-milestone(s)`,
+          meta: {
+            event: 'timeline_created',
+            milestone_count: topLevelCount,
+            submilestone_count: subCount,
+            start_date: starts[0] || null,
+            end_date: ends[ends.length - 1] || null
+          }
+        }, t);
       }
 
       if (team && team.length > 0) {
@@ -791,12 +810,10 @@ class ProjectController {
         const scheduledCount = milestones.filter(ms => ms.startDate || ms.endDate).length;
         if (scheduledCount > 0) {
           await logProjectHistory({
-            project_id: id,
-            company_id,
-            user_id: req.user.id,
+            project_id: id, company_id, user_id: req.user.id,
             action_type: "TIMELINE_UPDATED",
-            detail: `schedule updated for ${scheduledCount} milestone(s)`,
-            meta: { count: scheduledCount }
+            detail: `Project timeline was updated. The schedule for ${scheduledCount} milestone(s) was modified.`,
+            meta: { event: 'bulk_updated', count: scheduledCount }
           }, t);
         }
       }
@@ -927,23 +944,51 @@ class ProjectController {
         is_completed: progress === 100
       }, { transaction: t });
 
+      let parentMsName = null;
+      if (parent_id) {
+        const parentMs = await db.milestone.findByPk(parent_id, { transaction: t });
+        parentMsName = parentMs?.name || null;
+      }
+
       await logProjectHistory({
         project_id: projectId,
         company_id,
         user_id: req.user.id,
         action_type: "MILESTONE_ADDED",
-        detail: `added milestone "${name}"`,
+        detail: `added ${parent_id ? 'sub-milestone' : 'milestone'} "${name}"`,
+        meta: parent_id
+          ? { submilestone_name: name, parent_milestone_name: parentMsName, progress: progress || 0 }
+          : { milestone_name: name, progress: progress || 0 }
       }, t);
 
 
       if (startDate || endDate) {
-        await logProjectHistory({
-          project_id: projectId,
-          company_id,
-          user_id: req.user.id,
-          action_type: "TIMELINE_UPDATED",
-          detail: `milestone "${name}" scheduled from ${startDate || 'N/A'} to ${endDate || 'N/A'}`,
-        }, t);
+        if (parent_id) {
+          await logProjectHistory({
+            project_id: projectId, company_id, user_id: req.user.id,
+            action_type: "TIMELINE_UPDATED",
+            detail: `sub-milestone "${name}" added under "${parentMsName || 'N/A'}", scheduled from ${startDate || 'N/A'} to ${endDate || 'N/A'}`,
+            meta: {
+              event: 'submilestone_added',
+              submilestone_name: name,
+              parent_milestone_name: parentMsName,
+              start_date: startDate || null,
+              end_date: endDate || null
+            }
+          }, t);
+        } else {
+          await logProjectHistory({
+            project_id: projectId, company_id, user_id: req.user.id,
+            action_type: "TIMELINE_UPDATED",
+            detail: `milestone "${name}" added to the project timeline, scheduled from ${startDate || 'N/A'} to ${endDate || 'N/A'}`,
+            meta: {
+              event: 'milestone_added',
+              milestone_name: name,
+              start_date: startDate || null,
+              end_date: endDate || null
+            }
+          }, t);
+        }
       }
 
       await t.commit();
@@ -1016,6 +1061,7 @@ class ProjectController {
           ? {
             submilestone_name: finalName,
             parent_milestone_name: parentMilestoneName,
+            progress: finalProgress,
             status: finalStatus
           }
           : {
@@ -1026,19 +1072,26 @@ class ProjectController {
       }, t);
 
       if (newStartDate !== oldStartDate || newEndDate !== oldEndDate) {
+        const fmt = (d) => d ? new Date(d).toISOString().split('T')[0] : 'N/A';
         await logProjectHistory({
-          project_id: projectId,
-          company_id,
-          user_id: req.user.id,
+          project_id: projectId, company_id, user_id: req.user.id,
           action_type: "TIMELINE_UPDATED",
-          detail: `milestone "${finalName}" schedule updated`,
+          detail: isSubmilestone
+            ? `sub-milestone "${finalName}" timeline was updated from ${fmt(oldStartDate)} - ${fmt(oldEndDate)} to ${fmt(newStartDate)} - ${fmt(newEndDate)}`
+            : `milestone "${finalName}" schedule was changed from ${fmt(oldStartDate)} - ${fmt(oldEndDate)} to ${fmt(newStartDate)} - ${fmt(newEndDate)}`,
           meta: isSubmilestone
             ? {
+              event: 'submilestone_date_changed',
               submilestone_name: finalName,
-              parent_milestone_name: parentMilestoneName
+              parent_milestone_name: parentMilestoneName,
+              old_start_date: oldStartDate, old_end_date: oldEndDate,
+              new_start_date: newStartDate, new_end_date: newEndDate
             }
             : {
-              milestone_name: finalName
+              event: 'milestone_date_changed',
+              milestone_name: finalName,
+              old_start_date: oldStartDate, old_end_date: oldEndDate,
+              new_start_date: newStartDate, new_end_date: newEndDate
             }
         }, t);
       }
