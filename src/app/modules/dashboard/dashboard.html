@@ -95,11 +95,11 @@
 
       <div>
         <p class="text-slate-400 text-sm font-bold uppercase tracking-wide">
-          Revenue
+          Total Budget
         </p>
 
         <h2 class="text-4xl font-black text-slate-900 dark:text-white mt-2">
-          ₹48L
+          {{ stats.totalBudget | currency:'INR':'symbol':'1.0-0' }}
         </h2>
       </div>
 
@@ -111,9 +111,9 @@
 
     </div>
 
-    <p class="text-emerald-500 font-bold text-sm">
+    <!-- <p class="text-emerald-500 font-bold text-sm">
       +18% Growth
-    </p>
+    </p> -->
 
   </div>
 
@@ -139,6 +139,7 @@
       </div>
 
       <button
+        (click)="goToProjects()"
         class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
 
         View All
@@ -148,118 +149,48 @@
 
     <div class="space-y-4">
 
-      <!-- Project Row -->
-      <div
-        class="flex items-center justify-between p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/60 hover:shadow-lg transition-all">
+  <div
+    *ngFor="let project of stats.projects.projectList"
+    class="flex items-center justify-between p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/60 hover:shadow-lg transition-all">
 
-        <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4">
 
-          <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
-            <span class="material-symbols-outlined text-3xl">
-              apartment
-            </span>
-          </div>
-
-          <div>
-            <h4 class="font-black text-slate-800 dark:text-white text-lg">
-              Skyline Tower Project
-            </h4>
-
-            <p class="text-sm text-slate-400 mt-1">
-              Mumbai Construction Site
-            </p>
-          </div>
-
-        </div>
-
-        <div class="text-right">
-
-          <p class="text-sm font-black text-emerald-600">
-            78% Completed
-          </p>
-
-          <div class="w-40 h-2 rounded-full bg-slate-200 mt-2 overflow-hidden">
-            <div class="h-full w-[78%] rounded-full bg-gradient-to-r from-primary to-violet-500"></div>
-          </div>
-
-        </div>
-
+      <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+        <span class="material-symbols-outlined text-3xl">
+          apartment
+        </span>
       </div>
 
-      <!-- Project Row -->
-      <div
-        class="flex items-center justify-between p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/60 hover:shadow-lg transition-all">
+      <div>
+        <h4 class="font-black text-slate-800 dark:text-white text-lg">
+          {{ project.name }}
+        </h4>
 
-        <div class="flex items-center gap-4">
-
-          <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
-            <span class="material-symbols-outlined text-3xl">
-              warehouse
-            </span>
-          </div>
-
-          <div>
-            <h4 class="font-black text-slate-800 dark:text-white text-lg">
-              Industrial Warehouse
-            </h4>
-
-            <p class="text-sm text-slate-400 mt-1">
-              Raipur Construction Site
-            </p>
-          </div>
-
-        </div>
-
-        <div class="text-right">
-
-          <p class="text-sm font-black text-primary">
-            54% Completed
-          </p>
-
-          <div class="w-40 h-2 rounded-full bg-slate-200 mt-2 overflow-hidden">
-            <div class="h-full w-[54%] rounded-full bg-gradient-to-r from-primary to-violet-500"></div>
-          </div>
-
-        </div>
-
+        <p class="text-sm text-slate-400 mt-1">
+          {{ project.address }}
+        </p>
       </div>
-      <div
-        class="flex items-center justify-between p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/60 hover:shadow-lg transition-all">
 
-        <div class="flex items-center gap-4">
-
-          <div class="w-14 h-14 rounded-2xl bg-green-100 text-amber-600 flex items-center justify-center">
-            <span class="material-symbols-outlined text-3xl">
-              military_tech
-            </span>
-          </div>
-
-          <div>
-            <h4 class="font-black text-slate-800 dark:text-white text-lg">
-              IRAN VS USA
-            </h4>
-
-            <p class="text-sm text-slate-400 mt-1">
-              On Site (Strait of Hormuz)
-            </p>
-          </div>
-
-        </div>
-
-        <div class="text-right">
-
-          <p class="text-sm font-black text-primary">
-            70% Completed
-          </p>
-
-          <div class="w-40 h-2 rounded-full bg-slate-200 mt-2 overflow-hidden">
-            <div class="h-full w-[70%] rounded-full bg-gradient-to-r from-primary to-violet-500"></div>
-          </div>
-
-        </div>
-
-      </div>
     </div>
+
+    <div class="text-right">
+
+      <p class="text-sm font-black text-emerald-600">
+        {{ project.progress || 0 }}% Completed
+      </p>
+
+      <div class="w-40 h-2 rounded-full bg-slate-200 mt-2 overflow-hidden">
+        <div
+          class="h-full rounded-full bg-gradient-to-r from-primary to-violet-500"
+          [style.width.%]="project.progress || 0">
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
   </div>
 

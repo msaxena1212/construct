@@ -2,8 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { DashboardService } from './services/dashboard.service';
 
+interface Project {
+  id: number;
+  name: string;
+  address: string;
+  progress: number;
+}
+
 interface DashboardStats {
-  projects: { total: number; thisMonth: number };
+  totalBudget: number;
+  projects: { total: number; thisMonth: number; projectList: Project[]; };
   materials: { total: number; newAdded: number };
   equipment: { total: number; active: number };
 }
@@ -16,41 +24,47 @@ interface DashboardStats {
 })
 export class Dashboard implements OnInit {
   stats: DashboardStats = {
-    projects: { total: 0, thisMonth: 0 },
+    totalBudget: 0,
+    projects: { total: 0, thisMonth: 0, projectList: [] },
     materials: { total: 0, newAdded: 0 },
     equipment: { total: 0, active: 0 },
   };
 
-  constructor(private dashboardService: DashboardService,   private router: Router) {}
+  constructor(private dashboardService: DashboardService, private router: Router) { }
 
   ngOnInit(): void {
     this.loadDashboardStats();
   }
 
   goToAddMaterial(): void {
-  this.router.navigate(['/master/masters/material']);
-}
+    this.router.navigate(['/master/masters/material']);
+  }
 
   goToAddEquipment(): void {
-  this.router.navigate(['/master/masters/equipment']);
-}
+    this.router.navigate(['/master/masters/equipment']);
+  }
 
   goToAddQuote(): void {
-  this.router.navigate(['/master/resources/quotations']);
-}
+    this.router.navigate(['/master/resources/quotations']);
+  }
 
   goToAddVendor(): void {
-  this.router.navigate(['/master/resources/vendors']);
-}
+    this.router.navigate(['/master/resources/vendors']);
+  }
+  goToProjects(): void {
+    this.router.navigate(['/master/projects']);
+  }
 
   private loadDashboardStats(): void {
     this.dashboardService.getDashboardStats().subscribe({
       next: (res) => {
         if (res?.success && res?.data) {
           this.stats = {
+            totalBudget: res.data.totalBudget ?? 0,
             projects: {
               total: res.data.projects?.total ?? 0,
               thisMonth: res.data.projects?.thisMonth ?? 0,
+              projectList: res.data.projects?.projectList ?? [],
             },
             materials: {
               total: res.data.materials?.total ?? 0,
@@ -65,7 +79,8 @@ export class Dashboard implements OnInit {
       },
       error: () => {
         this.stats = {
-          projects: { total: 0, thisMonth: 0 },
+          totalBudget: 0,
+          projects: { total: 0, thisMonth: 0, projectList: [], },
           materials: { total: 0, newAdded: 0 },
           equipment: { total: 0, active: 0 },
         };
