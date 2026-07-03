@@ -237,7 +237,6 @@ export class VendorsHistory implements OnInit {
   vendors: Vendor[] = [];
   exporting = false;
   records: Record<string, VendorRecord> = {};
-  Math = Math;
 
   selectedVendorIds: Set<string> = new Set();
   vendorDropdownOpen = false;
@@ -284,10 +283,6 @@ export class VendorsHistory implements OnInit {
 
   getCategoryLabel(cat: ConcreteCategory): string {
     return CATEGORY_META[cat]?.label ?? cat;
-  }
-
-  hasMetaFields(ev: HistoryEvent): boolean {
-    return !!(ev.createdAt || ev.createdBy || ev.updatedAt || ev.updatedBy);
   }
 
   ngOnInit(): void {
@@ -431,81 +426,8 @@ export class VendorsHistory implements OnInit {
     return this.vendors.filter(v => this.selectedVendorIds.has(v.id));
   }
 
-  get displayTotalInvoices(): number {
-    return this.displayVendors.reduce((s, v) => s + (this.records[v.id]?.invoices.length || 0), 0);
-  }
-
-  get displayTotalBilled(): number {
-    return this.displayVendors.reduce((s, v) => s + (this.records[v.id]?.totalBilled || 0), 0);
-  }
-
-  get displayTotalPaid(): number {
-    return this.displayVendors.reduce((s, v) => s + (this.records[v.id]?.totalPaid || 0), 0);
-  }
-
   get isTimelineLoading(): boolean {
     return this.displayVendors.some(v => !this.records[v.id] || this.records[v.id].loading);
-  }
-
-  get vendorBudgetSummaries(): VendorBudgetSummary[] {
-    return this.displayVendors
-      .filter(v => this.records[v.id]?.loaded)
-      .map(v => {
-        const rec = this.records[v.id];
-        const allocated = Number(v.budget_allocation) || 0;
-        const invoiced = rec.totalBilled;
-        const paid = rec.totalPaid;
-        const remaining = Math.max(0, allocated - invoiced);
-        const utilizationPercent = allocated > 0 ? Math.min(Math.round((invoiced / allocated) * 100), 999) : 0;
-        const exceeded = allocated > 0 && invoiced > allocated;
-        const exceededBy = exceeded ? invoiced - allocated : 0;
-        return {
-          vendor: v, allocated, invoiced, paid, remaining,
-          utilizationPercent, exceeded, exceededBy,
-          invoiceCount: rec.invoices.length,
-          paidInvoiceCount: rec.invoices.filter(i => i.status === 'Paid').length,
-          pendingInvoiceCount: rec.invoices.filter(i => ['Pending', 'Unpaid'].includes(i.status)).length,
-          cancelledInvoiceCount: rec.invoices.filter(i => i.status === 'Cancelled').length,
-        } as VendorBudgetSummary;
-      })
-      .sort((a, b) => b.utilizationPercent - a.utilizationPercent);
-  }
-
-  get totalAllocated(): number { return this.vendorBudgetSummaries.reduce((s, b) => s + b.allocated, 0); }
-  get totalInvoiced(): number { return this.vendorBudgetSummaries.reduce((s, b) => s + b.invoiced, 0); }
-  get totalBudgetPaid(): number { return this.vendorBudgetSummaries.reduce((s, b) => s + b.paid, 0); }
-  get totalBudgetRemaining(): number { return this.vendorBudgetSummaries.reduce((s, b) => s + b.remaining, 0); }
-
-  get overallUtilizationPercent(): number {
-    return this.totalAllocated > 0
-      ? Math.min(Math.round((this.totalInvoiced / this.totalAllocated) * 100), 999) : 0;
-  }
-
-  get exceededVendorsCount(): number {
-    return this.vendorBudgetSummaries.filter(b => b.exceeded).length;
-  }
-
-  getBudgetBarWidth(summary: VendorBudgetSummary): number { return Math.min(summary.utilizationPercent, 100); }
-
-  getBudgetBarColor(summary: VendorBudgetSummary): string {
-    if (summary.exceeded) return 'bg-red-500';
-    if (summary.utilizationPercent >= 80) return 'bg-amber-500';
-    if (summary.utilizationPercent >= 50) return 'bg-blue-500';
-    return 'bg-emerald-500';
-  }
-
-  getBudgetStatusLabel(summary: VendorBudgetSummary): string {
-    if (summary.exceeded) return 'Exceeded';
-    if (summary.utilizationPercent >= 80) return 'Near Limit';
-    if (summary.utilizationPercent >= 50) return 'Moderate';
-    return 'Healthy';
-  }
-
-  getBudgetStatusClasses(summary: VendorBudgetSummary): string {
-    if (summary.exceeded) return 'bg-red-100 text-red-600';
-    if (summary.utilizationPercent >= 80) return 'bg-amber-100 text-amber-600';
-    if (summary.utilizationPercent >= 50) return 'bg-blue-100 text-blue-600';
-    return 'bg-emerald-100 text-emerald-600';
   }
 
   private buildLaborDescription(
@@ -578,43 +500,6 @@ export class VendorsHistory implements OnInit {
 
     this._flatCache = { key: cacheKey, cat: this.activeCategory, groups };
     return groups;
-  }
-
-  get groupedTimelineEvents(): VendorGroup[] {
-    const allEvents = this.timelineEvents;
-
-    return this.displayVendors
-      .filter(v => this.records[v.id]?.loaded)
-      .map(v => {
-        const rec = this.records[v.id];
-        const vendorEvs = allEvents.filter(ev => ev.vendorId === v.id);
-        const filtered = this.activeCategory === 'all'
-          ? vendorEvs
-          : vendorEvs.filter(ev =>
-            ev.categories.includes(this.activeCategory as ConcreteCategory)
-          );
-
-        const dateMap = new Map<string, { date: Date; events: HistoryEvent[] }>();
-        filtered.forEach(ev => {
-          const k = this.dateKey(ev.date);
-          if (!dateMap.has(k)) dateMap.set(k, { date: ev.date, events: [] });
-          dateMap.get(k)!.events.push(ev);
-        });
-
-        const dateGroups: VendorDateGroup[] = Array.from(dateMap.values())
-          .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-        return {
-          vendor: v,
-          events: filtered,
-          dateGroups,
-          totalBilled: rec.totalBilled,
-          totalPaid: rec.totalPaid,
-          invoiceCount: rec.invoices.length,
-          complianceScore: v.compliance_score,
-        } as VendorGroup;
-      })
-      .filter(g => g.events.length > 0);
   }
 
   countEventsInDateGroup(dGroup: VendorDateGroup | FlatDateGroup): number {
@@ -1523,14 +1408,6 @@ export class VendorsHistory implements OnInit {
       .reduce((s, w) => s + (Number(w.daily_rate) || 0) * (w.labor_count || 0), 0);
   }
 
-  budgetUsage(rec: VendorRecord): { allocated: number; invoiced: number; percent: number; exceeded: boolean; exceededBy: number } {
-    const allocated = Number(rec.vendor.budget_allocation) || 0;
-    const invoiced = rec.totalBilled;
-    const percent = allocated > 0 ? Math.round((invoiced / allocated) * 100) : 0;
-    const exceeded = allocated > 0 && invoiced > allocated;
-    return { allocated, invoiced, percent, exceeded, exceededBy: exceeded ? invoiced - allocated : 0 };
-  }
-
   getInvoiceItems(inv: VendorInvoice): any[] {
     if (Array.isArray(inv.items)) return inv.items;
     try { const parsed = JSON.parse(inv.items as any); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
@@ -1554,13 +1431,6 @@ export class VendorsHistory implements OnInit {
 
   remainingAmount(inv: VendorInvoice): number {
     return Math.max(0, this.toNumber(inv.grand_total) - this.toNumber(inv.paid_amount));
-  }
-
-  getVendorInitials(name: string): string {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
   getLatestInvoiceDate(rec: VendorRecord): string | null {
@@ -1587,20 +1457,6 @@ export class VendorsHistory implements OnInit {
   }
 
   toNumber(val: any): number { return Number(val) || 0; }
-
-  projectDurationLabel(projectData: any): string {
-    if (!projectData) return '—';
-    const start = projectData.start_date || projectData.startDate || projectData.createdAt || projectData.created_at;
-    const end = projectData.completion_date || projectData.completionDate || projectData.end_date || projectData.endDate;
-    if (!start) return '—';
-    const startDate = new Date(start);
-    const endDate = end ? new Date(end) : null;
-    if (!endDate) return `Started ${this.formatDate(startDate)} · Ongoing`;
-    const now = new Date();
-    if (now > endDate) return `${this.formatDate(startDate)} → ${this.formatDate(endDate)} · Completed`;
-    const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / 86_400_000);
-    return `${this.formatDate(startDate)} → ${this.formatDate(endDate)} · ${daysLeft} day(s) left`;
-  }
 
   viewInvoice(rec: VendorRecord, inv: VendorInvoice): void {
     const invoiceItems = this.getInvoiceItems(inv);
@@ -1716,72 +1572,6 @@ table{width:100%;border-collapse:collapse;margin-top:16px;}th{background:#f1f5f9
   </div>
   ${settlementBlock}${paymentRows}
   <div style="margin-top:32px;text-align:center;">
-    <button onclick="window.print()" style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-weight:700;cursor:pointer;">
-      Print / Save as PDF
-    </button>
-  </div>
-</body></html>`;
-    const win = window.open('', '_blank');
-    if (win) { win.document.write(html); win.document.close(); }
-  }
-
-  downloadVendorReport(rec: VendorRecord): void {
-    const v = rec.vendor;
-    const projectName = rec.projectData?.name || 'Project not linked';
-    const usage = this.budgetUsage(rec);
-    const invoiceRows = rec.invoices.map(inv => `
-      <tr>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${inv.invoice_number}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${this.formatDate(inv.invoice_date)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">${this.formatAmount(inv.grand_total)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">${this.formatAmount(inv.paid_amount)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${inv.status}</td>
-      </tr>`).join('');
-    const auditRows = rec.audits.map((a: any) => `
-      <tr>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${this.formatDate(a.audit_date || a.auditDate || a.createdAt || a.created_at)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;">${a.quality}/10</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;">${a.timeliness}/10</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;">${a.safety}/10</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;font-weight:700;">${Math.round(Number(a.composite_score ?? a.compositeScore ?? 0))}%</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${a.observations || '—'}</td>
-      </tr>`).join('');
-    const laborRows = rec.laborWorkers.map(w => `
-      <tr>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${w.skill}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center;">${w.labor_count}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${w.assign_worker || '—'}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">${this.formatAmount(w.daily_rate)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:right;font-weight:700;">${this.formatAmount(Number(w.daily_rate) * (w.labor_count || 0))}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;">${(w as any).statusLabel || w.status}</td>
-      </tr>`).join('');
-    const html = `<!DOCTYPE html><html><head><title>Vendor Report — ${v.name}</title>
-<style>body{font-family:sans-serif;padding:36px;color:#1e293b;}h1{font-size:22px;font-weight:900;margin:0 0 4px;}
-h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#475569;margin:28px 0 10px;border-bottom:2px solid #e2e8f0;padding-bottom:6px;}
-table{width:100%;border-collapse:collapse;margin-top:6px;}th{background:#f1f5f9;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;}
-@media print{button{display:none!important;}}</style></head><body>
-  <h1>Vendor Report — ${v.name}</h1>
-  <p style="color:#64748b;margin:0 0 8px;">Generated on ${this.formatDate(new Date())}</p>
-  <h2>Vendor Profile</h2>
-  <p><strong>Added On:</strong> ${this.formatDate((v as any).created_at)}</p>
-  <p><strong>SPOC:</strong> ${v.spoc.name} · ${v.spoc.phone}</p>
-  <p><strong>Email:</strong> ${v.email} · <strong>Phone:</strong> ${v.phone}</p>
-  <p><strong>GST:</strong> ${v.kyc.gst || '—'} &nbsp;&nbsp; <strong>PAN:</strong> ${v.kyc.pan || '—'}</p>
-  <p><strong>Address:</strong> ${v.address.street}, ${v.address.pincode}</p>
-  <p><strong>Skills:</strong> ${v.skill.join(', ') || '—'}</p>
-  <p><strong>Budget Allocated:</strong> ${this.formatAmount(v.budget_allocation)} &nbsp;&nbsp; <strong>Compliance Score:</strong> ${v.compliance_score}%</p>
-  <p><strong>Budget Utilized:</strong> ${usage.percent}% (${this.formatAmount(usage.invoiced)} of ${this.formatAmount(usage.allocated)})${usage.exceeded ? ' — EXCEEDED by ' + this.formatAmount(usage.exceededBy) : ''}</p>
-  <p><strong>Project:</strong> ${projectName} &nbsp;&nbsp; <strong>Duration:</strong> ${this.projectDurationLabel(rec.projectData)}</p>
-  <h2>Invoices (${rec.invoices.length}) — Billed: ${this.formatAmount(rec.totalBilled)} | Paid: ${this.formatAmount(rec.totalPaid)}</h2>
-  <table><thead><tr><th>Invoice #</th><th>Date</th><th style="text-align:right;">Amount</th><th style="text-align:right;">Paid</th><th>Status</th></tr></thead>
-  <tbody>${invoiceRows || '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;">No invoices</td></tr>'}</tbody></table>
-  <h2>Compliance Audits (${rec.audits.length})</h2>
-  <table><thead><tr><th>Date</th><th style="text-align:center;">Quality</th><th style="text-align:center;">Timeliness</th><th style="text-align:center;">Safety</th><th style="text-align:center;">Score</th><th>Observations</th></tr></thead>
-  <tbody>${auditRows || '<tr><td colspan="6" style="padding:12px;text-align:center;color:#94a3b8;">No audits</td></tr>'}</tbody></table>
-  <h2>Labor (${rec.laborWorkers.length}) — Daily Cost: ${this.formatAmount(rec.totalDailyLaborCost)}</h2>
-  <table><thead><tr><th>Skill</th><th style="text-align:center;">Count</th><th>Assigned To</th><th style="text-align:right;">Rate/day</th><th style="text-align:right;">Cost/day</th><th>Status</th></tr></thead>
-  <tbody>${laborRows || '<tr><td colspan="6" style="padding:12px;text-align:center;color:#94a3b8;">No labor records</td></tr>'}</tbody></table>
-  <div style="margin-top:30px;text-align:center;">
     <button onclick="window.print()" style="background:#4f46e5;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-weight:700;cursor:pointer;">
       Print / Save as PDF
     </button>

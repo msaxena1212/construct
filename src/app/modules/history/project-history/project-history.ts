@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, HostListener, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -82,8 +82,7 @@ export class ProjectHistory implements OnInit, OnChanges {
     private historyService: ProjectHistoryServices,
     private projectService: ProjectService,
     private toastr: ToastrService,
-    private route: ActivatedRoute,
-    private elRef: ElementRef
+    private route: ActivatedRoute
   ) { }
 
   @HostListener('document:click', ['$event'])
@@ -749,16 +748,6 @@ export class ProjectHistory implements OnInit, OnChanges {
     const result = Object.keys(groups).map(date => ({ date, entries: groups[date] }));
     this._groupCache = { key, groups: result };
     return result;
-  }
-
-  get totalEntries() { return this.displayHistory.length; }
-  get totalProjectsEvents() { return this.tabs.find(t => t.key === 'Project')?.count || 0; }
-  get totalMilestoneEvents() { return this.tabs.find(t => t.key === 'Milestone')?.count || 0; }
-  get totalTaskEvents() { return this.tabs.find(t => t.key === 'Task')?.count || 0; }
-  get totalDocumentEvents() { return this.tabs.find(t => t.key === 'Document')?.count || 0; }
-
-  get activeTabCount(): number {
-    return this.tabs.find(t => t.key === this.activeTab)?.count || 0;
   }
 
   setActiveTab(tab: string) {
