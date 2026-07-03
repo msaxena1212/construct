@@ -752,6 +752,7 @@ export class ProjectHistory implements OnInit, OnChanges {
   }
 
   get totalEntries() { return this.displayHistory.length; }
+  get totalProjectsEvents() { return this.tabs.find(t => t.key === 'Project')?.count || 0; }
   get totalMilestoneEvents() { return this.tabs.find(t => t.key === 'Milestone')?.count || 0; }
   get totalTaskEvents() { return this.tabs.find(t => t.key === 'Task')?.count || 0; }
   get totalDocumentEvents() { return this.tabs.find(t => t.key === 'Document')?.count || 0; }

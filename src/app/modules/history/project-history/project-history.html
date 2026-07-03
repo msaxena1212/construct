@@ -155,8 +155,8 @@
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500 text-white rounded-2xl p-4 shadow-md">
-        <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Events</p>
-        <p class="text-2xl font-black mt-1">{{ totalEntries }}</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Total Projects</p>
+        <p class="text-2xl font-black mt-1">{{ totalProjectsEvents }}</p>
       </div>
       <div class="bg-gradient-to-br from-purple-400 to-fuchsia-500 text-white rounded-2xl p-4 shadow-md">
         <p class="text-[10px] font-black uppercase tracking-widest text-white/70">Milestones</p>
@@ -178,9 +178,6 @@
           {{ sectionHeadingLabel }}
         </h3>
         @if (activeTab !== 'All') {
-        <p class="text-xs text-outline font-semibold mt-0.5">
-          Showing {{ activeTabCount }} event(s) across all dates
-        </p>
         }
       </div>
     </div>
