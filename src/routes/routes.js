@@ -15,6 +15,7 @@ class Routes {
     require("../modules/material/routes/material_master.routes")(router);
     require("../modules/material/routes/quotation.routes")(router);
     require("../modules/material/routes/material.routes")(router);
+    require("../modules/material/routes/material_history.routes")(router);
     require("../modules/stock-requests/routes/stockRequestRoutes")(router);
 
     require("../modules/equipment/routes/equipment_master.routes")(router);
@@ -51,8 +52,8 @@ class Routes {
       require("../modules/skill/routes/skill_routes")
     );
     app.use("/api/v1/meetings", require("../modules/meeting/routes/meeting.routes"));
-     app.use("/api/v1", require("../modules/dashboard/routes/dashboard.routes"));
-     
+    app.use("/api/v1", require("../modules/dashboard/routes/dashboard.routes"));
+
   }
 }
 

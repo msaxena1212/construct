@@ -224,6 +224,8 @@ db.material_history.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor
 
 db.project.hasMany(db.material_history, { foreignKey: "project_id", as: "material_history" });
 db.material_history.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.user.hasMany(db.material_history, { foreignKey: "user_id", as: "material_history_logs" });
+db.material_history.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
 db.StockRequest = require("../modules/stock-requests/model/stockRequestModel.js")(sequelize, Sequelize);
 
 db.quotation.hasMany(db.material_history, { foreignKey: "quotation_id", as: "material_history" });

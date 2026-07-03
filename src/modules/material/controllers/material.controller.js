@@ -7,11 +7,10 @@ class MaterialController {
     this.getMaterialById = this.getMaterialById.bind(this);
     this.updateMaterial = this.updateMaterial.bind(this);
     this.deleteMaterial = this.deleteMaterial.bind(this);
+    this.getMaterialByprojectId = this.getMaterialByprojectId.bind(this);
+    this.material_stock_transfer = this.material_stock_transfer.bind(this);
   }
 
-  /**
-   * Create Material
-   */
   async createMaterial(req, res) {
     try {
       const {
@@ -29,9 +28,9 @@ class MaterialController {
 
       const company_id = req.user.company_id;
 
-      // if (!material_master_id) {
-      //   return res.status(400).json({ message: "Material are required." });
-      // }
+      if (!material_master_id) {
+        return res.status(400).json({ message: "material_master_id is required." });
+      }
 
       if (!vendor_name) {
         return res.status(400).json({ message: "vendor_name are required." });
@@ -45,32 +44,27 @@ class MaterialController {
         return res.status(400).json({ message: "Cost are required." });
       }
 
-
       const material = await db.material.findOne({
-        where: { isDeleted: false, company_id, material_master_id }
+        where: { isDeleted: false, company_id, material_master_id, vendor_id }
       });
 
       if (material) {
-        const {
-          name,
-          sku,
-          category,
-          stockIn,
-          vendor_name,
-          stockUsed,
-          cost,
-          status,
-          vendor_id,
-          material_master_id,
-        } = req.body;
+
+        const newStockIn = Number(material.stockIn) + Number(stockIn);
+
+        const newStockUsed =
+          stockUsed !== undefined && stockUsed !== null
+            ? Number(stockUsed)
+            : Number(material.stockUsed || 0);
 
         await material.update({
           name,
           sku,
           category,
-          stockIn: Number(material.stockIn) + Number(stockIn),
+          stockIn: newStockIn,
           vendor_name,
-          stockUsed,
+          stockUsed: newStockUsed,
+          stockRemaining: newStockIn - newStockUsed,
           cost,
           status,
           vendor_id,
@@ -78,27 +72,19 @@ class MaterialController {
         });
 
         const existingMaterial = await db.material_master.findOne({
-          where: {
-            id: material_master_id
-          }
+          where: { id: material_master_id }
         });
 
-        const updatedStock =
-          Number(existingMaterial.stockAvailable) + Number(stockIn);
+        if (existingMaterial) {
+          const updatedStock =
+            Number(existingMaterial.stockAvailable) + Number(stockIn);
 
-        await db.material_master.update(
-          {
-            stockAvailable: updatedStock
-          },
-          {
-            where: {
-              id: material_master_id
-            }
-          }
-        );
+          await db.material_master.update(
+            { stockAvailable: updatedStock },
+            { where: { id: material_master_id } }
+          );
+        }
 
-
-        // ================= CREATE HISTORY =================
         await db.material_history.create({
           name,
           sku,
@@ -109,30 +95,30 @@ class MaterialController {
           material_id: material.id,
           material_master_id,
           company_id,
-          stockUsed,
+          stockUsed: newStockUsed,
           vendor_id,
+          user_id: req.user.id,
           status: "UPDATED",
-
         });
 
-        res.status(201).json({
+        return res.status(201).json({
           message: "Material Updated successfully.",
           data: material
         });
 
+      } else {
 
+        const initialStockIn = Number(stockIn);
+        const initialStockUsed = Number(stockUsed || 0);
 
-      }
-
-      else {
-
-        const material = await db.material.create({
+        const newMaterial = await db.material.create({
           name,
           sku,
           category,
-          stockIn,
+          stockIn: initialStockIn,
           vendor_name,
-          stockUsed,
+          stockUsed: initialStockUsed,
+          stockRemaining: initialStockIn - initialStockUsed,
           cost,
           status,
           vendor_id,
@@ -141,68 +127,52 @@ class MaterialController {
         });
 
         const existingMaterial = await db.material_master.findOne({
-          where: {
-            id: material_master_id
-          }
+          where: { id: material_master_id }
         });
 
-        const updatedStock =
-          Number(existingMaterial.stockAvailable) + Number(stockIn);
+        if (existingMaterial) {
+          const updatedStock =
+            Number(existingMaterial.stockAvailable) + Number(stockIn);
 
-        await db.material_master.update(
-          {
-            stockAvailable: updatedStock
-          },
-          {
-            where: {
-              id: material_master_id
-            }
-          }
-        );
-
-        // ================= CREATE HISTORY =================
+          await db.material_master.update(
+            { stockAvailable: updatedStock },
+            { where: { id: material_master_id } }
+          );
+        }
 
         await db.material_history.create({
           name,
           sku,
           category,
-          stockIn,
+          stockIn: initialStockIn,
           cost,
           vendor_name,
-          stockUsed,
-          material_id: material.id,
+          stockUsed: initialStockUsed,
+          material_id: newMaterial.id,
           material_master_id,
           company_id,
           vendor_id,
+          user_id: req.user.id,
           status: "CREATED",
-
         });
 
-        res.status(201).json({
+        return res.status(201).json({
           message: "Material created successfully.",
-          data: material
+          data: newMaterial
         });
-
       }
 
     } catch (error) {
       console.error("[CREATE_MATERIAL_ERROR]", error);
-      res.status(500).json({
+      return res.status(500).json({
         message: "Error creating material.",
         error: error.message
       });
     }
-
-
   }
 
-
-  /**
-   * Get All Materials
-   */
   async getAllMaterials(req, res) {
     try {
-
       const company_id = req.user.company_id;
 
       if (!company_id) {
@@ -216,14 +186,12 @@ class MaterialController {
           isDeleted: false,
           company_id
         },
-
         include: [
           {
             model: db.material_project_stock,
             as: "material_project_stock"
           }
         ],
-
         order: [['createdAt', 'DESC']]
       });
 
@@ -241,18 +209,13 @@ class MaterialController {
       }
 
     } catch (error) {
-
       return res.status(500).send({
         code: 500,
         message: error.message || "Server Error"
       });
-
     }
   }
 
-  /**
-   * Get Material By ID
-   */
   async getMaterialById(req, res) {
     try {
       const { id } = req.params;
@@ -261,7 +224,6 @@ class MaterialController {
       if (!company_id) {
         return res.status(401).json({ message: "Unauthorized. Company context missing." });
       }
-
 
       const material = await db.material.findOne({
         where: { id, isDeleted: false, company_id }
@@ -282,9 +244,6 @@ class MaterialController {
     }
   }
 
-  /**
-   * Update Material
-   */
   async updateMaterial(req, res) {
     try {
       const { id } = req.params;
@@ -327,12 +286,23 @@ class MaterialController {
 
       const { projects } = req.body;
 
-      // total assigned stock
+      if (!Array.isArray(projects) || projects.length === 0) {
+        return res.status(400).json({
+          message: "projects array is required."
+        });
+      }
+
       const totalUsedStock = projects.reduce((sum, item) => {
         return sum + Number(item.stock || 0);
       }, 0);
 
-      // update material table stockUsed
+      const availableStock = Number(stockIn) - Number(stockUsed || 0);
+      if (totalUsedStock > availableStock) {
+        return res.status(400).json({
+          message: `Assigned stock (${totalUsedStock}) exceeds available stock (${availableStock}).`
+        });
+      }
+
       await db.material.update(
         {
           stockUsed: Number(stockUsed || 0) + totalUsedStock,
@@ -349,7 +319,6 @@ class MaterialController {
       const project_multiple = await Promise.all(
         projects.map(async (project) => {
 
-          // Check existing record by material_id + project_id
           const existingProjectStock = await db.material_project_stock.findOne({
             where: {
               material_id: id,
@@ -361,12 +330,10 @@ class MaterialController {
 
           if (existingProjectStock) {
 
-            // Add old stock + new stock
             const updatedStock =
               Number(existingProjectStock.stockUsed || 0) +
               Number(project.stock || 0);
 
-            // Update existing record
             await existingProjectStock.update({
               stockUsed: updatedStock
             });
@@ -375,7 +342,6 @@ class MaterialController {
 
           } else {
 
-            // Create new record
             projectStockData = await db.material_project_stock.create({
               material_id: id,
               project_id: project.project_id,
@@ -394,12 +360,11 @@ class MaterialController {
             });
           }
 
-          // Material history create
           await db.material_history.create({
             name,
             sku,
             category,
-            stockIn,
+            stockIn: 0,
             stockUsed: project.stock,
             cost,
             vendor_name,
@@ -410,50 +375,31 @@ class MaterialController {
             project_id: project.project_id,
             vendor_id,
             quotation_id,
+            user_id: req.user.id,
             status: "UPDATED",
           });
 
-          //history_check
           await db.material_project_stock_history.create({
-              material_project_stock_id: projectStockData.id,
-              material_id: id,
-              project_id: project.project_id,
-              name,
-              sku,
-              category,
-              vendor_name,
-              stockUsed: project.stock,
-              cost,
-              status: project.status,
-              vendor_id,
-              material_master_id,
-              project_name: project.project_name,
-              quotation_id,
-              company_id
+            material_project_stock_id: projectStockData.id,
+            material_id: id,
+            project_id: project.project_id,
+            name,
+            sku,
+            category,
+            vendor_name,
+            stockUsed: project.stock,
+            cost,
+            status: project.status,
+            vendor_id,
+            material_master_id,
+            project_name: project.project_name,
+            quotation_id,
+            company_id
           });
 
           return projectStockData;
         })
       );
-
-
-      // ================= CREATE HISTORY =================
-      // await db.material_history.create({
-      //   name,
-      //   sku,
-      //   category,
-      //   stockIn,
-      //   cost,
-      //   vendor_name,
-      //   material_id: material.id,
-      //   material_master_id,
-      //   company_id,
-      //   stockUsed,
-      //   vendor_id,
-      //   status: "UPDATED",
-
-      // });
-
 
       res.status(200).json({
         message: "Material updated successfully.",
@@ -469,9 +415,6 @@ class MaterialController {
     }
   }
 
-  /**
-   * Delete Material (Soft Delete)
-   */
   async deleteMaterial(req, res) {
     try {
       const { id } = req.params;
@@ -504,7 +447,6 @@ class MaterialController {
     }
   }
 
-
   async getMaterialByprojectId(req, res) {
     try {
       const { id } = req.params;
@@ -513,7 +455,6 @@ class MaterialController {
       if (!company_id) {
         return res.status(401).json({ message: "Unauthorized. Company context missing." });
       }
-
 
       const material = await db.material_project_stock.findOne({
         where: { project_id: id, isDeleted: false, company_id }
@@ -533,9 +474,7 @@ class MaterialController {
       });
     }
   }
-  /**
-   * MATERIAL STOCK TRANSFER API
-   */
+
   async material_stock_transfer(req, res) {
     try {
 
@@ -545,7 +484,6 @@ class MaterialController {
 
       const company_id = req.user.company_id;
 
-      // Check material exists
       const material = await db.material.findOne({
         where: {
           id: material_id,
@@ -572,7 +510,6 @@ class MaterialController {
         quotation_id
       } = material;
 
-      // Validate transfers
       if (!transfers || !Array.isArray(transfers) || transfers.length === 0) {
         return res.status(400).json({
           message: "Transfers data is required"
@@ -587,7 +524,6 @@ class MaterialController {
           quantity
         } = item;
 
-        // Source stock
         const fromStock = await db.material_project_stock.findOne({
           where: {
             material_id,
@@ -602,14 +538,12 @@ class MaterialController {
           });
         }
 
-        // Check stock
         if (Number(fromStock.stockUsed) < Number(quantity)) {
           return res.status(400).json({
             message: `Insufficient stock in source project`
           });
         }
 
-        // Deduct stock from source
         const updatedFromStock =
           Number(fromStock.stockUsed) - Number(quantity);
 
@@ -617,7 +551,6 @@ class MaterialController {
           stockUsed: updatedFromStock
         });
 
-        // Destination project data
         const projectData = await db.project.findOne({
           where: {
             id: to_project_id,
@@ -631,7 +564,6 @@ class MaterialController {
           });
         }
 
-        // Find or create destination stock
         const [toStock, created] =
           await db.material_project_stock.findOrCreate({
 
@@ -660,7 +592,6 @@ class MaterialController {
 
           });
 
-        // If already exists then update stock
         if (!created) {
 
           const updatedToStock =
@@ -671,7 +602,6 @@ class MaterialController {
           });
         }
 
-        // Create history
         await db.material_history.create({
           name,
           sku,
@@ -684,7 +614,8 @@ class MaterialController {
           company_id,
           project_id: to_project_id,
           vendor_id,
-          project_name: projectData.project_name,
+          project_name: projectData.name,
+          user_id: req.user.id,
           status: "TRANSFER",
           note
         });

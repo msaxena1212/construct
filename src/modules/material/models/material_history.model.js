@@ -7,6 +7,10 @@ module.exports = (sequelize, Sequelize) => {
         autoIncrement: true,
         primaryKey: true,
       },
+       user_id: {            
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
 
       name: {
         type: Sequelize.STRING,
@@ -47,6 +51,8 @@ module.exports = (sequelize, Sequelize) => {
       status: {
         type: Sequelize.STRING,
       },
+
+      note: { type: Sequelize.TEXT, allowNull: true },
 
       isDeleted: {
         type: Sequelize.BOOLEAN,
