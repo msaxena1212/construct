@@ -99,7 +99,7 @@
         </p>
 
         <h2 class="text-4xl font-black text-slate-900 dark:text-white mt-2">
-          {{ stats.totalBudget | currency:'INR':'symbol':'1.0-0' }}
+          {{ formatBudget(stats.totalBudget) }}
         </h2>
       </div>
 

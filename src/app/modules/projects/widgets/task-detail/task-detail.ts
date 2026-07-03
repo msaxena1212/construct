@@ -33,6 +33,7 @@ export class TaskDetail implements OnInit {
   showDeleteSubTaskModal = false;
   subTaskToDelete: number | null = null;
   isUploading = false;
+  showAllAttachments = false;
 
   selectedPredecessorId: any = '';
   selectedDepType: 'FS' | 'SS' | 'FF' | 'SF' = 'FS';
@@ -77,11 +78,8 @@ export class TaskDetail implements OnInit {
     return `${this.environment.serverUrl}${avatar}`;
   }
 
-
   onMilestoneChange(event: any) {
     const milestoneId = event.target.value || this.task.milestone_id;
-
-    console.log('Selected Milestone ID:', milestoneId);
 
     const milestone = this.milestones.find(
       (m: any) => m.id == milestoneId
@@ -134,6 +132,8 @@ export class TaskDetail implements OnInit {
   }
 
   toggleChecklist(item: IProjectSubTask) {
+    if (!this.isEditing) return;
+
     const newStatus = !item.completed;
     this.projectService.updateSubTask(item?.id!, { completed: newStatus }).subscribe({
       next: () => {
@@ -144,7 +144,7 @@ export class TaskDetail implements OnInit {
   }
 
   addSubTask() {
-    if (!this.newSubTaskTitle.trim()) return;
+    if (!this.isEditing || !this.newSubTaskTitle.trim()) return;
 
     this.projectService.createSubTask(this.task.id, this.newSubTaskTitle.trim()).subscribe({
       next: (res) => {
@@ -158,6 +158,8 @@ export class TaskDetail implements OnInit {
   }
 
   openDeleteSubTaskDialog(subTaskId: number) {
+    if (!this.isEditing) return;
+
     this.subTaskToDelete = subTaskId;
     this.showDeleteSubTaskModal = true;
   }
@@ -186,6 +188,8 @@ export class TaskDetail implements OnInit {
   }
 
   onSubTaskChange(item: IProjectSubTask, newTitle: string) {
+    if (!this.isEditing) return;
+
     if (item.title !== newTitle) {
       this.projectService.updateSubTask(item?.id!, { title: newTitle }).subscribe({
         next: () => item.title = newTitle,
@@ -195,9 +199,10 @@ export class TaskDetail implements OnInit {
   }
 
   postComment() {
-    if (!this.newComment.trim()) return;
+    const trimmedComment = this.newComment?.trim();
+    if (!trimmedComment) return;
 
-    this.projectService.addTaskComment(this.task.id, this.newComment).subscribe({
+    this.projectService.addTaskComment(this.task.id, trimmedComment).subscribe({
       next: (res) => {
         if (!this.task.comments) this.task.comments = [];
         this.task.comments.unshift(res.data);
@@ -215,7 +220,8 @@ export class TaskDetail implements OnInit {
 
         this.newComment = '';
         this.toastr.success('Comment posted');
-      }
+      },
+      error: () => this.toastr.error('Error posting comment')
     });
   }
 
@@ -265,7 +271,6 @@ export class TaskDetail implements OnInit {
 
     if (!this.task.dependencies) this.task.dependencies = [];
 
-    // Check if already exists
     if (this.task.dependencies.some(d => d.predecessor_id === Number(this.selectedPredecessorId))) {
       this.toastr.warning('Dependency already exists');
       return;
@@ -296,5 +301,70 @@ export class TaskDetail implements OnInit {
   getTaskTitle(id: number | string) {
     const taskId = typeof id === 'string' ? Number(id) : id;
     return this.allTasks.find((t: IProjectTask) => t.id === taskId)?.title || `Task #${id}`;
+  }
+
+  // ---------- New helpers added to match the redesigned UI ----------
+
+  /** Badge color classes for the task priority pill (High/Medium/Low). */
+  priorityBadgeClass(): string {
+    switch ((this.task?.priority || '').toLowerCase()) {
+      case 'high': return 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400';
+      case 'medium': return 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400';
+      case 'low': return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400';
+      default: return 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
+    }
+  }
+
+  /** Derives a display status for a sub-task purely from the existing `completed` boolean. */
+  subTaskStatus(item: IProjectSubTask): string {
+    return item.completed ? 'Completed' : 'Pending';
+  }
+
+  subTaskStatusClass(item: IProjectSubTask): string {
+    return item.completed ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500';
+  }
+
+  /** Color classes for the FS/SS/FF/SF dependency-type chip. */
+  depTypeClass(type: string): string {
+    switch (type) {
+      case 'FS': return 'bg-blue-100 text-blue-600';
+      case 'SS': return 'bg-emerald-100 text-emerald-600';
+      case 'FF': return 'bg-violet-100 text-violet-600';
+      case 'SF': return 'bg-amber-100 text-amber-600';
+      default: return 'bg-slate-100 text-slate-500';
+    }
+  }
+
+  /** Icon + colors for an attachment, based on its file extension. */
+  getFileIconMeta(name: string): { icon: string; bg: string; color: string } {
+    const ext = name?.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'pdf':
+        return { icon: 'picture_as_pdf', bg: 'bg-red-100', color: 'text-red-600' };
+      case 'xlsx':
+      case 'xls':
+      case 'csv':
+        return { icon: 'table_chart', bg: 'bg-emerald-100', color: 'text-emerald-600' };
+      case 'doc':
+      case 'docx':
+        return { icon: 'description', bg: 'bg-blue-100', color: 'text-blue-600' };
+      case 'png':
+      case 'jpg':
+      case 'jpeg':
+      case 'gif':
+        return { icon: 'image', bg: 'bg-violet-100', color: 'text-violet-600' };
+      default:
+        return { icon: 'draft', bg: 'bg-slate-100', color: 'text-slate-500' };
+    }
+  }
+
+  /** Attachments shown in the card: first 3 unless "View all" was clicked. */
+  get visibleAttachments() {
+    if (!this.task?.attachments) return [];
+    return this.showAllAttachments ? this.task.attachments : this.task.attachments.slice(0, 3);
+  }
+
+  toggleAttachmentsView() {
+    this.showAllAttachments = !this.showAllAttachments;
   }
 }
