@@ -1,5 +1,6 @@
 const db = require("../../../models");
 const { project, material, equipment } = db;
+const { getProjectsWithProgress } = require("../../services/projectProgress.service");
 
 exports.getDashboardData = async (req, res) => {
 
@@ -19,6 +20,7 @@ exports.getDashboardData = async (req, res) => {
     );
 
     // Total Projects
+    
     const totalProjects = await project.count({
       where: { company_id },
     });
@@ -30,21 +32,16 @@ exports.getDashboardData = async (req, res) => {
           company_id,
         },
       })) || 0;
+    const projects = await getProjectsWithProgress(company_id);
 
-     // project name and address
-    const projectList = await project.findAll({
-      where: {
-        company_id,
-      },
-      attributes: [
-        "id",
-        "name",
-        "address",
-        "progress",
-      ],
-      order: [["createdAt", "DESC"]],
-      limit: 3,
-    });
+    const projectList = projects
+      .slice(0, 3)
+      .map((project) => ({
+        id: project.id,
+        name: project.name,
+        address: project.address,
+        progress: project.project_progress,
+      }));
 
     // Projects added this month
     const projectsThisMonth = await project.count({
