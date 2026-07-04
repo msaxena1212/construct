@@ -1,6 +1,5 @@
 <section class="p-4 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-    <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div class="space-y-1">
             <h2 class="text-3xl font-black text-slate-800 dark:text-white">Material Inventory History</h2>
@@ -12,77 +11,101 @@
 
             <div class="relative material-filter-dropdown">
                 <button (click)="toggleFilterDropdown(); $event.stopPropagation()"
-                    class="flex items-center gap-2 px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-sm text-slate-700 dark:text-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer">
-                    <span class="material-symbols-outlined text-[18px] text-primary">inventory_2</span>
-                    {{ selectedMaterialsLabel }}
-                    <span class="material-symbols-outlined text-[18px]">{{ isFilterOpen ? 'expand_less' : 'expand_more'
-                        }}</span>
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:shadow-md transition-all cursor-pointer shadow-sm min-w-[200px]">
+                    <span class="material-symbols-outlined text-primary text-lg">inventory_2</span>
+                    <span class="flex-1 text-left truncate">{{ selectedMaterialsLabel }}</span>
+                    <span class="material-symbols-outlined text-slate-400 text-base transition-transform duration-200"
+                        [class.rotate-180]="isFilterOpen">expand_more</span>
                 </button>
 
                 @if (isFilterOpen) {
                 <div (click)="$event.stopPropagation()"
-                    class="absolute right-0 mt-2 w-[300px] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl z-50 overflow-hidden">
+                    class="absolute right-0 top-full mt-1.5 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl z-50 overflow-hidden">
 
-                    <div class="p-3 border-b border-slate-100 dark:border-slate-800">
-                        <div class="flex items-center gap-2 h-10 px-3 rounded-xl bg-slate-100 dark:bg-slate-800">
-                            <span class="material-symbols-outlined text-slate-400 text-[18px]">search</span>
-                            <input type="text" [(ngModel)]="materialSearchQuery" placeholder="Search materials..."
-                                class="w-full bg-transparent outline-none text-sm font-medium text-slate-700 dark:text-slate-200 placeholder:text-slate-400">
+                    <div class="px-3 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                        <div class="relative">
+                            <span
+                                class="absolute left-2.5 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-[15px]">search</span>
+                            <input [(ngModel)]="materialSearchQuery" type="text" placeholder="Search materials…"
+                                class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] font-semibold outline-none focus:ring-2 focus:ring-primary/20 bg-slate-50 dark:bg-slate-800" />
                         </div>
                     </div>
 
-                    <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-                        <label class="flex items-center justify-between gap-2 cursor-pointer">
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" [checked]="allMaterialsSelected" (change)="toggleAllMaterials()"
-                                    class="w-4 h-4 accent-primary cursor-pointer">
-                                <span class="text-sm font-black text-slate-800 dark:text-white">All Materials</span>
-                            </div>
-                            <span class="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                                {{ selectedMaterialIds.size }}/{{ uniqueMaterials.length }}
-                            </span>
-                        </label>
+                    <div (click)="toggleAllMaterials()"
+                        class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors border-b border-slate-100 dark:border-slate-800">
+                        <div class="w-4 h-4 rounded flex items-center justify-center border-2 transition-all"
+                            [ngClass]="allMaterialsSelected ? 'bg-primary border-primary' : isPartiallySelected ? 'bg-primary/30 border-primary' : 'border-slate-300 bg-white dark:bg-slate-800'">
+                            @if (allMaterialsSelected) {
+                            <span class="material-symbols-outlined text-white text-[11px]">check</span>
+                            } @else if (isPartiallySelected) {
+                            <span class="material-symbols-outlined text-primary text-[11px]">remove</span>
+                            }
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-black text-slate-800 dark:text-white">All Materials</p>
+                            <p class="text-[10px] text-slate-400">{{ uniqueMaterials.length }} total</p>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            {{ selectedMaterialIds.size }}/{{ uniqueMaterials.length }}
+                        </span>
                     </div>
 
-                    <div class="max-h-[260px] overflow-y-auto">
+                    <div class="max-h-60 overflow-y-auto">
                         @for (m of filteredMaterialOptions; track m.id) {
-                        <label
-                            class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer border-b border-slate-50 dark:border-slate-800/50">
-                            <div class="flex items-center gap-3">
-                                <input type="checkbox" [checked]="isMaterialChecked(m.id)"
-                                    (change)="toggleMaterial(m.id)" class="w-4 h-4 accent-primary cursor-pointer">
-                                <div
-                                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-primary text-[16px]">inventory_2</span>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-black text-slate-800 dark:text-white">{{ m.name }}</p>
-                                    <p class="text-[11px] text-slate-400 font-semibold">
-                                        <span class="text-emerald-500 font-black">{{ m.utilization }}% used</span>
-                                        · Since {{ m.since | date:'dd/MMM/yyyy' }}
-                                    </p>
+                        <div (click)="toggleMaterial(m.id)"
+                            class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors border-b border-slate-50 dark:border-slate-800/50">
+                            <div class="w-4 h-4 rounded flex items-center justify-center border-2 shrink-0 transition-all"
+                                [ngClass]="isMaterialChecked(m.id) ? 'bg-primary border-primary' : 'border-slate-300 bg-white dark:bg-slate-800'">
+                                @if (isMaterialChecked(m.id)) {
+                                <span class="material-symbols-outlined text-white text-[11px]">check</span>
+                                }
+                            </div>
+                            <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                                [ngClass]="isMaterialChecked(m.id) ? 'bg-primary/15' : 'bg-slate-100 dark:bg-slate-800'">
+                                <span class="material-symbols-outlined text-[14px]"
+                                    [ngClass]="isMaterialChecked(m.id) ? 'text-primary' : 'text-slate-400'">inventory_2</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold truncate text-slate-800 dark:text-white">{{ m.name }}</p>
+
+                                <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                        [ngClass]="getMaterialStatusClass(m.utilization)">
+                                        {{ getMaterialStatusLabel(m.utilization) }}
+                                    </span>
+                                    <span class="text-[10px] font-semibold" [class.text-green-600]="m.utilization >= 90"
+                                        [class.text-amber-500]="m.utilization < 90 && m.utilization >= 70"
+                                        [class.text-red-500]="m.utilization < 70">{{ m.utilization }}%</span>
+                                    @if (m.since) {
+                                    <span class="text-[9px] text-slate-400 font-semibold">· Since {{ m.since |
+                                        date:'dd/MMM/yyyy' }}</span>
+                                    }
                                 </div>
                             </div>
-                        </label>
-                        }
-
-                        @if (!filteredMaterialOptions.length) {
-                        <div class="text-center py-8 text-sm text-slate-400 font-bold">No materials found.</div>
+                        </div>
+                        } @empty {
+                        <div class="py-6 text-center text-slate-400">
+                            <span class="material-symbols-outlined text-2xl">search_off</span>
+                            <p class="text-xs font-bold mt-1">No materials found</p>
+                        </div>
                         }
                     </div>
 
-                    <div class="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/60">
-                        <p class="text-[11px] font-bold text-slate-500">Selected: {{ selectedMaterialIds.size }}</p>
+                    <div
+                        class="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between gap-3">
+                        <div class="flex gap-3 text-[10px] font-bold text-slate-400">
+                            <span>Active: <span class="text-green-600 font-black">{{ activeMaterialsCount
+                                    }}</span></span>
+                            <span>Pending: <span class="text-amber-600 font-black">{{ pendingMaterialsCount
+                                    }}</span></span>
+                        </div>
                         <button (click)="applyFilterDone()"
-                            class="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-black cursor-pointer">
-                            Done
-                        </button>
+                            class="text-[11px] font-black text-primary hover:underline cursor-pointer">Done</button>
                     </div>
                 </div>
                 }
             </div>
 
-            <!-- Export -->
             <button (click)="exportCSV()"
                 class="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-800 dark:bg-slate-700 text-white font-bold text-sm shadow-lg hover:shadow-xl transition-all cursor-pointer">
                 <span class="material-symbols-outlined text-[18px]">download</span>
@@ -97,18 +120,40 @@
             [class]="selectedTab === tab ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-dim'"
             class="flex items-center gap-2 px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap cursor-pointer transition-colors">
             {{ tab }}
+            @if (tabCounts[tab] > 0) {
             <span
                 [class]="selectedTab === tab ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'"
                 class="px-2 py-0.5 rounded-full text-[11px] font-black">
-                {{ tabCounts[tab] || 0 }}
+                {{ tabCounts[tab] }}
             </span>
+            }
         </button>
         }
     </div>
 
-    <div class="flex items-center justify-between">
+    @if (isPartiallySelected) {
+    <div class="flex items-center gap-2 flex-wrap -mt-4">
+        <span class="text-xs font-black text-slate-400 uppercase tracking-wide">Showing:</span>
+        @for (m of selectedMaterialsList; track m.id) {
+        <span
+            class="flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+            {{ m.name }}
+            <button (click)="removeMaterialChip(m.id)"
+                class="material-symbols-outlined text-[14px] leading-none border-none bg-transparent cursor-pointer text-primary hover:text-primary/70 p-0">
+                close
+            </button>
+        </span>
+        }
+        <button (click)="clearAllMaterialChips()"
+            class="text-xs font-bold text-slate-400 underline hover:text-primary transition-colors border-none bg-transparent cursor-pointer">
+            Clear all
+        </button>
+    </div>
+    }
+
+    <div class="flex items-center justify-between gap-3 flex-wrap">
         <h3 class="text-xl font-black text-slate-800 dark:text-white">
-            {{ selectedTab === 'All' ? 'All Materials' : selectedTab }} — Activity History
+            {{ sectionHeadingLabel }} — Activity History
         </h3>
 
         <div
@@ -137,105 +182,112 @@
         }
 
         @if (!loading && paginatedHistory.length) {
-        @for (group of groupedHistory; track group.dateLabel) {
-        <div class="mb-8 last:mb-0">
+        <div class="flex flex-col gap-6">
+            @for (group of groupedHistory; track group.dateLabel) {
+            <div class="flex flex-col gap-2">
 
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2 text-slate-800 dark:text-white">
-                    <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-[18px] text-primary">calendar_today</span>
+                <div class="flex items-center gap-3 px-1">
+                    <div class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-primary text-[16px]">calendar_today</span>
                     </div>
-                    <span class="text-base font-black">{{ group.dateLabel }}</span>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-sm font-black text-slate-800 dark:text-white">{{ group.dateLabel }}</h4>
+                    </div>
+                    <span class="text-[10px] font-black px-2.5 py-1 rounded-full bg-primary/10 text-primary shrink-0">
+                        {{ group.count }}
+                    </span>
                 </div>
-                <span
-                    class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 text-[12px] font-black">
-                    {{ group.count }}
-                </span>
-            </div>
 
-            <div class="relative flex flex-col gap-3 pl-1">
-                <div class="absolute left-[17px] top-2 bottom-2 w-0.5 bg-slate-100 dark:bg-slate-800"></div>
-
-                @for (item of group.items; track item.id) {
                 <div
-                    class="relative flex items-start justify-between gap-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-4 hover:shadow-lg transition-all duration-300">
+                    class="ml-4 pl-7 border-l-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col gap-2">
+                    @for (item of group.items; track item.id) {
 
-                    <div class="flex items-start gap-4">
+                    <div
+                        class="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+
                         <div [ngClass]="getActivityIconClass(item.status || '')"
-                            class="relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-[18px]">{{ getActivityIcon(item.status || '')
-                                }}</span>
+                            class="absolute -left-[33px] top-4 w-3 h-3 rounded-full border-2 border-white dark:border-slate-950 shadow-sm">
                         </div>
 
-                        <div class="space-y-1.5">
-                            <span [ngClass]="statusBadgeClass(item.status || '')"
-                                class="inline-block px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wide">
-                                {{ item.status }}
-                            </span>
-                            <p class="text-[15px] font-bold text-slate-800 dark:text-slate-100 leading-snug max-w-2xl">
-                                {{ getActivityText(item) }}
-                            </p>
-                            <div class="flex items-center gap-2 text-xs text-slate-400 font-semibold">
-                                <span
-                                    class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">SKU</span>
-                                {{ item.sku }}
-                                @if (item.cost) {
-                                <span>•</span>
-                                <span class="font-black text-slate-600 dark:text-slate-300">₹{{ item.cost }}</span>
-                                }
+                        <div class="flex items-start gap-3 px-4 py-3.5">
+
+                            <div [ngClass]="getActivityIconClass(item.status || '')"
+                                class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                                <span class="material-symbols-outlined text-[16px]">{{ getActivityIcon(item.status ||
+                                    '')
+                                    }}</span>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="flex flex-col items-end gap-1.5 shrink-0">
-                        <div [ngClass]="getMetaBoxClass(item.status || '')"
-                            class="flex items-center gap-2 px-3 py-1.5 rounded-xl">
-                            <span class="text-[9px] font-black uppercase tracking-wide text-slate-400">{{
-                                getMetaLabel(item.status || '') }} BY:</span>
-                            <span class="text-xs font-black text-slate-700 dark:text-slate-200">{{ getActorName(item)
-                                }}</span>
-                        </div>
-                        <div [ngClass]="getMetaBoxClass(item.status || '')"
-                            class="flex items-center gap-2 px-3 py-1.5 rounded-xl">
-                            <span class="text-[9px] font-black uppercase tracking-wide text-slate-400">{{
-                                getMetaLabel(item.status || '') }} AT:</span>
-                            <span class="text-xs font-black text-slate-700 dark:text-slate-200">{{ item.createdAt |
-                                date:'dd/MMM/yyyy, h:mm a' }}</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <span [ngClass]="statusBadgeClass(item.status || '')"
+                                        class="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
+                                        {{ item.status }}
+                                    </span>
+                                </div>
+                                <p class="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                                    {{ getActivityText(item) }}
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col gap-3 shrink-0" style="min-width: 210px; max-width: 260px;">
+
+                                @if (getMetaLabel(item.status || '') === 'CREATED') {
+                                <div
+                                    class="rounded-xl border border-pink-200 dark:border-pink-800/40 bg-pink-50/60 dark:bg-pink-900/10 px-3 py-2 shadow-sm">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span
+                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Created
+                                            By:</span>
+                                        <span
+                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 whitespace-nowrap max-w-[140px] truncate">
+                                            {{ getActorName(item) }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2 mt-1">
+                                        <span
+                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Created
+                                            At:</span>
+                                        <span
+                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 whitespace-nowrap">
+                                            {{ item.createdAt | date:'dd/MMM/yyyy, h:mm a' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                } @else {
+                                <div
+                                    class="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/60 dark:bg-blue-900/10 px-3 py-2 shadow-sm">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span
+                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Updated
+                                            By:</span>
+                                        <span
+                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap max-w-[140px] truncate">
+                                            {{ getActorName(item) }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2 mt-1">
+                                        <span
+                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Updated
+                                            At:</span>
+                                        <span
+                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
+                                            {{ item.createdAt | date:'dd/MMM/yyyy, h:mm a' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                }
+
+                            </div>
+
                         </div>
                     </div>
+                    }
                 </div>
-                }
             </div>
-        </div>
-        }
-        }
-    </div>
-
-    <div
-        class="flex flex-col md:flex-row items-center justify-between gap-4 px-6 py-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Showing {{ filteredHistory.length ? ((page - 1) * pageSize) + 1 : 0 }} - {{ endItem }} of {{
-            filteredHistory.length }} records
-        </p>
-
-        <div class="flex items-center gap-2">
-            <button (click)="prevPage()"
-                class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
-                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-            </button>
-
-            @for (p of [].constructor(totalPages()); track $index) {
-            <button (click)="goToPage($index + 1)"
-                class="w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer"
-                [ngClass]="page === ($index + 1) ? 'bg-primary text-white shadow-md' : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary'">
-                {{ $index + 1 }}
-            </button>
             }
-
-            <button (click)="nextPage()"
-                class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
-                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-            </button>
         </div>
+        }
     </div>
+
 </section>

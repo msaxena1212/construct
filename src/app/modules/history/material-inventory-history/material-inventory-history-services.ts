@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface MaterialHistory {
-  id?: number;
+  id?: number | string;
   name: string;
   sku: string;
   category?: string;
   stockIn?: number;
   stockUsed?: number;
+  stockRemaining?: number;
   cost?: string;
   vendor_name?: string;
   project_name?: string;
@@ -53,7 +53,8 @@ export class MaterialInventoryHistoryServices {
 
     this.http.get<any>(`${this.baseUrl}/getAllMaterialHistory`).subscribe({
       next: (res) => {
-        this.historySubject.next(res?.data || []);
+        const flattened = this.flattenHistory(res?.data || []);
+        this.historySubject.next(flattened);
         this.loadingSubject.next(false);
       },
       error: (err) => {
@@ -62,6 +63,49 @@ export class MaterialInventoryHistoryServices {
         this.loadingSubject.next(false);
       },
     });
+  }
+
+
+  private flattenHistory(rawData: any[]): MaterialHistory[] {
+    const flattened: MaterialHistory[] = [];
+    const firstSeenAt = new Map<number, string>();
+
+    for (const item of rawData) {
+      const masterId = item.material_master_id;
+      if (masterId == null || !item.createdAt) continue;
+
+      const existing = firstSeenAt.get(masterId);
+      if (!existing || new Date(item.createdAt) < new Date(existing)) {
+        firstSeenAt.set(masterId, item.createdAt);
+      }
+    }
+
+
+    for (const item of rawData) {
+      const masterId = item.material_master_id;
+      const isFirst = masterId != null && item.createdAt === firstSeenAt.get(masterId);
+
+      flattened.push({
+        ...item,
+        id: `stock-${item.id}`,
+        status: isFirst ? 'CREATED' : 'UPDATED',
+      });
+
+      if (Array.isArray(item.material_project_stock)) {
+        for (const proj of item.material_project_stock) {
+          flattened.push({
+            ...proj,
+            id: `transfer-${proj.id}`,
+            status: 'TRANSFER',
+            material_master_id: proj.material_master_id ?? masterId,
+          });
+        }
+      }
+    }
+
+    return flattened.sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
   }
 
   getMaterialHistoryById(id: number) {

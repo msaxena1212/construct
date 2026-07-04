@@ -41,8 +41,6 @@ export class MaterialInventoryHistory {
   page = 1;
   pageSize = 8;
 
-  Math = Math;
-
   isFilterOpen = false;
   materialSearchQuery = '';
   selectedMaterialIds = new Set<number>();
@@ -70,24 +68,11 @@ export class MaterialInventoryHistory {
     }
   }
 
-
-  get tabCounts(): { [tab: string]: number } {
-    const counts: { [tab: string]: number } = { All: this.history.length };
-    for (const tab of this.tabs) {
-      if (tab === 'All') continue;
-      counts[tab] = this.history.filter(
-        (h) => (h.status || '').toUpperCase() === tab
-      ).length;
-    }
-    return counts;
-  }
-
-
   get uniqueMaterials(): MaterialFilterItem[] {
     const map = new Map<number, MaterialFilterItem>();
 
     for (const item of this.history) {
-      const id = item.material_id ?? item.material_master_id;
+      const id = item.material_master_id ?? item.material_id;
       if (!id) continue;
 
       if (!map.has(id)) {
@@ -103,8 +88,12 @@ export class MaterialInventoryHistory {
       }
 
       const m = map.get(id)!;
+
       m.stockIn += item.stockIn || 0;
-      m.stockUsed += item.stockUsed || 0;
+
+      if ((item.status || '').toUpperCase() === 'TRANSFER') {
+        m.stockUsed += item.stockUsed || 0;
+      }
 
       if (item.createdAt && (!m.since || new Date(item.createdAt) < new Date(m.since))) {
         m.since = item.createdAt;
@@ -132,6 +121,14 @@ export class MaterialInventoryHistory {
     );
   }
 
+  get isPartiallySelected(): boolean {
+    return this.selectedMaterialIds.size > 0 && !this.allMaterialsSelected;
+  }
+
+  get selectedMaterialsList(): MaterialFilterItem[] {
+    return this.uniqueMaterials.filter((m) => this.selectedMaterialIds.has(m.id));
+  }
+
   get selectedMaterialsLabel(): string {
     if (this.allMaterialsSelected || this.selectedMaterialIds.size === 0) {
       return 'All Materials';
@@ -141,6 +138,31 @@ export class MaterialInventoryHistory {
       return this.uniqueMaterials.find((x) => x.id === id)?.name || '1 Selected';
     }
     return `${this.selectedMaterialIds.size} Materials Selected`;
+  }
+
+  get sectionHeadingLabel(): string {
+    if (this.selectedMaterialIds.size > 0 && this.selectedMaterialIds.size < this.uniqueMaterials.length) {
+      return `${this.selectedMaterialIds.size} Material(s)`;
+    }
+    return this.selectedTab === 'All' ? 'All Materials' : this.selectedTab;
+  }
+
+  getMaterialStatusLabel(utilization: number): string {
+    return utilization > 0 ? 'Active' : 'Pending';
+  }
+
+  getMaterialStatusClass(utilization: number): string {
+    return utilization > 0
+      ? 'bg-emerald-100 text-emerald-600'
+      : 'bg-amber-100 text-amber-600';
+  }
+
+  get activeMaterialsCount(): number {
+    return this.uniqueMaterials.filter((m) => m.utilization > 0).length;
+  }
+
+  get pendingMaterialsCount(): number {
+    return this.uniqueMaterials.filter((m) => m.utilization === 0).length;
   }
 
   toggleFilterDropdown() {
@@ -171,30 +193,57 @@ export class MaterialInventoryHistory {
     this.updatePagination();
   }
 
+  removeMaterialChip(id: number) {
+    this.selectedMaterialIds.delete(id);
+    this.page = 1;
+    this.updatePagination();
+  }
+
+  clearAllMaterialChips() {
+    this.selectedMaterialIds.clear();
+    this.page = 1;
+    this.updatePagination();
+  }
+
   applyFilterDone() {
     this.isFilterOpen = false;
     this.page = 1;
     this.updatePagination();
   }
 
-
-  get filteredHistory(): MaterialHistory[] {
+  private get materialFilteredHistory(): MaterialHistory[] {
     let filtered = [...this.history];
-
-    if (this.selectedTab !== 'All') {
-      filtered = filtered.filter((h) => (h.status || '').toUpperCase() === this.selectedTab);
-    }
 
     if (
       this.selectedMaterialIds.size > 0 &&
       this.selectedMaterialIds.size < this.uniqueMaterials.length
     ) {
       filtered = filtered.filter((h) => {
-        const id = h.material_id ?? h.material_master_id;
+        const id = h.material_master_id ?? h.material_id;
         return id ? this.selectedMaterialIds.has(id) : false;
       });
-    } else if (this.selectedMaterialIds.size === 0) {
-      filtered = [];
+    }
+
+    return filtered;
+  }
+
+  get tabCounts(): { [tab: string]: number } {
+    const base = this.materialFilteredHistory;
+    const counts: { [tab: string]: number } = { All: base.length };
+    for (const tab of this.tabs) {
+      if (tab === 'All') continue;
+      counts[tab] = base.filter(
+        (h) => (h.status || '').toUpperCase() === tab
+      ).length;
+    }
+    return counts;
+  }
+
+  get filteredHistory(): MaterialHistory[] {
+    let filtered = this.materialFilteredHistory;
+
+    if (this.selectedTab !== 'All') {
+      filtered = filtered.filter((h) => (h.status || '').toUpperCase() === this.selectedTab);
     }
 
     if (this.searchQuery) {
@@ -211,10 +260,6 @@ export class MaterialInventoryHistory {
     }
 
     return filtered;
-  }
-
-  get endItem(): number {
-    return Math.min(this.page * this.pageSize, this.filteredHistory.length);
   }
 
   get groupedHistory(): HistoryGroup[] {
@@ -247,22 +292,21 @@ export class MaterialInventoryHistory {
   getActivityText(item: MaterialHistory): string {
     const status = (item.status || '').toUpperCase();
     const name = item.name || 'Material';
+    const sku = item.sku ? ` (SKU: ${item.sku})` : '';
+    const costText = item.cost ? ` at ₹${item.cost} per unit` : '';
 
     switch (status) {
       case 'CREATED':
-        return `Material "${name}" was added to inventory with ${item.stockIn || 0} units from vendor "${item.vendor_name || 'N/A'}".`;
+        return `Material "${name}"${sku} was added to inventory with ${item.stockIn || 0} units from vendor "${item.vendor_name || 'N/A'}"${costText}.`;
 
       case 'UPDATED':
-        if (item.project_id) {
-          return `${item.stockUsed || 0} units of Material "${name}" were assigned to Project "${item.project_name || 'N/A'}".`;
-        }
-        return `Material "${name}" stock was replenished by ${item.stockIn || 0} units from vendor "${item.vendor_name || 'N/A'}".`;
+        return `Material "${name}"${sku} stock was replenished by ${item.stockIn || 0} units from vendor "${item.vendor_name || 'N/A'}"${costText}.`;
 
       case 'TRANSFER':
-        return `${item.stockUsed || 0} units of Material "${name}" were transferred to Project "${item.project_name || 'N/A'}"${item.note ? ` with note: "${item.note}"` : ''}.`;
+        return `${item.stockUsed || 0} units of Material "${name}"${sku} were transferred to Project "${item.project_name || 'N/A'}"${item.note ? ` with note: "${item.note}"` : ''}.`;
 
       default:
-        return `Stock movement recorded for Material "${name}".`;
+        return `Stock movement recorded for Material "${name}"${sku}.`;
     }
   }
 
@@ -315,6 +359,20 @@ export class MaterialInventoryHistory {
       : 'bg-blue-50 dark:bg-blue-500/5';
   }
 
+  private currentUserDisplayName(): string {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        const name = `${user?.firstname || ''} ${user?.lastname || ''}`.trim();
+        return name || user?.username || 'System';
+      }
+    } catch {
+
+    }
+    return 'System';
+  }
+
   getActorName(item: MaterialHistory): string {
     if (item.created_by && item.created_by.trim().length > 0) {
       return item.created_by;
@@ -325,7 +383,7 @@ export class MaterialInventoryHistory {
       if (fullName) return fullName;
     }
 
-    return 'System';
+    return this.currentUserDisplayName()
   }
 
   changeTab(tab: string) {
@@ -343,29 +401,6 @@ export class MaterialInventoryHistory {
     const start = (this.page - 1) * this.pageSize;
     const end = start + this.pageSize;
     this.paginatedHistory = this.filteredHistory.slice(start, end);
-  }
-
-  totalPages() {
-    return Math.ceil(this.filteredHistory.length / this.pageSize) || 1;
-  }
-
-  nextPage() {
-    if (this.page < this.totalPages()) {
-      this.page++;
-      this.updatePagination();
-    }
-  }
-
-  prevPage() {
-    if (this.page > 1) {
-      this.page--;
-      this.updatePagination();
-    }
-  }
-
-  goToPage(p: number) {
-    this.page = p;
-    this.updatePagination();
   }
 
   exportCSV() {
