@@ -273,6 +273,9 @@ db.equipment_history.belongsTo(db.equipment_master, { foreignKey: "equipment_mas
 db.equipment.hasMany(db.equipment_history, { foreignKey: "equipment_id", as: "equipment_history" });
 db.equipment_history.belongsTo(db.equipment, { foreignKey: "equipment_id", as: "equipment" });
 
+db.user.hasMany(db.equipment_history, { foreignKey: "user_id", as: "equipment_history_logs" });
+db.equipment_history.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
+
 db.company.hasMany(db.equipment_history, { foreignKey: "company_id", as: "equipment_history" });
 db.equipment_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
@@ -374,16 +377,7 @@ db.quotation.hasMany(db.quotation_history, { foreignKey: "quotation_id", as: "qu
 db.quotation_history.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
 
 
-
 // PROJECT MANAGEMENT END
-// ── LABOR associations ──────────────────────────────────────
-// Labor → Company
-// db.company.hasMany(db.labor, { foreignKey: 'company_id', as: 'laborWorkers' });
-// db.labor.belongsTo(db.company, { foreignKey: 'company_id', as: 'company' });
-
-// db.vendors.hasMany(db.labor, { foreignKey: 'vendor_id', as: 'laborWorkers' });
-// db.labor.belongsTo(db.vendors, { foreignKey: 'vendor_id', as: 'vendors' });
-
 
 
 connectDB();

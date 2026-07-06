@@ -37,12 +37,6 @@ class Routes {
       require("../modules/vendors/vendors_activity_routes")
     );
 
-
-    app.use(
-      "/api/v1/labor",
-      require("../modules/labor/routes/labor_routes")
-    );
-
     app.use(
       "/api/v1/vendors_labor",
       require("../modules/vendors/vendors_labor_routes")

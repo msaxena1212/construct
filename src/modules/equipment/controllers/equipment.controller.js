@@ -9,11 +9,9 @@ class equipmentController {
     this.deleteequipment = this.deleteequipment.bind(this);
     this.getequipmentByprojectId = this.getequipmentByprojectId.bind(this);
     this.getAllequipments_history = this.getAllequipments_history.bind(this);
+    this.equipment_stock_transfer = this.equipment_stock_transfer.bind(this);
   }
 
-  /**
-   * Create equipment
-   */
   async createequipment(req, res) {
     try {
       const {
@@ -31,10 +29,6 @@ class equipmentController {
 
       const company_id = req.user.company_id;
 
-      // if (!equipment_master_id) {
-      //   return res.status(400).json({ message: "equipment are required." });
-      // }
-
       if (!vendor_name) {
         return res.status(400).json({ message: "vendor_name are required." });
       }
@@ -47,25 +41,11 @@ class equipmentController {
         return res.status(400).json({ message: "Cost are required." });
       }
 
-
       const equipment = await db.equipment.findOne({
-        where: { isDeleted: false, company_id, project_id, equipment_master_id }
+        where: { isDeleted: false, company_id, equipment_master_id }
       });
 
       if (equipment) {
-        const {
-          name,
-          sku,
-          category,
-          stockIn,
-          vendor_name,
-          stockUsed,
-          cost,
-          status,
-          vendor_id,
-          equipment_master_id,
-        } = req.body;
-
         await equipment.update({
           name,
           sku,
@@ -80,27 +60,16 @@ class equipmentController {
         });
 
         const existingequipment = await db.equipment_master.findOne({
-          where: {
-            id: equipment_master_id
-          }
+          where: { id: equipment_master_id }
         });
 
-        const updatedStock =
-          Number(existingequipment.stockAvailable) + Number(stockIn);
+        const updatedStock = Number(existingequipment.stockAvailable) + Number(stockIn);
 
         await db.equipment_master.update(
-          {
-            stockAvailable: updatedStock
-          },
-          {
-            where: {
-              id: equipment_master_id
-            }
-          }
+          { stockAvailable: updatedStock },
+          { where: { id: equipment_master_id } }
         );
 
-
-        // ================= CREATE HISTORY =================
         await db.equipment_history.create({
           name,
           sku,
@@ -114,27 +83,24 @@ class equipmentController {
           stockUsed,
           vendor_id,
           status: "UPDATED",
-
+          user_id: req.user.id,
         });
 
-        res.status(201).json({
+        return res.status(201).json({
           message: "equipment Updated successfully.",
           data: equipment
         });
 
+      } else {
 
-
-      }
-
-      else {
-
-        const equipment = await db.equipment.create({
+        const newEquipment = await db.equipment.create({
           name,
           sku,
           category,
           stockIn,
           vendor_name,
           stockUsed,
+          stockRemaining: stockIn,
           cost,
           status,
           vendor_id,
@@ -143,26 +109,15 @@ class equipmentController {
         });
 
         const existingequipment = await db.equipment_master.findOne({
-          where: {
-            id: equipment_master_id
-          }
+          where: { id: equipment_master_id }
         });
 
-        const updatedStock =
-          Number(existingequipment.stockAvailable) + Number(stockIn);
+        const updatedStock = Number(existingequipment.stockAvailable) + Number(stockIn);
 
         await db.equipment_master.update(
-          {
-            stockAvailable: updatedStock
-          },
-          {
-            where: {
-              id: equipment_master_id
-            }
-          }
+          { stockAvailable: updatedStock },
+          { where: { id: equipment_master_id } }
         );
-
-        // ================= CREATE HISTORY =================
 
         await db.equipment_history.create({
           name,
@@ -172,19 +127,18 @@ class equipmentController {
           cost,
           vendor_name,
           stockUsed,
-          equipment_id: equipment.id,
+          equipment_id: newEquipment.id,
           equipment_master_id,
           company_id,
           vendor_id,
           status: "CREATED",
-
+          user_id: req.user.id,
         });
 
-        res.status(201).json({
+        return res.status(201).json({
           message: "equipment created successfully.",
-          data: equipment
+          data: newEquipment
         });
-
       }
 
     } catch (error) {
@@ -194,14 +148,8 @@ class equipmentController {
         error: error.message
       });
     }
-
-
   }
 
-
-  /**
-   * Get All equipments
-   */
   async getAllequipments(req, res) {
     try {
 
@@ -236,9 +184,6 @@ class equipmentController {
     }
   };
 
-  /**
-   * Get equipment By ID
-   */
   async getequipmentById(req, res) {
     try {
       const { id } = req.params;
@@ -268,9 +213,6 @@ class equipmentController {
     }
   }
 
-  /**
-   * Update equipment
-   */
   async updateequipment(req, res) {
     try {
       const { id } = req.params;
@@ -305,12 +247,10 @@ class equipmentController {
 
       const { projects } = req.body;
 
-      // total assigned stock
       const totalUsedStock = projects.reduce((sum, item) => {
         return sum + Number(item.stock || 0);
       }, 0);
 
-      // update equipment table stockUsed
       await db.equipment.update(
         {
           stockUsed: Number(stockUsed || 0) + totalUsedStock,
@@ -324,11 +264,9 @@ class equipmentController {
         }
       );
 
-      // create entries project wise
       const project_multiple = await Promise.all(
         projects.map(async (project) => {
 
-          // Check existing record by equipment_id + project_id
           const existingProjectStock = await db.equipment_project_stock.findOne({
             where: {
               equipment_id: id,
@@ -340,12 +278,10 @@ class equipmentController {
 
           if (existingProjectStock) {
 
-            // Add previous stock + new stock
             const updatedStock =
               Number(existingProjectStock.stockUsed || 0) +
               Number(project.stock || 0);
 
-            // Update existing record
             await existingProjectStock.update({
               stockUsed: updatedStock,
 
@@ -355,7 +291,6 @@ class equipmentController {
 
           } else {
 
-            // Create new record
             projectStockData = await db.equipment_project_stock.create({
               equipment_id: id,
               project_id: project.project_id,
@@ -374,7 +309,6 @@ class equipmentController {
             });
           }
 
-          // Create equipment history
           await db.equipment_history.create({
             name,
             sku,
@@ -391,52 +325,30 @@ class equipmentController {
             vendor_id,
             quotation_id,
             status: "UPDATED",
+            user_id: req.user.id,
           });
 
-
-          //history_check
           await db.equipment_project_stock_history.create({
-              equipment_project_stock_id: projectStockData.id,
-              equipment_id: id,
-              project_id: project.project_id,
-              name,
-              sku,
-              category,
-              vendor_name,
-              stockUsed: project.stock,
-              cost,
-              status: project.status,
-              vendor_id,
-              equipment_master_id,
-              project_name: project.project_name,
-              quotation_id,
-              company_id
+            equipment_project_stock_id: projectStockData.id,
+            equipment_id: id,
+            project_id: project.project_id,
+            name,
+            sku,
+            category,
+            vendor_name,
+            stockUsed: project.stock,
+            cost,
+            status: project.status,
+            vendor_id,
+            equipment_master_id,
+            project_name: project.project_name,
+            quotation_id,
+            company_id
           });
 
           return projectStockData;
         })
       );
-
-
-
-      // ================= CREATE HISTORY =================
-      // await db.equipment_history.create({
-      //   name,
-      //   sku,
-      //   category,
-      //   stockIn,
-      //   cost,
-      //   vendor_name,
-      //   project_name,
-      //   equipment_id: equipment.id,
-      //   equipment_master_id,
-      //   company_id,
-      //   project_id,
-      //   vendor_id,
-      //   status: "UPDATED",
-
-      // });
-
 
       res.status(200).json({
         message: "equipment updated successfully.",
@@ -452,9 +364,6 @@ class equipmentController {
     }
   }
 
-  /**
-   * Delete equipment (Soft Delete)
-   */
   async deleteequipment(req, res) {
     try {
       const { id } = req.params;
@@ -516,10 +425,6 @@ class equipmentController {
     }
   }
 
-
-  /**
- * Get All equipments history
- */
   async getAllequipments_history(req, res) {
     try {
 
@@ -530,6 +435,13 @@ class equipmentController {
 
       const equipments = await db.equipment_history.findAll({
         where: { isDeleted: false, company_id },
+        include: [
+          {
+            model: db.user,
+            as: "user",
+            attributes: ["id", "firstname", "lastname"]
+          }
+        ],
         order: [['createdAt', 'DESC']]
       });
 
@@ -548,9 +460,6 @@ class equipmentController {
     }
   };
 
-  /**
-   * EQUIPMENT STOCK TRANSFER API
-   */
   async equipment_stock_transfer(req, res) {
     try {
 
@@ -560,7 +469,6 @@ class equipmentController {
 
       const company_id = req.user.company_id;
 
-      // Check equipment exists
       const equipment = await db.equipment.findOne({
         where: {
           id: equipment_id,
@@ -587,7 +495,6 @@ class equipmentController {
         quotation_id
       } = equipment;
 
-      // Validate transfers
       if (!transfers || !Array.isArray(transfers) || transfers.length === 0) {
         return res.status(400).json({
           message: "Transfers data is required"
@@ -602,7 +509,6 @@ class equipmentController {
           quantity
         } = item;
 
-        // Source stock
         const fromStock = await db.equipment_project_stock.findOne({
           where: {
             equipment_id,
@@ -617,14 +523,12 @@ class equipmentController {
           });
         }
 
-        // Check stock
         if (Number(fromStock.stockUsed) < Number(quantity)) {
           return res.status(400).json({
             message: `Insufficient stock in source project`
           });
         }
 
-        // Deduct stock from source
         const updatedFromStock =
           Number(fromStock.stockUsed) - Number(quantity);
 
@@ -632,7 +536,6 @@ class equipmentController {
           stockUsed: updatedFromStock
         });
 
-        // Destination project data
         const projectData = await db.project.findOne({
           where: {
             id: to_project_id,
@@ -646,7 +549,6 @@ class equipmentController {
           });
         }
 
-        // Find or create destination stock
         const [toStock, created] =
           await db.equipment_project_stock.findOrCreate({
 
@@ -675,7 +577,6 @@ class equipmentController {
 
           });
 
-        // If already exists then update stock
         if (!created) {
 
           const updatedToStock =
@@ -686,7 +587,6 @@ class equipmentController {
           });
         }
 
-        // Create history
         await db.equipment_history.create({
           name,
           sku,
@@ -701,7 +601,8 @@ class equipmentController {
           vendor_id,
           project_name: projectData.name,
           status: "TRANSFER",
-          note
+          note,
+          user_id: req.user.id,
         });
 
       }
@@ -720,8 +621,6 @@ class equipmentController {
       });
     }
   }
-
-
 
 }
 
