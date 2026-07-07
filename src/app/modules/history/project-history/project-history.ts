@@ -306,8 +306,7 @@ export class ProjectHistory implements OnInit, OnChanges {
   }
 
   clearAllChips() {
-    this.selectedProjectIds = this.projects.map(p => p.id);
-    this.projects.forEach(p => this.ensureProjectLoaded(p));
+    this.selectedProjectIds = [];
     this.invalidateCaches();
   }
 
@@ -326,8 +325,9 @@ export class ProjectHistory implements OnInit, OnChanges {
     if (this.activeTab !== 'All') {
       return `${this.activeTab} — Activity History`;
     }
-    const countLabel = this.isAllSelected ? 'All Projects' : `${this.selectedProjectIds.length} Project(s)`;
-    return `${countLabel} — Activity History`;
+    if (this.isAllSelected) return 'All Projects — Activity History';
+    if (this.selectedProjectIds.length === 0) return 'No Project Selected';
+    return `${this.selectedProjectIds.length} Project(s) — Activity History`;
   }
 
   get activeProjectsCount(): number {
@@ -349,7 +349,7 @@ export class ProjectHistory implements OnInit, OnChanges {
 
   private get effectiveIds(): (string | number)[] {
     if (this.projects.length > 0) {
-      return this.selectedProjectIds.length ? this.selectedProjectIds : this.projects.map(p => p.id);
+      return this.selectedProjectIds;
     }
     return this.projectId ? [this.projectId] : [];
   }

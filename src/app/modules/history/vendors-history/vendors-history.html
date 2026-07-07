@@ -149,8 +149,10 @@
     <div class="flex items-center justify-between gap-3 flex-wrap">
       <div>
         <h3 class="text-lg font-black text-on-surface">
-          @if (isAllSelected || selectedVendorIds.size === 0) {
+          @if (isAllSelected) {
           All Vendors — Activity History
+          } @else if (selectedVendorIds.size === 0) {
+          No Vendor Selected
           } @else {
           {{ selectedVendorIds.size }} Vendor(s) — Activity History
           }

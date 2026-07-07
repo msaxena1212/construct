@@ -204,8 +204,13 @@
     <div
       class="py-16 flex flex-col items-center gap-2 text-outline bg-white dark:bg-slate-900 rounded-2xl border border-outline-variant/10">
       <span class="material-symbols-outlined text-4xl">history</span>
+      @if (selectedProjectIds.length === 0 && projects.length > 0) {
+      <p class="text-sm font-bold">No project selected.</p>
+      <p class="text-xs text-outline/70">Select at least one project from the dropdown above.</p>
+      } @else {
       <p class="text-sm font-bold">No "{{ activeTab }}" entries found.</p>
       <p class="text-xs text-outline/70">Try selecting a different tab or project.</p>
+      }
     </div>
     }
 

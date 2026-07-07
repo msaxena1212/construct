@@ -232,51 +232,29 @@
 
                             <div class="flex flex-col gap-3 shrink-0" style="min-width: 210px; max-width: 260px;">
 
-                                @if (getMetaLabel(item.status || '') === 'CREATED') {
-                                <div
-                                    class="rounded-xl border border-pink-200 dark:border-pink-800/40 bg-pink-50/60 dark:bg-pink-900/10 px-3 py-2 shadow-sm">
+                                <div [ngClass]="getMetaBoxClass(item.status || '')"
+                                    class="rounded-xl border px-3 py-2 shadow-sm">
                                     <div class="flex items-center justify-between gap-2">
                                         <span
-                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Created
-                                            By:</span>
-                                        <span
-                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 whitespace-nowrap max-w-[140px] truncate">
+                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                            {{ getMetaLabel(item.status || '') }} By:
+                                        </span>
+                                        <span [ngClass]="getMetaBadgeClass(item.status || '')"
+                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full whitespace-nowrap max-w-[140px] truncate">
                                             {{ getActorName(item) }}
                                         </span>
                                     </div>
                                     <div class="flex items-center justify-between gap-2 mt-1">
                                         <span
-                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Created
-                                            At:</span>
-                                        <span
-                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-pink-100 text-pink-700 whitespace-nowrap">
+                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                                            {{ getMetaLabel(item.status || '') }} At:
+                                        </span>
+                                        <span [ngClass]="getMetaBadgeClass(item.status || '')"
+                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full whitespace-nowrap">
                                             {{ item.createdAt | date:'dd/MMM/yyyy, h:mm a' }}
                                         </span>
                                     </div>
                                 </div>
-                                } @else {
-                                <div
-                                    class="rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50/60 dark:bg-blue-900/10 px-3 py-2 shadow-sm">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <span
-                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Updated
-                                            By:</span>
-                                        <span
-                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap max-w-[140px] truncate">
-                                            {{ getActorName(item) }}
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center justify-between gap-2 mt-1">
-                                        <span
-                                            class="text-[8px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Updated
-                                            At:</span>
-                                        <span
-                                            class="text-[8.5px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
-                                            {{ item.createdAt | date:'dd/MMM/yyyy, h:mm a' }}
-                                        </span>
-                                    </div>
-                                </div>
-                                }
 
                             </div>
 

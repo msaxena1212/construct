@@ -422,7 +422,6 @@ export class VendorsHistory implements OnInit {
   get inactiveCount(): number { return this.vendors.filter(v => v.status.toLowerCase() === 'inactive').length; }
 
   get displayVendors(): Vendor[] {
-    if (this.selectedVendorIds.size === 0) return this.vendors;
     return this.vendors.filter(v => this.selectedVendorIds.has(v.id));
   }
 

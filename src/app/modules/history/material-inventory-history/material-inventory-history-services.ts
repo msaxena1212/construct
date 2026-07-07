@@ -65,43 +65,12 @@ export class MaterialInventoryHistoryServices {
     });
   }
 
-
   private flattenHistory(rawData: any[]): MaterialHistory[] {
-    const flattened: MaterialHistory[] = [];
-    const firstSeenAt = new Map<number, string>();
-
-    for (const item of rawData) {
-      const masterId = item.material_master_id;
-      if (masterId == null || !item.createdAt) continue;
-
-      const existing = firstSeenAt.get(masterId);
-      if (!existing || new Date(item.createdAt) < new Date(existing)) {
-        firstSeenAt.set(masterId, item.createdAt);
-      }
-    }
-
-
-    for (const item of rawData) {
-      const masterId = item.material_master_id;
-      const isFirst = masterId != null && item.createdAt === firstSeenAt.get(masterId);
-
-      flattened.push({
-        ...item,
-        id: `stock-${item.id}`,
-        status: isFirst ? 'CREATED' : 'UPDATED',
-      });
-
-      if (Array.isArray(item.material_project_stock)) {
-        for (const proj of item.material_project_stock) {
-          flattened.push({
-            ...proj,
-            id: `transfer-${proj.id}`,
-            status: 'TRANSFER',
-            material_master_id: proj.material_master_id ?? masterId,
-          });
-        }
-      }
-    }
+    const flattened: MaterialHistory[] = rawData.map((item) => ({
+      ...item,
+      id: `hist-${item.id}`,
+      status: (item.status || 'UPDATED').toUpperCase(),
+    }));
 
     return flattened.sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()

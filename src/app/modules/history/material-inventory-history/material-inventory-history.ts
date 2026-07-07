@@ -35,7 +35,7 @@ export class MaterialInventoryHistory {
   paginatedHistory: MaterialHistory[] = [];
 
   selectedTab = 'All';
-  tabs = ['All', 'CREATED', 'UPDATED', 'TRANSFER'];
+  tabs = ['All', 'CREATED', 'UPDATED', 'ASSIGNED', 'TRANSFER'];
 
   searchQuery = '';
   page = 1;
@@ -91,7 +91,7 @@ export class MaterialInventoryHistory {
 
       m.stockIn += item.stockIn || 0;
 
-      if ((item.status || '').toUpperCase() === 'TRANSFER') {
+      if ((item.status || '').toUpperCase() === 'ASSIGNED') {
         m.stockUsed += item.stockUsed || 0;
       }
 
@@ -130,9 +130,8 @@ export class MaterialInventoryHistory {
   }
 
   get selectedMaterialsLabel(): string {
-    if (this.allMaterialsSelected || this.selectedMaterialIds.size === 0) {
-      return 'All Materials';
-    }
+    if (this.allMaterialsSelected) return 'All Materials';
+    if (this.selectedMaterialIds.size === 0) return 'No Material Selected';
     if (this.selectedMaterialIds.size === 1) {
       const id = Array.from(this.selectedMaterialIds)[0];
       return this.uniqueMaterials.find((x) => x.id === id)?.name || '1 Selected';
@@ -141,10 +140,13 @@ export class MaterialInventoryHistory {
   }
 
   get sectionHeadingLabel(): string {
-    if (this.selectedMaterialIds.size > 0 && this.selectedMaterialIds.size < this.uniqueMaterials.length) {
-      return `${this.selectedMaterialIds.size} Material(s)`;
+    if (this.allMaterialsSelected) {
+      return this.selectedTab === 'All' ? 'All Materials' : this.selectedTab;
     }
-    return this.selectedTab === 'All' ? 'All Materials' : this.selectedTab;
+    if (this.selectedMaterialIds.size === 0) {
+      return 'No Material Selected';
+    }
+    return `${this.selectedMaterialIds.size} Material(s)`;
   }
 
   getMaterialStatusLabel(utilization: number): string {
@@ -212,19 +214,10 @@ export class MaterialInventoryHistory {
   }
 
   private get materialFilteredHistory(): MaterialHistory[] {
-    let filtered = [...this.history];
-
-    if (
-      this.selectedMaterialIds.size > 0 &&
-      this.selectedMaterialIds.size < this.uniqueMaterials.length
-    ) {
-      filtered = filtered.filter((h) => {
-        const id = h.material_master_id ?? h.material_id;
-        return id ? this.selectedMaterialIds.has(id) : false;
-      });
-    }
-
-    return filtered;
+    return this.history.filter((h) => {
+      const id = h.material_master_id ?? h.material_id;
+      return id ? this.selectedMaterialIds.has(id) : false;
+    });
   }
 
   get tabCounts(): { [tab: string]: number } {
@@ -302,6 +295,9 @@ export class MaterialInventoryHistory {
       case 'UPDATED':
         return `Material "${name}"${sku} stock was replenished by ${item.stockIn || 0} units from vendor "${item.vendor_name || 'N/A'}"${costText}.`;
 
+      case 'ASSIGNED':
+        return `${item.stockUsed || 0} units of Material "${name}"${sku} were assigned to Project "${item.project_name || 'N/A'}"${costText}.`;
+
       case 'TRANSFER':
         return `${item.stockUsed || 0} units of Material "${name}"${sku} were transferred to Project "${item.project_name || 'N/A'}"${item.note ? ` with note: "${item.note}"` : ''}.`;
 
@@ -316,6 +312,8 @@ export class MaterialInventoryHistory {
         return 'add_circle';
       case 'UPDATED':
         return 'edit';
+      case 'ASSIGNED':
+        return 'assignment_turned_in';
       case 'TRANSFER':
         return 'swap_horiz';
       default:
@@ -329,6 +327,8 @@ export class MaterialInventoryHistory {
         return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400';
       case 'UPDATED':
         return 'bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400';
+      case 'ASSIGNED':
+        return 'bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400';
       case 'TRANSFER':
         return 'bg-purple-100 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400';
       default:
@@ -342,6 +342,8 @@ export class MaterialInventoryHistory {
         return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400';
       case 'UPDATED':
         return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400';
+      case 'ASSIGNED':
+        return 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400';
       case 'TRANSFER':
         return 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400';
       default:
@@ -350,13 +352,39 @@ export class MaterialInventoryHistory {
   }
 
   getMetaLabel(status: string): string {
-    return (status || '').toUpperCase() === 'CREATED' ? 'CREATED' : 'UPDATED';
+    const s = (status || '').toUpperCase();
+    if (s === 'CREATED') return 'CREATED';
+    if (s === 'ASSIGNED') return 'ASSIGNED';
+    if (s === 'TRANSFER') return 'TRANSFERRED';
+    return 'UPDATED';
   }
 
   getMetaBoxClass(status: string): string {
-    return (status || '').toUpperCase() === 'CREATED'
-      ? 'bg-rose-50 dark:bg-rose-500/5'
-      : 'bg-blue-50 dark:bg-blue-500/5';
+    const s = (status || '').toUpperCase();
+    switch (s) {
+      case 'CREATED':
+        return 'bg-rose-50 dark:bg-rose-500/5 border-pink-200 dark:border-pink-800/40';
+      case 'ASSIGNED':
+        return 'bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-800/40';
+      case 'TRANSFER':
+        return 'bg-purple-50 dark:bg-purple-500/5 border-purple-200 dark:border-purple-800/40';
+      default:
+        return 'bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-800/40';
+    }
+  }
+
+  getMetaBadgeClass(status: string): string {
+    const s = (status || '').toUpperCase();
+    switch (s) {
+      case 'CREATED':
+        return 'bg-pink-100 text-pink-700';
+      case 'ASSIGNED':
+        return 'bg-amber-100 text-amber-700';
+      case 'TRANSFER':
+        return 'bg-purple-100 text-purple-700';
+      default:
+        return 'bg-blue-100 text-blue-700';
+    }
   }
 
   private currentUserDisplayName(): string {
@@ -398,9 +426,7 @@ export class MaterialInventoryHistory {
   }
 
   updatePagination() {
-    const start = (this.page - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    this.paginatedHistory = this.filteredHistory.slice(start, end);
+    this.paginatedHistory = this.filteredHistory
   }
 
   exportCSV() {
