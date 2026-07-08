@@ -13,12 +13,8 @@ class QuotationController {
             this.get_quotation_by_equipment_master_id.bind(this);
     }
 
-    /**
-     * Create Quotation
-     */
     async create_quotation(req, res) {
         try {
-
             const {
                 date,
                 sales_person,
@@ -35,7 +31,6 @@ class QuotationController {
                 return res.status(401).json({ message: "Unauthorized. Company context missing." });
             }
 
-            // Validation
             if (!date) {
                 return res.status(400).json({
                     message: "date is required."
@@ -54,7 +49,6 @@ class QuotationController {
                 });
             }
 
-            // Calculate Total Amount
             let total_amount = 0;
 
             for (const item of items) {
@@ -68,8 +62,6 @@ class QuotationController {
                     !item.totalPrice ||
                     !item.vendor_id ||
                     !item.vendor_name
-                    // !item.material_master_id ||
-                    // !item.equipment_master_id
                 ) {
                     return res.status(400).json({
                         message:
@@ -77,7 +69,6 @@ class QuotationController {
                     });
                 }
 
-                // Auto Calculate Total Price
                 item.totalPrice =
                     Number(item.quantity) * Number(item.unitPrice);
 
@@ -85,7 +76,6 @@ class QuotationController {
 
             }
 
-            // Create Quotation
             const quotation = await db.quotation.create({
                 date,
                 sales_person,
@@ -100,10 +90,8 @@ class QuotationController {
                 quotation_number: "QT-"
             });
 
-            // Generate Quotation Number
             const quotation_number = `QT-${quotation.id}`;
 
-            // Update quotation_number
             await quotation.update({
                 quotation_number
             });
@@ -146,9 +134,6 @@ class QuotationController {
                 });
             }
 
-
-
-            // Find quotation
             const quotation = await db.quotation.findOne({
                 where: {
                     id: id,
@@ -162,7 +147,6 @@ class QuotationController {
                 });
             }
 
-            // Prevent after approved  to reject validattion update
             if (
                 quotation.status === "Approved" &&
                 status === "Rejected"
@@ -172,8 +156,6 @@ class QuotationController {
                 });
             }
 
-
-            // Prevent duplicate stock update
             if (
                 quotation.status === "Approved" &&
                 status === "Approved"
@@ -183,8 +165,6 @@ class QuotationController {
                 });
             }
 
-
-            // Prevent duplicate rejected stock update
             if (
                 quotation.status === "Rejected" &&
                 status === "Rejected"
@@ -194,10 +174,6 @@ class QuotationController {
                 });
             }
 
-
-
-
-            // Update stock only when Approved
             if (status === "Approved") {
 
                 let items = quotation.items || quotation.dataValues.items || [];
@@ -213,9 +189,6 @@ class QuotationController {
 
                     const quantity = Number(item.quantity) || 0;
 
-                    // =========================
-                    // MATERIAL
-                    // =========================
                     if (item.material_master_id) {
 
                         const existingMaterial =
@@ -231,7 +204,6 @@ class QuotationController {
                                 Number(existingMaterial.stockAvailable || 0) +
                                 quantity;
 
-                            // Update stock
                             await db.material_master.update(
                                 {
                                     stockAvailable: updatedStock
@@ -243,8 +215,7 @@ class QuotationController {
                                 }
                             );
 
-                            // Create material entry
-                            await db.material.create({
+                            const newMaterial = await db.material.create({
                                 name: item.name,
                                 sku: item.sku,
                                 category: item.category,
@@ -258,12 +229,26 @@ class QuotationController {
                                 company_id,
                                 quotation_id: id
                             });
+
+                            await db.material_history.create({
+                                name: item.name,
+                                sku: item.sku,
+                                category: item.category,
+                                stockIn: quantity,
+                                stockUsed: 0,
+                                cost: item.unitPrice,
+                                vendor_name: item.vendor_name,
+                                material_id: newMaterial.id,
+                                material_master_id: item.material_master_id,
+                                company_id,
+                                vendor_id: item.vendor_id,
+                                quotation_id: id,
+                                status: "CREATED",
+                                user_id: req.user.id,
+                            });
                         }
                     }
 
-                    // =========================
-                    // EQUIPMENT
-                    // =========================
                     if (item.equipment_master_id) {
 
                         const existingEquipment =
@@ -279,7 +264,6 @@ class QuotationController {
                                 Number(existingEquipment.stockAvailable || 0) +
                                 quantity;
 
-                            // Update stock
                             await db.equipment_master.update(
                                 {
                                     stockAvailable: updatedStock
@@ -291,8 +275,7 @@ class QuotationController {
                                 }
                             );
 
-                            // Create equipment entry
-                            await db.equipment.create({
+                            const newEquipment = await db.equipment.create({
                                 name: item.name,
                                 sku: item.sku,
                                 category: item.category,
@@ -306,12 +289,28 @@ class QuotationController {
                                 company_id,
                                 quotation_id: id
                             });
+
+                            await db.equipment_history.create({
+                                name: item.name,
+                                sku: item.sku,
+                                category: item.category,
+                                stockIn: quantity,
+                                stockUsed: 0,
+                                cost: item.unitPrice,
+                                vendor_name: item.vendor_name,
+                                equipment_id: newEquipment.id,
+                                equipment_master_id: item.equipment_master_id,
+                                company_id,
+                                vendor_id: item.vendor_id,
+                                quotation_id: id,
+                                status: "CREATED",
+                                user_id: req.user.id,
+                            });
                         }
                     }
                 }
             }
 
-            // Update quotation status
             await quotation.update({
                 status
             });
@@ -332,10 +331,6 @@ class QuotationController {
         }
     }
 
-
-    /**
-     * Create Multiple Quotation
-     */
     async create_multiple_quotation(req, res) {
         try {
 
@@ -343,7 +338,6 @@ class QuotationController {
 
             const company_id = req.user.company_id;
 
-            // Validation
             if (!Array.isArray(quotations) || quotations.length === 0) {
                 return res.status(400).json({
                     message: "Quotation array is required."
@@ -353,8 +347,6 @@ class QuotationController {
             const createdQuotations = [];
             const duplicateSkus = [];
 
-
-            // Last quotation find
             const lastQuotation = await db.quotation.findOne({
                 order: [["id", "DESC"]]
             });
@@ -380,14 +372,12 @@ class QuotationController {
                     quotation_status
                 } = item;
 
-                // Required Validation
                 if (!name || !sku) {
                     return res.status(400).json({
                         message: "name and sku are required."
                     });
                 }
 
-                // Duplicate Check
                 const existingQuotation = await db.quotation.findOne({
                     where: {
                         sku,
@@ -401,10 +391,8 @@ class QuotationController {
                     continue;
                 }
 
-                // Generate quotation number
                 const quotation_number = `QT-${nextQuotationNumber++}`;
 
-                // Create Quotation
                 const quotation = await db.quotation.create({
                     name,
                     sku,
@@ -443,9 +431,6 @@ class QuotationController {
         }
     }
 
-    /**
-     * Get All Quotations
-     */
     async getall_quotation(req, res) {
         try {
 
@@ -465,7 +450,6 @@ class QuotationController {
 
                     let items = quotation.items;
 
-                    // Convert string into JSON
                     if (typeof items === "string") {
                         items = JSON.parse(items);
                     }
@@ -501,9 +485,6 @@ class QuotationController {
         }
     }
 
-    /**
-     * Get Quotation By ID
-     */
     async getbyid_quotation(req, res) {
         try {
 
@@ -539,10 +520,6 @@ class QuotationController {
         }
     }
 
-
-    /**
-     * Update Quotation
-     */
     async update_quotation(req, res) {
         try {
 
@@ -573,7 +550,6 @@ class QuotationController {
                 quotation_status
             } = req.body;
 
-            // Validation
             if (!date) {
                 return res.status(400).json({
                     message: "date is required."
@@ -611,13 +587,11 @@ class QuotationController {
                     });
                 }
 
-                // Auto Calculate Total Price
                 item.totalPrice =
                     Number(item.quantity) * Number(item.unitPrice);
 
                 total_amount += Number(item.totalPrice);
 
-                // Update Material Stock
                 if (item.material_master_id) {
 
                     const existingMaterial = await db.material_master.findOne({
@@ -646,7 +620,6 @@ class QuotationController {
                 }
             }
 
-            // Update Quotation
             await quotation.update({
                 date,
                 sales_person,
@@ -674,9 +647,6 @@ class QuotationController {
         }
     }
 
-    /**
-     * Delete Quotation (Soft Delete)
-     */
     async delete_quotation(req, res) {
         try {
 
@@ -716,9 +686,6 @@ class QuotationController {
         }
     }
 
-    /**
-     * Get Quotation By Material Master ID
-     */
     async get_quotation_by_material_master_id(req, res) {
         try {
 
@@ -755,9 +722,6 @@ class QuotationController {
         }
     }
 
-    /**
-     * Get Quotation By Equipment Master ID
-     */
     async get_quotation_by_equipment_master_id(req, res) {
         try {
 
@@ -794,10 +758,6 @@ class QuotationController {
         }
     }
 
-
-    /**
-     * Get All Material Quotations
-     */
     async getall_material_quotation(req, res) {
         try {
 
@@ -820,14 +780,12 @@ class QuotationController {
             const materialQuotations = quotations
                 .map((quotation) => {
 
-                    // Convert items into array if string
                     let items = quotation.items;
 
                     if (typeof items === "string") {
                         items = JSON.parse(items);
                     }
 
-                    // Filter only MATERIAL items
                     const materialItems = Array.isArray(items)
                         ? items.filter(
                             (item) => item.status === "MATERIAL"
@@ -863,9 +821,6 @@ class QuotationController {
         }
     }
 
-    // ===============================
-    // GET MATERIAL QUOTATION BY ID
-    // ===============================
     async get_material_quotation_by_id(req, res) {
         try {
 
@@ -904,10 +859,6 @@ class QuotationController {
         }
     }
 
-
-    // ===============================
-    // GET ALL EQUIPMENT QUOTATIONS
-    // ===============================
     async getall_equipment_quotation(req, res) {
         try {
 
@@ -944,10 +895,6 @@ class QuotationController {
         }
     }
 
-
-    // ===============================
-    // GET EQUIPMENT QUOTATION BY ID
-    // ===============================
     async get_equipment_quotation_by_id(req, res) {
         try {
 
@@ -986,8 +933,6 @@ class QuotationController {
         }
     }
 
-    // quatation_company
-
     async getall_material_quotation_company(req, res) {
         try {
 
@@ -1010,14 +955,12 @@ class QuotationController {
             const materialQuotations = quotations
                 .map((quotation) => {
 
-                    // Convert items into array if string
                     let items = quotation.items;
 
                     if (typeof items === "string") {
                         items = JSON.parse(items);
                     }
 
-                    // Filter only MATERIAL items
                     const materialItems = Array.isArray(items)
                         ? items.filter(
                             (item) => item.status === "MATERIAL"
@@ -1052,8 +995,6 @@ class QuotationController {
             });
         }
     }
-
-
 
 }
 

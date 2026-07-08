@@ -19,8 +19,8 @@ class MaterialHistoryController {
             const history = await db.material_history.findAll({
                 where: { isDeleted: false, company_id },
                 include: [
-                    { model: db.material, as: "material", attributes: ["id", "sku", "name"] },
-                    { model: db.material_master, as: "material_master", attributes: ["id", "sku", "name"] },
+                    { model: db.material, as: "material", attributes: ["id", "sku", "name", "category"] },
+                    { model: db.material_master, as: "material_master", attributes: ["id", "sku", "name", "category"] },
                     { model: db.vendors, as: "vendors", attributes: ["id", "name"] },
                     { model: db.project, as: "project", attributes: ["id", "name"] },
                     { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "email"] }
@@ -37,7 +37,7 @@ class MaterialHistoryController {
 
                 return {
                     ...item,
-                    category: item.category || item.material_master?.name,
+                    category: item.category || item.material?.category || item.material_master?.category,
                     vendor_name: item.vendor_name || item.vendors?.name,
                     project_name: item.project_name || item.project?.name,
                     created_by: userFullName
@@ -64,7 +64,11 @@ class MaterialHistoryController {
             const history = await db.material_history.findOne({
                 where: { id, isDeleted: false, company_id },
                 include: [
-                    { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "email"] } // 👈 FIXED
+                    { model: db.material, as: "material", attributes: ["id", "sku", "name", "category"] },
+                    { model: db.material_master, as: "material_master", attributes: ["id", "sku", "name", "category"] },
+                    { model: db.vendors, as: "vendors", attributes: ["id", "name"] },
+                    { model: db.project, as: "project", attributes: ["id", "name"] },
+                    { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "email"] }
                 ]
             });
 
@@ -80,6 +84,9 @@ class MaterialHistoryController {
             return res.status(200).json({
                 data: {
                     ...item,
+                    category: item.category || item.material?.category || item.material_master?.category,
+                    vendor_name: item.vendor_name || item.vendors?.name,
+                    project_name: item.project_name || item.project?.name,
                     created_by: userFullName
                 }
             });
@@ -101,7 +108,11 @@ class MaterialHistoryController {
             const history = await db.material_history.findAll({
                 where: { material_id, isDeleted: false, company_id },
                 include: [
-                    { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "email"] } // 👈 FIXED
+                    { model: db.material, as: "material", attributes: ["id", "sku", "name", "category"] },
+                    { model: db.material_master, as: "material_master", attributes: ["id", "sku", "name", "category"] },
+                    { model: db.vendors, as: "vendors", attributes: ["id", "name"] },
+                    { model: db.project, as: "project", attributes: ["id", "name"] },
+                    { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "email"] }
                 ],
                 order: [["createdAt", "DESC"]]
             });
@@ -117,6 +128,9 @@ class MaterialHistoryController {
                     : '';
                 return {
                     ...item,
+                    category: item.category || item.material?.category || item.material_master?.category,
+                    vendor_name: item.vendor_name || item.vendors?.name,
+                    project_name: item.project_name || item.project?.name,
                     created_by: userFullName
                 };
             });
@@ -140,7 +154,11 @@ class MaterialHistoryController {
             const history = await db.material_history.findAll({
                 where: { material_master_id, isDeleted: false, company_id },
                 include: [
-                    { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "email"] } // 👈 FIXED
+                    { model: db.material, as: "material", attributes: ["id", "sku", "name", "category"] },
+                    { model: db.material_master, as: "material_master", attributes: ["id", "sku", "name", "category"] },
+                    { model: db.vendors, as: "vendors", attributes: ["id", "name"] },
+                    { model: db.project, as: "project", attributes: ["id", "name"] },
+                    { model: db.user, as: "user", attributes: ["id", "firstname", "lastname", "email"] }
                 ],
                 order: [["createdAt", "DESC"]]
             });
@@ -156,6 +174,9 @@ class MaterialHistoryController {
                     : '';
                 return {
                     ...item,
+                    category: item.category || item.material?.category || item.material_master?.category,
+                    vendor_name: item.vendor_name || item.vendors?.name,
+                    project_name: item.project_name || item.project?.name,
                     created_by: userFullName
                 };
             });

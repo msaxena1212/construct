@@ -1,5 +1,4 @@
 const db = require("../../../models");
-
 class MaterialController {
   constructor() {
     this.createMaterial = this.createMaterial.bind(this);
@@ -57,6 +56,8 @@ class MaterialController {
             ? Number(stockUsed)
             : Number(material.stockUsed || 0);
 
+        const computedStatus = newStockUsed > 0 ? "ASSIGNED" : "NOT ASSIGNED";
+
         await material.update({
           name,
           sku,
@@ -66,7 +67,7 @@ class MaterialController {
           stockUsed: newStockUsed,
           stockRemaining: newStockIn - newStockUsed,
           cost,
-          status,
+          status: status || computedStatus,
           vendor_id,
           material_master_id
         });
@@ -111,6 +112,8 @@ class MaterialController {
         const initialStockIn = Number(stockIn);
         const initialStockUsed = Number(stockUsed || 0);
 
+        const computedStatus = initialStockUsed > 0 ? "ASSIGNED" : "NOT ASSIGNED";
+
         const newMaterial = await db.material.create({
           name,
           sku,
@@ -120,7 +123,7 @@ class MaterialController {
           stockUsed: initialStockUsed,
           stockRemaining: initialStockIn - initialStockUsed,
           cost,
-          status,
+          status: status || computedStatus,
           vendor_id,
           material_master_id,
           company_id
@@ -303,10 +306,16 @@ class MaterialController {
         });
       }
 
+      const newStockUsed = Number(stockUsed || 0) + totalUsedStock;
+      const newStockRemaining = stockIn - newStockUsed;
+
+      const newStatus = newStockUsed > 0 ? "ASSIGNED" : "NOT ASSIGNED";
+
       await db.material.update(
         {
-          stockUsed: Number(stockUsed || 0) + totalUsedStock,
-          stockRemaining: stockIn - (Number(stockUsed || 0) + totalUsedStock)
+          stockUsed: newStockUsed,
+          stockRemaining: newStockRemaining,
+          status: newStatus
         },
         {
           where: {
@@ -335,7 +344,8 @@ class MaterialController {
               Number(project.stock || 0);
 
             await existingProjectStock.update({
-              stockUsed: updatedStock
+              stockUsed: updatedStock,
+              status: project.status || "ASSIGNED"
             });
 
             projectStockData = existingProjectStock;
@@ -351,7 +361,7 @@ class MaterialController {
               vendor_name,
               stockUsed: project.stock,
               cost,
-              status: project.status,
+              status: project.status || "ASSIGNED",
               vendor_id,
               material_master_id,
               project_name: project.project_name,
@@ -376,7 +386,7 @@ class MaterialController {
             vendor_id,
             quotation_id,
             user_id: req.user.id,
-            status: "UPDATED",
+            status: "ASSIGNED",
           });
 
           await db.material_project_stock_history.create({
@@ -389,7 +399,7 @@ class MaterialController {
             vendor_name,
             stockUsed: project.stock,
             cost,
-            status: project.status,
+            status: project.status || "ASSIGNED",
             vendor_id,
             material_master_id,
             project_name: project.project_name,
@@ -401,9 +411,19 @@ class MaterialController {
         })
       );
 
+      const updatedMaterial = await db.material.findOne({
+        where: { id, company_id },
+        include: [
+          {
+            model: db.material_project_stock,
+            as: "material_project_stock"
+          }
+        ]
+      });
+
       res.status(200).json({
         message: "Material updated successfully.",
-        data: material
+        data: updatedMaterial
       });
 
     } catch (error) {
@@ -548,7 +568,9 @@ class MaterialController {
           Number(fromStock.stockUsed) - Number(quantity);
 
         await fromStock.update({
-          stockUsed: updatedFromStock
+          stockUsed: updatedFromStock,
+
+          status: updatedFromStock > 0 ? fromStock.status : "NOT ASSIGNED"
         });
 
         const projectData = await db.project.findOne({
@@ -598,7 +620,8 @@ class MaterialController {
             Number(toStock.stockUsed) + Number(quantity);
 
           await toStock.update({
-            stockUsed: updatedToStock
+            stockUsed: updatedToStock,
+            status: "ASSIGNED"
           });
         }
 
@@ -621,6 +644,19 @@ class MaterialController {
         });
 
       }
+
+      const allProjectStocks = await db.material_project_stock.findAll({
+        where: { material_id, company_id }
+      });
+
+      const stillAssigned = allProjectStocks.some(
+        (ps) => Number(ps.stockUsed) > 0
+      );
+
+      await db.material.update(
+        { status: stillAssigned ? "ASSIGNED" : "NOT ASSIGNED" },
+        { where: { id: material_id, company_id } }
+      );
 
       return res.status(200).json({
         message: "Stock transferred successfully"

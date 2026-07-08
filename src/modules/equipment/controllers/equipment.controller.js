@@ -20,7 +20,6 @@ class equipmentController {
         category,
         stockIn,
         vendor_name,
-        stockUsed,
         cost,
         status,
         vendor_id,
@@ -41,18 +40,26 @@ class equipmentController {
         return res.status(400).json({ message: "Cost are required." });
       }
 
+      if (!equipment_master_id) {
+        return res.status(400).json({ message: "equipment_master_id is required." });
+      }
+
       const equipment = await db.equipment.findOne({
         where: { isDeleted: false, company_id, equipment_master_id }
       });
 
       if (equipment) {
+        const updatedStockIn = Number(equipment.stockIn) + Number(stockIn);
+        const currentStockUsed = Number(equipment.stockUsed || 0);
+
         await equipment.update({
           name,
           sku,
           category,
-          stockIn: Number(equipment.stockIn) + Number(stockIn),
+          stockIn: updatedStockIn,
           vendor_name,
-          stockUsed,
+          stockUsed: currentStockUsed,
+          stockRemaining: updatedStockIn - currentStockUsed,
           cost,
           status,
           vendor_id,
@@ -63,10 +70,14 @@ class equipmentController {
           where: { id: equipment_master_id }
         });
 
-        const updatedStock = Number(existingequipment.stockAvailable) + Number(stockIn);
+        if (!existingequipment) {
+          return res.status(404).json({ message: "Equipment master not found." });
+        }
+
+        const updatedMasterStock = Number(existingequipment.stockAvailable) + Number(stockIn);
 
         await db.equipment_master.update(
-          { stockAvailable: updatedStock },
+          { stockAvailable: updatedMasterStock },
           { where: { id: equipment_master_id } }
         );
 
@@ -80,7 +91,7 @@ class equipmentController {
           equipment_id: equipment.id,
           equipment_master_id,
           company_id,
-          stockUsed,
+          stockUsed: 0,
           vendor_id,
           status: "UPDATED",
           user_id: req.user.id,
@@ -93,13 +104,21 @@ class equipmentController {
 
       } else {
 
+        const existingequipment = await db.equipment_master.findOne({
+          where: { id: equipment_master_id }
+        });
+
+        if (!existingequipment) {
+          return res.status(404).json({ message: "Equipment master not found." });
+        }
+
         const newEquipment = await db.equipment.create({
           name,
           sku,
           category,
           stockIn,
           vendor_name,
-          stockUsed,
+          stockUsed: 0,
           stockRemaining: stockIn,
           cost,
           status,
@@ -108,14 +127,10 @@ class equipmentController {
           company_id
         });
 
-        const existingequipment = await db.equipment_master.findOne({
-          where: { id: equipment_master_id }
-        });
-
-        const updatedStock = Number(existingequipment.stockAvailable) + Number(stockIn);
+        const updatedMasterStock = Number(existingequipment.stockAvailable) + Number(stockIn);
 
         await db.equipment_master.update(
-          { stockAvailable: updatedStock },
+          { stockAvailable: updatedMasterStock },
           { where: { id: equipment_master_id } }
         );
 
@@ -126,7 +141,7 @@ class equipmentController {
           stockIn,
           cost,
           vendor_name,
-          stockUsed,
+          stockUsed: 0,
           equipment_id: newEquipment.id,
           equipment_master_id,
           company_id,
@@ -247,9 +262,25 @@ class equipmentController {
 
       const { projects } = req.body;
 
+      if (!projects || !Array.isArray(projects) || projects.length === 0) {
+        return res.status(400).json({ message: "Projects data is required." });
+      }
+
       const totalUsedStock = projects.reduce((sum, item) => {
         return sum + Number(item.stock || 0);
       }, 0);
+
+      const availableStock = Number(stockIn) - Number(stockUsed || 0);
+
+      if (totalUsedStock <= 0) {
+        return res.status(400).json({ message: "Assigned stock must be greater than 0." });
+      }
+
+      if (totalUsedStock > availableStock) {
+        return res.status(400).json({
+          message: `Assigned stock (${totalUsedStock}) exceeds available stock (${availableStock}).`
+        });
+      }
 
       await db.equipment.update(
         {
@@ -284,7 +315,6 @@ class equipmentController {
 
             await existingProjectStock.update({
               stockUsed: updatedStock,
-
             });
 
             projectStockData = existingProjectStock;
@@ -300,7 +330,7 @@ class equipmentController {
               vendor_name,
               stockUsed: project.stock,
               cost,
-              status: project.status,
+              status: "ASSIGNED",
               vendor_id,
               equipment_master_id,
               project_name: project.project_name,
@@ -324,7 +354,7 @@ class equipmentController {
             project_id: project.project_id,
             vendor_id,
             quotation_id,
-            status: "UPDATED",
+            status: "ASSIGNED",
             user_id: req.user.id,
           });
 
@@ -338,7 +368,7 @@ class equipmentController {
             vendor_name,
             stockUsed: project.stock,
             cost,
-            status: project.status,
+            status: "ASSIGNED",
             vendor_id,
             equipment_master_id,
             project_name: project.project_name,
@@ -350,9 +380,11 @@ class equipmentController {
         })
       );
 
+      const updatedEquipment = await db.equipment.findOne({ where: { id, company_id } });
+
       res.status(200).json({
         message: "equipment updated successfully.",
-        data: equipment
+        data: updatedEquipment
       });
 
     } catch (error) {
@@ -489,7 +521,6 @@ class equipmentController {
         category,
         vendor_name,
         cost,
-        status,
         vendor_id,
         equipment_master_id,
         quotation_id
@@ -499,6 +530,18 @@ class equipmentController {
         return res.status(400).json({
           message: "Transfers data is required"
         });
+      }
+
+      for (const item of transfers) {
+        if (!item.from_project_id || !item.to_project_id) {
+          return res.status(400).json({ message: "from_project_id and to_project_id are required." });
+        }
+        if (item.from_project_id === item.to_project_id) {
+          return res.status(400).json({ message: "From and To project cannot be the same." });
+        }
+        if (!item.quantity || Number(item.quantity) <= 0) {
+          return res.status(400).json({ message: "Quantity must be greater than 0." });
+        }
       }
 
       for (const item of transfers) {
