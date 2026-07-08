@@ -35,7 +35,6 @@ export class EquipmentInventoryHistory {
   paginatedHistory: EquipmentHistory[] = [];
 
   selectedTab = 'All';
-  // ⬇️ FIX: 'ASSIGNED' tab add kiya
   tabs = ['All', 'CREATED', 'UPDATED', 'ASSIGNED', 'TRANSFER'];
 
   searchQuery = '';
@@ -361,13 +360,39 @@ export class EquipmentInventoryHistory {
   }
 
   getMetaLabel(status: string): string {
-    return (status || '').toUpperCase() === 'CREATED' ? 'CREATED' : 'UPDATED';
+    const s = (status || '').toUpperCase();
+    if (s === 'CREATED') return 'CREATED';
+    if (s === 'ASSIGNED') return 'ASSIGNED';
+    if (s === 'TRANSFER') return 'TRANSFERRED';
+    return 'UPDATED';
   }
 
   getMetaBoxClass(status: string): string {
-    return (status || '').toUpperCase() === 'CREATED'
-      ? 'bg-rose-50 dark:bg-rose-500/5'
-      : 'bg-blue-50 dark:bg-blue-500/5';
+    const s = (status || '').toUpperCase();
+    switch (s) {
+      case 'CREATED':
+        return 'bg-rose-50 dark:bg-rose-500/5 border-pink-200 dark:border-pink-800/40';
+      case 'ASSIGNED':
+        return 'bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-800/40';
+      case 'TRANSFER':
+        return 'bg-purple-50 dark:bg-purple-500/5 border-purple-200 dark:border-purple-800/40';
+      default:
+        return 'bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-800/40';
+    }
+  }
+
+  getMetaBadgeClass(status: string): string {
+    const s = (status || '').toUpperCase();
+    switch (s) {
+      case 'CREATED':
+        return 'bg-pink-100 text-pink-700';
+      case 'ASSIGNED':
+        return 'bg-amber-100 text-amber-700';
+      case 'TRANSFER':
+        return 'bg-purple-100 text-purple-700';
+      default:
+        return 'bg-blue-100 text-blue-700';
+    }
   }
 
   private currentUserDisplayName(): string {
