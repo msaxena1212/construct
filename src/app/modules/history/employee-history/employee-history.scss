@@ -1,0 +1,21 @@
+.employee-scroll-list {
+    scrollbar-width: thin;
+    scrollbar-color: #c4b5fd transparent; // violet-300 thumb, transparent track
+
+    &::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #c4b5fd;
+        border-radius: 999px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: #a78bfa;
+    }
+}

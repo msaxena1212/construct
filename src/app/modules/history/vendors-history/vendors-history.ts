@@ -242,6 +242,7 @@ export class VendorsHistory implements OnInit {
   vendorDropdownOpen = false;
   dropdownSearch = '';
   activeCategory: HistoryCategory = 'all';
+  searchQuery: string = '';
 
   readonly categoryTabs: { key: HistoryCategory; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -395,6 +396,9 @@ export class VendorsHistory implements OnInit {
   }
 
   setActiveCategory(key: HistoryCategory): void { this.activeCategory = key; }
+  onSearchChange(): void {
+    this._flatCache = null;
+  }
 
   getCategoryCount(key: HistoryCategory): number {
     const matched = key === 'all'
@@ -461,10 +465,24 @@ export class VendorsHistory implements OnInit {
   }
 
   get filteredTimelineEvents(): HistoryEvent[] {
-    if (this.activeCategory === 'all') return this.timelineEvents;
-    return this.timelineEvents.filter(ev =>
-      ev.categories.includes(this.activeCategory as ConcreteCategory)
-    );
+    let events = this.activeCategory === 'all'
+      ? this.timelineEvents
+      : this.timelineEvents.filter(ev =>
+        ev.categories.includes(this.activeCategory as ConcreteCategory)
+      );
+
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q) {
+      events = events.filter(ev =>
+        ev.description?.toLowerCase().includes(q) ||
+        ev.vendorName?.toLowerCase().includes(q) ||
+        ev.createdBy?.toLowerCase().includes(q) ||
+        ev.updatedBy?.toLowerCase().includes(q) ||
+        ev.subDetails?.some(d => d.value?.toLowerCase().includes(q))
+      );
+    }
+
+    return events;
   }
 
   private _flatCache: { key: string; cat: string; groups: FlatDateGroup[] } | null = null;
@@ -474,7 +492,7 @@ export class VendorsHistory implements OnInit {
     const loadedKey = this.displayVendors
       .filter(v => this.records[v.id]?.loaded)
       .map(v => v.id).join(',');
-    const cacheKey = `${selectedKey}|${loadedKey}|${this.activeCategory}`;
+    const cacheKey = `${selectedKey}|${loadedKey}|${this.activeCategory}|${this.searchQuery}`;
 
     if (this._flatCache?.key === cacheKey) return this._flatCache.groups;
 

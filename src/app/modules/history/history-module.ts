@@ -7,6 +7,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProjectHistory } from './project-history/project-history';
 import { MaterialInventoryHistory } from './material-inventory-history/material-inventory-history';
 import { EquipmentInventoryHistory } from './equipment-inventory-history/equipment-inventory-history';
+import { EmployeeHistory } from './employee-history/employee-history';
 
 @NgModule({
   declarations: [
@@ -14,7 +15,8 @@ import { EquipmentInventoryHistory } from './equipment-inventory-history/equipme
     ProjectHistory,
     MaterialInventoryHistory,
     EquipmentInventoryHistory,
+    EmployeeHistory,
   ],
   imports: [CommonModule, HistoryRoutingModule, FormsModule, ReactiveFormsModule],
 })
-export class HistoryModule {}
+export class HistoryModule { }

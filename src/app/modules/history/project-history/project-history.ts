@@ -65,6 +65,7 @@ export class ProjectHistory implements OnInit, OnChanges {
   selectedProjectIds: (string | number)[] = [];
 
   activeTab = 'All';
+  searchQuery: string = '';
   tabs: ITabConfig[] = [
     { key: 'All', label: 'All', count: 0 },
     { key: 'Project', label: 'Project', count: 0 },
@@ -731,13 +732,25 @@ export class ProjectHistory implements OnInit, OnChanges {
     const ids = this.effectiveIds;
     const selectedKey = [...ids].map(String).sort().join(',');
     const loadedKey = ids.filter(id => this.records[String(id)]?.loaded).map(String).join(',');
-    const key = `${selectedKey}|${loadedKey}|${this.activeTab}`;
+    const key = `${selectedKey}|${loadedKey}|${this.activeTab}|${this.searchQuery}`;
 
     if (this._groupCache?.key === key) return this._groupCache.groups;
 
-    const filtered = this.activeTab === 'All'
+    let filtered = this.activeTab === 'All'
       ? all
       : all.filter(h => h.category === this.activeTab);
+
+    const q = this.searchQuery.trim().toLowerCase();
+    if (q) {
+      filtered = filtered.filter(h =>
+        h.statement?.toLowerCase().includes(q) ||
+        h.projectLabel?.toLowerCase().includes(q) ||
+        h.userName?.toLowerCase().includes(q) ||
+        h.metaCreatedBy?.toLowerCase().includes(q) ||
+        h.metaUpdatedBy?.toLowerCase().includes(q) ||
+        this.getActionLabel(h.action_type)?.toLowerCase().includes(q)
+      );
+    }
 
     const groups: { [key: string]: IHistoryDisplay[] } = {};
     filtered.forEach(h => {
@@ -752,6 +765,10 @@ export class ProjectHistory implements OnInit, OnChanges {
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
+  }
+
+  onSearchChange(): void {
+    this._groupCache = null;
   }
 
   exportCsv() {
