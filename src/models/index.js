@@ -10,6 +10,7 @@ db.user = require("../modules/users/models/user.model.js")(sequelize, Sequelize)
 db.company = require("../modules/users/models/company.model.js")(sequelize, Sequelize);
 db.role = require("../modules/rbac/models/roles.model.js")(sequelize, Sequelize);
 db.rbac_module = require("../modules/rbac/models/module.model.js")(sequelize, Sequelize);
+db.employee_history = require("../modules/users/models/employee-history.model.js")(sequelize, Sequelize);
 
 db.company.hasMany(db.user, { foreignKey: "company_id" });
 db.user.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -28,6 +29,15 @@ db.role_permission.belongsTo(db.role, { foreignKey: 'role_id' });
 
 db.rbac_module.hasMany(db.role_permission, { foreignKey: 'module_id', as: 'module_permissions' });
 db.role_permission.belongsTo(db.rbac_module, { foreignKey: 'module_id', as: 'module' });
+
+db.user.hasMany(db.employee_history, { foreignKey: "user_id", as: "employee_history" });
+db.employee_history.belongsTo(db.user, { foreignKey: "user_id", as: "employee" });
+
+db.user.hasMany(db.employee_history, { foreignKey: "performed_by", as: "performed_actions" });
+db.employee_history.belongsTo(db.user, { foreignKey: "performed_by", as: "performer" });
+
+db.company.hasMany(db.employee_history, { foreignKey: "company_id", as: "employee_history" });
+db.employee_history.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 
 // RBAC END
 

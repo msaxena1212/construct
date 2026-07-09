@@ -15,6 +15,19 @@ class UserController {
     this.toggleUserStatus = this.toggleUserStatus.bind(this);
     this.updateUser = this.updateUser.bind(this);
     this.updateProfile = this.updateProfile.bind(this);
+    this.getUserHistory = this.getUserHistory.bind(this);
+  }
+
+
+  async logHistory({ user_id, performed_by, company_id, action, description }, transaction = null) {
+    try {
+      await db.employee_history.create(
+        { user_id, performed_by: performed_by || null, company_id, action, description },
+        transaction ? { transaction } : {}
+      );
+    } catch (err) {
+      console.error("[LOG_HISTORY_ERROR]", err);
+    }
   }
 
   async registerCompany(req, res) {
@@ -26,7 +39,7 @@ class UserController {
       }
       email = email.toLowerCase().trim();
       name = name.trim();
-      // Check if company with the same email already exists
+
       const existingCompany = await db.company.findOne({
         where: {
           [db.Sequelize.Op.or]: [{ email }, { name }],
@@ -63,7 +76,7 @@ class UserController {
       });
 
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-        expiresIn: 86400, // 24 hours
+        expiresIn: 86400,
       });
 
       res
@@ -89,7 +102,7 @@ class UserController {
 
   async getAllCompanies(req, res) {
     try {
-      // Super Admin check: typically company_id is null for super admins.
+
       if (req.user && req.user.company_id) {
         return res.status(403).json({ message: "Unauthorized. Super Admin access only." });
       }
@@ -156,11 +169,22 @@ class UserController {
         isInviteAccepted: false
       }, { transaction: t });
 
-      // Fetch company name dynamically for the email
-      const company = await db.company.findByPk(company_id, { transaction: t });
+
+      const [company, role] = await Promise.all([
+        db.company.findByPk(company_id, { transaction: t }),
+        db.role.findByPk(role_id, { transaction: t })
+      ]);
       const companyName = company ? company.name : "Your Team";
 
-      // LIVE FIRE NODE MAILER TRANSPORT
+      await this.logHistory({
+        user_id: user.id,
+        performed_by: req.user.id,
+        company_id,
+        action: "INVITED",
+        description: `${firstname} ${lastname} was invited to join ${companyName} as "${role ? role.name : 'Unassigned'}".`
+      }, t);
+
+
       const mailService = require("../../core/services/mail.service");
       await mailService.sendInviteEmail(user.email, user.firstname, companyName, inviteToken);
 
@@ -223,6 +247,14 @@ class UserController {
         inviteToken: null
       });
 
+      await this.logHistory({
+        user_id: user.id,
+        performed_by: user.id,
+        company_id: user.company_id,
+        action: "INVITE_ACCEPTED",
+        description: `${firstname} ${lastname} accepted the invite and completed account setup.`
+      });
+
       res.status(200).json({ message: "Invite accepted successfully. You can now login." });
     } catch (error) {
       res.status(500).json({ message: "Error accepting invite.", error });
@@ -264,27 +296,35 @@ class UserController {
       }
 
       await user.update({ isActive });
+
+      await this.logHistory({
+        user_id: user.id,
+        performed_by: req.user.id,
+        company_id,
+        action: isActive ? "STATUS_ACTIVATED" : "STATUS_DEACTIVATED",
+        description: `${user.firstname} ${user.lastname}'s account was ${isActive ? 'activated' : 'deactivated'}.`
+      });
+
       res.status(200).json({ message: `Team member ${isActive ? 'enabled' : 'disabled'} successfully.` });
     } catch (error) {
       res.status(500).json({ message: "Error toggling user status", error });
     }
   }
 
-  /**
-   * Update User Details (Admin Only)
-   */
   async updateUser(req, res) {
     try {
       const company_id = req.user.company_id;
       const { id } = req.params;
-      
+
       const userData = req.body.data ? JSON.parse(req.body.data) : req.body;
-      const { firstname, lastname, email, role_id } = userData;
+      const { firstname, lastname, email, mobile, role_id } = userData;
 
       const user = await db.user.findOne({ where: { id, company_id } });
       if (!user) {
         return res.status(404).json({ message: "User not found or unauthorized." });
       }
+
+      const oldRoleId = user.role_id;
 
       let avatarPath = user.avatar;
       if (req.file) {
@@ -295,9 +335,37 @@ class UserController {
         firstname,
         lastname,
         email: email ? email.toLowerCase().trim() : user.email,
+        mobile: mobile !== undefined ? mobile : user.mobile,
         role_id,
         avatar: avatarPath
       });
+
+      if (role_id && String(oldRoleId) !== String(role_id)) {
+        const [oldRole, newRole] = await Promise.all([
+          oldRoleId ? db.role.findByPk(oldRoleId) : null,
+          db.role.findByPk(role_id)
+        ]);
+
+        await this.logHistory({
+          user_id: user.id,
+          performed_by: req.user.id,
+          company_id,
+          action: "ROLE_UPDATED",
+          description: `Role updated from "${oldRole ? oldRole.name : 'Unassigned'}" to "${newRole ? newRole.name : 'Unassigned'}" for ${user.firstname} ${user.lastname}.`
+        });
+      } else {
+        const currentRole = user.role_id ? await db.role.findByPk(user.role_id) : null;
+        const roleName = currentRole ? currentRole.name : 'Unassigned';
+        const statusText = user.isActive ? 'Active' : 'Inactive';
+
+        await this.logHistory({
+          user_id: user.id,
+          performed_by: req.user.id,
+          company_id,
+          action: "PROFILE_UPDATED",
+          description: `Profile details updated for ${user.firstname} ${user.lastname} with email "${user.email || '—'}", mobile "${user.mobile || '—'}", role "${roleName}". Current status: ${statusText}.`
+        });
+      }
 
       res.status(200).json({ message: "User updated successfully.", data: user });
     } catch (error) {
@@ -306,9 +374,6 @@ class UserController {
     }
   }
 
-  /**
-   * Update Self Profile
-   */
   async updateProfile(req, res) {
     try {
       const id = req.user.id;
@@ -333,10 +398,87 @@ class UserController {
         avatar: avatarPath
       });
 
+      if (user.company_id) {
+        const currentRole = user.role_id ? await db.role.findByPk(user.role_id) : null;
+        const roleName = currentRole ? currentRole.name : 'Unassigned';
+        const statusText = user.isActive ? 'Active' : 'Inactive';
+
+        await this.logHistory({
+          user_id: user.id,
+          performed_by: user.id,
+          company_id: user.company_id,
+          action: "PROFILE_UPDATED",
+          description: `Profile details updated for ${user.firstname} ${user.lastname} with email "${user.email || '—'}", mobile "${user.mobile || '—'}", role "${roleName}". Current status: ${statusText}.`
+        });
+      }
+
       res.status(200).json({ message: "Profile updated successfully.", data: user });
     } catch (error) {
       console.error("[UPDATE_PROFILE_ERROR]", error);
       res.status(500).json({ message: "Error updating profile.", error: error.message });
+    }
+  }
+
+  async getUserHistory(req, res) {
+    try {
+      const requesterId = req.user.id;
+      const requesterCompanyId = req.user.company_id;
+      const { id } = req.params;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+
+      const isSuperAdmin = !requesterCompanyId;
+
+      if (!isSuperAdmin && String(requesterId) !== String(id)) {
+        return res.status(403).json({ message: "Unauthorized. You can only view your own history." });
+      }
+
+      const employeeWhere = isSuperAdmin ? { id } : { id, company_id: requesterCompanyId };
+
+      const employee = await db.user.findOne({
+        where: employeeWhere,
+        attributes: ["id", "firstname", "lastname"]
+      });
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found or unauthorized." });
+      }
+
+      const historyWhere = isSuperAdmin ? { user_id: id } : { user_id: id, company_id: requesterCompanyId };
+
+      const { count, rows } = await db.employee_history.findAndCountAll({
+        where: historyWhere,
+        include: [
+          { model: db.user, as: "performer", attributes: ["firstname", "lastname"] }
+        ],
+        order: [["createdAt", "DESC"]],
+        limit,
+        offset: (page - 1) * limit
+      });
+
+      const data = rows.map((r) => {
+        const performerName = r.performer
+          ? `${r.performer.firstname} ${r.performer.lastname}`
+          : `${employee.firstname} ${employee.lastname}`;
+
+        return {
+          id: r.id,
+          type: r.action,
+          message: r.description,
+          created_by: performerName,
+          created_at: r.createdAt,
+          updated_by: performerName,
+          updated_at: r.updatedAt,
+        };
+      });
+
+      res.status(200).json({
+        data,
+        employee: { id: employee.id, name: `${employee.firstname} ${employee.lastname}` },
+        pagination: { page, limit, total: count, totalPages: Math.ceil(count / limit) }
+      });
+    } catch (error) {
+      console.error("[GET_USER_HISTORY_ERROR]", error);
+      res.status(500).json({ message: "Error fetching employee history.", error: error.message });
     }
   }
 }

@@ -3,7 +3,7 @@ const userCtrl = require("./user.controller");
 module.exports = (router) => {
   router.post("/register-company", userCtrl.registerCompany);
   router.get("/getAllUsers", userCtrl.getAllUsers);
-  
+
   // Super Admin Company Management
   router.get("/companies", userCtrl.getAllCompanies);
   router.put("/companies/:id/status", userCtrl.toggleCompanyStatus);
@@ -18,6 +18,7 @@ module.exports = (router) => {
   router.put("/team/:id", upload.single('avatar'), userCtrl.updateUser);
   router.put("/team/:id/status", userCtrl.toggleUserStatus);
 
+  router.get("/team/:id/history", userCtrl.getUserHistory);
   // Self Profile Management
   router.put("/profile", upload.single('avatar'), userCtrl.updateProfile);
 };
