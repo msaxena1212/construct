@@ -244,6 +244,9 @@ export class VendorsHistory implements OnInit {
   activeCategory: HistoryCategory = 'all';
   searchQuery: string = '';
 
+  readonly pageSize = 20;
+  currentPage = 1;
+
   readonly categoryTabs: { key: HistoryCategory; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'vendor', label: 'Vendors' },
@@ -365,6 +368,7 @@ export class VendorsHistory implements OnInit {
       this.vendors.forEach(v => this.ensureVendorLoaded(v));
     }
     this._flatCache = null;
+    this.currentPage = 1;
   }
 
   toggleVendorSelection(vendor: Vendor): void {
@@ -377,6 +381,7 @@ export class VendorsHistory implements OnInit {
     }
     this.selectedVendorIds = newSet;
     this._flatCache = null;
+    this.currentPage = 1;
   }
 
   removeVendorSelection(id: string): void {
@@ -384,20 +389,27 @@ export class VendorsHistory implements OnInit {
     newSet.delete(id);
     this.selectedVendorIds = newSet;
     this._flatCache = null;
+    this.currentPage = 1;
   }
 
   clearAllSelections(): void {
     this.selectedVendorIds = new Set();
     this._flatCache = null;
+    this.currentPage = 1;
   }
 
   getVendorNameById(id: string): string {
     return this.vendors.find(v => v.id === id)?.name ?? id;
   }
 
-  setActiveCategory(key: HistoryCategory): void { this.activeCategory = key; }
+  setActiveCategory(key: HistoryCategory): void {
+    this.activeCategory = key;
+    this.currentPage = 1;
+  }
+
   onSearchChange(): void {
     this._flatCache = null;
+    this.currentPage = 1;
   }
 
   getCategoryCount(key: HistoryCategory): number {
@@ -485,6 +497,52 @@ export class VendorsHistory implements OnInit {
     return events;
   }
 
+  get totalFilteredEvents(): number {
+    return this.filteredTimelineEvents.length;
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalFilteredEvents / this.pageSize));
+  }
+
+  get paginatedTimelineEvents(): HistoryEvent[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredTimelineEvents.slice(start, start + this.pageSize);
+  }
+
+  get pageStartIndex(): number {
+    return this.totalFilteredEvents === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEndIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalFilteredEvents);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const windowSize = 5;
+    let start = Math.max(1, current - Math.floor(windowSize / 2));
+    let end = Math.min(total, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
   private _flatCache: { key: string; cat: string; groups: FlatDateGroup[] } | null = null;
 
   get flatDateGroups(): FlatDateGroup[] {
@@ -492,11 +550,16 @@ export class VendorsHistory implements OnInit {
     const loadedKey = this.displayVendors
       .filter(v => this.records[v.id]?.loaded)
       .map(v => v.id).join(',');
-    const cacheKey = `${selectedKey}|${loadedKey}|${this.activeCategory}|${this.searchQuery}`;
+
+    const cacheKey = `${selectedKey}|${loadedKey}|${this.activeCategory}|${this.searchQuery}|${this.currentPage}`;
 
     if (this._flatCache?.key === cacheKey) return this._flatCache.groups;
 
-    const events = this.filteredTimelineEvents;
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
+    const events = this.paginatedTimelineEvents;
 
     const dateMap = new Map<string, { date: Date; events: HistoryEvent[] }>();
     events.forEach(ev => {

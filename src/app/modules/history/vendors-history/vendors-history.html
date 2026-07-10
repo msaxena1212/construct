@@ -356,6 +356,57 @@
       </div>
     </div>
     }
+
+    @if (totalFilteredEvents > 0) {
+    <div
+      class="flex items-center justify-between gap-3 flex-wrap px-1 pt-2 pb-1 border-t border-outline-variant/10 mt-1">
+      <p class="text-xs font-semibold text-outline">
+        Showing <span class="font-black text-on-surface">{{ pageStartIndex }}–{{ pageEndIndex }}</span>
+        of <span class="font-black text-on-surface">{{ totalFilteredEvents }}</span> entries
+      </p>
+
+      <div class="flex items-center gap-1">
+        <button (click)="prevPage()" [disabled]="currentPage === 1"
+          class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          title="Previous page">
+          <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </button>
+
+        @if (pageNumbers[0] > 1) {
+        <button (click)="goToPage(1)"
+          class="min-w-8 h-8 px-2 flex items-center justify-center rounded-lg text-xs font-bold text-slate-500 hover:bg-surface-container-low cursor-pointer transition-colors">
+          1
+        </button>
+        @if (pageNumbers[0] > 2) {
+        <span class="px-1 text-xs font-bold text-outline">…</span>
+        }
+        }
+
+        @for (p of pageNumbers; track p) {
+        <button (click)="goToPage(p)"
+          class="min-w-8 h-8 px-2 flex items-center justify-center rounded-lg text-xs font-bold cursor-pointer transition-colors"
+          [ngClass]="p === currentPage ? 'bg-primary text-white shadow-sm' : 'text-slate-500 hover:bg-surface-container-low'">
+          {{ p }}
+        </button>
+        }
+
+        @if (pageNumbers[pageNumbers.length - 1] < totalPages) { @if (pageNumbers[pageNumbers.length - 1] < totalPages -
+          1) { <span class="px-1 text-xs font-bold text-outline">…</span>
+          }
+          <button (click)="goToPage(totalPages)"
+            class="min-w-8 h-8 px-2 flex items-center justify-center rounded-lg text-xs font-bold text-slate-500 hover:bg-surface-container-low cursor-pointer transition-colors">
+            {{ totalPages }}
+          </button>
+          }
+
+          <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+            class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-surface-container-low disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+            title="Next page">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+      </div>
+    </div>
+    }
     }
   </div>
 </section>

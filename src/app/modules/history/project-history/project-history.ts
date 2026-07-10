@@ -76,6 +76,9 @@ export class ProjectHistory implements OnInit, OnChanges {
     { key: 'Document', label: 'Document', count: 0 },
   ];
 
+  readonly pageSize = 20;
+  currentPage = 1;
+
   private _displayCache: { key: string; events: IHistoryDisplay[] } | null = null;
   private _groupCache: { key: string; groups: { date: string; entries: IHistoryDisplay[] }[] } | null = null;
 
@@ -122,6 +125,7 @@ export class ProjectHistory implements OnInit, OnChanges {
       this.selectedProjectIds = [this.projectId];
       this.ensureProjectLoaded({ id: this.projectId });
       this.invalidateCaches();
+      this.currentPage = 1;
     }
   }
 
@@ -287,6 +291,7 @@ export class ProjectHistory implements OnInit, OnChanges {
       this.projects.forEach(p => this.ensureProjectLoaded(p));
     }
     this.invalidateCaches();
+    this.currentPage = 1;
   }
 
   toggleProject(p: any) {
@@ -299,16 +304,19 @@ export class ProjectHistory implements OnInit, OnChanges {
       this.ensureProjectLoaded(p);
     }
     this.invalidateCaches();
+    this.currentPage = 1;
   }
 
   removeProjectChip(id: string | number) {
     this.selectedProjectIds = this.selectedProjectIds.filter(pid => String(pid) !== String(id));
     this.invalidateCaches();
+    this.currentPage = 1;
   }
 
   clearAllChips() {
     this.selectedProjectIds = [];
     this.invalidateCaches();
+    this.currentPage = 1;
   }
 
   get selectedProjectsList(): any[] {
@@ -727,14 +735,8 @@ export class ProjectHistory implements OnInit, OnChanges {
     return sorted;
   }
 
-  get groupedHistory(): { date: string; entries: IHistoryDisplay[] }[] {
+  get filteredDisplayHistory(): IHistoryDisplay[] {
     const all = this.displayHistory;
-    const ids = this.effectiveIds;
-    const selectedKey = [...ids].map(String).sort().join(',');
-    const loadedKey = ids.filter(id => this.records[String(id)]?.loaded).map(String).join(',');
-    const key = `${selectedKey}|${loadedKey}|${this.activeTab}|${this.searchQuery}`;
-
-    if (this._groupCache?.key === key) return this._groupCache.groups;
 
     let filtered = this.activeTab === 'All'
       ? all
@@ -752,6 +754,70 @@ export class ProjectHistory implements OnInit, OnChanges {
       );
     }
 
+    return filtered;
+  }
+
+  get totalFilteredEntries(): number {
+    return this.filteredDisplayHistory.length;
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalFilteredEntries / this.pageSize));
+  }
+
+  get paginatedDisplayHistory(): IHistoryDisplay[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredDisplayHistory.slice(start, start + this.pageSize);
+  }
+
+  get pageStartIndex(): number {
+    return this.totalFilteredEntries === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEndIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalFilteredEntries);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const windowSize = 5;
+    let start = Math.max(1, current - Math.floor(windowSize / 2));
+    let end = Math.min(total, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+  }
+
+  nextPage(): void {
+    this.goToPage(this.currentPage + 1);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.currentPage - 1);
+  }
+
+  get groupedHistory(): { date: string; entries: IHistoryDisplay[] }[] {
+    const ids = this.effectiveIds;
+    const selectedKey = [...ids].map(String).sort().join(',');
+    const loadedKey = ids.filter(id => this.records[String(id)]?.loaded).map(String).join(',');
+
+    const key = `${selectedKey}|${loadedKey}|${this.activeTab}|${this.searchQuery}|${this.currentPage}`;
+
+    if (this._groupCache?.key === key) return this._groupCache.groups;
+
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+
+    const filtered = this.paginatedDisplayHistory;
+
     const groups: { [key: string]: IHistoryDisplay[] } = {};
     filtered.forEach(h => {
       if (!groups[h.dateLabel]) groups[h.dateLabel] = [];
@@ -765,10 +831,12 @@ export class ProjectHistory implements OnInit, OnChanges {
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
+    this.currentPage = 1;
   }
 
   onSearchChange(): void {
     this._groupCache = null;
+    this.currentPage = 1;
   }
 
   exportCsv() {
