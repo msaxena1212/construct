@@ -38,8 +38,9 @@ export class EquipmentInventoryHistory {
   tabs = ['All', 'CREATED', 'UPDATED', 'ASSIGNED', 'TRANSFER'];
 
   searchQuery = '';
+
   page = 1;
-  pageSize = 8;
+  pageSize = 20;
 
   isFilterOpen = false;
   equipmentSearchQuery = '';
@@ -256,6 +257,48 @@ export class EquipmentInventoryHistory {
     return filtered;
   }
 
+  get totalFilteredEntries(): number {
+    return this.filteredHistory.length;
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalFilteredEntries / this.pageSize));
+  }
+
+  get pageStartIndex(): number {
+    return this.totalFilteredEntries === 0 ? 0 : (this.page - 1) * this.pageSize + 1;
+  }
+
+  get pageEndIndex(): number {
+    return Math.min(this.page * this.pageSize, this.totalFilteredEntries);
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages;
+    const current = this.page;
+    const windowSize = 5;
+    let start = Math.max(1, current - Math.floor(windowSize / 2));
+    let end = Math.min(total, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages) return;
+    this.page = p;
+    this.updatePagination();
+  }
+
+  nextPage(): void {
+    this.goToPage(this.page + 1);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.page - 1);
+  }
+
   get groupedHistory(): HistoryGroup[] {
     const groups: { [key: string]: EquipmentHistory[] } = {};
 
@@ -434,7 +477,11 @@ export class EquipmentInventoryHistory {
   }
 
   updatePagination() {
-    this.paginatedHistory = this.filteredHistory;
+    if (this.page > this.totalPages) {
+      this.page = this.totalPages;
+    }
+    const start = (this.page - 1) * this.pageSize;
+    this.paginatedHistory = this.filteredHistory.slice(start, start + this.pageSize);
   }
 
   exportCSV() {
