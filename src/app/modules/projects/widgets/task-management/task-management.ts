@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, HostListener, ElementRef } from '@angular/core';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ProjectService } from '../../services/project-service';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
@@ -46,10 +46,12 @@ export class TaskManagement implements OnInit, OnChanges {
 
   newComment = '';
   isUploading = false;
-  activeTaskTab = 'Subtasks'; // Subtasks, Attachments, Discussion, History
+  activeTaskTab = 'Subtasks';
 
   selectedMilestoneId: number | null = null;
   allTasks: IProjectTask[] = [];
+
+  milestoneDropdownOpen = false;
 
   columns: TaskColumn[] = [
     { id: 'todo', title: 'To Do', color: 'bg-slate-400', count: 0, tasks: [] },
@@ -58,9 +60,12 @@ export class TaskManagement implements OnInit, OnChanges {
     { id: 'completed', title: 'Completed', color: 'bg-green-500', count: 0, tasks: [] }
   ];
 
+  environment = environment;
+
   constructor(
     private projectService: ProjectService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private elementRef: ElementRef
   ) { }
 
   ngOnInit(): void {
@@ -70,30 +75,68 @@ export class TaskManagement implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['milestones'] && this.milestones && this.milestones.length > 0 && !this.selectedMilestoneId) {
-      this.selectedMilestoneId = this.milestones[0].id;
+    let projectChanged = false;
+
+    if (changes['projectId'] && !changes['projectId'].isFirstChange()) {
+      projectChanged = true;
+      this.selectedMilestoneId = null;
+      this.allTasks = [];
+      this.mapTasksToColumns([]);
+    }
+
+    if (changes['milestones']) {
+      const currentMilestones = this.milestones || [];
+
+      if (currentMilestones.length > 0) {
+        const stillValid = currentMilestones.some(m => m.id === this.selectedMilestoneId);
+
+        if (!this.selectedMilestoneId || !stillValid) {
+          this.selectedMilestoneId = currentMilestones[0].id;
+        }
+      } else {
+        this.selectedMilestoneId = null;
+      }
+    }
+
+    if (projectChanged && this.projectId) {
+      this.fetchTasks();
+    } else if (this.selectedMilestoneId) {
       this.filterTasks();
     }
   }
 
+  toggleMilestoneDropdown() {
+    this.milestoneDropdownOpen = !this.milestoneDropdownOpen;
+  }
+
+  getSelectedMilestoneName(): string {
+    const found = (this.milestones || []).find(m => m.id === this.selectedMilestoneId);
+    return found ? found.name : 'Select Milestone';
+  }
+
   selectMilestone(milestoneId: number) {
-    this.selectedMilestoneId = milestoneId;
+    this.selectedMilestoneId = Number(milestoneId);
+    this.milestoneDropdownOpen = false;
     this.filterTasks();
   }
 
-environment = environment;
-getAvatarUrl(avatar?: string): string {
-  if (!avatar) {
-    return 'assets/default-avatar.png';
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.milestoneDropdownOpen && !this.elementRef.nativeElement.contains(event.target)) {
+      this.milestoneDropdownOpen = false;
+    }
   }
 
-  // Agar URL pehle se full hai to waise hi return karo
-  if (avatar.startsWith('http')) {
-    return avatar;
+  getAvatarUrl(avatar?: string): string {
+    if (!avatar) {
+      return 'assets/default-avatar.png';
+    }
+    if (avatar.startsWith('http')) {
+      return avatar;
+    }
+    return `${this.environment.serverUrl}${avatar}`;
   }
-
-  return `${this.environment.serverUrl}${avatar}`;
-}
 
   fetchTasks() {
     this.loading = true;
@@ -112,16 +155,14 @@ getAvatarUrl(avatar?: string): string {
 
   filterTasks() {
     if (!this.selectedMilestoneId) return;
-
-    // Filter out tasks that belong to the selected milestone
-    const filtered = this.allTasks.filter(t => t.milestone_id === this.selectedMilestoneId);
+    const filtered = this.allTasks.filter(
+      t => t.milestone_id != null && Number(t.milestone_id) === Number(this.selectedMilestoneId)
+    );
     this.mapTasksToColumns(filtered);
   }
 
   mapTasksToColumns(tasks: IProjectTask[]) {
-    // Reset tasks
     this.columns.forEach(col => col.tasks = []);
-
     tasks.forEach(task => {
       const mappedTask = this.transformTask(task);
       const column = this.columns.find(c => c.title === mappedTask.status);
@@ -129,7 +170,6 @@ getAvatarUrl(avatar?: string): string {
         column.tasks.push(mappedTask);
       }
     });
-
     this.updateCounts();
   }
 
@@ -160,7 +200,7 @@ getAvatarUrl(avatar?: string): string {
 
   addNewTask(task: any) {
     const newTask = this.transformTask(task);
-    this.allTasks.push(task); // Add to cache
+    this.allTasks.push(newTask);
     const column = this.columns.find(c => c.title === newTask.status);
     if (column) {
       column.tasks.unshift(newTask);
@@ -193,7 +233,6 @@ getAvatarUrl(avatar?: string): string {
         event.currentIndex
       );
 
-      // Persistence
       this.projectService.updateTask(task.id, { status: newStatus }).subscribe({
         next: () => {
           task.status = newStatus;
@@ -202,7 +241,6 @@ getAvatarUrl(avatar?: string): string {
         },
         error: () => {
           this.toastr.error('Failed to update task status');
-          // Revert visual move on error
           transferArrayItem(
             event.container.data,
             event.previousContainer.data,

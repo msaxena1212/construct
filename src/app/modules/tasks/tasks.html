@@ -52,8 +52,8 @@
             class="bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl border border-slate-200/70 dark:border-slate-700 overflow-hidden">
             <div class="p-6">
                 <app-task-management [projectId]="selectedProjectId"
-                    [milestones]="getSelectedProject()?.milestones || []"
-                    [team_members]="getSelectedProject()?.team_members || []">
+                    [milestones]="selectedProject?.milestones ?? emptyMilestones"
+                    [team_members]="selectedProject?.team_members ?? emptyTeamMembers">
                 </app-task-management>
             </div>
         </div>
