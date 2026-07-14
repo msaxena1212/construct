@@ -18,11 +18,9 @@
         <button (click)="openInviteModal()"
           class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
 
-          <!-- Glow -->
           <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
           </div>
 
-          <!-- Icon -->
           <div
             class="relative z-10 w-6 h-6 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
 
@@ -38,13 +36,10 @@
 
     <div class="overflow-x-auto px-2 pb-4">
 
-      <table class="w-full min-w-[1250px] border-separate border-spacing-y-3">
+      <table class="w-full min-w-[1000px] border-separate border-spacing-y-3">
 
-        <!-- Head -->
         <thead>
-
           <tr>
-
             <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
               Team Member
             </th>
@@ -61,15 +56,14 @@
               Status
             </th>
 
-            <th class="px-6 py-4 text-right text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+            <th
+              class="sticky right-0 z-10 bg-white dark:bg-slate-900 px-6 py-4 text-right text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
               Actions
             </th>
-
           </tr>
 
         </thead>
 
-        <!-- Body -->
         <tbody>
 
           @for (element of teamMembers; track $index) {
@@ -77,12 +71,10 @@
           <tr
             class="group bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl">
 
-            <!-- User -->
             <td class="px-6 py-5 rounded-l-3xl border-y border-l border-slate-200 dark:border-slate-800">
 
               <div class="flex items-center gap-4">
 
-                <!-- Avatar -->
                 <div
                   class="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center border border-white dark:border-slate-700 shadow-sm shrink-0">
 
@@ -102,7 +94,6 @@
 
                 </div>
 
-                <!-- Info -->
                 <div>
 
                   <h4
@@ -124,7 +115,6 @@
 
             </td>
 
-            <!-- Email -->
             <td class="px-6 py-5 border-y border-slate-200 dark:border-slate-800">
 
               <div>
@@ -145,7 +135,6 @@
 
             </td>
 
-            <!-- Role -->
             <td class="px-6 py-5 border-y border-slate-200 dark:border-slate-800 text-center">
 
               <span [ngClass]="{
@@ -166,7 +155,6 @@
 
             </td>
 
-            <!-- Status -->
             <td class="px-6 py-5 border-y border-slate-200 dark:border-slate-800 text-center">
 
               @if (element.isInviteAccepted) {
@@ -200,12 +188,11 @@
 
             </td>
 
-            <!-- Actions -->
-            <td class="px-6 py-5 rounded-r-3xl border-y border-r border-slate-200 dark:border-slate-800">
+            <td
+              class="sticky right-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 px-6 py-5 rounded-r-3xl border-y border-r border-slate-200 dark:border-slate-800 transition-all duration-300">
 
               <div class="flex items-center justify-end gap-2">
 
-                <!-- Edit -->
                 <button (click)="openEditModal(element)"
                   class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
@@ -215,7 +202,6 @@
 
                 </button>
 
-                <!-- Active / Inactive -->
                 @if (element.isInviteAccepted) {
 
                 <button (click)="toggleStatus(element)" [ngClass]="element.isActive
@@ -245,7 +231,6 @@
 
       </table>
 
-      <!-- Empty -->
       <div *ngIf="teamMembers.length === 0" class="flex flex-col items-center justify-center py-24">
 
         <div
@@ -293,18 +278,9 @@
     }
   </div>
 
-  <app-invite-user-modal
-    [open]="showInviteModal"
-    [roles]="roles"
-    (closed)="closeInviteModal()"
-    (saved)="onModalSaved()"
-  ></app-invite-user-modal>
+  <app-invite-user-modal [open]="showInviteModal" [roles]="roles" (closed)="closeInviteModal()"
+    (saved)="onModalSaved()"></app-invite-user-modal>
 
-  <app-edit-user-modal
-    [open]="showEditModal"
-    [roles]="roles"
-    [user]="selectedUser"
-    (closed)="closeEditModal()"
-    (saved)="onModalSaved()"
-  ></app-edit-user-modal>
+  <app-edit-user-modal [open]="showEditModal" [roles]="roles" [user]="selectedUser" (closed)="closeEditModal()"
+    (saved)="onModalSaved()"></app-edit-user-modal>
 </div>

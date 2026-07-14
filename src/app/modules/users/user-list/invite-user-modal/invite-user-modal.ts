@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { TeamService } from '../services/team.service';
@@ -15,11 +15,13 @@ export class InviteUserModalComponent implements OnInit {
   @Output() saved = new EventEmitter<void>();
 
   teamForm: FormGroup;
+  isRoleDropdownOpen = false;
 
   constructor(
     private fb: FormBuilder,
     private teamService: TeamService,
-    private toast: ToastrService
+    private toast: ToastrService,
+    private elRef: ElementRef
   ) {
     this.teamForm = this.fb.group({
       firstname: ['', Validators.required],
@@ -29,7 +31,29 @@ export class InviteUserModalComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
+
+  get selectedRoleName(): string | null {
+    const role = this.roles.find(r => r.id === this.teamForm.get('role_id')?.value);
+    return role ? role.name : null;
+  }
+
+  toggleRoleDropdown() {
+    this.isRoleDropdownOpen = !this.isRoleDropdownOpen;
+  }
+
+  selectRole(role: any) {
+    this.teamForm.get('role_id')?.setValue(role.id);
+    this.teamForm.get('role_id')?.markAsTouched();
+    this.isRoleDropdownOpen = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: Event) {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isRoleDropdownOpen = false;
+    }
+  }
 
   inviteUser() {
     if (this.teamForm.invalid) {

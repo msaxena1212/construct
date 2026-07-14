@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { TeamService } from '../services/team.service';
@@ -20,12 +20,15 @@ export class EditUserModalComponent implements OnInit, OnChanges {
   loading = false;
   selectedFile: File | null = null;
   avatarPreview: string | null = null;
+  avatarError = false;
   serverUrl = environment.serverUrl;
+  isRoleDropdownOpen = false;
 
   constructor(
     private fb: FormBuilder,
     private teamService: TeamService,
-    private toast: ToastrService
+    private toast: ToastrService,
+    private elRef: ElementRef
   ) {
     this.teamForm = this.fb.group({
       firstname: ['', Validators.required],
@@ -37,6 +40,7 @@ export class EditUserModalComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     if (this.user) {
+      this.avatarError = false;
       this.teamForm.patchValue({
         firstname: this.user.firstname,
         lastname: this.user.lastname,
@@ -49,6 +53,7 @@ export class EditUserModalComponent implements OnInit, OnChanges {
 
   ngOnChanges(): void {
     if (this.user) {
+      this.avatarError = false;
       this.teamForm.patchValue({
         firstname: this.user.firstname,
         lastname: this.user.lastname,
@@ -59,16 +64,43 @@ export class EditUserModalComponent implements OnInit, OnChanges {
     }
   }
 
+  get selectedRoleName(): string | null {
+    const role = this.roles.find(r => r.id === this.teamForm.get('role_id')?.value);
+    return role ? role.name : null;
+  }
+
+  toggleRoleDropdown() {
+    this.isRoleDropdownOpen = !this.isRoleDropdownOpen;
+  }
+
+  selectRole(role: any) {
+    this.teamForm.get('role_id')?.setValue(role.id);
+    this.teamForm.get('role_id')?.markAsTouched();
+    this.isRoleDropdownOpen = false;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: Event) {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isRoleDropdownOpen = false;
+    }
+  }
+
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
+      this.avatarError = false;
       const reader = new FileReader();
       reader.onload = () => {
         this.avatarPreview = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  onAvatarError() {
+    this.avatarError = true;
   }
 
   updateUser() {

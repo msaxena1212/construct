@@ -1,82 +1,109 @@
 <app-common-dialog [open]="open">
-    <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-100 dark:border-slate-800">
-        <div>
-            <h2 class="text-2xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Edit Team Member</h2>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Modify account details and permissions</p>
-        </div>
-        <button type="button" (click)="closed.emit()" class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border-none cursor-pointer">
-            <mat-icon>close</mat-icon>
-        </button>
-    </div>
-
-    <form [formGroup]="teamForm" (ngSubmit)="updateUser()" class="space-y-6">
-        <!-- Avatar Upload -->
-        <div class="flex flex-col items-center gap-4 mb-8">
-            <div class="relative group">
-                <div class="w-24 h-24 rounded-[32px] bg-slate-100 dark:bg-slate-800 overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl">
-                    <img [src]="avatarPreview || (user?.avatar ? serverUrl + user.avatar : 'https://images.unsplash.com/photo-1537724326059-2ea20251b9c8?q=80&w=256&auto=format&fit=crop')" 
-                         class="w-full h-full object-cover" alt="Avatar">
-                </div>
-                <label for="avatar-upload" class="absolute inset-0 flex items-center justify-center bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all rounded-[32px] cursor-pointer backdrop-blur-xs">
-                    <mat-icon class="text-white">photo_camera</mat-icon>
-                </label>
-                <input id="avatar-upload" type="file" class="hidden" (change)="onFileSelected($event)" accept="image/*">
+    <div class="px-6 py-5">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+                <h2 class="text-xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Edit Team Member</h2>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Modify account details
+                    and permissions</p>
             </div>
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Click to change profile picture</p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-6">
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">First Name</label>
-                <input formControlName="firstname" type="text"
-                    class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner"
-                    placeholder="e.g. John">
-            </div>
-
-            <div class="space-y-2">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
-                <input formControlName="lastname" type="text"
-                    class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner"
-                    placeholder="e.g. Doe">
-            </div>
-        </div>
-
-        <div class="space-y-2">
-            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-            <input formControlName="email" type="email"
-                class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner"
-                placeholder="john.doe@company.com">
-        </div>
-
-        <div class="space-y-2">
-            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Role</label>
-            <div class="relative">
-                <select formControlName="role_id"
-                    class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner">
-                    <option value="" disabled>Select a role</option>
-                    @for (role of roles; track role.id) {
-                    <option [value]="role.id">{{ role.name }}</option>
-                    }
-                </select>
-                <mat-icon class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</mat-icon>
-            </div>
-        </div>
-
-        <div class="flex gap-4 pt-6 mt-4">
             <button type="button" (click)="closed.emit()"
-                class="flex-1 py-4 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border-none cursor-pointer">
-                Cancel
+                class="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border-none cursor-pointer shrink-0">
+                <mat-icon>close</mat-icon>
             </button>
-            <button type="submit" [disabled]="loading"
-                class="flex-1 py-4 bg-linear-to-br from-blue-600 to-indigo-700 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all border-none cursor-pointer flex items-center justify-center gap-2">
-                @if (loading) {
+        </div>
+
+        <form [formGroup]="teamForm" (ngSubmit)="updateUser()" class="space-y-5">
+            <div class="flex flex-col items-center gap-3 pb-2">
+                <div class="relative group">
+                    <div
+                        class="w-20 h-20 rounded-[28px] bg-slate-100 dark:bg-slate-800 overflow-hidden border-4 border-white dark:border-slate-800 shadow-xl flex items-center justify-center">
+                        <img *ngIf="(avatarPreview || user?.avatar) && !avatarError"
+                            [src]="avatarPreview || (serverUrl + user.avatar)" class="w-full h-full object-cover"
+                            (error)="onAvatarError()" alt="Avatar">
+                        <mat-icon *ngIf="!(avatarPreview || user?.avatar) || avatarError"
+                            class="text-slate-300 dark:text-slate-600 scale-125">person</mat-icon>
+                    </div>
+                    <label for="avatar-upload"
+                        class="absolute inset-0 flex items-center justify-center bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all rounded-[28px] cursor-pointer backdrop-blur-xs">
+                        <mat-icon class="text-white">photo_camera</mat-icon>
+                    </label>
+                    <input id="avatar-upload" type="file" class="hidden" (change)="onFileSelected($event)"
+                        accept="image/*">
+                </div>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Click to change profile
+                    picture</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">First
+                        Name</label>
+                    <input formControlName="firstname" type="text"
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner"
+                        placeholder="e.g. John">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last
+                        Name</label>
+                    <input formControlName="lastname" type="text"
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner"
+                        placeholder="e.g. Doe">
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email
+                    Address</label>
+                <input formControlName="email" type="email"
+                    class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold placeholder-slate-400 focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner"
+                    placeholder="john.doe@company.com">
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Role</label>
+                <div class="relative">
+                    <button type="button" (click)="toggleRoleDropdown()"
+                        class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-left flex items-center justify-between focus:ring-4 focus:ring-blue-100/50 dark:focus:ring-blue-900/20 outline-none transition-all shadow-inner cursor-pointer"
+                        [class.text-slate-400]="!selectedRoleName" [class.text-slate-900]="selectedRoleName"
+                        [class.dark:text-slate-50]="selectedRoleName">
+                        {{ selectedRoleName || 'Select a role' }}
+                        <mat-icon class="text-slate-400 transition-transform"
+                            [class.rotate-180]="isRoleDropdownOpen">expand_more</mat-icon>
+                    </button>
+
+                    <div *ngIf="isRoleDropdownOpen"
+                        class="absolute z-10 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                        <div
+                            class="max-h-52 overflow-y-auto scroll-smooth custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
+                            <div *ngFor="let role of roles" (click)="selectRole(role)"
+                                class="px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                                [class.bg-blue-600]="role.id === teamForm.get('role_id')?.value"
+                                [class.text-white]="role.id === teamForm.get('role_id')?.value"
+                                [class.hover:bg-blue-700]="role.id === teamForm.get('role_id')?.value">
+                                {{ role.name }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button type="button" (click)="closed.emit()"
+                    class="flex-1 py-3 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all border-none cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" [disabled]="loading"
+                    class="flex-1 py-3 bg-linear-to-br from-blue-600 to-indigo-700 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all border-none cursor-pointer flex items-center justify-center gap-2">
+                    @if (loading) {
                     <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     Saving Changes...
-                } @else {
+                    } @else {
                     <mat-icon class="text-sm">save</mat-icon>
                     Update Member
-                }
-            </button>
-        </div>
-    </form>
+                    }
+                </button>
+            </div>
+        </form>
+    </div>
 </app-common-dialog>

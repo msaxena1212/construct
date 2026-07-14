@@ -1,5 +1,4 @@
 <div class="role-management-container p-6 space-y-6">
-  <!-- Header Section -->
   <div
     class="flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
     <div>
@@ -18,19 +17,17 @@
       <button (click)="openRoleDialog()"
         class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff]">
 
-      <!-- Glow -->
-      <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
-      </div>
+        <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
+        </div>
 
-      <!-- Icon -->
-      <div
-        class="relative z-10 w-6 h-6 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
+        <div
+          class="relative z-10 w-6 h-6 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
 
-        <span class="material-symbols-outlined text-[20px]">
-          add
-        </span>
+          <span class="material-symbols-outlined text-[20px]">
+            add
+          </span>
 
-      </div>
+        </div>
         Create New Role
       </button>
       }
@@ -38,7 +35,6 @@
   </div>
 
   @if (!managingPermissionsRoleId) {
-  <!-- Roles Listing -->
   <div
     class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
     <div class="px-8 py-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
@@ -50,270 +46,226 @@
       </div>
     </div>
 
-  <div class="overflow-x-auto px-2 pb-4">
+    <div class="overflow-x-auto px-2 pb-4">
 
-  <table
-    class="w-full min-w-[1100px] border-separate border-spacing-y-3">
+      <table class="w-full min-w-[950px] border-separate border-spacing-y-3">
 
-    <!-- Head -->
-    <thead>
+        <thead>
+          <tr>
+            <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+              Role Identity
+            </th>
 
-      <tr>
+            <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+              Access Type
+            </th>
 
-        <th
-          class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-          Role Identity
-        </th>
+            <th class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+              Permissions
+            </th>
 
-        <th
-          class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-          Access Type
-        </th>
+            <th class="px-6 py-4 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+              Status
+            </th>
 
-        <th
-          class="px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-          Permissions
-        </th>
+            <th
+              class="sticky right-0 z-10 bg-white dark:bg-slate-900 px-6 py-4 text-right text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+              Actions
+            </th>
 
-        <th
-          class="px-6 py-4 text-center text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-          Status
-        </th>
+          </tr>
 
-        <th
-          class="px-6 py-4 text-right text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
-          Actions
-        </th>
+        </thead>
 
-      </tr>
+        <tbody>
 
-    </thead>
+          @for (role of roles; track role.id) {
 
-    <!-- Body -->
-    <tbody>
+          <tr
+            class="group bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl">
 
-      @for (role of roles; track role.id) {
+            <td class="px-6 py-5 rounded-l-3xl border-y border-l border-slate-200 dark:border-slate-800">
 
-      <tr
-        class="group bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl">
+              <div class="flex items-center gap-4">
+                <div
+                  class="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
 
-        <!-- Role -->
-        <td
-          class="px-6 py-5 rounded-l-3xl border-y border-l border-slate-200 dark:border-slate-800">
+                  <div
+                    class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 blur-xl transition-opacity">
+                  </div>
 
-          <div class="flex items-center gap-4">
+                  <span class="relative z-10 text-primary font-black text-sm uppercase">
 
-            <!-- Avatar -->
-            <div
-              class="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                    {{ role.name.charAt(0) }}
 
-              <div
-                class="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 blur-xl transition-opacity">
+                  </span>
+
+                </div>
+
+                <div>
+
+                  <h4
+                    class="font-black text-sm text-slate-800 dark:text-white group-hover:text-primary transition-colors">
+
+                    {{ role.name }}
+
+                  </h4>
+
+                  <p class="text-[11px] text-slate-400 font-semibold mt-1 uppercase tracking-wide">
+
+                    UID : #{{ role.id }}
+
+                  </p>
+
+                </div>
+
               </div>
 
-              <span
-                class="relative z-10 text-primary font-black text-sm uppercase">
+            </td>
 
-                {{ role.name.charAt(0) }}
+            <td class="px-6 py-5 border-y border-slate-200 dark:border-slate-800">
 
-              </span>
-
-            </div>
-
-            <!-- Info -->
-            <div>
-
-              <h4
-                class="font-black text-sm text-slate-800 dark:text-white group-hover:text-primary transition-colors">
-
-                {{ role.name }}
-
-              </h4>
-
-              <p
-                class="text-[11px] text-slate-400 font-semibold mt-1 uppercase tracking-wide">
-
-                UID : #{{ role.id }}
-
-              </p>
-
-            </div>
-
-          </div>
-
-        </td>
-
-        <!-- Access Type -->
-        <td
-          class="px-6 py-5 border-y border-slate-200 dark:border-slate-800">
-
-          <span
-            [ngClass]="{
+              <span [ngClass]="{
               'bg-blue-50 text-blue-700 border-blue-200': role.type === 'STATIC',
               'bg-emerald-50 text-emerald-700 border-emerald-200': role.type === 'CUSTOM'
             }"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-[11px] font-black uppercase tracking-wide">
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border text-[11px] font-black uppercase tracking-wide">
 
-            <span
-              class="w-2 h-2 rounded-full"
-              [ngClass]="{
+                <span class="w-2 h-2 rounded-full" [ngClass]="{
                 'bg-blue-500': role.type === 'STATIC',
                 'bg-emerald-500': role.type === 'CUSTOM'
               }">
-            </span>
+                </span>
 
-            {{ role.type === 'STATIC'
-              ? 'System Protected'
-              : 'Custom Defined' }}
+                {{ role.type === 'STATIC'
+                ? 'System Protected'
+                : 'Custom Defined' }}
 
-          </span>
-
-        </td>
-
-        <!-- Permissions -->
-        <td
-          class="px-6 py-5 border-y border-slate-200 dark:border-slate-800">
-
-          <div class="flex flex-col gap-1">
-
-            <p
-              class="font-black text-slate-800 dark:text-white text-sm">
-
-              Access Control
-
-            </p>
-
-            <p
-              class="text-[11px] text-slate-400 font-bold uppercase tracking-wide">
-
-              Role Based Permissions
-
-            </p>
-
-          </div>
-
-        </td>
-
-        <!-- Status -->
-        <td
-          class="px-6 py-5 border-y border-slate-200 dark:border-slate-800 text-center">
-
-          <span
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-green-50 text-green-700 border border-green-200 text-[11px] font-black uppercase tracking-wide">
-
-            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-
-            Active
-
-          </span>
-
-        </td>
-
-        <!-- Actions -->
-        <td
-          class="px-6 py-5 rounded-r-3xl border-y border-r border-slate-200 dark:border-slate-800">
-
-          <div
-            class="flex items-center justify-end gap-2">
-
-            <!-- Permissions -->
-            <button
-              (click)="openPermissions(role)"
-              title="Configure Permissions"
-              class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
-
-              <span class="material-symbols-outlined text-[18px]">
-                security
               </span>
 
-            </button>
+            </td>
 
-            @if (role.type !== 'STATIC') {
+            <td class="px-6 py-5 border-y border-slate-200 dark:border-slate-800">
 
-            <!-- Edit -->
-            <button
-              (click)="onEdit(role)"
-              title="Edit Role"
-              class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+              <div class="flex flex-col gap-1">
 
-              <span class="material-symbols-outlined text-[18px]">
-                edit
-              </span>
+                <p class="font-black text-slate-800 dark:text-white text-sm">
 
-            </button>
+                  Access Control
 
-            <!-- Delete -->
-            <button
-              (click)="onDelete(role.id, role.type)"
-              title="Delete Role"
-              class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                </p>
 
-              <span class="material-symbols-outlined text-[18px]">
-                delete
-              </span>
+                <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wide">
 
-            </button>
+                  Role Based Permissions
 
-            }
+                </p>
 
-          </div>
+              </div>
 
-        </td>
+            </td>
 
-      </tr>
-
-      } @empty {
-
-      <!-- Empty -->
-      <tr>
-
-        <td colspan="5" class="py-24">
-
-          <div
-            class="flex flex-col items-center justify-center">
-
-            <div
-              class="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-5 shadow-inner">
+            <td class="px-6 py-5 border-y border-slate-200 dark:border-slate-800 text-center">
 
               <span
-                class="material-symbols-outlined text-5xl text-slate-400">
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-green-50 text-green-700 border border-green-200 text-[11px] font-black uppercase tracking-wide">
 
-                admin_panel_settings
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+
+                Active
 
               </span>
 
-            </div>
+            </td>
 
-            <p
-              class="text-xl font-black text-slate-700 dark:text-slate-200">
+            <td
+              class="sticky right-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 px-6 py-5 rounded-r-3xl border-y border-r border-slate-200 dark:border-slate-800 transition-all duration-300">
 
-              No Roles Found
+              <div class="flex items-center justify-end gap-2">
 
-            </p>
+                <button (click)="openPermissions(role)" title="Configure Permissions"
+                  class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
-            <p
-              class="text-sm text-slate-400 mt-2">
+                  <span class="material-symbols-outlined text-[18px]">
+                    security
+                  </span>
 
-              Create your first access role
+                </button>
 
-            </p>
+                @if (role.type !== 'STATIC') {
 
-          </div>
+                <button (click)="onEdit(role)" title="Edit Role"
+                  class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
-        </td>
+                  <span class="material-symbols-outlined text-[18px]">
+                    edit
+                  </span>
 
-      </tr>
+                </button>
 
-      }
+                <button (click)="onDelete(role.id, role.type)" title="Delete Role"
+                  class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center">
 
-    </tbody>
+                  <span class="material-symbols-outlined text-[18px]">
+                    delete
+                  </span>
 
-  </table>
+                </button>
 
-</div>
+                }
+
+              </div>
+
+            </td>
+
+          </tr>
+
+          } @empty {
+
+          <tr>
+
+            <td colspan="5" class="py-24">
+
+              <div class="flex flex-col items-center justify-center">
+
+                <div
+                  class="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-5 shadow-inner">
+
+                  <span class="material-symbols-outlined text-5xl text-slate-400">
+
+                    admin_panel_settings
+
+                  </span>
+
+                </div>
+
+                <p class="text-xl font-black text-slate-700 dark:text-slate-200">
+
+                  No Roles Found
+
+                </p>
+
+                <p class="text-sm text-slate-400 mt-2">
+
+                  Create your first access role
+
+                </p>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
   </div>
   } @else {
-  <!-- Permissions View -->
   <div
     class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden fade-in">
     <div

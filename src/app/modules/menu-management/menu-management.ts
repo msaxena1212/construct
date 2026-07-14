@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MenuService } from './services/menu.service';
 import { ToastrService } from 'ngx-toastr';
@@ -15,8 +15,9 @@ export class MenuManagement implements OnInit {
   isEditing: boolean = false;
   editingId: number | null = null;
 
-  // MODAL
   showModal: boolean = false;
+
+  parentDropdownOpen: boolean = false;
 
   menuForm!: FormGroup;
   menus: any[] = [];
@@ -56,9 +57,6 @@ export class MenuManagement implements OnInit {
     });
   }
 
-  // =========================
-  // LOAD MENUS
-  // =========================
   loadMenus() {
     this.menuService.getMenus().subscribe({
       next: (res) => {
@@ -70,9 +68,6 @@ export class MenuManagement implements OnInit {
     });
   }
 
-  // =========================
-  // HIERARCHY
-  // =========================
   buildHierarchy(rawMenus: any[]): any[] {
 
     const map = new Map<number, any>();
@@ -129,9 +124,6 @@ export class MenuManagement implements OnInit {
     return flattenedList;
   }
 
-  // =========================
-  // GET PARENT NAME
-  // =========================
   getParentName(parentId: any): string {
 
     if (!parentId) return 'None';
@@ -143,13 +135,57 @@ export class MenuManagement implements OnInit {
     return parent ? parent.name : 'Unknown';
   }
 
-  // =========================
-  // OPEN CREATE MODAL
-  // =========================
+  toggleParentDropdown(): void {
+    this.parentDropdownOpen = !this.parentDropdownOpen;
+  }
+
+  closeParentDropdown(): void {
+    this.parentDropdownOpen = false;
+  }
+
+  selectParent(id: number | null): void {
+    this.menuForm.get('parentId')?.setValue(id);
+    this.parentDropdownOpen = false;
+  }
+
+  getSelectedParentLabel(): string {
+
+    const selectedId = this.menuForm.get('parentId')?.value;
+
+    if (!selectedId) {
+      return '-- Top Level --';
+    }
+
+    const selected = this.menus.find(m => m.id === selectedId);
+
+    if (!selected) {
+      return '-- Top Level --';
+    }
+
+    const prefix = selected.depth > 0 ? '↳ '.repeat(selected.depth) : '';
+
+    return `${prefix}${selected.name}`;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+
+    if (!this.parentDropdownOpen) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+
+    if (!target.closest('.parent-dropdown-wrapper')) {
+      this.parentDropdownOpen = false;
+    }
+  }
+
   openCreateModal() {
 
     this.isEditing = false;
     this.editingId = null;
+    this.parentDropdownOpen = false;
 
     this.menuForm.reset({
       icon: 'domain',
@@ -161,31 +197,28 @@ export class MenuManagement implements OnInit {
     this.showModal = true;
   }
 
-  // =========================
-  // OPEN EDIT MODAL
-  // =========================
-editMenu(menu: any) {
-  this.isEditing = true;
-  this.editingId = menu.id;
+  editMenu(menu: any) {
+    this.isEditing = true;
+    this.editingId = menu.id;
+    this.parentDropdownOpen = false;
 
-  this.menuForm.patchValue({
-    name: menu.name,
-    title: menu.title,
-    path: menu.path,
-    icon: menu.icon,
-    order: menu.order,
-    parentId: menu.parentId,
-    status: menu.status
-  });
+    this.menuForm.patchValue({
+      name: menu.name,
+      title: menu.title,
+      path: menu.path,
+      icon: menu.icon,
+      order: menu.order,
+      parentId: menu.parentId,
+      status: menu.status
+    });
 
-  this.showModal = true;
-}
-  // =========================
-  // CLOSE MODAL
-  // =========================
+    this.showModal = true;
+  }
+
   closeModal() {
 
     this.showModal = false;
+    this.parentDropdownOpen = false;
 
     this.isEditing = false;
     this.editingId = null;
@@ -198,9 +231,7 @@ editMenu(menu: any) {
     });
   }
 
-  // =========================
-  // DELETE
-  // =========================
+
   deleteMenu(id: number) {
 
     Swal.fire({
@@ -243,23 +274,6 @@ editMenu(menu: any) {
 
   }
 
-  // editMenu(menu: any) {
-  //   this.isEditing = true;
-  //   this.editingId = menu.id;
-  //   this.menuForm.patchValue({
-  //     name: menu.name,
-  //     title: menu.title,
-  //     path: menu.path,
-  //     icon: menu.icon,
-  //     order: menu.order,
-  //     parentId: menu.parentId,
-  //     status: menu.status
-  //   });
-  // }
-
-  // =========================
-  // SUBMIT
-  // =========================
   onSubmit() {
 
     if (this.menuForm.invalid) {
@@ -271,7 +285,6 @@ editMenu(menu: any) {
       return;
     }
 
-    // UPDATE
     if (this.isEditing && this.editingId) {
 
       this.menuService.updateMenu(
@@ -303,7 +316,6 @@ editMenu(menu: any) {
 
     }
 
-    // CREATE
     else {
 
       this.menuService.createMenu(
