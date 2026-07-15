@@ -133,16 +133,6 @@
                         </div>
                     </div>
                 </nav>
-
-                <div
-                    class="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/50 shadow-sm shadow-blue-500/5">
-                    <mat-icon class="text-blue-500 mb-3">lightbulb</mat-icon>
-                    <p
-                        class="text-[11px] font-bold text-blue-900 dark:text-blue-300 leading-relaxed uppercase tracking-wider">
-                        Pro-tip: You can import existing project templates from your Dashboard to speed up this
-                        setup.
-                    </p>
-                </div>
             </div>
         </aside>
 
@@ -221,27 +211,41 @@
                             }
                         </div>
 
-                        <!-- Project Type -->
-                        <div>
+                        <div class="relative">
                             <label
                                 class="block text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2 ml-1">
                                 Project Type
                             </label>
 
-                            <div class="relative">
-                                <select formControlName="type"
-                                    class="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-semibold text-slate-800 shadow-sm appearance-none cursor-pointer focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all">
-                                    <option>Commercial Renovation</option>
-                                    <option>Residential New Build</option>
-                                    <option>Industrial Facility</option>
-                                    <option>Infrastructure</option>
-                                </select>
+                            <button type="button" (click)="projectTypeDropdownOpen = !projectTypeDropdownOpen"
+                                class="w-full flex items-center justify-between bg-white border rounded-2xl px-5 py-4 text-sm font-semibold text-slate-800 shadow-sm cursor-pointer outline-none transition-all"
+                                [ngClass]="projectTypeDropdownOpen
+                                ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-200'">
 
-                                <span
-                                    class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                <span>{{ f['type'].value || 'Select Project Type' }}</span>
+
+                                <span class="material-symbols-outlined text-slate-400 transition-transform duration-200"
+                                    [ngClass]="projectTypeDropdownOpen ? 'rotate-180' : ''">
                                     expand_more
                                 </span>
+                            </button>
+
+                            @if (projectTypeDropdownOpen) {
+
+                            <div class="fixed inset-0 z-40" (click)="projectTypeDropdownOpen = false"></div>
+
+                            <div
+                                class="absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-2 max-h-56 overflow-y-auto scroll-smooth custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+                                @for (type of projectTypes; track type) {
+                                <button type="button" (click)="selectProjectType(type)"
+                                    class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 cursor-pointer"
+                                    [ngClass]="f['type'].value === type ? 'bg-blue-600 text-white'
+                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
+                                    {{ type }}
+                                </button>
+                                }
                             </div>
+                            }
                         </div>
 
                         <!-- Completion Date -->
@@ -449,10 +453,10 @@
                     <app-common-dialog [open]="showBudgetBreakdownDialog" title="Allocate Project Budget"
                         subtitle="Break down the total budget into Material, Equipment, Labor and Other Costs"
                         [showCloseButton]="false" [showFooter]="true" [showDefaultFooterButtons]="true"
-                        [cancelLabel]="'Clear Allocation'"
-                        [primaryLabel]="'Save Allocation'" (closed)="closeBudgetBreakdownDialog()"
-                        (cancelled)="closeBudgetBreakdownDialog()" (primary)="saveBudgetBreakdown()"
-                        panelClass="max-w-3xl p-0 overflow-hidden rounded-3xl" [closeOnBackdrop]="false">
+                        [cancelLabel]="'Clear Allocation'" [primaryLabel]="'Save Allocation'"
+                        (closed)="closeBudgetBreakdownDialog()" (cancelled)="closeBudgetBreakdownDialog()"
+                        (primary)="saveBudgetBreakdown()" panelClass="max-w-3xl p-0 overflow-hidden rounded-3xl"
+                        [closeOnBackdrop]="false">
 
 
                         <div [formGroup]="budgetBreakdown"

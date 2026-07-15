@@ -1,93 +1,99 @@
-<app-common-dialog
-  [title]="data.title"
-  [badge]="isEditingMilestone ? 'Edit Milestone' : 'Add Milestone'"
-  icon="flag"
-  [showCloseButton]="true"
-  [showFooter]="true"
-  cancelLabel="Cancel"
-  primaryLabel="Save"
-  [primaryDisabled]="form.invalid"
-  (cancelled)="dialogRef.close()"
-  (primary)="saveMilestone()"
->
+<app-common-dialog [title]="data.title" [badge]="isEditingMilestone ? 'Edit Milestone' : 'Add Milestone'" icon="flag"
+  [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" primaryLabel="Save" [primaryDisabled]="form.invalid"
+  (cancelled)="dialogRef.close()" (primary)="saveMilestone()">
 
-   <form [formGroup]="form">
+  <form [formGroup]="form">
 
-  <div class="p-7">
+    <div class="p-7">
 
-    <!-- Milestone Name -->
-    <div class="mb-5">
-      <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
-        Milestone Name
-      </label>
-
-      <input
-        type="text"
-        formControlName="name"
-        placeholder="Enter milestone name"
-        class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
-
-      @if(form.get('name')?.invalid && form.get('name')?.touched){
-      <div class="text-red-500 text-xs mt-1">
-        Name is required
-      </div>
-      }
-    </div>
-
-    <!-- Color -->
-    <div class="mb-5">
-      <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
-        Color
-      </label>
-
-      <select
-        formControlName="color"
-        class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
-
-        <option value="blue-600">Blue</option>
-        <option value="indigo-600">Indigo</option>
-        <option value="emerald-600">Emerald</option>
-        <option value="amber-600">Amber</option>
-        <option value="rose-600">Rose</option>
-        <option value="purple-600">Purple</option>
-        <option value="cyan-600">Cyan</option>
-
-      </select>
-    </div>
-
-    <!-- Dates -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-      <div>
+      <!-- Milestone Name -->
+      <div class="mb-5">
         <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
-          Start Date
+          Milestone Name
         </label>
 
-        <input
-          [matDatepicker]="startPicker"
-          formControlName="startDate"
-          (click)="startPicker.open()"
-          class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 cursor-pointer focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+        <input type="text" formControlName="name" placeholder="Enter milestone name"
+          class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
 
-        <mat-datepicker #startPicker></mat-datepicker>
+        @if(form.get('name')?.invalid && form.get('name')?.touched){
+        <div class="text-red-500 text-xs mt-1">
+          Name is required
+        </div>
+        }
       </div>
 
-      <div>
+
+      <div class="mb-5 relative">
         <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
-          End Date
+          Color
         </label>
 
-        <input
-          [matDatepicker]="endPicker"
-          formControlName="endDate"
-          (click)="endPicker.open()"
-          class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 cursor-pointer focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+        <button type="button" (click)="colorDropdownOpen = !colorDropdownOpen"
+          class="w-full flex items-center justify-between border rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 transition-all cursor-pointer"
+          [ngClass]="colorDropdownOpen
+      ? 'border-primary ring-4 ring-primary/10'
+      : 'border-slate-200 dark:border-slate-700'">
 
-        <mat-datepicker #endPicker></mat-datepicker>
+          <span class="flex items-center gap-3">
+            <span class="w-4 h-4 rounded-full shrink-0"
+              [style.background-color]="getColorHex(form.get('color')?.value)"></span>
+            <span class="font-bold text-slate-800 dark:text-white">{{ getColorLabel(form.get('color')?.value) }}</span>
+          </span>
+
+          <span class="material-symbols-outlined text-[20px] text-slate-400 transition-transform duration-200"
+            [ngClass]="colorDropdownOpen ? 'rotate-180' : ''">
+            expand_more
+          </span>
+        </button>
+
+        @if (colorDropdownOpen) {
+
+        <div class="fixed inset-0 z-40" (click)="colorDropdownOpen = false"></div>
+
+        <div
+          class="absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-2 max-h-56 overflow-y-auto scroll-smooth custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+          @for (color of colorOptions; track color.value) {
+          <button type="button" (click)="selectColor(color.value)"
+            class="w-full flex items-center gap-3 text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 cursor-pointer"
+            [ngClass]="form.get('color')?.value === color.value
+        ? 'bg-primary text-white'
+        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
+
+            <span class="w-4 h-4 rounded-full shrink-0" [style.background-color]="color.hex"></span>
+            {{ color.label }}
+          </button>
+          }
+        </div>
+        }
+      </div>
+
+      <!-- Dates -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div>
+          <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
+            Start Date
+          </label>
+
+          <input [matDatepicker]="startPicker" formControlName="startDate" (click)="startPicker.open()"
+            class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 cursor-pointer focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+
+          <mat-datepicker #startPicker></mat-datepicker>
+        </div>
+
+        <div>
+          <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
+            End Date
+          </label>
+
+          <input [matDatepicker]="endPicker" formControlName="endDate" (click)="endPicker.open()"
+            class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 cursor-pointer focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all">
+
+          <mat-datepicker #endPicker></mat-datepicker>
+        </div>
+
       </div>
 
     </div>
-
-  </div>
   </form>
 </app-common-dialog>

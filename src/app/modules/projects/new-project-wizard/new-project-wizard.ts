@@ -24,6 +24,13 @@ export class NewProjectWizard implements OnInit {
   newMilestoneName = '';
   thumbnailFile: File | null = null;
   thumbnailPreview: string | null = null;
+  projectTypeDropdownOpen = false;
+  projectTypes = [
+    'Commercial Renovation',
+    'Residential New Build',
+    'Industrial Facility',
+    'Infrastructure'
+  ];
 
   budgetBreakdown: FormGroup;
 
@@ -74,6 +81,11 @@ export class NewProjectWizard implements OnInit {
         this.addDefaultMilestones();
       }
     });
+  }
+
+  selectProjectType(type: string) {
+    this.projectForm.get('type')?.setValue(type);
+    this.projectTypeDropdownOpen = false;
   }
 
   addDefaultMilestones() {
@@ -177,20 +189,20 @@ export class NewProjectWizard implements OnInit {
     this.showBudgetBreakdownDialog = true;
   }
 
-closeBudgetBreakdownDialog(): void {
-  this.showBudgetBreakdownDialog = false;
+  closeBudgetBreakdownDialog(): void {
+    this.showBudgetBreakdownDialog = false;
 
-  // Clear Budget Breakdown Form
-  this.budgetBreakdown.reset({
-    material: null,
-    equipment: null,
-    labor: null,
-    other: null
-  });
+    // Clear Budget Breakdown Form
+    this.budgetBreakdown.reset({
+      material: null,
+      equipment: null,
+      labor: null,
+      other: null
+    });
 
-  // Clear Main Project Form Budget
-  this.projectForm.get('budgetTotal')?.setValue(0);
-}
+    // Clear Main Project Form Budget
+    this.projectForm.get('budgetTotal')?.setValue(0);
+  }
 
   saveBudgetBreakdown() {
     this.projectForm.get('budgetTotal')?.setValue(this.budgetBreakdownTotal);

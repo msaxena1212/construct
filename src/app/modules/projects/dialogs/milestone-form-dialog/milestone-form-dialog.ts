@@ -14,6 +14,7 @@ import { MilestoneStatus } from '../../../../shared/interfaces/project.interface
 export class MilestoneFormDialog implements OnInit {
   isEditingMilestone = false;
   form!: FormGroup;
+  colorDropdownOpen = false;
 
   constructor(
     public dialogRef: MatDialogRef<MilestoneFormDialog>,
@@ -48,6 +49,29 @@ export class MilestoneFormDialog implements OnInit {
 
     return `${year}-${month}-${day}`;
   }
+   
+colorOptions = [
+  { value: 'blue-600', label: 'Blue', hex: '#2563eb' },
+  { value: 'indigo-600', label: 'Indigo', hex: '#4f46e5' },
+  { value: 'emerald-600', label: 'Emerald', hex: '#059669' },
+  { value: 'amber-600', label: 'Amber', hex: '#d97706' },
+  { value: 'rose-600', label: 'Rose', hex: '#e11d48' },
+  { value: 'purple-600', label: 'Purple', hex: '#9333ea' },
+  { value: 'cyan-600', label: 'Cyan', hex: '#0891b2' }
+];
+
+selectColor(value: string) {
+  this.form.get('color')?.setValue(value);
+  this.colorDropdownOpen = false;
+}
+
+getColorLabel(value: string): string {
+  return this.colorOptions.find(c => c.value === value)?.label || 'Select Color';
+}
+
+getColorHex(value: string): string {
+  return this.colorOptions.find(c => c.value === value)?.hex || '#94a3b8';
+}
 
   saveMilestone() {
     if (this.form.invalid) {

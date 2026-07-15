@@ -41,6 +41,8 @@ export class MaterialMaster {
   Math: any;
   searchQuery: any;
   categories: any[] = [];
+  categoryDropdownOpen = false;
+  editCategoryDropdownOpen = false;
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -81,6 +83,15 @@ export class MaterialMaster {
     });
   }
 
+  selectCategory(name: string) {
+    this.newMaterial.category = name;
+    this.categoryDropdownOpen = false;
+  }
+
+  selectEditCategory(name: string) {
+    this.materialToEdit.category = name;
+    this.editCategoryDropdownOpen = false;
+  }
 
   updatePagination() {
 

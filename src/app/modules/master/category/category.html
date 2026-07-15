@@ -19,8 +19,7 @@
     <button (click)="openAddModal()"
       class="group relative overflow-hidden flex items-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff] cursor-pointer">
 
-      <div
-        class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
+      <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300">
       </div>
 
       <div
@@ -169,8 +168,7 @@
             </td>
 
             <!-- Category Type -->
-            <td
-              class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
+            <td class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
 
               <div class="flex items-left">
 
@@ -190,8 +188,7 @@
             </td>
 
             <!-- Status -->
-            <td
-              class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
+            <td class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
 
               <div class="flex items-left">
 
@@ -215,8 +212,7 @@
             </td>
 
             <!-- Actions -->
-            <td
-              class="px-6 py-5 rounded-r-[28px] border border-l-0 border-slate-200 dark:border-slate-800 shadow-sm">
+            <td class="px-6 py-5 rounded-r-[28px] border border-l-0 border-slate-200 dark:border-slate-800 shadow-sm">
 
               <div class="flex items-center justify-center gap-3">
 
@@ -349,18 +345,10 @@
 
 </section>
 
-<app-common-dialog
-  [open]="showAddModal"
-  [title]="isEditMode ? 'Edit Category' : 'Add Category'"
-  [subtitle]="isEditMode ? 'Update existing category details' : 'Create a new category record'"
-  icon="category"
-  [showCloseButton]="true"
-  [showFooter]="true"
-  cancelLabel="Cancel"
-  [primaryLabel]="isEditMode ? 'Update' : 'Save'"
-  (closed)="closeModal()"
-  (primary)="isEditMode ? updateCategory() : addCategory()"
->
+<app-common-dialog [open]="showAddModal" [title]="isEditMode ? 'Edit Category' : 'Add Category'"
+  [subtitle]="isEditMode ? 'Update existing category details' : 'Create a new category record'" icon="category"
+  [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="isEditMode ? 'Update' : 'Save'"
+  (closed)="closeModal()" (primary)="isEditMode ? updateCategory() : addCategory()">
   <div class="p-7">
 
     <!-- Category Name -->
@@ -376,48 +364,62 @@
     </div>
 
     <!-- Category Type -->
-    <div class="mb-6">
-
+    <div class="mb-6 relative">
       <label class="text-sm font-black block mb-2 text-slate-700 dark:text-slate-200">
         Category Type
       </label>
 
-      <select [(ngModel)]="newCategory.category_type"
-        class="w-full border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none cursor-pointer">
+      <button type="button" (click)="categoryTypeDropdownOpen = !categoryTypeDropdownOpen"
+        class="w-full flex items-center justify-between border rounded-2xl px-4 py-3.5 outline-none bg-white dark:bg-slate-900 transition-all cursor-pointer"
+        [ngClass]="categoryTypeDropdownOpen
+      ? 'border-primary ring-4 ring-primary/10'
+      : 'border-slate-200 dark:border-slate-700'">
 
-        <option value="" disabled selected>
-          Select category type
-        </option>
+        <span
+          [ngClass]="newCategory.category_type ? 'text-slate-800 dark:text-white font-bold' : 'text-slate-400 font-medium'">
+          {{ newCategory.category_type || 'Select category type' }}
+        </span>
 
-        <option value="Material">
+        <span class="material-symbols-outlined text-[20px] text-slate-400 transition-transform duration-200"
+          [ngClass]="categoryTypeDropdownOpen ? 'rotate-180' : ''">
+          expand_more
+        </span>
+      </button>
+
+      @if (categoryTypeDropdownOpen) {
+
+      <div class="fixed inset-0 z-40" (click)="categoryTypeDropdownOpen = false"></div>
+
+      <div
+        class="absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-2 max-h-56 overflow-y-auto scroll-smooth custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200">
+
+        <button type="button" (click)="selectCategoryType('Material')"
+          class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 cursor-pointer"
+          [ngClass]="newCategory.category_type === 'Material'
+        ? 'bg-primary text-white'
+        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
           Material
-        </option>
+        </button>
 
-        <option value="Equipment">
+        <button type="button" (click)="selectCategoryType('Equipment')"
+          class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-150 cursor-pointer"
+          [ngClass]="newCategory.category_type === 'Equipment'
+        ? 'bg-primary text-white'
+        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'">
           Equipment
-        </option>
+        </button>
 
-      </select>
-
+      </div>
+      }
     </div>
 
   </div>
 </app-common-dialog>
 
 <!-- Delete Confirmation Modal -->
-<app-common-dialog
-  [open]="showDeleteModal && !!categoryToDelete"
-  variant="danger"
-  title="Delete Category?"
-  subtitle="This action cannot be undone."
-  icon="delete_forever"
-  [showCloseButton]="true"
-  [showFooter]="true"
-  cancelLabel="Cancel"
-  primaryLabel="Delete Item"
-  (closed)="closeDeleteModal()"
-  (primary)="confirmDelete()"
->
+<app-common-dialog [open]="showDeleteModal && !!categoryToDelete" variant="danger" title="Delete Category?"
+  subtitle="This action cannot be undone." icon="delete_forever" [showCloseButton]="true" [showFooter]="true"
+  cancelLabel="Cancel" primaryLabel="Delete Item" (closed)="closeDeleteModal()" (primary)="confirmDelete()">
   @if (categoryToDelete) {
   <div class="p-8 text-center">
     <p class="text-outline text-sm font-medium">Are you sure you want to remove <span

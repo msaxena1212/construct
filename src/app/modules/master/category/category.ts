@@ -13,7 +13,7 @@ private categoryService = inject(CategoryServeice);
   private toast = inject(ToastrService);
 
   categories: any[] = [];
-
+ categoryTypeDropdownOpen = false;
   paginatedCategories: any[] = [];
   page = 1;
 
@@ -65,6 +65,11 @@ private categoryService = inject(CategoryServeice);
       }
     });
   }
+
+  selectCategoryType(type: string) {
+  this.newCategory.category_type = type;
+  this.categoryTypeDropdownOpen = false;
+}
 
  updatePagination() {
 
@@ -159,8 +164,8 @@ get filteredCategories(): any[] {
   }
 
   closeModal() {
-
     this.showAddModal = false;
+    this.categoryTypeDropdownOpen = false;
   }
 
   closeDeleteModal() {

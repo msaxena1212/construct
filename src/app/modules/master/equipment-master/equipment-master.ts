@@ -48,6 +48,8 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
   Math: any;
   searchQuery: any;
   categories: any;
+  categoryDropdownOpen = false;
+editCategoryDropdownOpen = false;
 
   ngOnInit() {
     this.materialService.loadMaterials();
@@ -87,6 +89,15 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
     });
   }
 
+  selectCategory(name: string) {
+  this.newMaterial.category = name;
+  this.categoryDropdownOpen = false;
+}
+
+selectEditCategory(name: string) {
+  this.materialToEdit.category = name;
+  this.editCategoryDropdownOpen = false;
+}
 
   updatePagination() {
 
