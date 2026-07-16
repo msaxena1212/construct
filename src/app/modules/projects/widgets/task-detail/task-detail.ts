@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostListener, inject, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ProjectService } from '../../services/project-service';
 import { ToastrService } from 'ngx-toastr';
 import { IProjectSubTask, IProjectTask, IUser, IProjectTaskDependency, IProject } from '../../../../shared/interfaces/project.interface';
@@ -18,13 +18,15 @@ import { environment } from '../../../../../environments/environment';
     CommonDialogComponent,
   ]
 })
-export class TaskDetail implements OnInit {
+export class TaskDetail implements OnInit, AfterViewInit, OnDestroy {
   @Input() task!: IProjectTask;
   @Output() close = new EventEmitter<void>();
+  @ViewChild('scrollArea') scrollAreaRef?: ElementRef<HTMLDivElement>;
 
   private projectService = inject(ProjectService);
   private toastr = inject(ToastrService);
   allTasks: IProjectTask[] = [];
+  private isAdjustingHeight = false;
 
   isEditing = false;
   newComment = '';
@@ -38,6 +40,12 @@ export class TaskDetail implements OnInit {
   selectedPredecessorId: any = '';
   selectedDepType: 'FS' | 'SS' | 'FF' | 'SF' = 'FS';
   depLag = 0;
+
+  milestoneOpen = false;
+  subMilestoneOpen = false;
+  assigneeOpen = false;
+  predecessorOpen = false;
+  depTypeOpen = false;
 
   dependencyTypes = [
     { id: 'FS', name: 'Finish-to-Start (FS)', desc: 'Predecessor must finish before Successor can start' },
@@ -59,12 +67,196 @@ export class TaskDetail implements OnInit {
         this.allTasks = res.data;
       });
       this.fetchTeamMembers();
-
     }
-
   }
 
+  private mutationObserver?: MutationObserver;
+
+  ngAfterViewInit() {
+    requestAnimationFrame(() => requestAnimationFrame(() => this.adjustScrollHeight()));
+    window.addEventListener('resize', this.adjustScrollHeight);
+    const el = this.scrollAreaRef?.nativeElement;
+    if (el) {
+      this.mutationObserver = new MutationObserver(() => {
+        requestAnimationFrame(() => this.adjustScrollHeight());
+      });
+      this.mutationObserver.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+    }
+  }
+
+  ngOnDestroy() {
+    window.removeEventListener('resize', this.adjustScrollHeight);
+    this.mutationObserver?.disconnect();
+    this.restoreAncestorScrolling();
+  }
+
+  private neutralizedElements = new Map<HTMLElement, { overflow: string; overflowY: string }>();
+
+  private neutralizeAncestorScrolling(el: HTMLElement) {
+    let parent = el.parentElement;
+    while (parent && parent !== document.body && parent !== document.documentElement) {
+      const computed = window.getComputedStyle(parent);
+      const needsOverflowYFix = computed.overflowY === 'auto' || computed.overflowY === 'scroll';
+      const needsOverflowFix = computed.overflow === 'auto' || computed.overflow === 'scroll';
+
+      if (needsOverflowYFix || needsOverflowFix) {
+
+        if (!this.neutralizedElements.has(parent)) {
+          this.neutralizedElements.set(parent, {
+            overflow: parent.style.overflow,
+            overflowY: parent.style.overflowY,
+          });
+        }
+        if (needsOverflowYFix) parent.style.overflowY = 'hidden';
+        if (needsOverflowFix) parent.style.overflow = 'hidden';
+      }
+      parent = parent.parentElement;
+    }
+  }
+
+  private restoreAncestorScrolling() {
+    this.neutralizedElements.forEach((original, el) => {
+      el.style.overflow = original.overflow;
+      el.style.overflowY = original.overflowY;
+    });
+    this.neutralizedElements.clear();
+  }
+
+
+  adjustScrollHeight = () => {
+    if (this.isAdjustingHeight) return;
+    this.isAdjustingHeight = true;
+
+    const el = this.scrollAreaRef?.nativeElement;
+    if (!el) { this.isAdjustingHeight = false; return; }
+
+    const dialogHeight = window.innerHeight * 0.96;
+    const dialogTop = (window.innerHeight - dialogHeight) / 2;
+    const dialogBottom = dialogTop + dialogHeight;
+
+    const elTop = el.getBoundingClientRect().top;
+    const bottomSafetyBuffer = 40;
+
+    const available = dialogBottom - elTop - bottomSafetyBuffer;
+    const newMaxHeight = `${Math.max(available, 200)}px`;
+
+    if (el.style.maxHeight !== newMaxHeight) {
+      el.style.maxHeight = newMaxHeight;
+    }
+    el.style.boxSizing = 'border-box';
+
+    this.neutralizeAncestorScrolling(el);
+
+    requestAnimationFrame(() => {
+      this.isAdjustingHeight = false;
+    });
+  };
+
   environment = environment;
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.closeAllDropdowns();
+  }
+
+  closeAllDropdowns(except?: 'milestone' | 'subMilestone' | 'assignee' | 'predecessor' | 'depType') {
+    if (except !== 'milestone') this.milestoneOpen = false;
+    if (except !== 'subMilestone') this.subMilestoneOpen = false;
+    if (except !== 'assignee') this.assigneeOpen = false;
+    if (except !== 'predecessor') this.predecessorOpen = false;
+    if (except !== 'depType') this.depTypeOpen = false;
+  }
+
+  toggleMilestoneDropdown() {
+    if (!this.isEditing) return;
+    const next = !this.milestoneOpen;
+    this.closeAllDropdowns('milestone');
+    this.milestoneOpen = next;
+  }
+
+  toggleSubMilestoneDropdown() {
+    if (!this.isEditing) return;
+    const next = !this.subMilestoneOpen;
+    this.closeAllDropdowns('subMilestone');
+    this.subMilestoneOpen = next;
+  }
+
+  toggleAssigneeDropdown() {
+    if (!this.isEditing) return;
+    const next = !this.assigneeOpen;
+    this.closeAllDropdowns('assignee');
+    this.assigneeOpen = next;
+  }
+
+  togglePredecessorDropdown() {
+    const next = !this.predecessorOpen;
+    this.closeAllDropdowns('predecessor');
+    this.predecessorOpen = next;
+  }
+
+  toggleDepTypeDropdown() {
+    const next = !this.depTypeOpen;
+    this.closeAllDropdowns('depType');
+    this.depTypeOpen = next;
+  }
+
+  selectMilestone(milestone: any) {
+    this.task.milestone_id = milestone.id;
+    this.onMilestoneChange({ target: { value: milestone.id } });
+    this.milestoneOpen = false;
+  }
+
+  selectSubMilestone(sub: any) {
+    this.task.submilestone_id = sub.id;
+    this.subMilestoneOpen = false;
+  }
+
+  selectAssignee(member: IUser) {
+    if (!member) return;
+    this.task.assignees = [{ ...member }] as any;
+    this.assigneeOpen = false;
+
+    this.projectService.updateTask(this.task.id, { assignees: [member.id] }).subscribe({
+      next: () => {
+        this.toastr.success('Assignee updated');
+      },
+      error: () => {
+        this.toastr.error('Failed to update assignee');
+      }
+    });
+  }
+
+  get selectedAssigneeName(): string {
+    const a = this.task?.assignees?.[0];
+    if (!a || !a.firstname) return 'Select Assignee';
+    return `${a.firstname} ${a.lastname || ''}`.trim();
+  }
+
+  selectPredecessor(t: IProjectTask) {
+    this.selectedPredecessorId = t.id;
+    this.predecessorOpen = false;
+  }
+
+  selectDepType(type: any) {
+    this.selectedDepType = type.id;
+    this.depTypeOpen = false;
+  }
+
+  get selectedMilestoneName(): string {
+    return this.milestones?.find((m: any) => m.id == this.task?.milestone_id)?.name || 'Select Milestone';
+  }
+
+  get selectedSubMilestoneName(): string {
+    return this.subMilestones?.find((s: any) => s.id == this.task?.submilestone_id)?.name || 'Select Sub Milestone';
+  }
+
+  get selectedPredecessorName(): string {
+    return this.allTasks?.find(t => t.id === Number(this.selectedPredecessorId))?.title || 'Select Task';
+  }
+
+  get selectedDepTypeName(): string {
+    return this.dependencyTypes.find(t => t.id === this.selectedDepType)?.name || 'Select Type';
+  }
 
   getAvatarUrl(avatar?: string): string {
     if (!avatar) {
@@ -76,6 +268,13 @@ export class TaskDetail implements OnInit {
     }
 
     return `${this.environment.serverUrl}${avatar}`;
+  }
+
+  onAvatarError(event: Event, name?: string) {
+    const target = event.target as HTMLImageElement;
+    target.onerror = null;
+    const displayName = name?.trim() || 'User';
+    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563eb&color=fff&bold=true`;
   }
 
   onMilestoneChange(event: any) {
@@ -103,6 +302,8 @@ export class TaskDetail implements OnInit {
       this.saveTaskUpdates();
     }
     this.isEditing = !this.isEditing;
+    this.closeAllDropdowns();
+    setTimeout(() => this.adjustScrollHeight());
   }
 
   saveTaskUpdates() {
@@ -122,6 +323,7 @@ export class TaskDetail implements OnInit {
   }
 
   onClose() {
+    this.restoreAncestorScrolling();
     this.close.emit();
   }
 
@@ -303,9 +505,6 @@ export class TaskDetail implements OnInit {
     return this.allTasks.find((t: IProjectTask) => t.id === taskId)?.title || `Task #${id}`;
   }
 
-  // ---------- New helpers added to match the redesigned UI ----------
-
-  /** Badge color classes for the task priority pill (High/Medium/Low). */
   priorityBadgeClass(): string {
     switch ((this.task?.priority || '').toLowerCase()) {
       case 'high': return 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400';
@@ -315,7 +514,6 @@ export class TaskDetail implements OnInit {
     }
   }
 
-  /** Derives a display status for a sub-task purely from the existing `completed` boolean. */
   subTaskStatus(item: IProjectSubTask): string {
     return item.completed ? 'Completed' : 'Pending';
   }
@@ -324,7 +522,6 @@ export class TaskDetail implements OnInit {
     return item.completed ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500';
   }
 
-  /** Color classes for the FS/SS/FF/SF dependency-type chip. */
   depTypeClass(type: string): string {
     switch (type) {
       case 'FS': return 'bg-blue-100 text-blue-600';
@@ -335,7 +532,6 @@ export class TaskDetail implements OnInit {
     }
   }
 
-  /** Icon + colors for an attachment, based on its file extension. */
   getFileIconMeta(name: string): { icon: string; bg: string; color: string } {
     const ext = name?.split('.').pop()?.toLowerCase();
     switch (ext) {
@@ -358,7 +554,6 @@ export class TaskDetail implements OnInit {
     }
   }
 
-  /** Attachments shown in the card: first 3 unless "View all" was clicked. */
   get visibleAttachments() {
     if (!this.task?.attachments) return [];
     return this.showAllAttachments ? this.task.attachments : this.task.attachments.slice(0, 3);

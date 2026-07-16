@@ -1,58 +1,101 @@
-<!-- Task Detail Modal Overlay -->
-<app-common-dialog [open]="true" size="xl" height="!h-[96vh]" title="Task Details"
+<app-common-dialog [open]="true" size="xl" height="!h-[96vh]" title="Task Details" custom-scrollbar
     [subtitle]="'Due: ' + ((task.due_date | date:'MMM dd, yyyy') || 'No date set')" [badge]="task.priority"
     [badgeClass]="priorityBadgeClass()" icon="assignment" [showCloseButton]="true"
-    panelClass="rounded-2xl border border-slate-200/50 dark:border-slate-800/50 transition-all !w-[88vw] !max-w-[1280px]"
+    panelClass="rounded-2xl border border-slate-200/50 dark:border-slate-800/50 transition-all !w-[92vw] sm:!w-[88vw] !max-w-[1280px]"
     contentClass="min-h-0 flex-1 overflow-hidden bg-slate-50/60 dark:bg-slate-950" (closed)="onClose()">
 
     <button dialog-header-actions (click)="toggleEditMode()"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors cursor-pointer shadow-sm shadow-blue-600/20">
+        class="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors cursor-pointer shadow-sm shadow-blue-600/20 text-sm sm:text-base whitespace-nowrap">
         <span class="material-symbols-outlined text-[20px]">{{ isEditing ? 'save' : 'edit' }}</span>
-        {{ isEditing ? 'Save Task' : 'Edit Task' }}
+        <span class="hidden xs:inline">{{ isEditing ? 'Save Task' : 'Edit Task' }}</span>
     </button>
 
-    <!-- Modal Content Scroll Area -->
-    <div class="h-full overflow-y-auto grid grid-cols-1 md:grid-cols-12 min-h-0 gap-8 p-8">
+    <div #scrollArea class="task-detail-scroll grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 p-4 sm:p-6 lg:p-8">
 
-        <!-- Main Info Column -->
-        <div class="md:col-span-8 space-y-6">
+        <div class="md:col-span-8 space-y-5 sm:space-y-6">
 
-            <!-- Task Information Card -->
-            <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
-                <div class="flex items-center gap-2 mb-5">
+            <section
+                class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+                <div class="flex items-center gap-2 mb-4 sm:mb-5">
                     <span class="material-symbols-outlined text-blue-600 text-[18px]">description</span>
                     <h3 class="text-xs font-black uppercase tracking-[0.15em] text-blue-600">Task Information</h3>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <!-- Milestone -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                     <div class="space-y-2">
-                        <label class="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <label
+                            class="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-slate-400">
                             <span class="material-symbols-outlined text-[14px] text-emerald-500">flag</span>
                             Milestone
                         </label>
-                        <select [(ngModel)]="task.milestone_id" (change)="onMilestoneChange($event)" [disabled]="!isEditing"
-                            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-default disabled:opacity-100">
-                            <option value="">Select Milestone</option>
-                            @for(milestone of milestones; track milestone.id){
-                            <option [value]="milestone.id">{{ milestone.name }}</option>
+                        <div class="relative">
+                            <button type="button" (click)="$event.stopPropagation(); toggleMilestoneDropdown()"
+                                [disabled]="!isEditing" [class.border-blue-500]="milestoneOpen"
+                                [class.ring-4]="milestoneOpen" [class.ring-blue-100]="milestoneOpen"
+                                [class.dark:ring-blue-900]="milestoneOpen"
+                                class="w-full flex items-center justify-between gap-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 outline-none transition-all cursor-pointer disabled:cursor-default disabled:opacity-100 disabled:bg-slate-50 dark:disabled:bg-slate-800/60">
+                                <span class="truncate text-left" [class.text-slate-400]="!task.milestone_id">{{
+                                    selectedMilestoneName }}</span>
+                                <span
+                                    class="material-symbols-outlined text-slate-400 shrink-0 transition-transform duration-200"
+                                    [class.rotate-180]="milestoneOpen"
+                                    [class.text-blue-600]="milestoneOpen">expand_more</span>
+                            </button>
+
+                            @if (milestoneOpen) {
+                            <div (click)="$event.stopPropagation()"
+                                class="animate-in fade-in duration-150 absolute z-20 mt-2 w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg max-h-56 overflow-y-auto scroll-smooth py-2">
+                                @for (milestone of milestones; track milestone.id) {
+                                <div (click)="selectMilestone(milestone)"
+                                    class="px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors truncate"
+                                    [class.text-blue-600]="task.milestone_id == milestone.id">
+                                    {{ milestone.name }}
+                                </div>
+                                }
+                                @if (!milestones || milestones.length === 0) {
+                                <div class="px-4 py-3 text-xs text-slate-400 text-center">No milestones found</div>
+                                }
+                            </div>
                             }
-                        </select>
+                        </div>
                     </div>
 
-                    <!-- Sub Milestone -->
                     <div class="space-y-2">
-                        <label class="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <label
+                            class="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-slate-400">
                             <span class="material-symbols-outlined text-[14px] text-amber-500">auto_awesome</span>
                             Sub Milestone
                         </label>
-                        <select [(ngModel)]="task.submilestone_id" [disabled]="!isEditing"
-                            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-default disabled:opacity-100">
-                            <option value="">Select Sub Milestone</option>
-                            @for(sub of subMilestones; track sub.id){
-                            <option [value]="sub.id">{{ sub.name }}</option>
+                        <div class="relative">
+                            <button type="button" (click)="$event.stopPropagation(); toggleSubMilestoneDropdown()"
+                                [disabled]="!isEditing" [class.border-blue-500]="subMilestoneOpen"
+                                [class.ring-4]="subMilestoneOpen" [class.ring-blue-100]="subMilestoneOpen"
+                                [class.dark:ring-blue-900]="subMilestoneOpen"
+                                class="w-full flex items-center justify-between gap-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-3 text-sm font-semibold text-slate-700 dark:text-slate-200 outline-none transition-all cursor-pointer disabled:cursor-default disabled:opacity-100 disabled:bg-slate-50 dark:disabled:bg-slate-800/60">
+                                <span class="truncate text-left" [class.text-slate-400]="!task.submilestone_id">{{
+                                    selectedSubMilestoneName }}</span>
+                                <span
+                                    class="material-symbols-outlined text-slate-400 shrink-0 transition-transform duration-200"
+                                    [class.rotate-180]="subMilestoneOpen"
+                                    [class.text-blue-600]="subMilestoneOpen">expand_more</span>
+                            </button>
+
+                            @if (subMilestoneOpen) {
+                            <div (click)="$event.stopPropagation()"
+                                class="animate-in fade-in duration-150 absolute z-20 mt-2 w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg max-h-56 overflow-y-auto scroll-smooth py-2">
+                                @for (sub of subMilestones; track sub.id) {
+                                <div (click)="selectSubMilestone(sub)"
+                                    class="px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors truncate"
+                                    [class.text-blue-600]="task.submilestone_id == sub.id">
+                                    {{ sub.name }}
+                                </div>
+                                }
+                                @if (!subMilestones || subMilestones.length === 0) {
+                                <div class="px-4 py-3 text-xs text-slate-400 text-center">No sub milestones found</div>
+                                }
+                            </div>
                             }
-                        </select>
+                        </div>
                         @if(isEditing && task.milestone_id && subMilestones?.length === 0){
                         <p class="text-xs text-red-500 font-medium">No Sub Milestone Found</p>
                         }
@@ -61,21 +104,23 @@
 
                 @if (isEditing) {
                 <input type="text" [(ngModel)]="task.title"
-                    class="w-full text-2xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                    class="w-full text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Task Title">
                 <textarea [(ngModel)]="task.description"
                     class="w-full text-slate-600 dark:text-slate-400 text-sm leading-relaxed bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
                     placeholder="Task Description"></textarea>
                 } @else {
-                <h2 class="text-2xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight mb-2">{{ task.title }}</h2>
-                <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                <h2
+                    class="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight mb-2 break-words">
+                    {{ task.title }}</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed break-words">
                     {{ task.description || 'No description provided for this task.' }}
                 </p>
                 }
             </section>
 
-            <!-- Sub-tasks Checklist -->
-            <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+            <section
+                class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 sm:p-6">
                 <div class="flex items-center gap-2 mb-3">
                     <span class="material-symbols-outlined text-blue-600 text-[18px]">checklist</span>
                     <h3 class="text-xs font-black uppercase tracking-[0.15em] text-blue-600">Sub-tasks</h3>
@@ -86,17 +131,17 @@
                         <div class="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all"
                             [style.width.%]="checklistProgress"></div>
                     </div>
-                    <span class="text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">{{ checklistProgress }}% Complete</span>
+                    <span class="text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">{{ checklistProgress }}%
+                        Complete</span>
                 </div>
 
                 <div class="space-y-2">
                     @for (item of task.sub_tasks; track item.id) {
                     <div
-                        class="flex items-center gap-3 p-3 bg-slate-50/60 dark:bg-slate-800/40 rounded-xl border border-slate-100/70 dark:border-slate-800/70 group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
+                        class="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 bg-slate-50/60 dark:bg-slate-800/40 rounded-xl border border-slate-100/70 dark:border-slate-800/70 group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
                         <div (click)="isEditing ? toggleChecklist(item) : null"
                             [class]="item.completed ? 'border-blue-600 bg-blue-600' : 'border-slate-300 dark:border-slate-600 group-hover:border-blue-500'"
-                            [class.cursor-pointer]="isEditing"
-                            [class.cursor-default]="!isEditing"
+                            [class.cursor-pointer]="isEditing" [class.cursor-default]="!isEditing"
                             class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0">
                             @if (item.completed) {
                             <span class="material-symbols-outlined text-white text-[14px]">check</span>
@@ -105,7 +150,7 @@
 
                         @if (isEditing) {
                         <input type="text" [ngModel]="item.title" (ngModelChange)="onSubTaskChange(item, $event)"
-                            class="text-sm bg-transparent border-none outline-none focus:ring-0 flex-1 font-semibold text-slate-700 dark:text-slate-300">
+                            class="text-sm bg-transparent border-none outline-none focus:ring-0 flex-1 min-w-0 font-semibold text-slate-700 dark:text-slate-300">
                         <button (click)="openDeleteSubTaskDialog(item?.id!)"
                             class="text-red-500 hover:text-red-700 p-1 flex items-center justify-center cursor-pointer shrink-0">
                             <span class="material-symbols-outlined text-[18px]">delete</span>
@@ -113,12 +158,13 @@
                         } @else {
                         <span
                             [class]="item.completed ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300 font-semibold'"
-                            class="text-sm transition-all flex-1 truncate">{{ item.title }}</span>
+                            class="text-sm transition-all flex-1 min-w-0 truncate">{{ item.title }}</span>
 
                         <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shrink-0"
                             [ngClass]="subTaskStatusClass(item)">{{ subTaskStatus(item) }}</span>
 
-                        <span class="material-symbols-outlined text-slate-300 hover:text-slate-500 cursor-pointer text-[18px] shrink-0">more_vert</span>
+                        <span
+                            class="material-symbols-outlined text-slate-300 hover:text-slate-500 cursor-pointer text-[18px] shrink-0">more_vert</span>
                         }
                     </div>
                     }
@@ -130,31 +176,32 @@
                     <span class="material-symbols-outlined text-slate-400">add</span>
                     <input type="text" [(ngModel)]="newSubTaskTitle" (keyup.enter)="addSubTask()"
                         placeholder="Add new sub-task..."
-                        class="text-sm bg-transparent border-none outline-none focus:ring-0 flex-1">
+                        class="text-sm bg-transparent border-none outline-none focus:ring-0 flex-1 min-w-0">
                     <button (click)="addSubTask()"
-                        class="text-xs font-bold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer">Add</button>
+                        class="text-xs font-bold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer shrink-0">Add</button>
                 </div>
                 }
             </section>
 
-            <!-- Attachments + Relationships side by side -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
 
-                <!-- Attachments -->
-                <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-blue-600 text-[18px]">attach_file</span>
-                            <h3 class="text-xs font-black uppercase tracking-[0.15em] text-blue-600">File Attachments</h3>
+                <section
+                    class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+                    <div class="flex items-center justify-between mb-4 gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span
+                                class="material-symbols-outlined text-blue-600 text-[18px] shrink-0">attach_file</span>
+                            <h3 class="text-xs font-black uppercase tracking-[0.15em] text-blue-600 truncate">File
+                                Attachments</h3>
                         </div>
                         @if (isEditing) {
                         <button (click)="openUploadModal()"
-                            class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
-                            <span class="material-symbols-outlined text-sm">upload</span> Upload Document
+                            class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer shrink-0">
+                            <span class="material-symbols-outlined text-sm">upload</span> Upload
                         </button>
                         } @else {
-                        <span class="text-xs font-semibold text-slate-400 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">upload</span> Upload Document
+                        <span class="text-xs font-semibold text-slate-400 flex items-center gap-1 shrink-0">
+                            <span class="material-symbols-outlined text-sm">upload</span> Upload
                         </span>
                         }
                     </div>
@@ -163,17 +210,21 @@
                         @for (file of visibleAttachments; track file.id) {
                         <div
                             class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-blue-100 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-all cursor-pointer group">
-                            <div
-                                [ngClass]="getFileIconMeta(file.name).bg"
+                            <div [ngClass]="getFileIconMeta(file.name).bg"
                                 class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
-                                <span class="material-symbols-outlined text-[22px]" [ngClass]="getFileIconMeta(file.name).color">{{ getFileIconMeta(file.name).icon }}</span>
+                                <span class="material-symbols-outlined text-[22px]"
+                                    [ngClass]="getFileIconMeta(file.name).color">{{ getFileIconMeta(file.name).icon
+                                    }}</span>
                             </div>
-                            <div class="flex-1 overflow-hidden">
-                                <p class="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{{ file.name }}</p>
-                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">{{ file.size }} • {{ file.createdAt | date }}</p>
+                            <div class="flex-1 overflow-hidden min-w-0">
+                                <p class="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">{{ file.name }}
+                                </p>
+                                <p
+                                    class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5 truncate">
+                                    {{ file.size }} • {{ file.createdAt | date }}</p>
                             </div>
                             <a [href]="file.url" target="_blank"
-                                class="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors shrink-0">download</a>
+                                class="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors shrink-0 cursor-pointer">download</a>
                         </div>
                         }
                         @if (!task.attachments || task.attachments.length === 0) {
@@ -184,34 +235,40 @@
                     @if (task.attachments && task.attachments.length > 3) {
                     <button (click)="toggleAttachmentsView()"
                         class="mt-3 text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
-                        {{ showAllAttachments ? 'Show less' : 'View all attachments (' + task.attachments.length + ')' }}
-                        <span class="material-symbols-outlined text-[16px]">{{ showAllAttachments ? 'expand_less' : 'chevron_right' }}</span>
+                        {{ showAllAttachments ? 'Show less' : 'View all attachments (' + task.attachments.length + ')'
+                        }}
+                        <span class="material-symbols-outlined text-[16px]">{{ showAllAttachments ? 'expand_less' :
+                            'chevron_right' }}</span>
                     </button>
                     }
                 </section>
 
-                <!-- Relationships (Predecessors) -->
-                <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-blue-600 text-[18px]">link</span>
-                            <h3 class="text-xs font-black uppercase tracking-[0.15em] text-blue-600">Relationships</h3>
+                <section
+                    class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 sm:p-6">
+                    <div class="flex items-center justify-between mb-4 gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="material-symbols-outlined text-blue-600 text-[18px] shrink-0">link</span>
+                            <h3 class="text-xs font-black uppercase tracking-[0.15em] text-blue-600 truncate">
+                                Relationships</h3>
                         </div>
-                        <span class="text-xs font-bold text-blue-600 dark:text-blue-400">{{ task.dependencies?.length || 0 }} Dependencies</span>
+                        <span class="text-xs font-bold text-blue-600 dark:text-blue-400 shrink-0">{{
+                            task.dependencies?.length || 0 }} Deps</span>
                     </div>
 
                     <div class="space-y-2">
                         @for (dep of task.dependencies; track dep.predecessor_id) {
                         <div
-                            class="flex items-center justify-between p-3 bg-slate-50/60 dark:bg-slate-800/40 rounded-xl border border-slate-100/70 dark:border-slate-800/70 group">
-                            <div class="flex items-center gap-3 overflow-hidden">
+                            class="flex items-center justify-between gap-2 p-3 bg-slate-50/60 dark:bg-slate-800/40 rounded-xl border border-slate-100/70 dark:border-slate-800/70 group">
+                            <div class="flex items-center gap-3 overflow-hidden min-w-0">
                                 <div [ngClass]="depTypeClass(dep.type)"
                                     class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest shrink-0">
                                     {{ dep.type }}
                                 </div>
-                                <div class="overflow-hidden">
-                                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">{{ getTaskTitle(dep.predecessor_id) }}</p>
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Lag: {{ dep.lag }} days</p>
+                                <div class="overflow-hidden min-w-0">
+                                    <p class="text-sm font-bold text-slate-700 dark:text-slate-300 truncate">{{
+                                        getTaskTitle(dep.predecessor_id) }}</p>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Lag: {{
+                                        dep.lag }} days</p>
                                 </div>
                             </div>
                             @if (isEditing) {
@@ -233,22 +290,66 @@
                     @if (isEditing) {
                     <div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Add Predecessor</p>
-                        <select [(ngModel)]="selectedPredecessorId"
-                            class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs font-bold outline-none">
-                            <option value="" disabled>Select Task</option>
-                            @for (t of allTasks; track t.id) {
-                            <option [value]="t.id">{{ t.title }}</option>
-                            }
-                        </select>
-                        <div class="grid grid-cols-3 gap-2">
-                            <select [(ngModel)]="selectedDepType"
-                                class="col-span-2 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs font-bold outline-none">
-                                @for (type of dependencyTypes; track type.id) {
-                                <option [value]="type.id">{{ type.name }}</option>
+
+                        <div class="relative">
+                            <button type="button" (click)="$event.stopPropagation(); togglePredecessorDropdown()"
+                                [class.border-blue-500]="predecessorOpen" [class.ring-4]="predecessorOpen"
+                                [class.ring-blue-100]="predecessorOpen" [class.dark:ring-blue-900]="predecessorOpen"
+                                class="w-full flex items-center justify-between gap-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-2.5 text-xs font-bold outline-none transition-all cursor-pointer">
+                                <span class="truncate text-left" [class.text-slate-400]="!selectedPredecessorId">{{
+                                    selectedPredecessorId ? selectedPredecessorName : 'Select Task' }}</span>
+                                <span
+                                    class="material-symbols-outlined text-[18px] text-slate-400 shrink-0 transition-transform duration-200"
+                                    [class.rotate-180]="predecessorOpen"
+                                    [class.text-blue-600]="predecessorOpen">expand_more</span>
+                            </button>
+
+                            @if (predecessorOpen) {
+                            <div (click)="$event.stopPropagation()"
+                                class="animate-in fade-in duration-150 absolute z-20 mt-2 w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg max-h-56 overflow-y-auto scroll-smooth py-2">
+                                @for (t of allTasks; track t.id) {
+                                <div (click)="selectPredecessor(t)"
+                                    class="px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors truncate"
+                                    [class.text-blue-600]="selectedPredecessorId == t.id">
+                                    {{ t.title }}
+                                </div>
                                 }
-                            </select>
+                                @if (!allTasks || allTasks.length === 0) {
+                                <div class="px-4 py-3 text-xs text-slate-400 text-center">No tasks found</div>
+                                }
+                            </div>
+                            }
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2">
+
+                            <div class="relative col-span-2">
+                                <button type="button" (click)="$event.stopPropagation(); toggleDepTypeDropdown()"
+                                    [class.border-blue-500]="depTypeOpen" [class.ring-4]="depTypeOpen"
+                                    [class.ring-blue-100]="depTypeOpen" [class.dark:ring-blue-900]="depTypeOpen"
+                                    class="w-full flex items-center justify-between gap-1 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-2.5 text-xs font-bold outline-none transition-all cursor-pointer">
+                                    <span class="truncate text-left">{{ selectedDepTypeName }}</span>
+                                    <span
+                                        class="material-symbols-outlined text-[16px] text-slate-400 shrink-0 transition-transform duration-200"
+                                        [class.rotate-180]="depTypeOpen"
+                                        [class.text-blue-600]="depTypeOpen">expand_more</span>
+                                </button>
+
+                                @if (depTypeOpen) {
+                                <div (click)="$event.stopPropagation()"
+                                    class="animate-in fade-in duration-150 absolute z-20 mt-2 w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg max-h-56 overflow-y-auto scroll-smooth py-2">
+                                    @for (type of dependencyTypes; track type.id) {
+                                    <div (click)="selectDepType(type)"
+                                        class="px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors truncate"
+                                        [class.text-blue-600]="selectedDepType == type.id">
+                                        {{ type.name }}
+                                    </div>
+                                    }
+                                </div>
+                                }
+                            </div>
                             <input type="number" [(ngModel)]="depLag" placeholder="Lag"
-                                class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs font-bold outline-none">
+                                class="w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-2.5 text-xs font-bold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 transition-all">
                         </div>
                         <p class="text-[10px] text-blue-600 font-medium">{{ getSelectedDepDesc() }}</p>
                         <button (click)="addDependency()"
@@ -261,28 +362,51 @@
             </div>
         </div>
 
-        <!-- Side Panel Column -->
-        <div class="md:col-span-4 space-y-6">
+        <div class="md:col-span-4 space-y-5 sm:space-y-6">
 
-            <!-- Assignee -->
             <div class="space-y-3">
                 <h2 class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                     <span class="material-symbols-outlined text-[14px]">person</span> Assignee
                 </h2>
                 <div
-                    class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-                    <img class="w-12 h-12 rounded-xl object-cover ring-2 ring-slate-100 dark:ring-slate-800"
+                    class="flex flex-nowrap items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <img class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-slate-100 dark:ring-slate-800 shrink-0"
                         [src]="getAvatarUrl(task.assignees?.[0]?.avatar)"
-                        [alt]="task.assignees?.[0]?.firstname || 'Assignee'">
-                    <div class="flex-1 overflow-hidden">
+                        [alt]="task.assignees?.[0]?.firstname || 'Assignee'"
+                        (error)="onAvatarError($event, task.assignees?.[0]?.firstname || 'Assignee')">
+
+                    <div class="flex-1 min-w-0">
                         @if (isEditing) {
-                        <select (change)="onAssigneeSelect($event)"
-                            class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500">
-                            <option disabled selected>Select Assignee</option>
-                            @for (member of teamMembers; track member.id) {
-                            <option [value]="member.id">{{ member.firstname }} {{ member.lastname }}</option>
+                        <div class="relative w-full">
+                            <button type="button" (click)="$event.stopPropagation(); toggleAssigneeDropdown()"
+                                [class.border-blue-500]="assigneeOpen" [class.ring-4]="assigneeOpen"
+                                [class.ring-blue-100]="assigneeOpen" [class.dark:ring-blue-900]="assigneeOpen"
+                                class="w-full flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-2 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none transition-all cursor-pointer">
+                                <span class="truncate text-left"
+                                    [class.text-slate-400]="!task.assignees?.[0]?.firstname">{{ selectedAssigneeName
+                                    }}</span>
+                                <span
+                                    class="material-symbols-outlined text-[16px] text-slate-400 shrink-0 transition-transform duration-200"
+                                    [class.rotate-180]="assigneeOpen"
+                                    [class.text-blue-600]="assigneeOpen">expand_more</span>
+                            </button>
+
+                            @if (assigneeOpen) {
+                            <div (click)="$event.stopPropagation()"
+                                class="animate-in fade-in duration-150 absolute z-20 mt-2 w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-lg max-h-56 overflow-y-auto scroll-smooth py-2">
+                                @for (member of teamMembers; track member.id) {
+                                <div (click)="$event.stopPropagation(); selectAssignee(member)"
+                                    class="px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors truncate"
+                                    [class.text-blue-600]="task.assignees?.[0]?.id == member.id">
+                                    {{ member.firstname }} {{ member.lastname }}
+                                </div>
+                                }
+                                @if (!teamMembers || teamMembers.length === 0) {
+                                <div class="px-4 py-3 text-xs text-slate-400 text-center">No team members found</div>
+                                }
+                            </div>
                             }
-                        </select>
+                        </div>
                         } @else {
                         <p class="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">
                             {{ task.assignees?.[0]?.firstname }} {{ task.assignees?.[0]?.lastname || 'Unassigned' }}
@@ -295,17 +419,17 @@
                 </div>
             </div>
 
-            <!-- Created By -->
             <div class="space-y-3">
                 <h2 class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                     <span class="material-symbols-outlined text-[14px]">badge</span> Created By
                 </h2>
                 <div
-                    class="flex items-center gap-4 p-4 bg-white/70 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                    <img class="w-10 h-10 rounded-xl object-cover"
-                        [src]="getAvatarUrl(task.creator?.avatar)"
-                        [alt]="task.creator?.firstname || 'Creator'">
-                    <div class="overflow-hidden">
+                    class="flex flex-nowrap items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-white/70 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <img class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-slate-100 dark:ring-slate-800 shrink-0"
+                        [src]="getAvatarUrl(task.assignees?.[0]?.avatar)"
+                        [alt]="task.assignees?.[0]?.firstname || 'Assignee'"
+                        (error)="onAvatarError($event, task.assignees?.[0]?.firstname || 'Assignee')">
+                    <div class="overflow-hidden min-w-0 flex-1">
                         <p class="text-sm font-bold text-slate-900 dark:text-slate-50 truncate">
                             {{ task.creator?.firstname || 'System' }} {{ task.creator?.lastname || '' }}
                         </p>
@@ -316,13 +440,13 @@
                 </div>
             </div>
 
-            <!-- Activity Log -->
             <div class="space-y-3 flex-1 flex flex-col min-h-0">
                 <h3 class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                     <span class="material-symbols-outlined text-[14px]">history</span> Activity Timeline
                 </h3>
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5">
-                    <div class="max-h-64 overflow-y-auto pr-2">
+                <div
+                    class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5">
+                    <div class="max-h-64 overflow-y-auto scroll-smooth pr-2">
                         <div
                             class="space-y-6 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-slate-800">
                             @for (act of task.activities; track act.id) {
@@ -330,11 +454,13 @@
                                 <div
                                     class="bg-blue-600 absolute left-0 top-1.5 w-4 h-4 rounded-full ring-4 ring-white dark:ring-slate-900 z-10">
                                 </div>
-                                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                    <span class="font-bold text-slate-900 dark:text-slate-50">{{ act.user?.firstname || 'System' }}</span>
+                                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed break-words">
+                                    <span class="font-bold text-slate-900 dark:text-slate-50">{{ act.user?.firstname ||
+                                        'System' }}</span>
                                     {{ act.detail }}
                                 </p>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ act.createdAt | date:'shortTime' }}</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{
+                                    act.createdAt | date:'shortTime' }}</p>
                             </div>
                             }
                             @if (!task.activities || task.activities.length === 0) {
@@ -343,7 +469,8 @@
                         </div>
                     </div>
                     @if (task.activities && task.activities.length > 4) {
-                    <button class="mt-4 text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                    <button
+                        class="mt-4 text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
                         View all activities <span class="material-symbols-outlined text-[16px]">chevron_right</span>
                     </button>
                     }
@@ -351,7 +478,6 @@
             </div>
 
             @if (isEditing) {
-            <!-- Quick Actions -->
             <div class="space-y-3">
                 <h2 class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                     <span class="material-symbols-outlined text-[14px]">chat_bubble</span> Add Comment
@@ -369,14 +495,13 @@
         </div>
     </div>
 
-    <!-- Document Upload Modal -->
     <app-common-dialog [open]="showUploadModal" size="sm" title="Upload Document"
         subtitle="Select a file to attach to this task." icon="cloud_upload" [showCloseButton]="true"
         [showFooter]="true" cancelLabel="Cancel" primaryLabel="Done"
         panelClass="rounded-2xl transform animate-in zoom-in-95 duration-200" (closed)="showUploadModal = false"
         (primary)="showUploadModal = false">
         <label
-            class="m-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors group">
+            class="m-4 sm:m-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors group">
             <input type="file" class="hidden" (change)="onFileSelected($event)">
             <span
                 class="material-symbols-outlined text-[32px] text-blue-500 mb-2 group-hover:scale-110 transition-transform">cloud_upload</span>
