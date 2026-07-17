@@ -8,12 +8,12 @@ import { CategoryServeice } from '../../../shared/services/master/category-serve
   styleUrl: './category.scss',
 })
 export class Category implements OnInit {
-private categoryService = inject(CategoryServeice);
+  private categoryService = inject(CategoryServeice);
 
   private toast = inject(ToastrService);
 
   categories: any[] = [];
- categoryTypeDropdownOpen = false;
+  categoryTypeDropdownOpen = false;
   paginatedCategories: any[] = [];
   page = 1;
 
@@ -67,18 +67,18 @@ private categoryService = inject(CategoryServeice);
   }
 
   selectCategoryType(type: string) {
-  this.newCategory.category_type = type;
-  this.categoryTypeDropdownOpen = false;
-}
+    this.newCategory.category_type = type;
+    this.categoryTypeDropdownOpen = false;
+  }
 
- updatePagination() {
+  updatePagination() {
 
-  const start = (this.page - 1) * this.pageSize;
-  const end = start + this.pageSize;
+    const start = (this.page - 1) * this.pageSize;
+    const end = start + this.pageSize;
 
-  this.paginatedCategories =
-    this.filteredCategories.slice(start, end);
-}
+    this.paginatedCategories =
+      this.filteredCategories.slice(start, end);
+  }
 
   nextPage() {
     if (this.page < this.totalPages()) {
@@ -104,48 +104,45 @@ private categoryService = inject(CategoryServeice);
   }
 
   get endItem(): number {
-  return Math.min(
-    this.page * this.pageSize,
-    this.categories.length
-  );
-}
-
-    onSearchChange() {
-
-  this.page = 1;
-
-  this.updatePagination();
-}
-
-get filteredCategories(): any[] {
-
-  let filtered = [...this.categories];
-
-  // 🔥 Tab Filter
-   if (this.selectedTab !== 'All Materials') {
-
-    filtered = filtered.filter(
-      c =>
-        (c.category_name || '')
-          .trim()
-          .toLowerCase() ===
-        this.selectedTab.trim().toLowerCase()
+    return Math.min(
+      this.page * this.pageSize,
+      this.categories.length
     );
   }
 
-  // 🔥 Search Filter
-  if (this.searchQuery) {
+  onSearchChange() {
 
-    const q = this.searchQuery.toLowerCase();
+    this.page = 1;
 
-    filtered = filtered.filter((category: any) =>
-      category.category_name?.toLowerCase().includes(q) ||
-      category.category_type?.toLowerCase().includes(q)
-    );
+    this.updatePagination();
   }
 
-  return filtered;
-}
+  get filteredCategories(): any[] {
+
+    let filtered = [...this.categories];
+    if (this.selectedTab !== 'All Materials') {
+
+      filtered = filtered.filter(
+        c =>
+          (c.category_name || '')
+            .trim()
+            .toLowerCase() ===
+          this.selectedTab.trim().toLowerCase()
+      );
+    }
+
+    if (this.searchQuery) {
+
+      const q = this.searchQuery.toLowerCase();
+
+      filtered = filtered.filter((category: any) =>
+        category.category_name?.toLowerCase().includes(q) ||
+        category.category_type?.toLowerCase().includes(q)
+      );
+    }
+
+    return filtered;
+  }
 
   openAddModal() {
 

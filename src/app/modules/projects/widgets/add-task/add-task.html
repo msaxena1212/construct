@@ -6,44 +6,78 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <!-- Milestone -->
                 <div class="space-y-2">
                     <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
                         Milestone
                     </label>
 
-                    <select formControlName="milestone_id" (change)="onMilestoneChange($event)"
-                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                    <div class="app-dropdown relative">
+                        <button type="button" (click)="toggleDropdown('milestone', $event)"
+                            class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                            [class.ring-2]="openDropdown === 'milestone'"
+                            [class.ring-primary]="openDropdown === 'milestone'">
+                            <span [class.text-outline]="!taskForm.get('milestone_id')?.value">
+                                {{ getMilestoneLabel() }}
+                            </span>
+                            <span
+                                class="material-symbols-outlined text-outline text-[18px] transition-transform duration-200"
+                                [class.rotate-180]="openDropdown === 'milestone'">expand_more</span>
+                        </button>
 
-                        <option value="">Select Milestone</option>
-
-                        @for(milestone of milestones; track milestone.id){
-                        <option [value]="milestone.id">
-                            {{ milestone.name }}
-                        </option>
+                        @if(openDropdown === 'milestone'){
+                        <div
+                            class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                            @for(milestone of milestones; track milestone.id){
+                            <div (click)="selectMilestone(milestone)"
+                                class="px-4 py-2.5 text-sm cursor-pointer hover:bg-surface-container-low transition-colors"
+                                [class.text-primary]="taskForm.get('milestone_id')?.value == milestone.id"
+                                [class.font-bold]="taskForm.get('milestone_id')?.value == milestone.id">
+                                {{ milestone.name }}
+                            </div>
+                            }
+                            @if(milestones.length === 0){
+                            <div class="px-4 py-2.5 text-sm text-outline">No milestones found</div>
+                            }
+                        </div>
                         }
-
-                    </select>
+                    </div>
                 </div>
 
-                <!-- Sub Milestone -->
                 <div class="space-y-2">
                     <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
                         Sub Milestone
                     </label>
 
-                    <select formControlName="submilestone_id"
-                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                    <div class="app-dropdown relative">
+                        <button type="button" (click)="toggleDropdown('submilestone', $event)"
+                            class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                            [class.ring-2]="openDropdown === 'submilestone'"
+                            [class.ring-primary]="openDropdown === 'submilestone'">
+                            <span [class.text-outline]="!taskForm.get('submilestone_id')?.value">
+                                {{ getSubMilestoneLabel() }}
+                            </span>
+                            <span
+                                class="material-symbols-outlined text-outline text-[18px] transition-transform duration-200"
+                                [class.rotate-180]="openDropdown === 'submilestone'">expand_more</span>
+                        </button>
 
-                        <option value="">Select Sub Milestone</option>
-
-                        @for(sub of subMilestones; track sub.id){
-                        <option [value]="sub.id">
-                            {{ sub.name }}
-                        </option>
+                        @if(openDropdown === 'submilestone'){
+                        <div
+                            class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                            @for(sub of subMilestones; track sub.id){
+                            <div (click)="selectSubMilestone(sub)"
+                                class="px-4 py-2.5 text-sm cursor-pointer hover:bg-surface-container-low transition-colors"
+                                [class.text-primary]="taskForm.get('submilestone_id')?.value == sub.id"
+                                [class.font-bold]="taskForm.get('submilestone_id')?.value == sub.id">
+                                {{ sub.name }}
+                            </div>
+                            }
+                            @if(subMilestones.length === 0){
+                            <div class="px-4 py-2.5 text-sm text-outline">No sub milestones found</div>
+                            }
+                        </div>
                         }
-
-                    </select>
+                    </div>
 
                     @if(taskForm.get('milestone_id')?.value && subMilestones.length === 0){
                     <p class="text-xs text-red-500 font-medium">
@@ -54,11 +88,7 @@
 
             </div>
 
-            <!-- Left Column: Core Info & Checklist -->
             <div class="space-y-6 mt-2">
-                <!-- Title & Description -->
-
-
                 <section class="space-y-4">
                     <div class="space-y-2">
                         <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Task
@@ -74,34 +104,75 @@
                     </div>
                 </section>
 
-                <!-- Settings Grid (moved above Vendor) -->
                 <div class="space-y-6">
-                    <!-- Settings Grid -->
+
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label
                                 class="block text-[10px] font-black uppercase tracking-widest text-outline">Priority</label>
-                            <select formControlName="priority"
-                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                @for (p of priorities; track $index) {
-                                <option [value]="p.label">{{ p.label }}</option>
+
+                            <div class="app-dropdown relative">
+                                <button type="button" (click)="toggleDropdown('priority', $event)"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                                    [class.ring-2]="openDropdown === 'priority'"
+                                    [class.ring-primary]="openDropdown === 'priority'">
+                                    <span>{{ getPriorityLabel() }}</span>
+                                    <span
+                                        class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                        [class.rotate-180]="openDropdown === 'priority'">expand_more</span>
+                                </button>
+
+                                @if(openDropdown === 'priority'){
+                                <div
+                                    class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                                    @for (p of priorities; track $index) {
+                                    <div (click)="selectPriority(p)"
+                                        class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                        [class.text-primary]="taskForm.get('priority')?.value === p.label"
+                                        [class.font-bold]="taskForm.get('priority')?.value === p.label">
+                                        {{ p.label }}
+                                    </div>
+                                    }
+                                </div>
                                 }
-                            </select>
+                            </div>
                         </div>
                         <div class="space-y-2">
                             <label
                                 class="block text-[10px] font-black uppercase tracking-widest text-outline">Assignee</label>
-                            <select formControlName="assigneeId"
-                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                <option value="" disabled selected>Select Team Member</option>
-                                @for(member of teamMembers; track $index){
-                                <option [value]="member.id">{{ member.firstname }} {{ member.lastname }}</option>
+
+                            <div class="app-dropdown relative">
+                                <button type="button" (click)="toggleDropdown('assignee', $event)"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                                    [class.ring-2]="openDropdown === 'assignee'"
+                                    [class.ring-primary]="openDropdown === 'assignee'">
+                                    <span [class.text-outline]="!taskForm.get('assigneeId')?.value">{{
+                                        getAssigneeLabel() }}</span>
+                                    <span
+                                        class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                        [class.rotate-180]="openDropdown === 'assignee'">expand_more</span>
+                                </button>
+
+                                @if(openDropdown === 'assignee'){
+                                <div
+                                    class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                                    @for(member of teamMembers; track $index){
+                                    <div (click)="selectAssignee(member)"
+                                        class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                        [class.text-primary]="isSelected(taskForm.get('assigneeId')?.value, member.id)"
+                                        [class.font-bold]="isSelected(taskForm.get('assigneeId')?.value, member.id)">
+                                        {{ member.firstname }} {{ member.lastname }}
+                                    </div>
+                                    }
+                                    @if(teamMembers.length === 0){
+                                    <div class="px-4 py-2.5 text-xs text-outline">No team members found</div>
+                                    }
+                                </div>
                                 }
-                            </select>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Scheduling Analysis -->
                     <section class="space-y-4">
                         <div class="flex items-center justify-between">
                             <label
@@ -132,22 +203,38 @@
                     </section>
                 </div>
 
-                <!-- vender list -->
                 <div class="space-y-2">
                     <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Vendor</label>
-                    <select formControlName="vendorId" (change)="loadLabors($event)"
-                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                        <option value="" disabled selected>Select Vendor</option>
-                        @for(vendor of vendors; track $index){
-                        <option [value]="vendor.id">
-                            {{ vendor.name }}
-                        </option>
+
+                    <div class="app-dropdown relative">
+                        <button type="button" (click)="toggleDropdown('vendor', $event)"
+                            class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                            [class.ring-2]="openDropdown === 'vendor'" [class.ring-primary]="openDropdown === 'vendor'">
+                            <span [class.text-outline]="!taskForm.get('vendorId')?.value">{{ getVendorLabel() }}</span>
+                            <span
+                                class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                [class.rotate-180]="openDropdown === 'vendor'">expand_more</span>
+                        </button>
+
+                        @if(openDropdown === 'vendor'){
+                        <div
+                            class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                            @for(vendor of vendors; track $index){
+                            <div (click)="selectVendor(vendor)"
+                                class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                [class.text-primary]="taskForm.get('vendorId')?.value == vendor.id"
+                                [class.font-bold]="taskForm.get('vendorId')?.value == vendor.id">
+                                {{ vendor.name }}
+                            </div>
+                            }
+                            @if(vendors.length === 0){
+                            <div class="px-4 py-2.5 text-xs text-outline">No vendors found</div>
+                            }
+                        </div>
                         }
-                    </select>
+                    </div>
                 </div>
 
-
-                <!-- File Attachments -->
                 <section class="space-y-4">
                     <label
                         class="block text-[10px] font-black uppercase tracking-widest text-outline">Attachments</label>
@@ -173,333 +260,410 @@
                     </div>
                 </section>
 
-                    <!-- Relationships (Predecessors) -->
-                    <section class="space-y-4">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Predecessor
-                            Relationships</label>
+                <section class="space-y-4">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Predecessor
+                        Relationships</label>
+                    <div class="bg-surface-container-low/50 rounded-2xl p-4 space-y-4 ring-1 ring-outline-variant/10">
+                        @for (dep of dependencies; track $index) {
                         <div
-                            class="bg-surface-container-low/50 rounded-2xl p-4 space-y-4 ring-1 ring-outline-variant/10">
-                            @for (dep of dependencies; track $index) {
-                            <div
-                                class="flex items-center justify-between p-3 bg-surface rounded-xl shadow-sm border border-outline-variant/5">
-                                <div class="flex items-center gap-3 overflow-hidden">
-                                    <span
-                                        class="text-[9px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{{
-                                        dep.type }}</span>
-                                    <p class="text-xs font-bold text-on-surface truncate">{{ dep.predecessorTitle }}</p>
-                                </div>
-                                <div class="flex items-center gap-3 overflow-hidden">
-                                    <span
-                                        class="text-[9px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{{
-                                        dep.lag }}</span>
-                                </div>
-                                <button (click)="removeDependency($index)" class="text-error/60 hover:text-error">
-                                    <span class="material-symbols-outlined text-sm">delete</span>
-                                </button>
+                            class="flex items-center justify-between p-3 bg-surface rounded-xl shadow-sm border border-outline-variant/5">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <span class="text-[9px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{{
+                                    dep.type }}</span>
+                                <p class="text-xs font-bold text-on-surface truncate">{{ dep.predecessorTitle }}</p>
                             </div>
-                            }
-                            <div class="pt-2 border-t border-outline-variant/10 space-y-3">
-                                <select [(ngModel)]="selectedPredecessorId" [ngModelOptions]="{standalone: true}"
-                                    class="w-full bg-surface border-none rounded-lg p-2.5 text-xs font-bold ring-1 ring-outline-variant/10 outline-none">
-                                    <option value="" disabled selected>Link Predecessor...</option>
-                                    @for (t of allTasks; track t.id) {
-                                    <option [value]="t.id">{{ t.title }}</option>
-                                    }
-                                </select>
-                                <div class="flex gap-2">
-                                    <select [(ngModel)]="selectedDepType" [ngModelOptions]="{standalone: true}"
-                                        class="flex-1 bg-surface border-none rounded-lg p-2.5 text-xs font-bold ring-1 ring-outline-variant/10 outline-none">
-                                        @for (type of dependencyTypes; track type.id) {
-                                        <option [value]="type.id">{{ type.name }}</option>
-                                        }
-                                    </select>
-                                    <input type="number" [(ngModel)]="depLag" [ngModelOptions]="{standalone: true}"
-                                        placeholder="Lag"
-                                        class="w-20 bg-surface border-none rounded-lg p-2.5 text-xs font-bold ring-1 ring-outline-variant/10 outline-none" />
-                                    <button (click)="addDependency()"
-                                        class="px-4 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors">
-                                        <span class="material-symbols-outlined text-sm">link</span>
-                                    </button>
-                                </div>
-                                <p class="text-[9px] text-primary/60 font-medium px-1">
-                                    {{ getSelectedDepDesc() }}
-                                </p>
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <span class="text-[9px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{{
+                                    dep.lag }}</span>
                             </div>
-                        </div>
-                    </section>
-
-                    <!-- Initial Comment -->
-                    <section class="space-y-4">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Initial
-                            Comment /
-                            Handover Note</label>
-                        <div class="relative">
-                            <textarea formControlName="initialComment" rows="2"
-                                placeholder="Tag team members or add notes..."
-                                class="w-full bg-surface-container-low border-none rounded-2xl p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none resize-none"></textarea>
-                            <button class="absolute right-3 bottom-3 text-outline hover:text-primary">
-                                <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+                            <button (click)="removeDependency($index)" class="text-error/60 hover:text-error">
+                                <span class="material-symbols-outlined text-sm">delete</span>
                             </button>
                         </div>
-                    </section>
-                </div>
+                        }
+                        <div class="pt-2 border-t border-outline-variant/10 space-y-3">
 
-                <!-- Sub-tasks Checklist -->
-                <section class="space-y-4">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between">
-                        <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
-                            Sub-tasks
-                        </label>
+                            <div class="app-dropdown relative">
+                                <button type="button" (click)="toggleDropdown('predecessor', $event)"
+                                    class="w-full bg-surface border-none rounded-lg p-2.5 text-xs font-bold ring-1 ring-outline-variant/10 outline-none flex items-center justify-between text-left transition-all"
+                                    [class.ring-2]="openDropdown === 'predecessor'"
+                                    [class.ring-primary]="openDropdown === 'predecessor'">
+                                    <span [class.text-outline]="!selectedPredecessorId">{{ getPredecessorLabel()
+                                        }}</span>
+                                    <span
+                                        class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                        [class.rotate-180]="openDropdown === 'predecessor'">expand_more</span>
+                                </button>
 
-                        <button type="button" (click)="showSubTaskForm = !showSubTaskForm"
-                            class="text-[10px] font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 uppercase tracking-widest transition-colors">
-
-                            Add
-                        </button>
-                    </div>
-                    <!-- Wrapper -->
-                    <div class="bg-surface-container-low/50 rounded-2xl p-3 space-y-3 ring-1 ring-outline-variant/10">
-
-                        <!-- Existing Checklist Items -->
-                        @for (item of checklist; track $index) {
-
-                        <div class="p-4 bg-surface rounded-2xl border border-outline-variant/5 shadow-sm">
-
-                            <div class="flex items-start justify-between gap-4">
-
-                                <!-- Left -->
-                                <div class="flex-1 space-y-3">
-
-                                    <!-- Title -->
-                                    <div class="flex items-center gap-2">
-
-                                        <div>
-                                            <p class="text-sm font-black text-on-surface">
-                                                {{ item.title }}
-                                            </p>
-
-                                            <p class="text-xs text-outline font-semibold">
-                                                {{ item.itemName }}
-                                            </p>
-                                        </div>
-
+                                @if(openDropdown === 'predecessor'){
+                                <div
+                                    class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                                    @for (t of allTasks; track t.id) {
+                                    <div (click)="selectPredecessor(t)"
+                                        class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                        [class.text-primary]="isSelected(selectedPredecessorId, t.id)"
+                                        [class.font-bold]="isSelected(selectedPredecessorId, t.id)">
+                                        {{ t.title }}
                                     </div>
+                                    }
+                                    @if(allTasks.length === 0){
+                                    <div class="px-4 py-2.5 text-xs text-outline">No tasks found</div>
+                                    }
+                                </div>
+                                }
+                            </div>
 
-                                    <!-- Meta -->
-                                    <div class="flex flex-wrap gap-3">
+                            <div class="flex gap-2">
 
-                                        <!-- Qty -->
-                                        <div
-                                            class="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+                                <div class="app-dropdown relative flex-1">
+                                    <button type="button" (click)="toggleDropdown('depType', $event)"
+                                        class="w-full bg-surface border-none rounded-lg p-2.5 text-xs font-bold ring-1 ring-outline-variant/10 outline-none flex items-center justify-between text-left transition-all"
+                                        [class.ring-2]="openDropdown === 'depType'"
+                                        [class.ring-primary]="openDropdown === 'depType'">
+                                        <span class="truncate">{{ getDepTypeLabel() }}</span>
+                                        <span
+                                            class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                            [class.rotate-180]="openDropdown === 'depType'">expand_more</span>
+                                    </button>
 
-                                            <span class="material-symbols-outlined text-[14px]">
-                                                inventory_2
-                                            </span>
-
-                                            Qty: {{ item.materialQty }}
-                                        </div>
-                                        @if (item.pendingRequest) {
-                                        <div
-                                            class="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
-                                            <span class="material-symbols-outlined text-[14px]">pending</span>
-                                            +{{ item.shortage }} Requested
+                                    @if(openDropdown === 'depType'){
+                                    <div
+                                        class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                                        @for (type of dependencyTypes; track type.id) {
+                                        <div (click)="selectDepType(type)"
+                                            class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                            [class.text-primary]="selectedDepType === type.id"
+                                            [class.font-bold]="selectedDepType === type.id">
+                                            {{ type.name }}
                                         </div>
                                         }
-                                        <!-- Equipment -->
-                                        <div
-                                            class="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+                                    </div>
+                                    }
+                                </div>
 
-                                            <span class="material-symbols-outlined text-[14px]">
-                                                construction
-                                            </span>
+                                <input type="number" [(ngModel)]="depLag" [ngModelOptions]="{standalone: true}"
+                                    placeholder="Lag"
+                                    class="w-20 bg-surface border-none rounded-lg p-2.5 text-xs font-bold ring-1 ring-outline-variant/10 outline-none" />
+                                <button (click)="addDependency()"
+                                    class="px-4 bg-primary text-white rounded-lg hover:bg-primary-container transition-colors">
+                                    <span class="material-symbols-outlined text-sm">link</span>
+                                </button>
+                            </div>
+                            <p class="text-[9px] text-primary/60 font-medium px-1">
+                                {{ getSelectedDepDesc() }}
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
-                                            {{ item.equipment_id }}
-                                        </div>
+                <section class="space-y-4">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">Initial
+                        Comment /
+                        Handover Note</label>
+                    <div class="relative">
+                        <textarea formControlName="initialComment" rows="2"
+                            placeholder="Tag team members or add notes..."
+                            class="w-full bg-surface-container-low border-none rounded-2xl p-4 text-sm ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none resize-none"></textarea>
+                        <button class="absolute right-3 bottom-3 text-outline hover:text-primary">
+                            <span class="material-symbols-outlined text-[20px]">alternate_email</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
 
+            <section class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-outline">
+                        Sub-tasks
+                    </label>
+
+                    <button type="button" (click)="showSubTaskForm = !showSubTaskForm"
+                        class="text-[10px] font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 uppercase tracking-widest transition-colors">
+
+                        Add
+                    </button>
+                </div>
+
+                <div class="bg-surface-container-low/50 rounded-2xl p-3 space-y-3 ring-1 ring-outline-variant/10">
+
+                    @for (item of checklist; track $index) {
+
+                    <div class="p-4 bg-surface rounded-2xl border border-outline-variant/5 shadow-sm">
+
+                        <div class="flex items-start justify-between gap-4">
+
+                            <div class="flex-1 space-y-3">
+
+                                <div class="flex items-center gap-2">
+
+                                    <div>
+                                        <p class="text-sm font-black text-on-surface">
+                                            {{ item.title }}
+                                        </p>
+
+                                        <p class="text-xs text-outline font-semibold">
+                                            {{ item.itemName }}
+                                        </p>
                                     </div>
 
                                 </div>
-                                <!-- Edit -->
-                                <button type="button" (click)="editSubTask($index)"
-                                    class="text-primary hover:text-primary/70 transition-colors">
 
-                                    <span class="material-symbols-outlined text-[18px]">
-                                        edit_square
-                                    </span>
+                                <div class="flex flex-wrap gap-3">
+                                    <div
+                                        class="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
 
-                                </button>
-                                <!-- Delete -->
-                                <button type="button" (click)="removeSubTask($index)"
-                                    class="text-error/60 hover:text-error transition-colors">
+                                        <span class="material-symbols-outlined text-[14px]">
+                                            inventory_2
+                                        </span>
 
-                                    <span class="material-symbols-outlined text-[18px]">
-                                        delete
-                                    </span>
+                                        Qty: {{ item.materialQty }}
+                                    </div>
+                                    @if (item.pendingRequest) {
+                                    <div
+                                        class="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+                                        <span class="material-symbols-outlined text-[14px]">pending</span>
+                                        +{{ item.shortage }} Requested
+                                    </div>
+                                    }
 
-                                </button>
+                                    <div
+                                        class="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide">
+
+                                        <span class="material-symbols-outlined text-[14px]">
+                                            construction
+                                        </span>
+
+                                        {{ item.equipment_id }}
+                                    </div>
+
+                                </div>
 
                             </div>
+
+                            <button type="button" (click)="editSubTask($index)"
+                                class="text-primary hover:text-primary/70 transition-colors">
+
+                                <span class="material-symbols-outlined text-[18px]">
+                                    edit_square
+                                </span>
+
+                            </button>
+
+                            <button type="button" (click)="removeSubTask($index)"
+                                class="text-error/60 hover:text-error transition-colors">
+
+                                <span class="material-symbols-outlined text-[18px]">
+                                    delete
+                                </span>
+
+                            </button>
 
                         </div>
 
-                        }
+                    </div>
 
-                        <!-- Expandable Form -->
-                        @if (showSubTaskForm) {
+                    }
 
-                        <div
-                            class="bg-surface rounded-2xl p-5 border border-outline-variant/10 space-y-5 animate-in slide-in-from-top-2 duration-200">
+                    @if (showSubTaskForm) {
 
-                            <!-- Title -->
+                    <div
+                        class="bg-surface rounded-2xl p-5 border border-outline-variant/10 space-y-5 animate-in slide-in-from-top-2 duration-200">
+
+                        <div class="space-y-2">
+
+                            <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+
+                                Title
+                            </label>
+
+                            <input type="text" [(ngModel)]="newSubTask.title" [ngModelOptions]="{standalone: true}"
+                                placeholder="e.g. Concrete Work"
+                                class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                             <div class="space-y-2">
-
                                 <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-
-                                    Title
+                                    Material
                                 </label>
 
-                                <input type="text" [(ngModel)]="newSubTask.title" [ngModelOptions]="{standalone: true}"
-                                    placeholder="e.g. Concrete Work"
-                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                                <div class="app-dropdown relative">
+                                    <button type="button" (click)="toggleDropdown('material', $event)"
+                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                                        [class.ring-2]="openDropdown === 'material'"
+                                        [class.ring-primary]="openDropdown === 'material'">
+                                        <span [class.text-outline]="!newSubTask.materialId">{{ getMaterialLabel()
+                                            }}</span>
+                                        <span
+                                            class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                            [class.rotate-180]="openDropdown === 'material'">expand_more</span>
+                                    </button>
+
+                                    @if(openDropdown === 'material'){
+                                    <div
+                                        class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                                        @for(material of materials; track material.id) {
+                                        <div (click)="selectMaterial(material)"
+                                            class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                            [class.text-primary]="newSubTask.materialId == material.id"
+                                            [class.font-bold]="newSubTask.materialId == material.id">
+                                            {{ material.name }}
+                                        </div>
+                                        }
+                                        @if(materials.length === 0){
+                                        <div class="px-4 py-2.5 text-xs text-outline">No materials found</div>
+                                        }
+                                    </div>
+                                    }
+                                </div>
                             </div>
 
-                            <!-- Qty + Material -->
-                            <!-- Material -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                    Material Quantity
+                                </label>
 
-                                <!-- Material -->
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                        Material
-                                    </label>
+                                <input type="number" [(ngModel)]="newSubTask.materialQty"
+                                    [ngModelOptions]="{standalone: true}" min="1"
+                                    [max]="materials.find(m => m.id == newSubTask.materialId)?.stockUsed"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
 
-                                    <select [(ngModel)]="newSubTask.materialId" [ngModelOptions]="{ standalone: true }"
-                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                                @if(newSubTask.materialId){
+                                <p class="text-[10px] text-primary font-bold px-1">
+                                    Available Stock:
+                                    {{ materials.find(m => m.id == newSubTask.materialId)?.stockUsed }}
+                                </p>
+                                }
+                            </div>
 
-                                        <option [ngValue]="null" disabled>Select Material</option>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                    Equipment
+                                </label>
 
-                                        @for(material of materials; track material.id) {
-                                        <option [ngValue]="material.id">{{ material.name }}</option>
-                                        }
-                                    </select>
-                                </div>
+                                <div class="app-dropdown relative">
+                                    <button type="button" (click)="toggleDropdown('equipment', $event)"
+                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                                        [class.ring-2]="openDropdown === 'equipment'"
+                                        [class.ring-primary]="openDropdown === 'equipment'">
+                                        <span [class.text-outline]="!newSubTask.equipment_id">{{ getEquipmentLabel()
+                                            }}</span>
+                                        <span
+                                            class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                            [class.rotate-180]="openDropdown === 'equipment'">expand_more</span>
+                                    </button>
 
-                                <!-- Material Qty -->
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                        Material Quantity
-                                    </label>
-
-                                    <input type="number" [(ngModel)]="newSubTask.materialQty"
-                                        [ngModelOptions]="{standalone: true}" min="1"
-                                        [max]="materials.find(m => m.id == newSubTask.materialId)?.stockUsed"
-                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
-
-                                    @if(newSubTask.materialId){
-                                    <p class="text-[10px] text-primary font-bold px-1">
-                                        Available Stock:
-                                        {{ materials.find(m => m.id == newSubTask.materialId)?.stockUsed }}
-                                    </p>
-                                    }
-                                </div>
-
-                                <!-- Equipment -->
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                        Equipment
-                                    </label>
-
-                                    <select [(ngModel)]="newSubTask.equipment_id" [ngModelOptions]="{ standalone: true }"
-                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-
-                                        <option [ngValue]="null" disabled>Select Equipment</option>
-
+                                    @if(openDropdown === 'equipment'){
+                                    <div
+                                        class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
                                         @for(equipment of equipmentList; track equipment.id) {
-                                        <option [ngValue]="equipment.id">{{ equipment.name }}</option>
+                                        <div (click)="selectEquipment(equipment)"
+                                            class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                            [class.text-primary]="newSubTask.equipment_id == equipment.id"
+                                            [class.font-bold]="newSubTask.equipment_id == equipment.id">
+                                            {{ equipment.name }}
+                                        </div>
                                         }
-                                    </select>
-                                </div>
-
-                                <!-- Equipment Qty -->
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                        Equipment Quantity
-                                    </label>
-
-                                    <input type="number" [(ngModel)]="newSubTask.equipmentQty"
-                                        [ngModelOptions]="{standalone: true}" min="1"
-                                        [max]="equipmentList.find(m => m.id == newSubTask.equipment_id)?.stockUsed"
-                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
-                                    @if(newSubTask.equipment_id){
-                                    <p class="text-[10px] text-primary font-bold px-1">
-                                        Available Stock:
-                                        {{ equipmentList.find(m => m.id == newSubTask.equipment_id)?.stockUsed }}
-                                    </p>
+                                        @if(equipmentList.length === 0){
+                                        <div class="px-4 py-2.5 text-xs text-outline">No equipment found</div>
+                                        }
+                                    </div>
                                     }
                                 </div>
+                            </div>
 
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                        Start Date
-                                    </label>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                    Equipment Quantity
+                                </label>
 
-                                    <input type="date" [(ngModel)]="newSubTask.startDate"
-                                        [ngModelOptions]="{ standalone: true }"
-                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                </div>
+                                <input type="number" [(ngModel)]="newSubTask.equipmentQty"
+                                    [ngModelOptions]="{standalone: true}" min="1"
+                                    [max]="equipmentList.find(m => m.id == newSubTask.equipment_id)?.stockUsed"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
+                                @if(newSubTask.equipment_id){
+                                <p class="text-[10px] text-primary font-bold px-1">
+                                    Available Stock:
+                                    {{ equipmentList.find(m => m.id == newSubTask.equipment_id)?.stockUsed }}
+                                </p>
+                                }
+                            </div>
 
-                                <!-- End Date -->
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-outline">
-                                        End Date
-                                    </label>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                    Start Date
+                                </label>
 
-                                    <input type="date" [(ngModel)]="newSubTask.endDate"
-                                        [ngModelOptions]="{ standalone: true }"
-                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
-                                </div>
+                                <input type="date" [(ngModel)]="newSubTask.startDate"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                            </div>
 
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-outline">
+                                    End Date
+                                </label>
 
-                            <!-- Labor -->
+                                <input type="date" [(ngModel)]="newSubTask.endDate"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                            </div>
+
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase tracking-widest text-outline">
                                     Labor
                                 </label>
 
-                                <select [(ngModel)]="newSubTask.labor_id" [ngModelOptions]="{ standalone: true }"
-                                    class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none">
+                                <div class="app-dropdown relative">
+                                    <button type="button" (click)="toggleDropdown('labor', $event)"
+                                        class="w-full bg-surface-container-low border-none rounded-xl p-3 text-xs ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30 outline-none flex items-center justify-between text-left transition-all"
+                                        [class.ring-2]="openDropdown === 'labor'"
+                                        [class.ring-primary]="openDropdown === 'labor'">
+                                        <span [class.text-outline]="!newSubTask.labor_id">{{ getLaborLabel() }}</span>
+                                        <span
+                                            class="material-symbols-outlined text-outline text-[16px] transition-transform duration-200"
+                                            [class.rotate-180]="openDropdown === 'labor'">expand_more</span>
+                                    </button>
 
-                                    <option [ngValue]="null" disabled>Select Labor</option>
-
-                                    @for(labor of labors; track labor.id) {
-                                    <option [ngValue]="labor.id">{{ labor.skill }}</option>
+                                    @if(openDropdown === 'labor'){
+                                    <div
+                                        class="absolute z-20 mt-2 w-full bg-surface rounded-2xl shadow-lg ring-1 ring-outline-variant/10 max-h-60 overflow-y-auto">
+                                        @for(labor of labors; track labor.id) {
+                                        <div (click)="selectLabor(labor)"
+                                            class="px-4 py-2.5 text-xs cursor-pointer hover:bg-surface-container-low transition-colors"
+                                            [class.text-primary]="newSubTask.labor_id == labor.id"
+                                            [class.font-bold]="newSubTask.labor_id == labor.id">
+                                            {{ labor.skill }}
+                                        </div>
+                                        }
+                                        @if(labors.length === 0){
+                                        <div class="px-4 py-2.5 text-xs text-outline">Select a vendor first</div>
+                                        }
+                                    </div>
                                     }
-                                </select>
+                                </div>
                             </div>
 
-                            <!-- No. Of Labor -->
                             <div class="space-y-2">
                                 <label class="text-[10px] font-black uppercase tracking-widest text-outline">
                                     No. Of Labor
                                 </label>
 
                                 <input type="number" [(ngModel)]="newSubTask.no_of_labor"
-                                    [ngModelOptions]="{standalone: true}" min="1" 
-                                     [max]="labors.find(m => m.id == newSubTask.labor_id)?.labor_count"
+                                    [ngModelOptions]="{standalone: true}" min="1"
+                                    [max]="labors.find(m => m.id == newSubTask.labor_id)?.labor_count"
                                     class="w-full bg-surface-container-low border-none rounded-xl p-3 text-sm outline-none ring-1 ring-outline-variant/20 focus:ring-2 focus:ring-primary/30" />
 
-                                     @if(newSubTask.labor_id){
-                                    <p class="text-[10px] text-primary font-bold px-1">
-                                        Available Labor:
-                                        {{ labors.find(m => m.id == newSubTask.labor_id)?.labor_count }}
-                                    </p>
-                                    }
+                                @if(newSubTask.labor_id){
+                                <p class="text-[10px] text-primary font-bold px-1">
+                                    Available Labor:
+                                    {{ labors.find(m => m.id == newSubTask.labor_id)?.labor_count }}
+                                </p>
+                                }
                             </div>
-
                         </div>
 
-                        <!-- Actions -->
                         <div class="flex justify-end gap-3 pt-2">
 
                             <button type="button" (click)="showSubTaskForm = false"
@@ -519,17 +683,13 @@
                     </div>
 
                     }
-
-            </div>
+                </div>
             </section>
 
         </div>
 
     </div>
-<!-- 
-    </div> -->
 
-    <!-- Stock Shortage Dialog -->
     <app-common-dialog [open]="showStockDialog && !!stockDialogData" title="Insufficient Stock"
         subtitle="Inventory allocation & shortage request" icon="inventory_2" [showCloseButton]="true"
         [showFooter]="false" [closeOnBackdrop]="false" maxWidth="max-w-md" (closed)="cancelStockRequest()">
@@ -538,7 +698,6 @@
 
         <div class="p-6 space-y-5">
 
-            <!-- Item Name & Type -->
             <div class="rounded-2xl bg-slate-100 p-3 border border-slate-300">
                 <p class="text-xs text-slate-600 font-semibold uppercase">
                     {{ stockDialogData.itemType === 'material' ? 'Material' : 'Equipment' }}
@@ -548,7 +707,6 @@
                 </p>
             </div>
 
-            <!-- Summary -->
             <div class="grid grid-cols-3 gap-3">
 
                 <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 text-center">
@@ -571,10 +729,8 @@
                         {{ stockDialogData.shortage }}
                     </h4>
                 </div>
-
             </div>
 
-            <!-- Flow -->
             <div class="rounded-3xl border border-outline-variant/10 bg-surface-container-low p-5">
 
                 <div class="flex items-center justify-between">
@@ -627,7 +783,7 @@
 
             </div>
 
-            <!-- Message -->
+
             <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4 flex gap-3">
 
                 <span class="material-symbols-outlined text-blue-600">
@@ -653,7 +809,6 @@
 
             </div>
 
-            <!-- Actions -->
             <div class="flex gap-3 pt-2">
 
                 <button (click)="cancelStockRequest()"

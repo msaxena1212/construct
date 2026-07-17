@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrModule, ToastrService } from 'ngx-toastr';
 import { ProjectService } from '../../services/project-service';
@@ -86,13 +86,14 @@ export class AddTask implements OnInit {
   ];
 
   milestones: any[] = [];
-
   subMilestones: any[] = [];
-
   teamMembers: IUser[] = [];
   vendors: any[] = [];
   materials: any[] = [];
   equipmentList: any[] = [];
+  labors: any[] = [];
+
+  openDropdown: string | null = null;
 
   ngOnInit() {
     this.initForm();
@@ -113,7 +114,6 @@ export class AddTask implements OnInit {
       })
     }
   }
-
 
 
   initForm() {
@@ -148,8 +148,6 @@ export class AddTask implements OnInit {
 
         this.teamMembers = res.data.team_members || [];
         this.milestones = res.data.milestones_with_child || [];
-
-        // Milestone change listener
         this.taskForm.get('milestone_id')?.valueChanges.subscribe((milestoneId) => {
 
           const selectedMilestone = this.milestones.find(
@@ -157,8 +155,6 @@ export class AddTask implements OnInit {
           );
 
           this.subMilestones = selectedMilestone?.children || [];
-
-          // Reset sub milestone
           this.taskForm.patchValue({
             subMilestoneId: ''
           });
@@ -181,9 +177,6 @@ export class AddTask implements OnInit {
   fetchMaterials() {
     this.projectService.getMaterialByprojectId(this.projectId).subscribe({
       next: (res) => {
-
-        console.log(res, 'res1');
-        // Handle both array and wrapped response
         this.materials = Array.isArray(res.data) ? res.data : [res.data];
         console.log('Materials loaded:', this.materials);
       }
@@ -201,7 +194,6 @@ export class AddTask implements OnInit {
     this.editingIndex = null;
   }
 
-  // Add these new properties
   showStockDialog = false;
   stockDialogData: {
     available: number;
@@ -222,17 +214,14 @@ export class AddTask implements OnInit {
         m => m.id == this.newSubTask.materialId
       );
 
-      // Check if material exists
       if (!selectedMaterial) {
         this.toast.error('Material not found');
         return;
       }
 
-      // VALIDATE STOCK for material
       if (this.newSubTask.materialQty > selectedMaterial.stockUsed) {
 
         if (selectedMaterial.stockIn === 0 && selectedMaterial.stockUsed === 0) {
-          // Zero stock — directly show dialog with full qty as shortage
           this.stockDialogData = {
             available: 0,
             shortage: this.newSubTask.materialQty,
@@ -243,7 +232,6 @@ export class AddTask implements OnInit {
           return;
         }
 
-        // Partial stock — show dialog
         this.stockDialogData = {
           available: selectedMaterial.stockUsed,
           shortage: this.newSubTask.materialQty - selectedMaterial.stockUsed,
@@ -251,10 +239,10 @@ export class AddTask implements OnInit {
           itemType: 'material'
         };
         this.showStockDialog = true;
-        return;  // ← don't save yet, wait for user confirmation
+        return;
       }
 
-      // VALIDATE STOCK for equipment (apply same dialog behavior)
+
       if (this.newSubTask.equipment_id) {
         const selectedEquipment = this.equipmentList.find(
           (e: any) => e.id == this.newSubTask.equipment_id
@@ -304,20 +292,14 @@ export class AddTask implements OnInit {
         no_of_labor: this.newSubTask.no_of_labor,
       };
 
-      // EDIT
       if (this.editingIndex !== null) {
 
         this.checklist[this.editingIndex] = payload;
         this.editingIndex = null;
-
       } else {
-
-        // CREATE
         this.checklist.push(payload);
 
       }
-
-      // RESET
       this.newSubTask = {
         title: '',
         materialId: null,
@@ -331,7 +313,6 @@ export class AddTask implements OnInit {
         labor_id: '',
         no_of_labor: 1,
       };
-
       this.showSubTaskForm = false;
     }
   }
@@ -363,8 +344,6 @@ export class AddTask implements OnInit {
     if (!this.stockDialogData) return;
 
     const { available, shortage, selectedItem, itemType } = this.stockDialogData;
-
-    // build a payload that works for both material and equipment
     const basePayload: any = {
       title: this.newSubTask.title,
       stockIn: available,
@@ -398,26 +377,16 @@ export class AddTask implements OnInit {
         equipmentQty: this.newSubTask.equipmentQty,
       };
     }
-
-    // ================= EDIT =================
-
     if (this.editingIndex !== null) {
-
       const oldItem = this.checklist[this.editingIndex];
-
-      // UPDATE CHECKLIST
       this.checklist[this.editingIndex] = {
         ...payload,
         stock_request_id: oldItem.stock_request_id
       };
-
-      // PUT API
       if (!oldItem.stock_request_id) {
         this.toast.error('Stock request id not found');
         return;
       }
-
-      // send update payload depending on item type
       const updatePayload: any = {
         task_title: this.newSubTask.title,
         requested_qty: shortage,
@@ -442,13 +411,8 @@ export class AddTask implements OnInit {
           this.toast.error('Failed to update stock request');
         }
       });
-
     }
-
-    // ================= CREATE =================
-
     else {
-
       const reqPayload: any = {
         task_title: this.newSubTask.title,
         requested_qty: shortage,
@@ -490,7 +454,6 @@ export class AddTask implements OnInit {
   cancelStockRequest() {
     this.showStockDialog = false;
     this.stockDialogData = null;
-    // Don't reset form — let user change qty
   }
 
   removeSubTask(index: number) {
@@ -533,10 +496,7 @@ export class AddTask implements OnInit {
     }
   }
 
-  labors: any[] = [];
-
-  loadLabors(event: Event) {
-    const vendorId = (event.target as HTMLSelectElement)?.value;
+  loadLabors(vendorId: string | number) {
     if (vendorId) {
       this.projectService.getLaborByVendor(Number(vendorId)).subscribe((res: any) => {
         this.labors = res.data || [];
@@ -556,7 +516,6 @@ export class AddTask implements OnInit {
         assignees: formValue.assigneeId ? [Number(formValue.assigneeId)] : [],
         due_date: this.calculateDueDate(formValue.startDate, formValue.duration)
       };
-
       this.projectService.createTask(this.projectId, payload).subscribe({
         next: (res) => {
           this.save.emit(res.data);
@@ -572,5 +531,139 @@ export class AddTask implements OnInit {
     const date = new Date(startDate);
     date.setDate(date.getDate() + duration);
     return date.toISOString().split('T')[0];
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.app-dropdown')) {
+      this.openDropdown = null;
+    }
+  }
+
+  toggleDropdown(name: string, event: Event) {
+    event.stopPropagation();
+    this.openDropdown = this.openDropdown === name ? null : name;
+  }
+
+  closeDropdown() {
+    this.openDropdown = null;
+  }
+
+  isSelected(a: any, b: any): boolean {
+    return a == b;
+  }
+
+  getMilestoneLabel(): string {
+    const id = this.taskForm.get('milestone_id')?.value;
+    const m = this.milestones.find((x: any) => x.id == id);
+    return m ? m.name : 'Select Milestone';
+  }
+
+  selectMilestone(milestone: any) {
+    this.taskForm.patchValue({ milestone_id: milestone.id });
+    this.closeDropdown();
+  }
+
+  getSubMilestoneLabel(): string {
+    const id = this.taskForm.get('submilestone_id')?.value;
+    const s = this.subMilestones.find((x: any) => x.id == id);
+    return s ? s.name : 'Select Sub Milestone';
+  }
+
+  selectSubMilestone(sub: any) {
+    this.taskForm.patchValue({ submilestone_id: sub.id });
+    this.closeDropdown();
+  }
+
+  getPriorityLabel(): string {
+    return this.taskForm.get('priority')?.value || 'Select Priority';
+  }
+
+  selectPriority(p: any) {
+    this.taskForm.patchValue({ priority: p.label });
+    this.closeDropdown();
+  }
+
+  getAssigneeLabel(): string {
+    const id = this.taskForm.get('assigneeId')?.value;
+    const member: any = this.teamMembers.find((x: any) => x.id == id);
+    return member ? `${member.firstname} ${member.lastname}` : 'Select Team Member';
+  }
+
+  selectAssignee(member: any) {
+    this.taskForm.patchValue({ assigneeId: member.id });
+    this.closeDropdown();
+  }
+
+  getVendorLabel(): string {
+    const id = this.taskForm.get('vendorId')?.value;
+    const v = this.vendors.find((x: any) => x.id == id);
+    return v ? v.name : 'Select Vendor';
+  }
+
+  selectVendor(vendor: any) {
+    this.taskForm.patchValue({ vendorId: vendor.id });
+    this.loadLabors(vendor.id);
+    this.closeDropdown();
+  }
+
+
+  getMaterialLabel(): string {
+    const id = this.newSubTask.materialId;
+    const m = this.materials.find((x: any) => x.id == id);
+    return m ? m.name : 'Select Material';
+  }
+
+  selectMaterial(material: any) {
+    this.newSubTask.materialId = material.id;
+    this.closeDropdown();
+  }
+
+
+  getEquipmentLabel(): string {
+    const id = this.newSubTask.equipment_id;
+    const e = this.equipmentList.find((x: any) => x.id == id);
+    return e ? e.name : 'Select Equipment';
+  }
+
+  selectEquipment(equipment: any) {
+    this.newSubTask.equipment_id = equipment.id;
+    this.closeDropdown();
+  }
+
+
+  getLaborLabel(): string {
+    const id = this.newSubTask.labor_id;
+    const l = this.labors.find((x: any) => x.id == id);
+    return l ? l.skill : 'Select Labor';
+  }
+
+  selectLabor(labor: any) {
+    this.newSubTask.labor_id = labor.id;
+    this.closeDropdown();
+  }
+
+
+  getPredecessorLabel(): string {
+    const id = this.selectedPredecessorId;
+    const t = this.allTasks.find((x: any) => x.id == id);
+    return t ? t.title : 'Link Predecessor...';
+  }
+
+  selectPredecessor(task: any) {
+    this.selectedPredecessorId = task.id;
+    this.closeDropdown();
+  }
+
+
+  getDepTypeLabel(): string {
+    const t = this.dependencyTypes.find((x: any) => x.id === this.selectedDepType);
+    return t ? t.name : 'Select Type';
+  }
+
+  selectDepType(type: any) {
+    this.selectedDepType = type.id;
+    this.closeDropdown();
   }
 }

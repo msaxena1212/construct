@@ -13,7 +13,7 @@ import { CategoryServeice } from '../../../shared/services/master/category-serve
   templateUrl: './equipment-master.html',
   styleUrl: './equipment-master.scss',
 })
-export class EquipmentMaster { // private vendorService = inject(VendorService);
+export class EquipmentMaster {
   private router = inject(Router);
   private vendorService = inject(VendorsServices);
   private toast = inject(ToastrService);
@@ -29,7 +29,6 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
   selectedTab = 'All Materials';
   // tabs = ['All Materials', 'Low Stock', 'Concrete', 'Steel', 'Electrical', 'Lumber'];
 
-  // Modal States
   showAddModal = false;
   showEditModal = false;
   showDeleteModal = false;
@@ -49,15 +48,15 @@ export class EquipmentMaster { // private vendorService = inject(VendorService);
   searchQuery: any;
   categories: any;
   categoryDropdownOpen = false;
-editCategoryDropdownOpen = false;
+  editCategoryDropdownOpen = false;
 
   ngOnInit() {
     this.materialService.loadMaterials();
 
     this.materialService.materials$.subscribe(m => {
       this.materials = m;
-      this.page = 1; // 🔥 reset page (important)
-      this.updatePagination(); // ✅ yahi sahi jagah hai
+      this.page = 1;
+      this.updatePagination();
     });
 
     this.vendorService.vendors$.subscribe(v => {
@@ -90,14 +89,14 @@ editCategoryDropdownOpen = false;
   }
 
   selectCategory(name: string) {
-  this.newMaterial.category = name;
-  this.categoryDropdownOpen = false;
-}
+    this.newMaterial.category = name;
+    this.categoryDropdownOpen = false;
+  }
 
-selectEditCategory(name: string) {
-  this.materialToEdit.category = name;
-  this.editCategoryDropdownOpen = false;
-}
+  selectEditCategory(name: string) {
+    this.materialToEdit.category = name;
+    this.editCategoryDropdownOpen = false;
+  }
 
   updatePagination() {
 
@@ -149,7 +148,6 @@ selectEditCategory(name: string) {
 
     let filtered = [...this.materials];
 
-    // 🔥 Tab Filter
     if (this.selectedTab !== 'All Materials') {
 
       filtered = filtered.filter(
@@ -161,7 +159,6 @@ selectEditCategory(name: string) {
       );
     }
 
-    // 🔥 Search Filter
     if (this.searchQuery) {
 
       const q = this.searchQuery.toLowerCase();
@@ -210,8 +207,6 @@ selectEditCategory(name: string) {
         this.showAddModal = false;
         this.toast.success('Material added successfully');
         this.materialService.loadMaterials();
-
-        // optional: form reset
         this.getDefaultMaterial();
       },
       error: (err) => {
@@ -233,11 +228,11 @@ selectEditCategory(name: string) {
     if (this.materialToEdit) {
 
       this.materialService
-        .updateMaterial(this.materialToEdit.id, this.materialToEdit) // ✅ id use karo
+        .updateMaterial(this.materialToEdit.id, this.materialToEdit)
         .subscribe({
           next: () => {
             this.showEditModal = false;
-            this.materialToEdit = null; // ✅ cleanup
+            this.materialToEdit = null;
             this.toast.success('Material updated successfully');
             this.materialService.loadMaterials();
 
@@ -260,11 +255,11 @@ selectEditCategory(name: string) {
     if (this.materialToDelete) {
 
       this.materialService
-        .deleteMaterial(this.materialToDelete.id) // ✅ id use karo
+        .deleteMaterial(this.materialToDelete.id)
         .subscribe({
           next: () => {
             this.showDeleteModal = false;
-            this.materialToDelete = null; // ✅ cleanup
+            this.materialToDelete = null;
             this.toast.success('Material deleted successfully');
             this.materialService.loadMaterials();
 

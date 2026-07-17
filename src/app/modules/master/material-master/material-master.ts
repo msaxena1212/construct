@@ -49,8 +49,8 @@ export class MaterialMaster {
 
     this.materialService.materials$.subscribe(m => {
       this.materials = m;
-      this.page = 1; // 🔥 reset page (important)
-      this.updatePagination(); // ✅ yahi sahi jagah hai
+      this.page = 1;
+      this.updatePagination();
     });
 
     this.vendorService.vendors$.subscribe(v => {
@@ -142,7 +142,6 @@ export class MaterialMaster {
 
     let filtered = [...this.materials];
 
-    // 🔥 Tab Filter
     if (this.selectedTab !== 'All Materials') {
 
       filtered = filtered.filter(
@@ -154,7 +153,6 @@ export class MaterialMaster {
       );
     }
 
-    // 🔥 Search Filter
     if (this.searchQuery) {
 
       const q = this.searchQuery.toLowerCase();
@@ -216,11 +214,11 @@ export class MaterialMaster {
     if (this.materialToEdit) {
 
       this.materialService
-        .updateMaterial(this.materialToEdit.id, this.materialToEdit) // ✅ id use karo
+        .updateMaterial(this.materialToEdit.id, this.materialToEdit)
         .subscribe({
           next: () => {
             this.showEditModal = false;
-            this.materialToEdit = null; // ✅ cleanup
+            this.materialToEdit = null;
             this.toast.success('Material updated successfully');
             this.materialService.loadMaterials();
 
@@ -243,11 +241,11 @@ export class MaterialMaster {
     if (this.materialToDelete) {
 
       this.materialService
-        .deleteMaterial(this.materialToDelete.id) // ✅ id use karo
+        .deleteMaterial(this.materialToDelete.id)
         .subscribe({
           next: () => {
             this.showDeleteModal = false;
-            this.materialToDelete = null; // ✅ cleanup
+            this.materialToDelete = null;
             this.toast.success('Material deleted successfully');
             this.materialService.loadMaterials();
 

@@ -117,7 +117,6 @@ export class SkillMaster implements OnInit {
 
     let filtered = [...this.skills];
 
-    // 🔥 Tab Filter
     if (this.selectedTab !== 'All Materials') {
 
       filtered = filtered.filter(
@@ -129,7 +128,6 @@ export class SkillMaster implements OnInit {
       );
     }
 
-    // 🔥 Search Filter
     if (this.searchQuery) {
 
       const q = this.searchQuery.toLowerCase();
