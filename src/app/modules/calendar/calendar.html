@@ -25,9 +25,9 @@
 
         <div *ngIf="showProjectFilterDropdown" (click)="$event.stopPropagation()"
           class="absolute z-50 top-full left-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden"
-          style="min-width: 220px; max-height: 300px;">
+          style="min-width: 220px; max-width: calc(100vw - 2.5rem); max-height: 300px;">
 
-          <div class="overflow-y-auto" style="max-height: 260px;">
+          <div class="overflow-y-auto custom-scrollbar dropdown-scroll" style="max-height: 260px;">
 
             <div (click)="toggleAllProjects()"
               class="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-slate-100 dark:border-slate-700"
@@ -493,7 +493,7 @@
         </button>
       </div>
 
-      <div class="overflow-y-auto p-6 space-y-3">
+      <div class="overflow-y-auto p-6 space-y-3 custom-scrollbar dropdown-scroll">
         <div *ngFor="let event of selectedDayEvents" class="rounded-2xl p-4 transition-all duration-200 hover:shadow-md"
           [ngClass]="{
             'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800': event.type === 'project-start',
@@ -633,32 +633,74 @@
             placeholder="e.g. Site progress review">
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Date *</label>
             <input [(ngModel)]="meetingForm.dateInput" type="date"
               class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer">
           </div>
+
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Time</label>
-            <input #timeInput [(ngModel)]="meetingForm.timeInput" type="time" (input)="closeTimePicker(timeInput)"
-              class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer">
+            <div class="relative">
+              <button type="button" (click)="toggleTimeDropdown($event)"
+                class="w-full flex items-center border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 hover:border-violet-400 focus:ring-2 focus:ring-violet-400 transition-all overflow-hidden px-3 py-3 cursor-pointer">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 mr-2 shrink-0">schedule</span>
+                <span class="flex-1 text-left text-sm text-slate-800 dark:text-white">{{ formatTimeDisplay() }}</span>
+                <span class="material-symbols-outlined text-[18px] text-slate-400 transition-transform duration-200"
+                  [class.rotate-180]="showTimeDropdown">
+                  expand_more
+                </span>
+              </button>
+
+              <div *ngIf="showTimeDropdown" (click)="$event.stopPropagation()"
+                class="absolute z-50 top-full left-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden flex w-full min-w-[140px] max-w-[calc(100vw-2.5rem)] sm:w-40">
+                <div
+                  class="flex-1 overflow-y-auto custom-scrollbar dropdown-scroll border-r border-slate-100 dark:border-slate-700"
+                  style="max-height: 200px;">
+                  <div *ngFor="let h of timeHours" (click)="selectHour(h)"
+                    class="text-center py-2 text-sm font-semibold cursor-pointer transition-colors"
+                    [ngClass]="getSelectedHour() === h ? 'bg-violet-600 text-white' : 'text-slate-700 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-900/20'">
+                    {{ h }}
+                  </div>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar dropdown-scroll" style="max-height: 200px;">
+                  <div *ngFor="let m of timeMinutes" (click)="selectMinute(m)"
+                    class="text-center py-2 text-sm font-semibold cursor-pointer transition-colors"
+                    [ngClass]="getSelectedMinute() === m ? 'bg-violet-600 text-white' : 'text-slate-700 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-900/20'">
+                    {{ m }}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Duration</label>
-            <select [(ngModel)]="meetingForm.duration"
-              class="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer">
-              <option [ngValue]="15">15 min</option>
-              <option [ngValue]="30">30 min</option>
-              <option [ngValue]="45">45 min</option>
-              <option [ngValue]="60">1 hour</option>
-              <option [ngValue]="90">1.5 hours</option>
-              <option [ngValue]="120">2 hours</option>
-            </select>
+            <div class="relative">
+              <button type="button" (click)="showDurationDropdown = !showDurationDropdown; $event.stopPropagation()"
+                class="w-full flex items-center justify-between border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:border-violet-400 focus:ring-2 focus:ring-violet-400 transition-all cursor-pointer">
+                <span>{{ getDurationLabel() }}</span>
+                <span class="material-symbols-outlined text-[18px] text-slate-400 transition-transform duration-200"
+                  [class.rotate-180]="showDurationDropdown">
+                  expand_more
+                </span>
+              </button>
+              <div *ngIf="showDurationDropdown" (click)="$event.stopPropagation()"
+                class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden custom-scrollbar dropdown-scroll"
+                style="max-height: 192px; overflow-y: auto;">
+                <div *ngFor="let opt of durationOptions" (click)="selectDuration(opt.value)"
+                  class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
+                  <span class="text-sm font-medium text-slate-800 dark:text-white">{{ opt.label }}</span>
+                  <span *ngIf="meetingForm.duration === opt.value"
+                    class="material-symbols-outlined text-violet-600 text-[16px]">check</span>
+                </div>
+              </div>
+            </div>
           </div>
+
           <div>
             <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Project</label>
             <div class="relative">
@@ -681,7 +723,8 @@
                   </span>
                 </button>
                 <div *ngIf="showProjectDropdown"
-                  class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                  class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden custom-scrollbar dropdown-scroll"
+                  style="max-height: 192px; overflow-y: auto;">
                   <div *ngFor="let p of projects" (click)="selectProject(p)"
                     class="px-4 py-3 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors">
                     <p class="text-sm font-medium text-slate-800 dark:text-white">{{ p.name }}</p>
@@ -719,7 +762,7 @@
               class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl flex flex-col"
               style="max-height: 220px;">
 
-              <div class="overflow-y-auto flex-1">
+              <div class="overflow-y-auto flex-1 custom-scrollbar dropdown-scroll">
                 <div *ngIf="!vendors.length" class="px-4 py-3 text-sm text-slate-400 text-center">No vendors available
                 </div>
                 <div *ngFor="let v of vendors" (click)="toggleVendor(v.id, $event)"
@@ -796,7 +839,7 @@
                 placeholder="Search name or email, press Enter or comma to add...">
             </div>
             <div *ngIf="showAttendeeSuggestions" (click)="$event.stopPropagation()"
-              class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+              class="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar dropdown-scroll">
               <div *ngFor="let opt of filteredAttendeeOptions" (click)="selectAttendee(opt, $event)"
                 class="flex items-center gap-3 px-4 py-2.5 hover:bg-violet-50 dark:hover:bg-violet-900/20 cursor-pointer transition-colors">
                 <div

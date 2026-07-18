@@ -1,182 +1,154 @@
-<!-- Content Area -->
 <section class="p-4 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <!-- Page Header & Key Metrics -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div class="space-y-1">
             <h2 class="text-3xl font-black text-slate-800 dark:text-white">Equipment Inventory
             </h2>
             <p class="text-on-surface-variant/80 font-medium">Precision tracking across active construction sites</p>
         </div>
-        <!-- <div class="flex gap-3">
-            <div
-                class="flex items-center gap-3 bg-surface-container-highest px-4 py-2 rounded-xl border border-outline-variant/10 shadow-sm">
-                <span class="material-symbols-outlined text-outline text-sm">filter_alt</span>
-                <select [(ngModel)]="selectedMember"
-                    class="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-on-surface outline-none cursor-pointer appearance-none pr-4">
-                    <option *ngFor="let m of team" [value]="m.name">{{ m.name }}</option>
-                </select>
-            </div>
-            <button (click)="showFilters = !showFilters"
-                class="px-5 py-2.5 bg-surface-container-highest text-primary rounded-xl font-bold flex items-center gap-2 hover:bg-surface-dim transition-colors cursor-pointer">
-                <span class="material-symbols-outlined text-lg"
-                    style="font-variation-settings: 'FILL' 1;">filter_list</span>
-                Filters
-            </button>
-         
-        </div> -->
     </div>
 
-   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
-
-    <!-- Total SKU -->
-    <div
-        class="group relative overflow-hidden rounded-3xl p-5
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+        <div class="group relative overflow-hidden rounded-3xl p-5
                bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-500
                text-white shadow-lg hover:shadow-xl
                hover:-translate-y-1 transition-all duration-300">
 
-        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+            <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+            <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-        <div class="flex items-center justify-between relative z-10">
+            <div class="flex items-center justify-between relative z-10">
 
-            <div>
-                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
-                    Total SKU
-                </p>
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                        Total SKU
+                    </p>
 
-                <h3 class="text-3xl font-black tracking-tight mt-2">
-                    {{ materials.length }}
-                </h3>
+                    <h3 class="text-3xl font-black tracking-tight mt-2">
+                        {{ materials.length }}
+                    </h3>
 
-                <p class="text-xs text-white/70 mt-1">
-                    Active Materials
-                </p>
+                    <p class="text-xs text-white/70 mt-1">
+                        Active Materials
+                    </p>
+                </div>
+
+                <div
+                    class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+
+                    <span class="material-symbols-outlined text-[30px]">
+                        inventory_2
+                    </span>
+
+                </div>
+
             </div>
-
-            <div
-                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
-
-                <span class="material-symbols-outlined text-[30px]">
-                    inventory_2
-                </span>
-
-            </div>
-
         </div>
 
-    </div>
-
-    <!-- Assigned Items -->
-    <div
-        class="group relative overflow-hidden rounded-3xl p-5
+        <div class="group relative overflow-hidden rounded-3xl p-5
                bg-gradient-to-br from-emerald-400 via-green-400 to-teal-500
                text-white shadow-lg hover:shadow-xl
                hover:-translate-y-1 transition-all duration-300">
 
-        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+            <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+            <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-        <div class="flex items-center justify-between relative z-10">
+            <div class="flex items-center justify-between relative z-10">
 
-            <div>
-                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
-                    Assigned Items
-                </p>
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                        Assigned Items
+                    </p>
 
-                <h3 class="text-3xl font-black tracking-tight mt-2">
-                    {{ noOfProjectsAssigned }}
-                </h3>
+                    <h3 class="text-3xl font-black tracking-tight mt-2">
+                        {{ noOfProjectsAssigned }}
+                    </h3>
 
-                <p class="text-xs text-white/70 mt-1">
-                    Project Allocated
-                </p>
-            </div>
+                    <p class="text-xs text-white/70 mt-1">
+                        Project Allocated
+                    </p>
+                </div>
 
-            <div
-                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                <div
+                    class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
 
-                <span class="material-symbols-outlined text-[30px]">
-                    assignment_turned_in
-                </span>
+                    <span class="material-symbols-outlined text-[30px]">
+                        assignment_turned_in
+                    </span>
+
+                </div>
 
             </div>
 
         </div>
 
-    </div>
-
-    <!-- Inventory Value -->
-    <div
-        class="group relative overflow-hidden rounded-3xl p-5
+        <div class="group relative overflow-hidden rounded-3xl p-5
                bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500
                text-white shadow-lg hover:shadow-xl
                hover:-translate-y-1 transition-all duration-300">
 
-        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+            <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+            <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-        <div class="flex items-center justify-between relative z-10">
+            <div class="flex items-center justify-between relative z-10">
 
-            <div>
-                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
-                    Inventory Value
-                </p>
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                        Inventory Value
+                    </p>
 
-                <h3 class="text-2xl font-black tracking-tight mt-2">
-                    ₹{{ getInventoryValue() | number:'1.0-0' }}
-                </h3>
+                    <h3 class="text-2xl font-black tracking-tight mt-2">
+                        ₹{{ getInventoryValue() | number:'1.0-0' }}
+                    </h3>
 
-                <p class="text-xs text-white/70 mt-1">
-                    Total Stock Worth
-                </p>
+                    <p class="text-xs text-white/70 mt-1">
+                        Total Stock Worth
+                    </p>
+                </div>
+
+                <div
+                    class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+
+                    <span class="material-symbols-outlined text-[30px]">
+                        account_balance_wallet
+                    </span>
+
+                </div>
+
             </div>
-
-            <div
-                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
-
-                <span class="material-symbols-outlined text-[30px]">
-                    account_balance_wallet
-                </span>
-
-            </div>
-
         </div>
 
-    </div>
-
-    <!-- Not Assigned -->
-    <div
-        class="group relative overflow-hidden rounded-3xl p-5
+        <div class="group relative overflow-hidden rounded-3xl p-5
                bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800
                text-white shadow-lg hover:shadow-xl
                hover:-translate-y-1 transition-all duration-300">
 
-        <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-        <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
+            <div class="absolute top-0 right-0 w-28 h-28 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+            <div class="absolute bottom-0 left-0 w-20 h-20 bg-black/5 rounded-full -ml-6 -mb-6"></div>
 
-        <div class="flex items-center justify-between relative z-10">
+            <div class="flex items-center justify-between relative z-10">
 
-            <div>
-                <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
-                    Not Assigned
-                </p>
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.25em] text-white/80 font-semibold">
+                        Not Assigned
+                    </p>
 
-                <h3 class="text-3xl font-black tracking-tight mt-2">
-                    {{ noOfProjectsNotAssigned }}
-                </h3>
+                    <h3 class="text-3xl font-black tracking-tight mt-2">
+                        {{ noOfProjectsNotAssigned }}
+                    </h3>
 
-                <p class="text-xs text-white/70 mt-1">
-                    Pending Allocation
-                </p>
-            </div>
+                    <p class="text-xs text-white/70 mt-1">
+                        Pending Allocation
+                    </p>
+                </div>
 
-            <div
-                class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
+                <div
+                    class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center">
 
-                <span class="material-symbols-outlined text-[30px]">
-                    pending_actions
-                </span>
+                    <span class="material-symbols-outlined text-[30px]">
+                        pending_actions
+                    </span>
+
+                </div>
 
             </div>
 
@@ -184,29 +156,22 @@
 
     </div>
 
-</div>
-
-    <!-- Filter Tabs -->
-    <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
+    <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar smooth-scroll pb-1">
         @for (tab of categories; track tab) {
         <button (click)="changeTab(tab)"
             [class]="selectedTab === tab.category_name ? 'bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff] text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-dim'"
-            class="px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap cursor-pointer transition-colors">
+            class="px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap cursor-pointer transition-colors shrink-0">
             {{ tab.category_name }}
         </button>
         }
 
     </div>
 
-    <!-- Inventory Table Container -->
     <div
         class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
-
-        <!-- Table Wrapper -->
         <div
             class="overflow-hidden rounded-[28px] border border-slate-200/70 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
 
-            <!-- Top Bar -->
             <div
                 class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
 
@@ -240,16 +205,12 @@
 
             </div>
 
-            <!-- Table -->
-            <div class="overflow-x-auto px-4 py-4">
+            <div class="overflow-x-auto custom-scrollbar smooth-scroll px-4 py-4">
 
                 <table class="w-full min-w-[1100px] border-separate border-spacing-y-4">
-
-                    <!-- Head -->
                     <thead>
 
                         <tr>
-
                             <th
                                 class="px-6 text-left text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
                                 Equipment
@@ -289,7 +250,6 @@
 
                     </thead>
 
-                    <!-- Body -->
                     <tbody>
 
                         @for (item of paginatedMaterials; track item.sku) {
@@ -297,13 +257,11 @@
                         <tr
                             class="group relative z-0 hover:z-[9999] bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 rounded-3xl">
 
-                            <!-- Equipment -->
                             <td
                                 class="px-6 py-5 rounded-l-[26px] bg-white dark:bg-slate-900 border border-r-0 border-slate-200 dark:border-slate-800 shadow-sm">
 
                                 <div class="flex items-center gap-4">
 
-                                    <!-- Icon -->
                                     <div
                                         class="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shadow-inner">
 
@@ -317,7 +275,6 @@
 
                                     </div>
 
-                                    <!-- Info -->
                                     <div class="space-y-1">
 
                                         <p
@@ -346,7 +303,6 @@
 
                             </td>
 
-                            <!-- Category -->
                             <td
                                 class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
 
@@ -365,8 +321,6 @@
                                 <div class="w-[210px] flex flex-col gap-3">
 
                                     <div class="flex items-center gap-3 text-sm font-black">
-
-                                        <!-- Available -->
                                         <div class="flex items-center gap-1 text-slate-800 dark:text-slate-100">
 
                                             <span class="material-symbols-outlined text-[16px]">
@@ -377,7 +331,6 @@
 
                                         </div>
 
-                                        <!-- Status -->
                                         <span [ngClass]="item.stockUsed >= item.stockRemaining
       ? 'bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400'
       : 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'" class="ml-2 px-2.5 py-1 rounded-full
@@ -386,7 +339,6 @@
                                         </span>
 
                                     </div>
-                                    <!-- Progress -->
                                     <div
                                         class="relative w-full h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">
 
@@ -409,7 +361,6 @@
       ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/10'
       : 'cursor-not-allowed opacity-70 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40'">
 
-                                    <!-- Icon -->
                                     <div [ngClass]="item.equipment_project_stock?.length > 0
         ? 'bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600'
         : 'bg-slate-200 dark:bg-slate-700 text-slate-500'"
@@ -424,8 +375,6 @@
                                         </span>
 
                                     </div>
-
-                                    <!-- Content -->
                                     <div class="flex flex-col leading-tight min-w-[90px]">
 
                                         @if ((item.equipment_project_stock?.length || 0) > 0) {
@@ -446,20 +395,15 @@
                                         </span>
 
                                     </div>
-
-                                    <!-- Arrow -->
                                     <span class="material-symbols-outlined text-[14px]
              text-slate-400">
 
                                         arrow_forward_ios
 
                                     </span>
-
                                 </div>
-
                             </td>
 
-                            <!-- Cost -->
                             <td
                                 class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
 
@@ -472,12 +416,9 @@
                                     <span class="text-[11px] text-slate-400 font-semibold">
                                         Per Unit
                                     </span>
-
                                 </div>
-
                             </td>
 
-                            <!-- Vendor -->
                             <td
                                 class="px-6 py-5 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
 
@@ -506,15 +447,11 @@
 
                             </td>
 
-                            <!-- Status -->
                             <td
                                 class="px-6 py-5 rounded-r-[26px] bg-white dark:bg-slate-900 border border-l-0 border-slate-200 dark:border-slate-800 shadow-sm">
 
                                 <div class="flex items-center justify-between gap-4">
-                                    <!-- Actions -->
                                     <div class="flex items-center gap-2">
-
-                                        <!-- Edit -->
                                         <button (click)="openAssignProjectModal(item)" title="Assign to Project"
                                             class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
 
@@ -536,7 +473,6 @@
 
                                         </button>
 
-                                        <!-- Delete -->
                                         <button (click)="openDeleteModal($event, item)" title="Delete Material"
                                             class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
 
@@ -564,11 +500,9 @@
 
         </div>
 
-        <!-- Pagination -->
         <div
             class="flex flex-col md:flex-row items-center justify-between gap-4 px-6 py-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
 
-            <!-- Count -->
             <p class="text-xs font-bold uppercase tracking-wider text-slate-500">
 
                 Showing
@@ -581,12 +515,11 @@
                 {{ filteredMaterials.length}} Equipment
 
             </p>
-            <!-- Pagination Buttons -->
-            <div class="flex items-center gap-2">
 
-                <!-- Prev -->
+            <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar smooth-scroll max-w-full">
+
                 <button (click)="prevPage()"
-                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer shrink-0">
 
                     <span class="material-symbols-outlined text-[18px]">
                         chevron_left
@@ -594,11 +527,10 @@
 
                 </button>
 
-                <!-- Numbers -->
                 @for (p of [].constructor(totalPages()); track $index) {
 
                 <button (click)="goToPage($index + 1)"
-                    class="w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer"
+                    class="w-9 h-9 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0"
                     [ngClass]="page === ($index + 1)
                 ? 'bg-primary text-white shadow-md'
                 : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary'">
@@ -611,7 +543,7 @@
 
                 <!-- Next -->
                 <button (click)="nextPage()"
-                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer">
+                    class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition-all cursor-pointer shrink-0">
 
                     <span class="material-symbols-outlined text-[18px]">
                         chevron_right
@@ -626,10 +558,8 @@
     </div>
 </section>
 
-<!-- Modals -->
-<!-- Add Material Modal -->
 <app-common-dialog [open]="showAddModal" (closed)="showAddModal = false" panelClass="p-8 max-w-lg"
-    [contentClass]="'overflow-y-auto'">
+    [contentClass]="'overflow-y-auto custom-scrollbar smooth-scroll'">
     <div class="flex justify-between items-center mb-6">
         <h3 class="text-2xl font-black tracking-tight">New Equipment</h3>
         <button (click)="showAddModal = false"
@@ -642,16 +572,36 @@
         <div class="md:col-span-2">
             <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Equipment
                 Name</label>
-            <select [(ngModel)]="newMaterial.equipment_master_id" (change)="getSelectedMat($event)"
-                class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
+            <div class="custom-dropdown-wrapper relative">
+                <button type="button" (click)="toggleDropdown('add-equipment')"
+                    class="w-full px-4 py-3 rounded-xl border-2 flex items-center justify-between text-sm font-bold outline-none bg-white dark:bg-slate-900 transition-all duration-200 cursor-pointer"
+                    [ngClass]="(openDropdown === ('add-equipment')) ? 'border-primary ring-4 ring-primary/10' : 'border-outline-variant/20 dark:border-slate-800 hover:border-primary/40'">
+                    <span class="truncate text-left"
+                        [ngClass]="newMaterial.name ? 'text-slate-800 dark:text-white' : 'text-slate-400'">
+                        {{ newMaterial.name || 'Select Equipment' }}
+                    </span>
+                    <span class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                        [ngClass]="(openDropdown === ('add-equipment')) ? 'rotate-180 text-primary' : 'text-slate-400'">expand_more</span>
+                </button>
 
-                <option value="" disabled>Select Equipment</option>
-
-                <option *ngFor="let material of MaterialMaster" [value]="material.id">
-                    {{ material.name }}
-                </option>
-
-            </select>
+                @if ((openDropdown === ('add-equipment'))) {
+                <div
+                    class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                        @for (material of MaterialMaster; track material.id) {
+                        <div (click)="selectEquipmentAdd(material)"
+                            class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150"
+                            [ngClass]="newMaterial.equipment_master_id === material.id ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                            {{ material.name }}
+                        </div>
+                        }
+                        @if (!MaterialMaster?.length) {
+                        <div class="px-4 py-3 text-sm font-semibold text-slate-400">No equipment found</div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
         </div>
         <div>
             <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">SKU Code</label>
@@ -660,24 +610,65 @@
         </div>
         <div>
             <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-            <select [(ngModel)]="newMaterial.category"
-                class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                <option value="Concrete">Concrete</option>
-                <option value="Steel">Steel</option>
-                <option value="Electrical">Electrical</option>
-                <option value="Lumber">Lumber</option>
-                <option value="Finishing">Finishing</option>
-                <option value="Chemicals">Chemicals</option>
-            </select>
+            <div class="custom-dropdown-wrapper relative">
+                <button type="button" (click)="toggleDropdown('add-category')"
+                    class="w-full px-4 py-3 rounded-xl border-2 flex items-center justify-between text-sm font-bold outline-none bg-white dark:bg-slate-900 transition-all duration-200 cursor-pointer"
+                    [ngClass]="(openDropdown === ('add-category')) ? 'border-primary ring-4 ring-primary/10' : 'border-outline-variant/20 dark:border-slate-800 hover:border-primary/40'">
+                    <span class="truncate text-left text-slate-800 dark:text-white">
+                        {{ newMaterial.category || 'Select Category' }}
+                    </span>
+                    <span class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                        [ngClass]="(openDropdown === ('add-category')) ? 'rotate-180 text-primary' : 'text-slate-400'">expand_more</span>
+                </button>
+
+                @if ((openDropdown === ('add-category'))) {
+                <div
+                    class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                        @for (cat of categoryOptions; track cat) {
+                        <div (click)="selectCategoryAdd(cat)"
+                            class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150"
+                            [ngClass]="newMaterial.category === cat ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                            {{ cat }}
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
         </div>
         <div>
             <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Project</label>
-            <select [(ngModel)]="newMaterial.project_id" (change)="getProject($event)"
-                class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                @for (p of projects; track p.id) {
-                <option [value]="p.id">{{ p.name }}</option>
+            <div class="custom-dropdown-wrapper relative">
+                <button type="button" (click)="toggleDropdown('add-project')"
+                    class="w-full px-4 py-3 rounded-xl border-2 flex items-center justify-between text-sm font-bold outline-none bg-white dark:bg-slate-900 transition-all duration-200 cursor-pointer"
+                    [ngClass]="(openDropdown === ('add-project')) ? 'border-primary ring-4 ring-primary/10' : 'border-outline-variant/20 dark:border-slate-800 hover:border-primary/40'">
+                    <span class="truncate text-left"
+                        [ngClass]="newMaterial.project_name ? 'text-slate-800 dark:text-white' : 'text-slate-400'">
+                        {{ newMaterial.project_name || 'Select Project' }}
+                    </span>
+                    <span class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                        [ngClass]="(openDropdown === ('add-project')) ? 'rotate-180 text-primary' : 'text-slate-400'">expand_more</span>
+                </button>
+
+                @if ((openDropdown === ('add-project'))) {
+                <div
+                    class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                        @for (p of projects; track p.id) {
+                        <div (click)="selectProjectAdd(p)"
+                            class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150"
+                            [ngClass]="newMaterial.project_id === p.id ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                            {{ p.name }}
+                        </div>
+                        }
+                        @if (!projects.length) {
+                        <div class="px-4 py-3 text-sm font-semibold text-slate-400">No projects found</div>
+                        }
+                    </div>
+                </div>
                 }
-            </select>
+            </div>
         </div>
         <div>
             <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">
@@ -693,20 +684,38 @@
         </div>
         <div>
             <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Vendor</label>
-            <select [(ngModel)]="newMaterial.vendor_id" (change)="getvendor($event)"
-                class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                <option value="" disabled selected>Select Vendor</option>
+            <div class="custom-dropdown-wrapper relative">
+                <button type="button" (click)="toggleDropdown('add-vendor')"
+                    class="w-full px-4 py-3 rounded-xl border-2 flex items-center justify-between text-sm font-bold outline-none bg-white dark:bg-slate-900 transition-all duration-200 cursor-pointer"
+                    [ngClass]="(openDropdown === ('add-vendor')) ? 'border-primary ring-4 ring-primary/10' : 'border-outline-variant/20 dark:border-slate-800 hover:border-primary/40'">
+                    <span class="truncate text-left"
+                        [ngClass]="newMaterial.vendor_name ? 'text-slate-800 dark:text-white' : 'text-slate-400'">
+                        {{ newMaterial.vendor_name || 'Select Vendor' }}
+                    </span>
+                    <span class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                        [ngClass]="(openDropdown === ('add-vendor')) ? 'rotate-180 text-primary' : 'text-slate-400'">expand_more</span>
+                </button>
 
-                @for (v of vendors; track v.id) {
-                <option [value]="v.id">
-                    {{ v.name }}
-                </option>
+                @if ((openDropdown === ('add-vendor'))) {
+                <div
+                    class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                        @for (v of vendors; track v.id) {
+                        <div (click)="selectVendorAdd(v)"
+                            class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150"
+                            [ngClass]="newMaterial.vendor_id === v.id ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                            {{ v.name }}
+                        </div>
+                        }
+                        <div (click)="selectAddNewVendor()"
+                            class="px-4 py-2.5 text-sm font-black text-primary cursor-pointer transition-colors duration-150 hover:bg-primary/5 border-t border-outline-variant/10 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px]">add</span>
+                            Add New Vendor
+                        </div>
+                    </div>
+                </div>
                 }
-
-                <option value="ADD_NEW" class="text-primary font-bold">
-                    + Add New Vendor
-                </option>
-            </select>
+            </div>
         </div>
     </div>
 
@@ -719,9 +728,8 @@
     </div>
 </app-common-dialog>
 
-<!-- Edit Material Modal -->
 <app-common-dialog [open]="showEditModal && !!materialToEdit" (closed)="showEditModal = false" panelClass="p-8 max-w-lg"
-    [contentClass]="'overflow-y-auto'">
+    [contentClass]="'overflow-y-auto custom-scrollbar smooth-scroll'">
     <ng-container *ngIf="materialToEdit">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-2xl font-black tracking-tight">Edit material</h3>
@@ -745,15 +753,11 @@
             </div>
             <div>
                 <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Category</label>
-                <select [ngModel]="materialToEdit.category" disabled
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    <option value="Concrete">Concrete</option>
-                    <option value="Steel">Steel</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Lumber">Lumber</option>
-                    <option value="Finishing">Finishing</option>
-                    <option value="Chemicals">Chemicals</option>
-                </select>
+                <div
+                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-sm font-bold text-slate-500 dark:text-slate-400 cursor-not-allowed flex items-center justify-between">
+                    <span>{{ materialToEdit.category || 'Select Category' }}</span>
+                    <span class="material-symbols-outlined text-[20px] text-slate-300">expand_more</span>
+                </div>
             </div>
 
             <div>
@@ -769,27 +773,40 @@
                 <input [value]="materialToEdit.cost" type="number" (blur)="formatCostEdit()" readonly
                     class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-primary/30">
             </div>
-
-
-            <!-- <div>
-                <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Supplier</label>
-                <select [(ngModel)]="materialToEdit.vendor_id" (change)="getvendor($event)"
-                    class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                    @for (v of vendors; track v.id) {
-                    <option [value]="v.id">{{ v.name }}</option>
-                    }
-                </select>
-            </div> -->
         </div>
 
         <div>
             <label class="text-[10px] font-black uppercase tracking-widest text-outline mb-1 block">Project</label>
-            <select [(ngModel)]="materialToEdit.project_id" (change)="getProject($event)"
-                class="w-full px-4 py-3 rounded-xl border border-outline-variant/20 dark:border-slate-800 text-sm font-bold outline-none bg-white dark:bg-slate-900">
-                @for (p of projects; track p.id) {
-                <option [value]="p.id">{{ p.name }}</option>
+            <div class="custom-dropdown-wrapper relative">
+                <button type="button" (click)="toggleDropdown('edit-project')"
+                    class="w-full px-4 py-3 rounded-xl border-2 flex items-center justify-between text-sm font-bold outline-none bg-white dark:bg-slate-900 transition-all duration-200 cursor-pointer"
+                    [ngClass]="(openDropdown === ('edit-project')) ? 'border-primary ring-4 ring-primary/10' : 'border-outline-variant/20 dark:border-slate-800 hover:border-primary/40'">
+                    <span class="truncate text-left"
+                        [ngClass]="materialToEdit.project_name ? 'text-slate-800 dark:text-white' : 'text-slate-400'">
+                        {{ materialToEdit.project_name || 'Select Project' }}
+                    </span>
+                    <span class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                        [ngClass]="(openDropdown === ('edit-project')) ? 'rotate-180 text-primary' : 'text-slate-400'">expand_more</span>
+                </button>
+
+                @if ((openDropdown === ('edit-project'))) {
+                <div
+                    class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                        @for (p of projects; track p.id) {
+                        <div (click)="selectProjectEdit(p)"
+                            class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150"
+                            [ngClass]="materialToEdit.project_id === p.id ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                            {{ p.name }}
+                        </div>
+                        }
+                        @if (!projects.length) {
+                        <div class="px-4 py-3 text-sm font-semibold text-slate-400">No projects found</div>
+                        }
+                    </div>
+                </div>
                 }
-            </select>
+            </div>
         </div>
 
         <div class="flex gap-3 mt-8">
@@ -802,7 +819,6 @@
     </ng-container>
 </app-common-dialog>
 
-<!-- Delete Confirmation Modal -->
 <app-common-dialog [open]="showDeleteModal && !!materialToDelete" variant="danger" title="Delete Material?"
     subtitle="This action cannot be undone." icon="delete_forever" [showCloseButton]="true" [showFooter]="true"
     cancelLabel="Cancel" primaryLabel="Delete Item" (closed)="showDeleteModal = false" (primary)="confirmDelete()">
@@ -816,10 +832,9 @@
 <app-common-dialog [open]="showAssignProjectModal" title="Assign Equipment" subtitle="Allocate stock project wise"
     [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" primaryLabel="Assign Stock"
     [primaryDisabled]="getRemainingStock() < 0" (closed)="showAssignProjectModal = false" (primary)="assignProjects()"
-    panelClass="max-w-3xl" [contentClass]="'overflow-y-auto'">
+    panelClass="max-w-3xl" [contentClass]="'overflow-y-auto custom-scrollbar smooth-scroll'">
     <div class="p-7">
 
-        <!-- Material Info -->
         <div class="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40
            border border-slate-200 dark:border-slate-700">
 
@@ -851,10 +866,9 @@
 
         </div>
 
-        <!-- Dynamic Rows -->
         <div class="space-y-3">
 
-            @for (item of assignedProjects; track $index) {
+            @for (item of assignedProjects; track item; let i = $index) {
 
             <div class="p-4 rounded-2xl border border-slate-200
              dark:border-slate-700 bg-slate-50/60
@@ -862,7 +876,6 @@
 
                 <div class="grid grid-cols-12 gap-3 items-end">
 
-                    <!-- Project -->
                     <div class="col-span-12 md:col-span-7">
 
                         <label class="text-[9px] uppercase tracking-[0.18em]
@@ -871,28 +884,41 @@
                             Select Project
                         </label>
 
-                        <select [(ngModel)]="item.project_id" (change)="validateAssignedStock()" class="w-full px-4 py-3 rounded-xl border
-                   border-slate-200 dark:border-slate-700
-                   bg-white dark:bg-slate-900
-                   text-sm font-semibold outline-none
-                   focus:ring-2 focus:ring-indigo-500/20
-                   focus:border-indigo-500 transition-all">
+                        <div class="custom-dropdown-wrapper relative">
+                            <button type="button" (click)="toggleDropdown('assign-project-' + i)" class="w-full px-4 py-3 rounded-xl border-2 flex items-center justify-between
+                       bg-white dark:bg-slate-900 text-sm font-semibold outline-none
+                       transition-all duration-200 cursor-pointer"
+                                [ngClass]="(openDropdown === ('assign-project-' + i)) ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-200 dark:border-slate-700 hover:border-indigo-400/50'">
+                                <span class="truncate text-left"
+                                    [ngClass]="item.project_id ? 'text-slate-800 dark:text-white' : 'text-slate-400'">
+                                    {{ getProjectNameById(item.project_id) || 'Choose Project' }}
+                                </span>
+                                <span
+                                    class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                                    [ngClass]="(openDropdown === ('assign-project-' + i)) ? 'rotate-180 text-indigo-500' : 'text-slate-400'">expand_more</span>
+                            </button>
 
-                            <option [ngValue]="null">
-                                Choose Project
-                            </option>
-
-                            @for (project of projects; track project.id) {
-                            <option [ngValue]="project.id">
-                                {{ project.name }}
-                            </option>
+                            @if ((openDropdown === ('assign-project-' + i))) {
+                            <div
+                                class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+                                <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                                    @for (project of projects; track project.id) {
+                                    <div (click)="selectAssignProject(i, project)"
+                                        class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150"
+                                        [ngClass]="item.project_id === project.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                                        {{ project.name }}
+                                    </div>
+                                    }
+                                    @if (!projects.length) {
+                                    <div class="px-4 py-3 text-sm font-semibold text-slate-400">No projects found</div>
+                                    }
+                                </div>
+                            </div>
                             }
-
-                        </select>
+                        </div>
 
                     </div>
 
-                    <!-- Qty -->
                     <div class="col-span-9 md:col-span-4">
 
                         <label class="text-[9px] uppercase tracking-[0.18em]
@@ -911,11 +937,10 @@
 
                     </div>
 
-                    <!-- Remove -->
                     <div class="col-span-3 md:col-span-1 flex justify-end">
 
-                        <button type="button" (click)="removeProjectRow($index)"
-                            [disabled]="assignedProjects.length === 1" class="w-11 h-11 rounded-xl bg-rose-100
+                        <button type="button" (click)="removeProjectRow(i)" [disabled]="assignedProjects.length === 1"
+                            class="w-11 h-11 rounded-xl bg-rose-100
                    text-rose-600 hover:bg-rose-200
                    transition-all flex items-center
                    justify-center disabled:opacity-40
@@ -937,7 +962,6 @@
 
         </div>
 
-        <!-- Add More -->
         <button type="button" (click)="addProjectRow()" class="mt-5 w-full border-2 border-dashed
            border-indigo-300 dark:border-indigo-700
            rounded-2xl py-3.5 text-indigo-600
@@ -954,7 +978,6 @@
 
         </button>
 
-        <!-- Summary -->
         <div class="mt-6 p-5 rounded-2xl border border-indigo-200
            dark:border-indigo-800 bg-indigo-50
            dark:bg-indigo-900/10">
@@ -990,7 +1013,6 @@
 
         </div>
 
-        <!-- Error -->
         @if (projectAssignError) {
 
         <div class="mt-5 flex items-start gap-3 px-4 py-3 rounded-2xl
@@ -1016,12 +1038,11 @@
 
 <app-common-dialog [open]="showProjectStockPopup" title="Project Assignment" [subtitle]="selectedProjectStock?.name"
     [showCloseButton]="true" [showFooter]="false" (closed)="showProjectStockPopup = false" panelClass="p-6 max-w-2xl"
-    [contentClass]="'overflow-y-auto'">
+    [contentClass]="'overflow-y-auto custom-scrollbar smooth-scroll'">
     <div class="p-6">
 
         @if (!selectedProjectStock?.equipment_project_stock?.length) {
 
-        <!-- Empty -->
         <div class="flex flex-col items-center justify-center
                py-14 text-center">
 
@@ -1055,8 +1076,7 @@
 
         } @else {
 
-        <!-- Assigned Projects -->
-        <div class="space-y-4 max-h-[420px] overflow-y-auto pr-1">
+        <div class="space-y-4 max-h-[420px] overflow-y-auto custom-scrollbar smooth-scroll pr-1">
 
             @for (p of selectedProjectStock.equipment_project_stock; track $index) {
 
@@ -1065,8 +1085,6 @@
                  dark:bg-slate-800/40">
 
                 <div class="flex items-center justify-between gap-4">
-
-                    <!-- Left -->
                     <div class="flex items-center gap-4">
 
                         <div class="w-14 h-14 rounded-2xl
@@ -1099,7 +1117,6 @@
 
                     </div>
 
-                    <!-- Stock -->
                     <div class="text-right">
 
                         <h4 class="text-2xl font-black text-indigo-600">
@@ -1131,7 +1148,6 @@
 
 </app-common-dialog>
 
-<!-- Filters Dropdown Overlay -->
 @if (showFilters) {
 <div class="fixed inset-0 z-[90]" (click)="showFilters = false">
     <div class="absolute top-32 right-8 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-outline-variant/20 p-6 w-72 animate-in fade-in slide-in-from-top-4 duration-300"
@@ -1140,22 +1156,42 @@
         <div class="space-y-4">
             <div>
                 <label class="text-[10px] font-bold text-outline mb-1 block">Sort Order</label>
-                <select class="w-full p-2 bg-surface-container rounded-lg text-xs font-bold outline-none">
-                    <option>Usage Rate (Highest)</option>
-                    <option>Usage Rate (Lowest)</option>
-                    <option>Stock Level (Asc)</option>
-                    <option>Stock Level (Desc)</option>
-                    <option>Newest Additions</option>
-                </select>
+                <div class="custom-dropdown-wrapper relative">
+                    <button type="button" (click)="toggleDropdown('sort-order')"
+                        class="w-full p-2 rounded-lg border flex items-center justify-between bg-surface-container text-xs font-bold outline-none transition-all duration-200 cursor-pointer"
+                        [ngClass]="(openDropdown === ('sort-order')) ? 'border-primary ring-2 ring-primary/10' : 'border-transparent'">
+                        <span class="truncate text-left">{{ selectedSortOrder }}</span>
+                        <span
+                            class="material-symbols-outlined text-[16px] shrink-0 ml-1 transition-transform duration-200"
+                            [ngClass]="(openDropdown === ('sort-order')) ? 'rotate-180 text-primary' : 'text-outline'">expand_more</span>
+                    </button>
+
+                    @if ((openDropdown === ('sort-order'))) {
+                    <div
+                        class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-outline-variant/20 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden">
+                        <div class="max-h-48 overflow-y-auto custom-scrollbar smooth-scroll py-1">
+                            @for (order of sortOrderOptions; track order) {
+                            <div (click)="selectSortOrder(order)"
+                                class="px-3 py-2 text-xs font-bold cursor-pointer transition-colors duration-150"
+                                [ngClass]="selectedSortOrder === order ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                                {{ order }}
+                            </div>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
             </div>
             <div>
                 <label class="text-[10px] font-bold text-outline mb-1 block">Supplier Status</label>
                 <div class="flex flex-wrap gap-2">
-                    <button class="px-2 py-1 bg-primary text-white rounded text-[10px] font-bold">Active</button>
-                    <button
-                        class="px-2 py-1 bg-surface-container text-outline rounded text-[10px] font-bold">Preferred</button>
-                    <button
-                        class="px-2 py-1 bg-surface-container text-outline rounded text-[10px] font-bold">New</button>
+                    @for (status of supplierStatusOptions; track status) {
+                    <button (click)="toggleSupplierStatus(status)"
+                        class="px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer"
+                        [ngClass]="selectedSupplierStatus === status ? 'bg-primary text-white' : 'bg-surface-container text-outline hover:bg-surface-dim'">
+                        {{ status }}
+                    </button>
+                    }
                 </div>
             </div>
         </div>
@@ -1170,12 +1206,10 @@
 
 <app-common-dialog [open]="showStockTransferModal" title="Stock Transfer"
     subtitle="Move Equipment stock between projects" icon="swap_horiz" [showCloseButton]="true" [showFooter]="true"
-    [contentClass]="'min-h-0 overflow-y-auto'" cancelLabel="Cancel" primaryLabel="Transfer Stock"
-    (closed)="showStockTransferModal = false" (primary)="transferStock()">
+    [contentClass]="'min-h-0 overflow-y-auto custom-scrollbar smooth-scroll'" cancelLabel="Cancel"
+    primaryLabel="Transfer Stock" (closed)="showStockTransferModal = false" (primary)="transferStock()">
 
     <div class="p-6 space-y-8">
-
-        <!-- Material Card -->
         <div
             class="flex items-center gap-4 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
 
@@ -1208,16 +1242,15 @@
             </div>
         </div>
 
-        <!-- Transfer Rows Section -->
         <div class="space-y-4">
 
-            @for (item of stockTransferData.transfers; track $index) {
+            @for (item of stockTransferData.transfers; track item; let i = $index) {
 
             <div
                 class="relative p-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
 
                 @if (stockTransferData.transfers.length > 1) {
-                <button (click)="removeTransferRow($index)"
+                <button (click)="removeTransferRow(i)"
                     class="absolute top-4 right-4 w-9 h-9 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-all flex items-center justify-center">
 
                     <span class="material-symbols-outlined text-[18px]">
@@ -1228,26 +1261,43 @@
                 }
 
                 <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_130px] gap-4 items-start">
-
-                    <!-- From Project -->
                     <div>
 
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
                             From Project
                         </label>
 
-                        <select [(ngModel)]="item.from_project_id"
-                            class="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/20">
+                        <div class="custom-dropdown-wrapper relative">
+                            <button type="button" (click)="toggleDropdown('transfer-from-' + i)" class="w-full px-4 py-3 rounded-2xl border-2 flex items-center justify-between
+                       bg-white dark:bg-slate-900 text-sm font-bold outline-none
+                       transition-all duration-200 cursor-pointer"
+                                [ngClass]="(openDropdown === ('transfer-from-' + i)) ? 'border-primary ring-4 ring-primary/10' : 'border-slate-200 dark:border-slate-700 hover:border-primary/40'">
+                                <span class="truncate text-left"
+                                    [ngClass]="item.from_project_id ? 'text-slate-800 dark:text-white' : 'text-slate-400'">
+                                    {{ getProjectNameById(item.from_project_id) || 'Select Project' }}
+                                </span>
+                                <span
+                                    class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                                    [ngClass]="(openDropdown === ('transfer-from-' + i)) ? 'rotate-180 text-primary' : 'text-slate-400'">expand_more</span>
+                            </button>
 
-                            <option value="">Select Project</option>
-
-                            @for (p of projects; track p.id) {
-                            <option [value]="p.id">
-                                {{ p.name }} (Stock : {{ getProjectStock(p.id) }})
-                            </option>
+                            @if ((openDropdown === ('transfer-from-' + i))) {
+                            <div
+                                class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+                                <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                                    @for (p of projects; track p.id) {
+                                    <div (click)="selectTransferFromProject(i, p)"
+                                        class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150 flex items-center justify-between"
+                                        [ngClass]="item.from_project_id === p.id ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                                        <span>{{ p.name }}</span>
+                                        <span class="text-[10px] font-semibold text-slate-400">Stock : {{
+                                            getProjectStock(p.id) }}</span>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
                             }
-
-                        </select>
+                        </div>
 
                         @if (item.from_project_id) {
 
@@ -1281,7 +1331,6 @@
 
                     </div>
 
-                    <!-- Arrow -->
                     <div class="hidden md:flex justify-center pt-6">
 
                         <div
@@ -1295,25 +1344,43 @@
 
                     </div>
 
-                    <!-- To Project -->
                     <div>
 
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
                             To Project
                         </label>
 
-                        <select [(ngModel)]="item.to_project_id"
-                            class="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/20">
+                        <div class="custom-dropdown-wrapper relative">
+                            <button type="button" (click)="toggleDropdown('transfer-to-' + i)" class="w-full px-4 py-3 rounded-2xl border-2 flex items-center justify-between
+                       bg-white dark:bg-slate-900 text-sm font-bold outline-none
+                       transition-all duration-200 cursor-pointer"
+                                [ngClass]="(openDropdown === ('transfer-to-' + i)) ? 'border-primary ring-4 ring-primary/10' : 'border-slate-200 dark:border-slate-700 hover:border-primary/40'">
+                                <span class="truncate text-left"
+                                    [ngClass]="item.to_project_id ? 'text-slate-800 dark:text-white' : 'text-slate-400'">
+                                    {{ getProjectNameById(item.to_project_id) || 'Select Project' }}
+                                </span>
+                                <span
+                                    class="material-symbols-outlined text-[20px] shrink-0 ml-2 transition-transform duration-200"
+                                    [ngClass]="(openDropdown === ('transfer-to-' + i)) ? 'rotate-180 text-primary' : 'text-slate-400'">expand_more</span>
+                            </button>
 
-                            <option value="">Select Project</option>
-
-                            @for (p of projects; track p.id) {
-                            <option [value]="p.id">
-                                {{ p.name }} (Stock : {{ getProjectStock(p.id) }})
-                            </option>
+                            @if ((openDropdown === ('transfer-to-' + i))) {
+                            <div
+                                class="dropdown-panel absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+                                <div class="max-h-56 overflow-y-auto custom-scrollbar smooth-scroll py-1.5">
+                                    @for (p of projects; track p.id) {
+                                    <div (click)="selectTransferToProject(i, p)"
+                                        class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors duration-150 flex items-center justify-between"
+                                        [ngClass]="item.to_project_id === p.id ? 'bg-primary/10 text-primary' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'">
+                                        <span>{{ p.name }}</span>
+                                        <span class="text-[10px] font-semibold text-slate-400">Stock : {{
+                                            getProjectStock(p.id) }}</span>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
                             }
-
-                        </select>
+                        </div>
 
                         @if (item.to_project_id) {
 
@@ -1347,7 +1414,6 @@
 
                     </div>
 
-                    <!-- Quantity -->
                     <div>
 
                         <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
@@ -1365,7 +1431,6 @@
 
             }
 
-            <!-- Add Row Button -->
             <button (click)="addTransferRow()"
                 class="w-full py-4 rounded-2xl border-2 border-dashed border-primary/30 text-primary font-black hover:bg-primary/5 transition-all flex items-center justify-center gap-2">
 
@@ -1379,7 +1444,6 @@
 
         </div>
 
-        <!-- Remarks Card -->
         <div class="p-5 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
 
             <label class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 block">

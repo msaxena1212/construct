@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, HostListener } from '@angular/core';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MaterialService, Material } from '../../../shared/services/materials/materials';
@@ -70,28 +70,32 @@ export class Materials {
   Number: any;
   searchQuery: any;
   noOfProjectsAssigned: number = 0;
-  noOfProjectsNotAssigned: number=0;
-  categories: any[]= [];
+  noOfProjectsNotAssigned: number = 0;
+  categories: any[] = [];
+
+  openDropdown: string | null = null;
+  categoryOptions: string[] = ['Concrete', 'Steel', 'Electrical', 'Lumber', 'Finishing', 'Chemicals'];
+  sortOptions: string[] = ['Usage Rate (Highest)', 'Usage Rate (Lowest)', 'Stock Level (Asc)', 'Stock Level (Desc)', 'Newest Additions'];
+  selectedSort: string = this.sortOptions[0];
 
   ngOnInit() {
     this.materialService.loadMaterials();
 
-    this.materialService.materials$.subscribe((m:any) => {
+    this.materialService.materials$.subscribe((m: any) => {
       this.materials = m;
 
       this.noOfProjectsAssigned = m.filter(
-        (x:any) => x.material_project_stock && x.material_project_stock.length > 0
+        (x: any) => x.material_project_stock && x.material_project_stock.length > 0
       ).length;
 
       this.noOfProjectsNotAssigned = m.filter(
-        (x:any) => !x.material_project_stock || x.material_project_stock.length === 0
+        (x: any) => !x.material_project_stock || x.material_project_stock.length === 0
       ).length;
-
 
       this.page = 1;
       this.updatePagination();
     });
-    
+
     this.loadProjects();
 
     this.MaterialMasterService.materials$.subscribe(m => {
@@ -102,14 +106,92 @@ export class Materials {
     this.getCategories();
   }
 
-    getCategories() {
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.custom-dropdown-wrapper')) {
+      this.openDropdown = null;
+    }
+  }
 
+  toggleDropdown(name: string) {
+    this.openDropdown = this.openDropdown === name ? null : name;
+  }
+
+  closeDropdown() {
+    this.openDropdown = null;
+  }
+
+  getProjectName(id: any): string {
+    const p = this.projects.find((x: any) => x.id == id);
+    return p?.name || '';
+  }
+
+  selectMaterialMasterOption(material: any) {
+    this.newMaterial.material_master_id = material.id;
+    this.getSelectedMat({ target: { value: material.id } });
+    this.closeDropdown();
+  }
+
+  selectCategory(target: 'new' | 'edit', cat: string) {
+    if (target === 'new') {
+      this.newMaterial.category = cat;
+    } else {
+      this.materialToEdit.category = cat;
+    }
+    this.closeDropdown();
+  }
+
+  selectProjectOption(target: 'new' | 'edit', project: any) {
+    if (target === 'new') {
+      this.newMaterial.project_id = project.id;
+      this.newMaterial.project_name = project.name;
+    } else {
+      this.materialToEdit.project_id = project.id;
+      this.materialToEdit.project_name = project.name;
+    }
+    this.getProject({ target: { value: project.id } });
+    this.closeDropdown();
+  }
+
+  selectVendorOption(vendor: any) {
+    if (vendor === 'ADD_NEW') {
+      this.showAddVendorModal = true;
+      this.newMaterial.vendor_id = '';
+      this.newMaterial.vendor_name = '';
+      this.closeDropdown();
+      return;
+    }
+
+    this.newMaterial.vendor_id = vendor.id;
+    this.newMaterial.vendor_name = vendor.name;
+    this.closeDropdown();
+  }
+
+  selectAssignProjectOption(index: number, project: any) {
+    this.assignedProjects[index].project_id = project.id;
+    this.validateAssignedStock();
+    this.closeDropdown();
+  }
+
+  selectTransferProjectOption(index: number, field: 'from' | 'to', project: any) {
+    if (field === 'from') {
+      this.stockTransferData.transfers[index].from_project_id = project.id;
+    } else {
+      this.stockTransferData.transfers[index].to_project_id = project.id;
+    }
+    this.closeDropdown();
+  }
+
+  selectSortOption(option: string) {
+    this.selectedSort = option;
+    this.closeDropdown();
+  }
+
+  getCategories() {
     this.categoryService.loadCategories().subscribe({
-
       next: () => {
-
         this.categoryService.categories$.subscribe((res) => {
-
           this.categories = [
             {
               category_name: 'All Materials',
@@ -120,11 +202,8 @@ export class Materials {
           this.updatePagination();
         });
       },
-
       error: (err) => {
-
         console.error(err);
-
         this.toast.error('Failed to load skills');
       }
     });
@@ -150,18 +229,13 @@ export class Materials {
   }
 
   get filteredMaterials(): any[] {
-
     let filtered = [...this.materials];
 
-    // 🔥 Tab Filter
     if (this.selectedTab === 'Low Stock') {
-
       filtered = filtered.filter(
         m => m.stockIn < 20
       );
-
     } else if (this.selectedTab !== 'All Materials') {
-
       filtered = filtered.filter(
         m =>
           (m.category || '')
@@ -171,9 +245,7 @@ export class Materials {
       );
     }
 
-    // 🔥 Search Filter
     if (this.searchQuery) {
-
       const q = this.searchQuery.toLowerCase();
 
       filtered = filtered.filter((material: any) =>
@@ -193,7 +265,6 @@ export class Materials {
   }
 
   updatePagination() {
-
     const start = (this.page - 1) * this.pageSize;
     const end = start + this.pageSize;
 
@@ -225,12 +296,9 @@ export class Materials {
   }
 
   onSearchChange() {
-
     this.page = 1;
-
     this.updatePagination();
   }
-
 
   onSupplierChange() {
     if (this.newMaterial.vendor_name === 'ADD_NEW') {
@@ -252,7 +320,6 @@ export class Materials {
       vendor_name: '',
       vendor_id: '',
       status: 'ASSIGNED',
-
     };
   }
 
@@ -263,18 +330,13 @@ export class Materials {
   }
 
   formatCost() {
-
     const value = Number(this.newMaterial.cost || 0);
-
     this.newMaterial.cost = value.toFixed(2);
-
   }
+
   formatCostEdit() {
-
     const value = Number(this.materialToEdit.cost || 0);
-
     this.materialToEdit.cost = value.toFixed(2);
-
   }
 
   openAddModal() {
@@ -283,9 +345,7 @@ export class Materials {
   }
 
   getProject(projectId: any) {
-
     const selectedId = Number(projectId.target.value);
-
     const project = this.projects.find((p: any) => p.id === selectedId);
 
     console.log(project, 'project');
@@ -301,8 +361,6 @@ export class Materials {
         this.showAddModal = false;
         this.toast.success('Material added successfully');
         this.materialService.loadMaterials();
-
-        // optional: form reset
         this.getDefaultMaterial();
       },
       error: (err) => {
@@ -314,7 +372,6 @@ export class Materials {
 
   openEditModal(event: Event, material: Material) {
     console.log(material);
-
     event.stopPropagation();
     this.materialToEdit = { ...material };
     this.showEditModal = true;
@@ -322,7 +379,6 @@ export class Materials {
 
   updateMaterial() {
     if (this.materialToEdit) {
-
       this.materialToEdit.stockPercent = Math.round(
         (this.materialToEdit.stockCurrent / this.materialToEdit.stockTotal) * 100
       );
@@ -330,15 +386,13 @@ export class Materials {
       this.materialToEdit.status = 'ASSIGNED';
 
       this.materialService
-        .updateMaterial(this.materialToEdit.id, this.materialToEdit) // ✅ id use karo
+        .updateMaterial(this.materialToEdit.id, this.materialToEdit)
         .subscribe({
           next: () => {
             this.showEditModal = false;
-            this.materialToEdit = null; // ✅ cleanup
+            this.materialToEdit = null;
             this.toast.success('Material updated successfully');
             this.materialService.loadMaterials();
-
-
           },
           error: (err) => {
             console.error('Update failed', err);
@@ -356,56 +410,47 @@ export class Materials {
 
   confirmDelete() {
     if (this.materialToDelete) {
-
       this.materialService
-        .deleteMaterial(this.materialToDelete.id) // ✅ id use karo
+        .deleteMaterial(this.materialToDelete.id)
         .subscribe({
           next: () => {
             this.showDeleteModal = false;
-            this.materialToDelete = null; // ✅ cleanup
+            this.materialToDelete = null;
             this.toast.success('Material deleted successfully');
             this.materialService.loadMaterials();
-
           },
           error: (err) => {
             console.error('Delete failed', err);
             this.toast.error(err?.error?.message || 'Failed to delete material');
-
           }
         });
     }
   }
-  calculateStatus(percent: number): 'ASSIGNED' | 'NOT ASSIGNED' {
 
+  calculateStatus(percent: number): 'ASSIGNED' | 'NOT ASSIGNED' {
     if (percent > 0) {
       return 'ASSIGNED';
     }
-
     return 'NOT ASSIGNED';
   }
 
   getSelectedMat(event: any) {
-
     const id = Number(event.target.value);
-
     if (!id) return;
 
     this.MaterialMasterService.getMaterialMasterById(id).subscribe({
       next: (res: any) => {
-
         const data = res?.data || res;
 
         this.newMaterial = {
           ...this.newMaterial,
-
-          name: data?.name || '', // 👈 name bhi jayega
+          name: data?.name || '',
           sku: data?.sku || '',
           category: data?.category || '',
           material_master_id: data?.id || 0,
         };
 
         console.log('Selected Material =>', this.newMaterial);
-
       },
       error: (err) => {
         console.log(err);
@@ -415,9 +460,7 @@ export class Materials {
 
   getVendors() {
     this.vendorService.vendors$.subscribe(v => {
-
       this.vendors = v;
-
     });
   }
 
@@ -447,7 +490,6 @@ export class Materials {
         this.isSaving = false;
         this.showAddVendorModal = false;
         this.getVendors();
-
       },
       error: (err) => {
         this.isSaving = false;
@@ -457,45 +499,25 @@ export class Materials {
   }
 
   onContractFileSelected(event: any) {
-
     this.contractFile = event.target.files[0];
-
   }
 
   onlyNumbers(event: KeyboardEvent) {
-
-    const charCode = event.which
-      ? event.which
-      : event.keyCode;
-
+    const charCode = event.which ? event.which : event.keyCode;
     if (charCode < 48 || charCode > 57) {
-
       event.preventDefault();
-
     }
-
   }
 
   onlyAlphanumeric(event: KeyboardEvent) {
-
     const regex = /^[a-zA-Z0-9]$/;
-
     const key = event.key;
-
     if (!regex.test(key)) {
-
       event.preventDefault();
-
     }
-
   }
 
-  stripNonNumericOnPaste(
-    event: ClipboardEvent,
-    field: string,
-    len: number
-  ) {
-
+  stripNonNumericOnPaste(event: ClipboardEvent, field: string, len: number) {
     event.preventDefault();
 
     const pastedData =
@@ -507,23 +529,15 @@ export class Materials {
     if (field === 'phone') {
       this.newVendor.phone = pastedData;
     }
-
     if (field === 'spocPhone') {
       this.newVendor.spoc.phone = pastedData;
     }
-
     if (field === 'pincode') {
       this.newVendor.address.pincode = pastedData;
     }
-
   }
 
-  stripNonAlphanumericOnPaste(
-    event: ClipboardEvent,
-    field: string,
-    len: number
-  ) {
-
+  stripNonAlphanumericOnPaste(event: ClipboardEvent, field: string, len: number) {
     event.preventDefault();
 
     const pastedData =
@@ -536,57 +550,33 @@ export class Materials {
     if (field === 'gst') {
       this.newVendor.kyc.gst = pastedData;
     }
-
     if (field === 'pan') {
       this.newVendor.kyc.pan = pastedData;
     }
-
   }
 
   getvendor(event: any) {
-
     const value = event.target.value;
 
-    // ✅ Add new vendor modal open
     if (value == 'ADD_NEW') {
-
       this.showAddVendorModal = true;
-      console.log('Add new vendor selected', this.showAddVendorModal, value);
-
-
-
-      // optional reset
       this.newMaterial.vendor_id = '';
-
       return;
     }
 
-    // ✅ Existing vendor select
-    const vendor = this.vendors.find(
-      (v: any) => v.id == value
-    );
-
+    const vendor = this.vendors.find((v: any) => v.id == value);
     this.newMaterial.vendor_name = vendor?.name || '';
     this.newMaterial.vendor_id = value || '';
-
-    console.log(vendor, 'selected vendor');
   }
 
   showAssignProjectModal = false;
-
   selectedProjects: number[] = [];
 
   toggleProjectSelection(projectId: number) {
-
     if (this.selectedProjects.includes(projectId)) {
-
-      this.selectedProjects =
-        this.selectedProjects.filter(id => id !== projectId);
-
+      this.selectedProjects = this.selectedProjects.filter(id => id !== projectId);
     } else {
-
       this.selectedProjects.push(projectId);
-
     }
   }
 
@@ -600,89 +590,59 @@ export class Materials {
   projectAssignError: string = '';
 
   openAssignProjectModal(material: any) {
-
     this.materialToEdit = material;
-
     this.assignedProjects = [
       {
         project_id: null,
         stock: null
       }
     ];
-
     this.projectAssignError = '';
-
     this.showAssignProjectModal = true;
   }
 
   addProjectRow() {
-
     this.assignedProjects.push({
       project_id: null,
       stock: null
     });
-
   }
 
   removeProjectRow(index: number) {
-
     if (this.assignedProjects.length === 1) {
       return;
     }
-
     this.assignedProjects.splice(index, 1);
-
     this.validateAssignedStock();
   }
 
   validateAssignedStock(): boolean {
-
     this.projectAssignError = '';
-
     let totalAssignedStock = 0;
-
     const selectedProjects: any[] = [];
 
     for (const item of this.assignedProjects) {
-
-      // Empty validation
       if (!item.project_id || item.stock === null || item.stock === '') {
-
-        this.projectAssignError =
-          'Please select project and enter stock for all rows';
-
+        this.projectAssignError = 'Please select project and enter stock for all rows';
         return false;
       }
 
-      // Negative validation
       if (+item.stock <= 0) {
-
-        this.projectAssignError =
-          'Stock quantity must be greater than 0';
-
+        this.projectAssignError = 'Stock quantity must be greater than 0';
         return false;
       }
 
-      // Duplicate project validation
       if (selectedProjects.includes(item.project_id)) {
-
-        this.projectAssignError =
-          'Same project cannot be selected multiple times';
-
+        this.projectAssignError = 'Same project cannot be selected multiple times';
         return false;
       }
 
       selectedProjects.push(item.project_id);
-
       totalAssignedStock += Number(item.stock);
     }
 
-    // Total stock validation
     if (totalAssignedStock > this.materialToEdit.stockIn) {
-
-      this.projectAssignError =
-        `Assigned stock (${totalAssignedStock}) cannot exceed available stock (${this.materialToEdit.stockIn})`;
-
+      this.projectAssignError = `Assigned stock (${totalAssignedStock}) cannot exceed available stock (${this.materialToEdit.stockIn})`;
       return false;
     }
 
@@ -690,7 +650,6 @@ export class Materials {
   }
 
   getTotalAssignedStock(): number {
-
     return this.assignedProjects.reduce(
       (sum, item) => sum + (Number(item.stock) || 0),
       0
@@ -698,7 +657,6 @@ export class Materials {
   }
 
   getRemainingStock(): number {
-
     return (
       Number(this.materialToEdit?.stockRemaining || 0) -
       this.getTotalAssignedStock()
@@ -706,26 +664,18 @@ export class Materials {
   }
 
   assignProjects() {
-
     const isValid = this.validateAssignedStock();
-
     if (!isValid) {
       return;
     }
 
-    // project name add karo
     const projectsWithName = this.assignedProjects.map(item => {
-
-      const project = this.projects.find(
-        (p: any) => p.id == item.project_id
-      );
-
+      const project = this.projects.find((p: any) => p.id == item.project_id);
       return {
         ...item,
         project_name: project?.name || '',
         status: 'ASSIGNED'
       };
-
     });
 
     const payload = {
@@ -739,32 +689,22 @@ export class Materials {
       .updateMaterial(this.materialToEdit.id, payload)
       .subscribe({
         next: () => {
-
           this.showEditModal = false;
           this.materialToEdit = null;
-
           this.toast.success('Material updated successfully');
-
           this.materialService.loadMaterials();
 
           this.materialService.materials$.subscribe(m => {
             this.materials = m;
-            this.page = 1; // 🔥 reset page (important)
-            this.updatePagination(); // ✅ yahi sahi jagah hai
+            this.page = 1;
+            this.updatePagination();
           });
 
           this.showAssignProjectModal = false;
-
         },
-
         error: (err) => {
-
           console.error('Update failed', err);
-
-          this.toast.error(
-            err?.error?.message || 'Failed to update material'
-          );
-
+          this.toast.error(err?.error?.message || 'Failed to update material');
         }
       });
   }
@@ -773,11 +713,8 @@ export class Materials {
   showProjectStockPopup = false;
 
   openProjectStockPopup(item: any) {
-
     this.selectedProjectStock = item;
-
     this.showProjectStockPopup = true;
-
   }
 
   showStockTransferModal = false;
@@ -797,27 +734,20 @@ export class Materials {
     }
 
     const stock = this.selectedMaterial.material_project_stock.find(
-      (x: any) => x.project_id
-        == projectId
+      (x: any) => x.project_id == projectId
     );
 
     return stock?.stockUsed || 0;
   }
 
   openStockTransferModal(material: any) {
-
     this.selectedMaterial = material;
     console.log(material, 'material for stock transfer');
 
-
     this.stockTransferData = {
-
       material_id: material.id,
-
       stockIn: material.stockIn,
-
       transfer_note: '',
-
       transfers: [
         {
           from_project_id: material.project_id || '',
@@ -831,69 +761,47 @@ export class Materials {
   }
 
   addTransferRow() {
-
     this.stockTransferData.transfers.push({
       from_project_id: '',
       to_project_id: '',
       quantity: 0
     });
-
   }
-
-
 
   removeTransferRow(index: number) {
-
     this.stockTransferData.transfers.splice(index, 1);
-
   }
-
-
 
   getTotalTransferQty(): number {
-
     return this.stockTransferData.transfers.reduce(
-      (sum: number, item: any) =>
-        sum + Number(item.quantity || 0),
+      (sum: number, item: any) => sum + Number(item.quantity || 0),
       0
     );
-
   }
 
-
-
   transferStock() {
-
     if (!this.stockTransferData.transfers.length) {
       this.toast.error('Add at least one transfer');
       return;
     }
 
     for (const item of this.stockTransferData.transfers) {
-
       if (!item.from_project_id) {
         this.toast.error('Select From Project');
         return;
       }
-
       if (!item.to_project_id) {
         this.toast.error('Select To Project');
         return;
       }
-
-      if (
-        item.from_project_id ===
-        item.to_project_id
-      ) {
+      if (item.from_project_id === item.to_project_id) {
         this.toast.error('From & To project cannot be same');
         return;
       }
-
       if (!item.quantity || item.quantity <= 0) {
         this.toast.error('Enter valid quantity');
         return;
       }
-
     }
 
     const totalQty = this.getTotalTransferQty();
@@ -905,7 +813,6 @@ export class Materials {
 
     const payload = {
       note: this.stockTransferData.transfer_note,
-
       transfers: this.stockTransferData.transfers.map((t: any) => ({
         from_project_id: t.from_project_id,
         to_project_id: t.to_project_id,
@@ -914,44 +821,17 @@ export class Materials {
     };
 
     this.materialService
-      .material_stock_transfer(
-
-        this.stockTransferData.material_id,
-
-        payload
-
-      )
+      .material_stock_transfer(this.stockTransferData.material_id, payload)
       .subscribe({
-
         next: () => {
-
-          this.toast.success(
-
-            'Material transferred successfully'
-
-          );
-
+          this.toast.success('Material transferred successfully');
           this.materialService.loadMaterials();
           this.showStockTransferModal = false;
-
         },
-
         error: (err) => {
-
           console.error('Update failed', err);
-
-          this.toast.error(
-
-            err?.error?.message ||
-
-            'Failed to update material'
-
-          );
-
+          this.toast.error(err?.error?.message || 'Failed to update material');
         }
-
       });
   }
 }
-
-

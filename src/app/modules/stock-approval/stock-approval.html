@@ -1,10 +1,8 @@
-<section class="p-6 flex flex-col gap-6 animate-in fade-in duration-500">
-
-  <!-- Header -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+<section class="p-4 sm:p-6 flex flex-col gap-6 animate-in fade-in duration-500">
+  <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
 
     <div>
-      <h2 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight">
         Stock Requests
       </h2>
 
@@ -13,55 +11,56 @@
       </p>
     </div>
 
-    <!-- Filters -->
-    <div class="flex flex-wrap gap-3">
+    <div
+      class="flex flex-wrap items-center justify-start xl:justify-center gap-2 overflow-x-auto custom-scrollbar smooth-scroll pb-1">
 
       <button (click)="filterRequests('all')" [ngClass]="selectedFilter === 'all'
-      ? 'bg-primary text-white'
-      : 'bg-white text-slate-600 border border-slate-200'" class="px-5 py-2 rounded-xl font-semibold transition-all">
+      ? 'bg-primary text-white shadow-md shadow-primary/30'
+      : 'bg-white text-slate-600 border border-slate-200 hover:border-primary/30 hover:text-primary'"
+        class="shrink-0 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300">
 
         All
       </button>
 
       <button (click)="filterRequests('pending')" [ngClass]="selectedFilter === 'pending'
-      ? 'bg-amber-500 text-white'
-      : 'bg-white text-slate-600 border border-slate-200'" class="px-5 py-2 rounded-xl font-semibold transition-all">
+      ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
+      : 'bg-white text-slate-600 border border-slate-200 hover:border-amber-300 hover:text-amber-600'"
+        class="shrink-0 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300">
 
         Pending
       </button>
 
       <button (click)="filterRequests('approved')" [ngClass]="selectedFilter === 'approved'
-      ? 'bg-emerald-500 text-white'
-      : 'bg-white text-slate-600 border border-slate-200'" class="px-5 py-2 rounded-xl font-semibold transition-all">
+      ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+      : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-300 hover:text-emerald-600'"
+        class="shrink-0 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300">
 
         Approved
       </button>
 
       <button (click)="filterRequests('rejected')" [ngClass]="selectedFilter === 'rejected'
-      ? 'bg-rose-500 text-white'
-      : 'bg-white text-slate-600 border border-slate-200'" class="px-5 py-2 rounded-xl font-semibold transition-all">
+      ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30'
+      : 'bg-white text-slate-600 border border-slate-200 hover:border-rose-300 hover:text-rose-600'"
+        class="shrink-0 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300">
 
         Rejected
       </button>
 
     </div>
 
-    <!-- Count -->
-    <div class="px-5 py-3 rounded-2xl bg-primary/10 text-primary font-bold text-sm w-fit">
+    <div class="px-5 py-3 rounded-2xl bg-primary/10 text-primary font-bold text-sm w-fit shrink-0">
       Total Requests : {{ filteredRequests.length || 0 }}
     </div>
 
   </div>
 
-  <!-- Loading -->
   <div *ngIf="loading" class="flex items-center justify-center py-20">
     <div class="h-14 w-14 border-4 border-primary border-t-transparent rounded-full animate-spin">
     </div>
   </div>
 
-  <!-- Empty State -->
   <div *ngIf="!loading && filteredRequests.length === 0" class="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700
-           p-16 text-center bg-white dark:bg-slate-900">
+           p-10 sm:p-16 text-center bg-white dark:bg-slate-900">
 
     <span class="material-symbols-outlined text-6xl text-slate-400">
       inventory_2
@@ -73,7 +72,6 @@
 
   </div>
 
-  <!-- Grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
     <div *ngFor="let request of filteredRequests" class="group rounded-[28px] overflow-hidden
@@ -82,11 +80,10 @@
              shadow-sm hover:shadow-2xl
              hover:-translate-y-1 transition-all duration-300">
 
-      <!-- Top -->
       <div class="p-6 border-b border-slate-100 dark:border-slate-800
                flex items-start justify-between gap-4">
 
-        <div>
+        <div class="min-w-0">
 
           <div class="h-14 w-14 rounded-2xl bg-primary/10 text-primary
                    flex items-center justify-center mb-4">
@@ -97,7 +94,7 @@
 
           </div>
 
-          <h3 class="text-lg font-bold text-slate-800 dark:text-white leading-snug">
+          <h3 class="text-lg font-bold text-slate-800 dark:text-white leading-snug break-words">
             {{ request.task_title }}
           </h3>
 
@@ -107,10 +104,9 @@
 
         </div>
 
-        <!-- Status -->
-        <div>
+        <div class="shrink-0">
 
-          <span class="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide" [ngClass]="{
+          <span class="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide whitespace-nowrap" [ngClass]="{
               'bg-amber-100 text-amber-700': request.status === 'pending',
               'bg-emerald-100 text-emerald-700': request.status === 'approved',
               'bg-rose-100 text-rose-700': request.status === 'rejected'
@@ -124,7 +120,6 @@
 
       </div>
 
-      <!-- Body -->
       <div class="p-6 flex flex-col gap-4">
 
         <div class="grid grid-cols-2 gap-4">
@@ -155,40 +150,39 @@
 
         </div>
 
-        <!-- Info -->
         <div class="flex flex-col gap-3 text-sm">
 
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
 
-            <span class="text-slate-500">
+            <span class="text-slate-500 shrink-0">
               Material ID
             </span>
 
-            <span class="font-bold text-slate-700 dark:text-slate-200">
+            <span class="font-bold text-slate-700 dark:text-slate-200 truncate">
               #{{ request.material_id }}
             </span>
 
           </div>
 
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
 
-            <span class="text-slate-500">
+            <span class="text-slate-500 shrink-0">
               Project ID
             </span>
 
-            <span class="font-bold text-slate-700 dark:text-slate-200">
+            <span class="font-bold text-slate-700 dark:text-slate-200 truncate">
               #{{ request.project_id }}
             </span>
 
           </div>
 
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
 
-            <span class="text-slate-500">
+            <span class="text-slate-500 shrink-0">
               Created
             </span>
 
-            <span class="font-semibold text-slate-700 dark:text-slate-200">
+            <span class="font-semibold text-slate-700 dark:text-slate-200 truncate">
               {{ request.createdAt | date:'mediumDate' }}
             </span>
 
@@ -198,10 +192,8 @@
 
       </div>
 
-      <!-- Footer -->
-      <div *ngIf="request.status === 'pending'" class="p-6 pt-0 flex items-center gap-4 ">
-
-        <!-- Approve -->
+      <div *ngIf="request.status === 'pending'"
+        class="p-6 pt-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         <button (click)="openApproveDialog(request.id)" class="group flex-1 h-12 rounded-2xl
            bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500
            hover:from-emerald-400 hover:via-green-400 hover:to-teal-400
@@ -222,7 +214,6 @@
 
         </button>
 
-        <!-- Reject -->
         <button (click)="openRejectDialog(request.id)" class="group flex-1 h-12 rounded-2xl
            bg-gradient-to-r from-rose-500 via-red-500 to-pink-500
            hover:from-rose-400 hover:via-red-400 hover:to-pink-400
@@ -248,31 +239,22 @@
 
   </div>
 
-<app-common-dialog
-  [open]="showRequestDialog"
-  maxWidth="max-w-xl"
-  [title]="dialogData.title"
-  [subtitle]="dialogData.subtitle"
-  icon="warning"
-  [showCloseButton]="true"
-  [showFooter]="true"
-  cancelLabel="Cancel"
-  primaryLabel="Confirm"
-  (closed)="closeDialog()"
-  (primary)="confirmAction()">
+  <app-common-dialog [open]="showRequestDialog" maxWidth="max-w-xl" [title]="dialogData.title"
+    [subtitle]="dialogData.subtitle" icon="warning" [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel"
+    primaryLabel="Confirm" (closed)="closeDialog()" (primary)="confirmAction()">
 
-  <div class="p-8 text-center">
-    <p class="text-outline text-sm font-medium">
-      {{ dialogData.subtitle }}
-    </p>
+    <div class="p-6 sm:p-8 text-center max-h-[60vh] overflow-y-auto custom-scrollbar smooth-scroll">
+      <p class="text-outline text-sm font-medium">
+        {{ dialogData.subtitle }}
+      </p>
 
-    <p class="text-amber-700 text-xs mt-3">
-      This action will update the request status immediately and cannot be undone later.
-    </p>
-  </div>
-  
+      <p class="text-amber-700 text-xs mt-3">
+        This action will update the request status immediately and cannot be undone later.
+      </p>
+    </div>
 
-</app-common-dialog>
+
+  </app-common-dialog>
 
 
 </section>

@@ -17,10 +17,7 @@ import { Equipment } from '../../../shared/services/master/equipment';
   styleUrl: './new-quotations.scss',
 })
 export class NewQuotations implements OnInit {
-
   private materialService = inject(MaterialMasterService);
-
-  // ADD THIS
   private equipmentService = inject(Equipment);
 
   private vendorService = inject(VendorsServices);
@@ -32,8 +29,6 @@ export class NewQuotations implements OnInit {
   currentStep = 1;
 
   materials: Material[] = [];
-
-  // ADD THIS
   equipments: any[] = [];
 
   vendors: Vendor[] = [];
@@ -43,8 +38,6 @@ export class NewQuotations implements OnInit {
   searchQuery = '';
 
   selectedMaterials = new Set<string>();
-
-  // For Step 2
   quoteItems: QuoteItem[] = [];
 
   selectedVendor: any;
@@ -53,10 +46,41 @@ export class NewQuotations implements OnInit {
 
   filteredMaterialsTab: any[] = [];
 
+  typeDropdownOpen = false;
+  typeOptions: { label: string; value: 'MATERIAL' | 'EQUIPMENT' }[] = [
+    { label: 'Material', value: 'MATERIAL' },
+    { label: 'Equipment', value: 'EQUIPMENT' }
+  ];
 
-  // =========================
-  // FILTER RESOURCES
-  // =========================
+  openVendorDropdownIndex: number | null = null;
+
+  toggleTypeDropdown() {
+    this.typeDropdownOpen = !this.typeDropdownOpen;
+    this.openVendorDropdownIndex = null;
+  }
+
+  selectType(value: 'MATERIAL' | 'EQUIPMENT') {
+    this.selectedType = value;
+    this.typeDropdownOpen = false;
+    this.onTypeChange();
+  }
+
+  toggleVendorDropdown(index: number) {
+    this.openVendorDropdownIndex = this.openVendorDropdownIndex === index ? null : index;
+    this.typeDropdownOpen = false;
+  }
+
+  selectVendor(item: any, vendor: Vendor) {
+    item.vendorId = vendor.id;
+    item.vendor_name = vendor.name;
+    this.selectedVendor = vendor;
+    this.openVendorDropdownIndex = null;
+  }
+
+  closeAllDropdowns() {
+    this.typeDropdownOpen = false;
+    this.openVendorDropdownIndex = null;
+  }
 
   onTypeChange() {
 
@@ -78,7 +102,6 @@ export class NewQuotations implements OnInit {
       );
 
     } else {
-      // this.loadResourcesByType();
       this.filteredMaterialsTab = this.equipments.filter((eq: any) =>
         eq.name?.toLowerCase().includes(query) ||
         eq.category?.toLowerCase().includes(query) ||
@@ -90,34 +113,28 @@ export class NewQuotations implements OnInit {
   }
 
   checkQuantity(item: any, event: any) {
-  let value = Number(event.target.value);
+    let value = Number(event.target.value);
 
-  if (value > 1000) {
-    value = 1000;
+    if (value > 1000) {
+      value = 1000;
+    }
+
+    if (value < 0) {
+      value = 0;
+    }
+
+    item.quantity = value || 0;
+    event.target.value = value || 0;
   }
-
-  if (value < 0) {
-    value = 0;
-  }
-
-  item.quantity = value || 0;
-  event.target.value = value || 0;
-}
 
 
   ngOnInit() {
-
-    // DEFAULT LOAD
     this.loadResourcesByType();
-
-
-    // VENDORS
     this.vendorService.vendors$.subscribe(v => {
       this.vendors = v;
     });
 
   }
-  // LOAD DATA BY TYPE
 
   loadResourcesByType() {
 
@@ -142,23 +159,15 @@ export class NewQuotations implements OnInit {
         this.filteredMaterialsTab = [...this.equipments];
 
       });
-
     }
-
   }
 
   get filteredMaterials() {
-
     return this.filteredMaterialsTab;
-
   }
 
-
   toggleMaterial(sku: string) {
-
     console.log(sku, 'sku fdfgdfgffhfg');
-
-
     if (this.selectedMaterials.has(sku)) {
 
       this.selectedMaterials.delete(sku);
@@ -172,8 +181,6 @@ export class NewQuotations implements OnInit {
 
 
   nextStep() {
-
-    // STEP 1
     if (this.currentStep === 1) {
 
       if (this.selectedMaterials.size === 0) {
@@ -186,17 +193,11 @@ export class NewQuotations implements OnInit {
       this.prepareQuoteItems();
     }
 
-
-    // STEP 2
     if (this.currentStep === 2) {
-
-      // Check every item vendor
       const missingVendor = this.quoteItems.find(
         (item: any) => !item.vendorId
       );
-
       if (missingVendor) {
-
         this.toast.error(
           `Please select vendor for ${missingVendor.name}`
         );
@@ -204,8 +205,6 @@ export class NewQuotations implements OnInit {
         return;
       }
 
-
-      // Check quantity
       const invalidQty = this.quoteItems.find(
         (item: any) => !item.quantity || item.quantity <= 0
       );
@@ -222,21 +221,15 @@ export class NewQuotations implements OnInit {
     }
 
     this.currentStep++;
-
   }
 
-
   prevStep() {
-
     this.currentStep--;
-
   }
 
 
   prepareQuoteItems() {
-
     console.log(this.quoteItems, 'this.quoteItems');
-
     const source =
       this.selectedType === 'MATERIAL'
         ? this.materials
@@ -295,16 +288,12 @@ export class NewQuotations implements OnInit {
 
 
   updateLineTotal(item: QuoteItem) {
-
     item.totalPrice = item.quantity * item.unitPrice;
-
   }
 
 
   get totalAmount() {
-
     return this.quoteItems.reduce((sum, item) => sum + item.totalPrice, 0);
-
   }
 
 
@@ -329,8 +318,6 @@ export class NewQuotations implements OnInit {
 
 
   submitQuote() {
-
-    // Validation
     if (!this.selectedVendor) {
 
       this.toast.error('Please select vendor');
@@ -358,7 +345,6 @@ export class NewQuotations implements OnInit {
 
     console.log(this.quoteItems, 'this.quoteItems');
 
-    // Dynamic Payload
     const payload = {
 
       date: new Date().toLocaleString('sv-SE').replace('T', ' '),
@@ -431,6 +417,6 @@ export class NewQuotations implements OnInit {
   }
 
   removeQuoteItem(index: number) {
-  this.quoteItems.splice(index, 1);;
-}
+    this.quoteItems.splice(index, 1);;
+  }
 }

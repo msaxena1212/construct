@@ -1,33 +1,33 @@
-<div class="bg-slate-50/50 animate-in">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-8">
+<div class="bg-slate-50/50 animate-in" (click)="closeAllDropdowns()">
+  <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-8">
     <div>
       <a routerLink="/master/resources/quotations"
         class="group inline-flex items-center gap-2.5 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 hover:-translate-x-1 transition-all shadow-sm mb-4">
         <span class="material-symbols-outlined text-[20px]">arrow_back</span>
         <span class="text-xs font-black uppercase tracking-widest">Back to List</span>
       </a>
-      <h1 class="text-4xl font-black tracking-tight text-slate-900 border-l-4 border-primary pl-6 py-1">New Quotation
+      <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 border-l-4 border-primary pl-6 py-1">New
+        Quotation
       </h1>
     </div>
 
-    <!-- Stepper Indicator -->
-    <div class="flex items-center gap-4 bg-white px-6 py-3 rounded-2xl border border-slate-200/60 shadow-sm">
-      <div [class]="'flex items-center gap-2 ' + (currentStep >= 1 ? 'text-primary' : 'text-slate-400')">
+    <div
+      class="flex items-center gap-4 bg-white px-6 py-3 rounded-2xl border border-slate-200/60 shadow-sm overflow-x-auto custom-scrollbar smooth-scroll">
+      <div [class]="'flex items-center gap-2 shrink-0 ' + (currentStep >= 1 ? 'text-primary' : 'text-slate-400')">
         <div
           [class]="'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ' + (currentStep >= 1 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400')">
           1</div>
         <span class="text-sm font-bold">Items</span>
       </div>
-      <div class="w-8 h-px bg-slate-200"></div>
-      <div [class]="'flex items-center gap-2 ' + (currentStep >= 2 ? 'text-primary' : 'text-slate-400')">
+      <div class="w-8 h-px bg-slate-200 shrink-0"></div>
+      <div [class]="'flex items-center gap-2 shrink-0 ' + (currentStep >= 2 ? 'text-primary' : 'text-slate-400')">
         <div
           [class]="'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ' + (currentStep >= 2 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400')">
           2</div>
         <span class="text-sm font-bold">Vendors</span>
       </div>
-      <div class="w-8 h-px bg-slate-200"></div>
-      <div [class]="'flex items-center gap-2 ' + (currentStep >= 3 ? 'text-primary' : 'text-slate-400')">
+      <div class="w-8 h-px bg-slate-200 shrink-0"></div>
+      <div [class]="'flex items-center gap-2 shrink-0 ' + (currentStep >= 3 ? 'text-primary' : 'text-slate-400')">
         <div
           [class]="'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ' + (currentStep >= 3 ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400')">
           3</div>
@@ -36,22 +36,39 @@
     </div>
   </div>
 
-  <!-- Step 1: Material Selection -->
   <div *ngIf="currentStep === 1" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-20">
-    <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm p-6">
-      <div class="flex items-center gap-4 mb-6">
+    <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6">
 
-        <div class="w-1/2">
-          <select [(ngModel)]="selectedType" (change)="onTypeChange()"
-            class="w-full px-4 py-3 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-primary/20 transition-all">
+        <div class="relative w-full sm:w-1/2" (click)="$event.stopPropagation()">
 
-            <option value="MATERIAL">Material</option>
-            <option value="EQUIPMENT">Equipment</option>
+          <button type="button" (click)="toggleTypeDropdown()"
+            class="w-full flex items-center justify-between px-4 py-3 bg-slate-50 border rounded-2xl text-sm font-semibold text-slate-700 transition-all"
+            [ngClass]="typeDropdownOpen ? 'ring-2 ring-primary/30 border-primary/40 bg-white' : 'border-transparent hover:border-slate-200'">
+            <span>{{ selectedType === 'MATERIAL' ? 'Material' : 'Equipment' }}</span>
+            <span class="material-symbols-outlined text-slate-400 transition-transform duration-200"
+              [ngClass]="typeDropdownOpen ? 'rotate-180' : ''">expand_more</span>
+          </button>
 
-          </select>
+          <div *ngIf="typeDropdownOpen"
+            class="custom-dropdown-wrapper absolute left-0 right-0 top-[calc(100%+8px)] z-50">
+            <div
+              class="dropdown-panel bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-slate-100 overflow-hidden">
+              <div class="max-h-60 overflow-y-auto custom-scrollbar smooth-scroll py-2">
+                <button type="button" *ngFor="let opt of typeOptions" (click)="selectType(opt.value)"
+                  class="w-full text-left px-4 py-3 text-sm font-semibold transition-all flex items-center justify-between"
+                  [ngClass]="selectedType === opt.value ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'">
+                  {{ opt.label }}
+                  <span *ngIf="selectedType === opt.value"
+                    class="material-symbols-outlined text-[18px] text-primary">check</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <div class="relative w-1/2">
+        <div class="relative w-full sm:w-1/2">
 
           <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
             search
@@ -159,13 +176,11 @@
 
             </div>
 
-            <!-- Stats Section -->
             <div class="rounded-2xl border border-slate-100 dark:border-slate-800
                bg-slate-50/70 dark:bg-slate-800/40 p-4">
 
               <div class="flex items-center justify-between">
 
-                <!-- Price -->
                 <div>
 
                   <p class="text-[10px] uppercase tracking-[0.25em]
@@ -188,7 +203,6 @@
 
                 </div>
 
-                <!-- SKU -->
                 <div class="text-right">
 
                   <p class="text-[9px] uppercase tracking-[0.22em]
@@ -214,7 +228,6 @@
 
             </div>
 
-            <!-- Bottom CTA -->
             <div [class]="
           'mt-5 w-full py-3 rounded-2xl flex items-center justify-center gap-2 text-sm font-black transition-all duration-300 ' +
           (
@@ -248,7 +261,7 @@
     </div>
 
     <div
-      class="fixed bottom-0 left-66 right-0 z-50 flex justify-end gap-4 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+      class="fixed bottom-0 left-0 lg:left-66 right-0 z-50 flex justify-end gap-4 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
       <button (click)="nextStep()" [disabled]="selectedMaterials.size === 0"
         [class]="'px-8 py-3 rounded-2xl font-bold text-white transition-all shadow-lg ' + (selectedMaterials.size > 0 ? 'bg-primary shadow-primary/20 hover:-translate-y-0.5' : 'bg-slate-300 opacity-50 cursor-not-allowed')">
         Continue to Vendors
@@ -256,11 +269,8 @@
     </div>
   </div>
 
-  <!-- Step 2: Details & Vendors -->
   <div *ngIf="currentStep === 2" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mb-20">
-
-    <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">
-
+    <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm">
       <table class="w-full text-left border-collapse">
 
         <thead class="bg-slate-50/50">
@@ -292,7 +302,6 @@
               Total
             </th>
 
-            <!-- Delete Column -->
             <th class="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">
 
               Action
@@ -307,7 +316,6 @@
           <tr *ngFor="let item of quoteItems; let i = index"
             class="border-b border-slate-50 last:border-none hover:bg-slate-50/50 transition-all">
 
-            <!-- Material -->
             <td class="px-8 py-6">
 
               <div class="text-sm font-bold text-slate-900">
@@ -320,35 +328,49 @@
 
             </td>
 
-            <!-- Vendor -->
             <td class="px-8 py-6">
 
-              <select (change)="onVendorChange(item, $event)" class="w-full bg-slate-50 border-none rounded-xl text-sm p-3
-                     focus:ring-2 focus:ring-primary/20 transition-all
-                     font-semibold text-slate-700">
+              <div class="relative min-w-[180px]" (click)="$event.stopPropagation()">
 
-                <option value="">
-                  Select Vendor...
-                </option>
+                <button type="button" (click)="toggleVendorDropdown(i)"
+                  class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-slate-50 rounded-xl text-sm font-semibold text-left transition-all"
+                  [ngClass]="openVendorDropdownIndex === i ? 'ring-2 ring-primary/30 bg-white' : 'hover:bg-slate-100'">
+                  <span class="truncate" [ngClass]="item.vendor_name ? 'text-slate-700' : 'text-slate-400'">
+                    {{ item.vendor_name || 'Select Vendor...' }}
+                  </span>
+                  <span
+                    class="material-symbols-outlined text-slate-400 text-[18px] shrink-0 transition-transform duration-200"
+                    [ngClass]="openVendorDropdownIndex === i ? 'rotate-180' : ''">expand_more</span>
+                </button>
 
-                <option *ngFor="let vendor of vendors" [value]="vendor.id" [selected]="vendor.id === item.vendorId">
+                <div *ngIf="openVendorDropdownIndex === i"
+                  class="custom-dropdown-wrapper absolute left-0 right-0 top-[calc(100%+8px)] z-[999] min-w-[200px]">
+                  <div
+                    class="dropdown-panel bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-slate-100 overflow-hidden">
+                    <div class="max-h-52 overflow-y-auto custom-scrollbar smooth-scroll py-2">
+                      <button type="button" *ngFor="let vendor of vendors" (click)="selectVendor(item, vendor)"
+                        class="w-full text-left px-4 py-2.5 text-sm font-semibold transition-all flex items-center justify-between"
+                        [ngClass]="item.vendorId === vendor.id ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-50'">
+                        {{ vendor.name }}
+                        <span *ngIf="item.vendorId === vendor.id"
+                          class="material-symbols-outlined text-[16px] text-primary">check</span>
+                      </button>
+                      <p *ngIf="!vendors.length" class="px-4 py-3 text-xs text-slate-400 text-center">No vendors found
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-                  {{vendor.name}}
-
-                </option>
-
-              </select>
+              </div>
 
             </td>
 
-            <!-- Quantity -->
             <td class="px-8 py-6">
               <input type="number" min="1" max="1000" [(ngModel)]="item.quantity" (input)="checkQuantity(item, $event)"
                 (ngModelChange)="updateLineTotal(item)" class="w-24 bg-slate-50 border-none rounded-xl text-sm p-3
     focus:ring-2 focus:ring-primary/20 transition-all font-bold" />
             </td>
 
-            <!-- Unit Price -->
             <td class="px-8 py-6">
 
               <div class="text-sm font-bold text-slate-900">
@@ -357,7 +379,6 @@
 
             </td>
 
-            <!-- Total -->
             <td class="px-8 py-6 text-right">
 
               <div class="text-sm font-black text-slate-900">
@@ -366,7 +387,6 @@
 
             </td>
 
-            <!-- Delete Button -->
             <td class="px-6 py-6 text-center">
 
               <button (click)="removeQuoteItem(i)" type="button" [disabled]="quoteItems.length === 1" class="w-11 h-11 rounded-2xl bg-rose-50
@@ -394,13 +414,12 @@
 
     </div>
 
-    <!-- Footer -->
     <div
-      class="fixed bottom-0 left-66 right-0 z-50 flex justify-end gap-4 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+      class="fixed bottom-0 left-0 lg:left-66 right-0 z-50 flex flex-col sm:flex-row justify-end gap-4 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
 
       <button (click)="prevStep()" class="px-8 py-4 rounded-2xl font-black uppercase tracking-widest
              text-slate-400 hover:text-slate-900 hover:bg-slate-100
-             transition-all flex items-center gap-3">
+             transition-all flex items-center justify-center gap-3">
 
         <span class="material-symbols-outlined text-sm">
           west
@@ -412,9 +431,9 @@
 
       </button>
 
-      <div class="flex gap-4 items-center">
+      <div class="flex flex-col sm:flex-row gap-4 items-center">
 
-        <div class="flex items-center gap-4 mr-6">
+        <div class="flex items-center gap-4 sm:mr-6">
 
           <p class="text-sm font-bold text-slate-400 uppercase tracking-wide">
             Grand Total
@@ -428,7 +447,7 @@
 
         <button (click)="nextStep()" class="px-10 py-3 bg-primary rounded-2xl font-bold text-white
                transition-all shadow-lg shadow-primary/20
-               hover:-translate-y-0.5">
+               hover:-translate-y-0.5 w-full sm:w-auto">
 
           Review Quote
 
@@ -440,67 +459,65 @@
 
   </div>
 
-  <!-- Step 3: Summary -->
   <div *ngIf="currentStep === 3" class=" mx-auto animate-in fade-in zoom-in-95 duration-500 mb-20">
-    <div class="bg-white rounded-[2rem] border border-slate-200/60 shadow-2xl p-10 relative overflow-hidden">
-      <!-- Watermark/Decor -->
+    <div class="bg-white rounded-[2rem] border border-slate-200/60 shadow-2xl p-6 sm:p-10 relative overflow-hidden">
       <div class="absolute -top-20 -right-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
 
-      <div class="flex justify-between items-start mb-12 relative z-10">
+      <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-12 relative z-10">
         <div>
           <div
             class="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 inline-block">
             Draft Quotation</div>
-          <h2 class="text-4xl font-black text-slate-900 tracking-tight">Summary</h2>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Summary</h2>
         </div>
-        <div class="text-right">
+        <div class="text-left sm:text-right">
           <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Generated On</p>
           <p class="text-lg font-bold text-slate-900">{{ today | date:'MMM dd, yyyy' }}</p>
         </div>
       </div>
 
-     <div class="max-w-4xl mx-auto space-y-8 relative z-10">
+      <div class="max-w-4xl mx-auto space-y-8 relative z-10">
 
-  <div class="bg-slate-50/80 rounded-3xl p-8 border border-slate-100">
-    <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">
-      Item Breakdown
-    </h3>
+        <div class="bg-slate-50/80 rounded-3xl p-6 sm:p-8 border border-slate-100">
+          <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">
+            Item Breakdown
+          </h3>
 
-    <div class="space-y-4">
-      <div *ngFor="let item of quoteItems"
-        class="flex justify-between items-center pb-4 border-b border-slate-200/60 last:border-none last:pb-0">
+          <div class="space-y-4 max-h-[420px] overflow-y-auto custom-scrollbar smooth-scroll pr-1">
+            <div *ngFor="let item of quoteItems"
+              class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-4 border-b border-slate-200/60 last:border-none last:pb-0">
 
-        <div>
-          <p class="text-sm font-bold text-slate-900">
-            {{item.name}} (x{{item.quantity}})
-          </p>
+              <div>
+                <p class="text-sm font-bold text-slate-900">
+                  {{item.name}} (x{{item.quantity}})
+                </p>
 
-          <div class="flex items-center gap-2 mt-1">
-            <span class="material-symbols-outlined text-[14px] text-slate-400">
-              local_shipping
-            </span>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="material-symbols-outlined text-[14px] text-slate-400">
+                    local_shipping
+                  </span>
 
-            <p class="text-[12px] font-semibold text-slate-500">
-              {{item.vendor_name || 'No Vendor Selected'}}
-            </p>
+                  <p class="text-[12px] font-semibold text-slate-500">
+                    {{item.vendor_name || 'No Vendor Selected'}}
+                  </p>
+                </div>
+              </div>
+
+              <div class="text-left sm:text-right">
+                <p class="text-sm font-black text-slate-900">
+                  ₹{{item.totalPrice.toLocaleString()}}
+                </p>
+
+                <p class="text-[11px] font-bold text-slate-400">
+                  &#64; ₹{{item.unitPrice.toLocaleString()}}/unit
+                </p>
+              </div>
+
+            </div>
           </div>
         </div>
 
-        <div class="text-right">
-          <p class="text-sm font-black text-slate-900">
-            ₹{{item.totalPrice.toLocaleString()}}
-          </p>
-
-          <p class="text-[11px] font-bold text-slate-400">
-            &#64; ₹{{item.unitPrice.toLocaleString()}}/unit
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- <div class="flex justify-between items-center px-8">
+        <!-- <div class="flex justify-between items-center px-8">
     <div>
       <p class="text-sm font-bold text-slate-400">
         Total Quotation Value
@@ -518,18 +535,16 @@
     </div>
   </div> -->
 
-</div>
+      </div>
 
-    <div
-  class="fixed bottom-0 left-66 right-0 z-[9999]
-         flex justify-end gap-4 p-4
+      <div class="fixed bottom-0 left-0 lg:left-66 right-0 z-[9999]
+         flex flex-col sm:flex-row justify-end gap-4 p-4
          bg-white dark:bg-slate-900
-         border-t border-slate-200 dark:border-slate-800"
-  style="opacity:1;">
+         border-t border-slate-200 dark:border-slate-800" style="opacity:1;">
 
         <button (click)="prevStep()" class="px-8 py-4 rounded-2xl font-black uppercase tracking-widest
            text-slate-400 hover:text-slate-900 hover:bg-slate-100
-           transition-all flex items-center gap-3">
+           transition-all flex items-center justify-center gap-3">
 
           <span class="material-symbols-outlined text-sm">
             west
@@ -541,7 +556,7 @@
 
         </button>
 
-          <div class="flex items-center gap-4 mr-6">
+        <div class="flex items-center justify-center gap-4 sm:mr-6">
 
           <p class="text-sm font-bold text-slate-400 uppercase tracking-wide">
             Grand Total
@@ -555,7 +570,7 @@
 
         <button (click)="submitQuote()" class="px-10 py-3 bg-primary rounded-2xl font-bold text-white
            transition-all shadow-lg shadow-primary/20
-           hover:-translate-y-0.5 flex items-center gap-2">
+           hover:-translate-y-0.5 flex items-center justify-center gap-2 w-full sm:w-auto">
 
           <span class="material-symbols-outlined text-[18px]">
             send

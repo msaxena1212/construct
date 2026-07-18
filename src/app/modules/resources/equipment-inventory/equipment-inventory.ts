@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EquipmentInventoryService, Material } from '../../../shared/services/equipment-inventory/equipment-inventory';
@@ -78,6 +78,58 @@ export class EquipmentInventory {
   noOfProjectsNotAssigned: number = 0;
   categories: any[] = [];
 
+  openDropdown: string | null = null;
+
+  categoryOptions: string[] = [
+    'Concrete',
+    'Steel',
+    'Electrical',
+    'Lumber',
+    'Finishing',
+    'Chemicals'
+  ];
+
+  sortOrderOptions: string[] = [
+    'Usage Rate (Highest)',
+    'Usage Rate (Lowest)',
+    'Stock Level (Asc)',
+    'Stock Level (Desc)',
+    'Newest Additions'
+  ];
+
+  selectedSortOrder: string = this.sortOrderOptions[0];
+
+  supplierStatusOptions: string[] = ['Active', 'Preferred', 'New'];
+  selectedSupplierStatus: string = 'Active';
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.custom-dropdown-wrapper')) {
+      this.openDropdown = null;
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
+    this.openDropdown = null;
+  }
+
+  toggleDropdown(id: string, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.openDropdown = this.openDropdown === id ? null : id;
+  }
+
+  isDropdownOpen(id: string): boolean {
+    return this.openDropdown === id;
+  }
+
+  closeDropdown() {
+    this.openDropdown = null;
+  }
+
   ngOnInit() {
 
     this.materialService.loadMaterials();
@@ -147,7 +199,7 @@ export class EquipmentInventory {
 
     let filtered = [...this.materials];
 
-    // 🔥 Tab Filter
+    // Tab Filter
     if (this.selectedTab === 'Low Stock') {
 
       filtered = filtered.filter(
@@ -165,7 +217,6 @@ export class EquipmentInventory {
       );
     }
 
-    // 🔥 Search Filter
     if (this.searchQuery) {
 
       const q = this.searchQuery.toLowerCase();
@@ -201,7 +252,7 @@ export class EquipmentInventory {
       },
 
       error: (err) => {
-      console.log(err);
+        console.log(err);
       }
 
     });
@@ -320,6 +371,7 @@ export class EquipmentInventory {
   openAddModal() {
 
     this.newMaterial = this.getDefaultMaterial();
+    this.closeDropdown();
 
     this.showAddModal = true;
 
@@ -363,6 +415,87 @@ export class EquipmentInventory {
     this.newMaterial.project_name = project?.name || '';
 
     this.newMaterial.project_id = selectedId || 0;
+
+  }
+
+
+  selectEquipmentAdd(material: any) {
+
+    this.closeDropdown();
+
+    if (!material?.id) return;
+
+    this.newMaterial.equipment_master_id = material.id;
+
+    this.MaterialMasterService
+      .getMaterialMasterById(material.id)
+      .subscribe({
+
+        next: (res: any) => {
+
+          const data = res?.data || res;
+
+          this.newMaterial = {
+
+            ...this.newMaterial,
+
+            name: data?.name || '',
+
+            sku: data?.sku || '',
+
+            category: data?.category || '',
+
+            equipment_master_id: data?.id || 0,
+
+          };
+
+        },
+
+        error: (err) => {
+
+          console.log(err);
+
+        }
+
+      });
+
+  }
+
+  selectCategoryAdd(cat: string) {
+
+    this.newMaterial.category = cat;
+
+    this.closeDropdown();
+
+  }
+
+  selectProjectAdd(project: any) {
+
+    this.newMaterial.project_name = project?.name || '';
+
+    this.newMaterial.project_id = project?.id || 0;
+
+    this.closeDropdown();
+
+  }
+
+  selectVendorAdd(vendor: any) {
+
+    this.newMaterial.vendor_name = vendor?.name || '';
+
+    this.newMaterial.vendor_id = vendor?.id || '';
+
+    this.closeDropdown();
+
+  }
+
+  selectAddNewVendor() {
+
+    this.showAddVendorModal = true;
+
+    this.newMaterial.vendor_id = '';
+
+    this.closeDropdown();
 
   }
 
@@ -413,8 +546,21 @@ export class EquipmentInventory {
     event.stopPropagation();
 
     this.materialToEdit = { ...material };
+    this.closeDropdown();
 
     this.showEditModal = true;
+
+  }
+
+  selectProjectEdit(project: any) {
+
+    if (!this.materialToEdit) return;
+
+    this.materialToEdit.project_name = project?.name || '';
+
+    this.materialToEdit.project_id = project?.id || 0;
+
+    this.closeDropdown();
 
   }
 
@@ -697,22 +843,13 @@ export class EquipmentInventory {
   getvendor(event: any) {
 
     const value = event.target.value;
-
-    // ✅ Add new vendor modal open
     if (value == 'ADD_NEW') {
-
       this.showAddVendorModal = true;
-      console.log('Add new vendor selected', this.showAddVendorModal, value);
-
-
-
-      // optional reset
       this.newMaterial.vendor_id = '';
 
       return;
     }
 
-    // ✅ Existing vendor select
     const vendor = this.vendors.find(
       (v: any) => v.id == value
     );
@@ -720,7 +857,6 @@ export class EquipmentInventory {
     this.newMaterial.vendor_name = vendor?.name || '';
     this.newMaterial.vendor_id = value || '';
 
-    console.log(vendor, 'selected vendor');
   }
 
   assignedProjects: any[] = [
@@ -744,6 +880,7 @@ export class EquipmentInventory {
     ];
 
     this.projectAssignError = '';
+    this.closeDropdown();
 
     this.showAssignProjectModal = true;
   }
@@ -768,6 +905,28 @@ export class EquipmentInventory {
     this.validateAssignedStock();
   }
 
+  selectAssignProject(index: number, project: any) {
+
+    if (!this.assignedProjects[index]) return;
+
+    this.assignedProjects[index].project_id = project?.id ?? null;
+
+    this.validateAssignedStock();
+
+    this.closeDropdown();
+
+  }
+
+  getProjectNameById(id: any): string {
+
+    if (!id) return '';
+
+    const project = this.projects.find((p: any) => p.id == id);
+
+    return project?.name || '';
+
+  }
+
   validateAssignedStock(): boolean {
 
     this.projectAssignError = '';
@@ -778,7 +937,6 @@ export class EquipmentInventory {
 
     for (const item of this.assignedProjects) {
 
-      // Empty validation
       if (!item.project_id || item.stock === null || item.stock === '') {
 
         this.projectAssignError =
@@ -787,7 +945,6 @@ export class EquipmentInventory {
         return false;
       }
 
-      // Negative validation
       if (+item.stock <= 0) {
 
         this.projectAssignError =
@@ -796,7 +953,6 @@ export class EquipmentInventory {
         return false;
       }
 
-      // Duplicate project validation
       if (selectedProjects.includes(item.project_id)) {
 
         this.projectAssignError =
@@ -810,7 +966,6 @@ export class EquipmentInventory {
       totalAssignedStock += Number(item.stock);
     }
 
-    // Total stock validation
     if (totalAssignedStock > this.materialToEdit.stockIn) {
 
       this.projectAssignError =
@@ -934,6 +1089,7 @@ export class EquipmentInventory {
         }
       ]
     };
+    this.closeDropdown();
 
     this.showStockTransferModal = true;
   }
@@ -950,6 +1106,26 @@ export class EquipmentInventory {
   removeTransferRow(index: number) {
 
     this.stockTransferData.transfers.splice(index, 1);
+
+  }
+
+  selectTransferFromProject(index: number, project: any) {
+
+    if (!this.stockTransferData.transfers[index]) return;
+
+    this.stockTransferData.transfers[index].from_project_id = project?.id ?? '';
+
+    this.closeDropdown();
+
+  }
+
+  selectTransferToProject(index: number, project: any) {
+
+    if (!this.stockTransferData.transfers[index]) return;
+
+    this.stockTransferData.transfers[index].to_project_id = project?.id ?? '';
+
+    this.closeDropdown();
 
   }
 
@@ -1040,5 +1216,19 @@ export class EquipmentInventory {
         }
 
       });
+  }
+
+  selectSortOrder(order: string) {
+
+    this.selectedSortOrder = order;
+
+    this.closeDropdown();
+
+  }
+
+  toggleSupplierStatus(status: string) {
+
+    this.selectedSupplierStatus = status;
+
   }
 }

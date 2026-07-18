@@ -21,6 +21,11 @@ export interface IAttendeeOption {
   isExisting?: boolean;
 }
 
+export interface IDurationOption {
+  value: number;
+  label: string;
+}
+
 @Component({
   selector: 'app-calendar',
   standalone: false,
@@ -75,6 +80,21 @@ export class Calendar implements OnInit {
   showAttendeeSuggestions = false;
   attendeeSearchText = '';
   selectedAttendees: IAttendeeOption[] = [];
+
+  // Duration custom dropdown state
+  showDurationDropdown = false;
+  durationOptions: IDurationOption[] = [
+    { value: 15, label: '15 min' },
+    { value: 30, label: '30 min' },
+    { value: 45, label: '45 min' },
+    { value: 60, label: '1 hour' },
+    { value: 90, label: '1.5 hours' },
+    { value: 120, label: '2 hours' },
+  ];
+
+  showTimeDropdown = false;
+  timeHours: string[] = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  timeMinutes: string[] = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
   constructor(
     private router: Router,
@@ -539,6 +559,8 @@ export class Calendar implements OnInit {
     this.selectedAttendees = [];
     this.attendeeSearchText = '';
     this.prefilledProjectId = undefined;
+    this.showDurationDropdown = false;
+    this.showTimeDropdown = false;
     if (prefillDate) this.meetingForm.dateInput = prefillDate;
     this.showMeetingModal = true;
   }
@@ -551,6 +573,8 @@ export class Calendar implements OnInit {
     this.attendeeSearchText = '';
     this.prefilledProjectId = Number(project.id);
     this.meetingForm.project_id = Number(project.id);
+    this.showDurationDropdown = false;
+    this.showTimeDropdown = false;
     this.showMeetingModal = true;
   }
 
@@ -589,6 +613,8 @@ export class Calendar implements OnInit {
     this.selectedAttendees = parsedAttendees;
     this.attendeeSearchText = '';
     this.showVendorDropdown = false;
+    this.showDurationDropdown = false;
+    this.showTimeDropdown = false;
     this.showDayEventsPanel = false;
     this.showMeetingModal = true;
   }
@@ -600,6 +626,8 @@ export class Calendar implements OnInit {
     this.selectedAttendees = [];
     this.attendeeSearchText = '';
     this.showVendorDropdown = false;
+    this.showDurationDropdown = false;
+    this.showTimeDropdown = false;
     this.prefilledProjectId = undefined;
   }
 
@@ -611,10 +639,6 @@ export class Calendar implements OnInit {
   getSelectedProjectName(): string {
     const project = this.projects.find(p => Number(p.id) === Number(this.meetingForm.project_id));
     return project?.name || '';
-  }
-
-  closeTimePicker(input: HTMLInputElement): void {
-    setTimeout(() => { input.blur(); }, 2000);
   }
 
   toggleVendorDropdown($event: Event): void {
@@ -650,6 +674,48 @@ export class Calendar implements OnInit {
     return this.vendors.filter(v => ids.includes(v.id)).map(v => v.name).join(', ');
   }
 
+  getDurationLabel(): string {
+    const found = this.durationOptions.find(o => o.value === this.meetingForm.duration);
+    return found ? found.label : 'Select Duration';
+  }
+
+  selectDuration(value: number): void {
+    this.meetingForm.duration = value;
+    this.showDurationDropdown = false;
+  }
+
+  toggleTimeDropdown($event: Event): void {
+    $event.stopPropagation();
+    this.showTimeDropdown = !this.showTimeDropdown;
+  }
+
+  getSelectedHour(): string {
+    return (this.meetingForm.timeInput || '10:00').split(':')[0] || '10';
+  }
+
+  getSelectedMinute(): string {
+    return (this.meetingForm.timeInput || '10:00').split(':')[1] || '00';
+  }
+
+  selectHour(h: string): void {
+    const mm = this.getSelectedMinute();
+    this.meetingForm.timeInput = `${h}:${mm}`;
+  }
+
+  selectMinute(m: string): void {
+    const hh = this.getSelectedHour();
+    this.meetingForm.timeInput = `${hh}:${m}`;
+    this.showTimeDropdown = false;
+  }
+
+  formatTimeDisplay(): string {
+    const t = this.meetingForm.timeInput || '10:00';
+    const [h, m] = t.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
+  }
+
   get selectedProjectsLabel(): string {
     if (this.isAllProjectsSelected) return 'All Projects';
     if (this.selectedProjectIds.length === 0) return 'No Projects';
@@ -665,6 +731,8 @@ export class Calendar implements OnInit {
     this.showProjectDropdown = false;
     this.showAttendeeSuggestions = false;
     this.showProjectFilterDropdown = false;
+    this.showDurationDropdown = false;
+    this.showTimeDropdown = false;
   }
 
   onAttendeeSearch(value: string): void {
