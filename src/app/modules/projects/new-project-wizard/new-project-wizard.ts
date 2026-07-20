@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ProjectService } from '../services/project-service';
 import { ToastrService } from 'ngx-toastr';
@@ -6,6 +6,17 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { IProject, ITeam, IUser } from '../../../shared/interfaces/project.interface';
 import { Location } from '@angular/common';
 import { environment } from '../../../../environments/environment';
+import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+
+
+export interface ProjectLocationSuggestion {
+  display_name: string;
+  place_id?: string;
+  lat?: number;
+  lon?: number;
+}
 
 @Component({
   selector: 'app-new-project-wizard',
@@ -13,7 +24,7 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './new-project-wizard.html',
   styleUrls: ['./new-project-wizard.scss'],
 })
-export class NewProjectWizard implements OnInit {
+export class NewProjectWizard implements OnInit, OnDestroy {
   currentStep: number = 1;
   projectForm: FormGroup;
   availableMembers: ITeam[] = [];
@@ -25,6 +36,7 @@ export class NewProjectWizard implements OnInit {
   thumbnailFile: File | null = null;
   thumbnailPreview: string | null = null;
   projectTypeDropdownOpen = false;
+
   projectTypes = [
     'Commercial Renovation',
     'Residential New Build',
@@ -40,19 +52,33 @@ export class NewProjectWizard implements OnInit {
   serverUrl = environment.serverUrl;
   allDetails: any;
 
+  isGettingLocation = false;
+  showSuggestions = false;
+  locationSuggestions: ProjectLocationSuggestion[] = [];
+  private isSelectingLocation = false;
+  private isLoadingData = false;
+  private addressSub: Subscription | null = null;
+  private readonly NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
+  private readonly SEARCH_DEBOUNCE_TIME = 500;
+  private readonly MIN_SEARCH_LENGTH = 3;
+
   constructor(
     private fb: FormBuilder,
     private projectService: ProjectService,
     private toastr: ToastrService,
     private router: Router,
     private route: ActivatedRoute,
-    private location: Location
+    private location: Location,
+    private http: HttpClient
   ) {
     this.projectForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       type: ['Commercial Renovation', Validators.required],
       completionDate: ['', Validators.required],
       address: ['', Validators.required],
+      latitude: [null],
+      longitude: [null],
+      place_id: [null],
       thumbnail: [null],
       team: this.fb.array([]),
       budgetTotal: [0, [Validators.required, Validators.min(0)]],
@@ -77,8 +103,138 @@ export class NewProjectWizard implements OnInit {
         this.projectId = id;
         this.loadProjectForEdit(id);
       } else {
-        // Default milestones for new project
         this.addDefaultMilestones();
+      }
+    });
+
+    this.setupAddressLocationListener();
+  }
+
+  ngOnDestroy(): void {
+    this.addressSub?.unsubscribe();
+  }
+
+  private setupAddressLocationListener(): void {
+    this.addressSub = this.projectForm.get('address')?.valueChanges
+      .pipe(debounceTime(this.SEARCH_DEBOUNCE_TIME), distinctUntilChanged())
+      .subscribe(value => {
+        if (this.isLoadingData || this.isSelectingLocation) return;
+        if (value && value.length >= this.MIN_SEARCH_LENGTH) {
+          this.searchLocation(value);
+        } else {
+          this.locationSuggestions = [];
+          this.showSuggestions = false;
+        }
+      }) || null;
+  }
+
+  private searchLocation(query: string): void {
+    const url = `${this.NOMINATIM_BASE_URL}/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&countrycodes=in`;
+
+    this.http.get<any[]>(url, {
+      headers: { 'Accept': 'application/json' }
+    }).subscribe({
+      next: (results) => {
+        if (results && results.length > 0) {
+          this.locationSuggestions = results.map((r: any) => ({
+            display_name: r.display_name,
+            lat: parseFloat(r.lat),
+            lon: parseFloat(r.lon),
+            place_id: r.place_id
+          }));
+          this.showSuggestions = true;
+        } else {
+          this.locationSuggestions = [];
+          this.showSuggestions = false;
+        }
+      },
+      error: () => {
+        this.locationSuggestions = [];
+        this.showSuggestions = false;
+      }
+    });
+  }
+
+  selectLocation(suggestion: ProjectLocationSuggestion): void {
+    this.isSelectingLocation = true;
+
+    this.projectForm.patchValue({
+      address: suggestion.display_name,
+      latitude: suggestion.lat ?? null,
+      longitude: suggestion.lon ?? null,
+      place_id: suggestion.place_id ? String(suggestion.place_id) : null
+    });
+
+    this.locationSuggestions = [];
+    this.showSuggestions = false;
+    setTimeout(() => { this.isSelectingLocation = false; }, 600);
+  }
+
+  onAddressFieldFocus(): void {
+    this.locationSuggestions = [];
+    this.showSuggestions = false;
+  }
+
+  onAddressBlur(): void {
+    setTimeout(() => { this.showSuggestions = false; }, 200);
+  }
+
+  useCurrentLocation(): void {
+    this.isGettingLocation = true;
+
+    if (!navigator.geolocation) {
+      this.toastr.error('Geolocation is not supported by your browser', 'Error');
+      this.isGettingLocation = false;
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        this.reverseGeocode(lat, lng);
+      },
+      (error) => {
+        this.isGettingLocation = false;
+        const messages: { [key: number]: string } = {
+          1: 'Location permission denied. Please enable location access.',
+          2: 'Location information is unavailable.',
+          3: 'Location request timed out.'
+        };
+        this.toastr.error(messages[error.code] || 'Unable to get your location.', 'Error');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  private reverseGeocode(lat: number, lng: number): void {
+    const url = `${this.NOMINATIM_BASE_URL}/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`;
+
+    this.http.get<any>(url, {
+      headers: { 'Accept': 'application/json' }
+    }).subscribe({
+      next: (result) => {
+        this.isGettingLocation = false;
+        this.isSelectingLocation = true;
+        this.projectForm.patchValue({
+          address: result.display_name,
+          latitude: lat,
+          longitude: lng,
+          place_id: result.place_id ? String(result.place_id) : null
+        });
+        setTimeout(() => { this.isSelectingLocation = false; }, 600);
+        this.toastr.success('Current location detected', 'Success');
+      },
+      error: () => {
+        this.isGettingLocation = false;
+        this.isSelectingLocation = true;
+        this.projectForm.patchValue({
+          address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+          latitude: lat,
+          longitude: lng
+        });
+        setTimeout(() => { this.isSelectingLocation = false; }, 600);
+        this.toastr.info('Location coordinates captured', 'Info');
       }
     });
   }
@@ -97,6 +253,7 @@ export class NewProjectWizard implements OnInit {
 
   loadProjectForEdit(id: string) {
     this.loading = true;
+    this.isLoadingData = true;
     this.projectService.getProjectById(id).subscribe({
       next: (res) => {
         const p = res.data;
@@ -107,6 +264,9 @@ export class NewProjectWizard implements OnInit {
           type: p.type || 'Commercial Renovation',
           completionDate: p.completion_date?.split('T')[0],
           address: p.address,
+          latitude: (p as any).latitude ?? null,
+          longitude: (p as any).longitude ?? null,
+          place_id: (p as any).place_id ?? null,
           budgetTotal: p.budget_total
         });
 
@@ -132,7 +292,6 @@ export class NewProjectWizard implements OnInit {
           }
         }
 
-        // Patch Team
         this.team.clear();
         p.team_members?.forEach((m) => {
           const role = (m as any).PROJECT_TEAM?.role || 'Technical Staff';
@@ -144,7 +303,6 @@ export class NewProjectWizard implements OnInit {
           }));
         });
 
-        // Patch Milestones
         this.milestones.clear();
         const milestonesWithChildren = t.milestones_with_child || p.milestones || [];
         milestonesWithChildren.forEach((m: any) => {
@@ -152,15 +310,16 @@ export class NewProjectWizard implements OnInit {
         });
 
         this.loading = false;
+        setTimeout(() => { this.isLoadingData = false; }, 500);
       },
       error: () => {
         this.loading = false;
+        this.isLoadingData = false;
         this.toastr.error('Failed to load project details.');
       }
     });
   }
 
-  // --- Getters ---
   get f() { return this.projectForm.controls; }
   get team() { return this.projectForm.get('team') as FormArray; }
   get milestones() { return this.projectForm.get('milestones') as FormArray; }
@@ -191,16 +350,12 @@ export class NewProjectWizard implements OnInit {
 
   closeBudgetBreakdownDialog(): void {
     this.showBudgetBreakdownDialog = false;
-
-    // Clear Budget Breakdown Form
     this.budgetBreakdown.reset({
       material: null,
       equipment: null,
       labor: null,
       other: null
     });
-
-    // Clear Main Project Form Budget
     this.projectForm.get('budgetTotal')?.setValue(0);
   }
 
@@ -209,7 +364,6 @@ export class NewProjectWizard implements OnInit {
     this.showBudgetBreakdownDialog = false;
   }
 
-  // --- Data Fetching ---
   fetchTeamMembers() {
     this.projectService.getTeamMembers().subscribe({
       next: (res) => {
@@ -221,7 +375,6 @@ export class NewProjectWizard implements OnInit {
     });
   }
 
-  // --- Step Logic ---
   nextStep() {
     if (this.isStepValid(this.currentStep)) {
       if (this.currentStep < 4) {
@@ -259,7 +412,6 @@ export class NewProjectWizard implements OnInit {
     }
   }
 
-  // --- Step 2: Team Management ---
   addMember(member: ITeam) {
     const isAlreadyAdded = this.team.value.find((m: any) => m.user_id === member.id);
     if (!isAlreadyAdded) {
@@ -281,7 +433,6 @@ export class NewProjectWizard implements OnInit {
     this.team.removeAt(index);
   }
 
-  // --- Step 3: Milestones ---
   createMilestone(name: string, phase: string, color: string): FormGroup {
     return this.fb.group({
       id: [null],
@@ -311,7 +462,6 @@ export class NewProjectWizard implements OnInit {
   }
 
   getMilestoneChildren(milestone: AbstractControl): FormArray {
-
     return milestone.get('children') as FormArray;
   }
 
@@ -334,7 +484,6 @@ export class NewProjectWizard implements OnInit {
     this.getMilestoneChildren(parent).removeAt(childIndex);
   }
 
-  // --- Thumbnail ---
   onThumbnailSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -347,7 +496,6 @@ export class NewProjectWizard implements OnInit {
     }
   }
 
-  // --- Step 4: Documents ---
   onFileSelected(event: any) {
     const files: FileList = event.target.files;
     for (let i = 0; i < files.length; i++) {
@@ -365,22 +513,17 @@ export class NewProjectWizard implements OnInit {
     this.documents.removeAt(index);
   }
 
-  // --- Final Execution ---
   saveProject() {
-
     if (this.projectForm.invalid) {
       this.toastr.error('Please fix the errors in the form before saving.');
       return;
     }
 
     this.loading = true;
-
     const formData = new FormData();
-
     const milestones: any[] = [];
 
     this.milestoneTree.value.forEach((parent: any) => {
-
       milestones.push({
         id: parent.id,
         name: parent.name,
@@ -394,9 +537,7 @@ export class NewProjectWizard implements OnInit {
       });
 
       if (parent.children?.length) {
-
         parent.children.forEach((child: any) => {
-
           milestones.push({
             id: child.id,
             name: child.name,
@@ -408,17 +549,17 @@ export class NewProjectWizard implements OnInit {
             endDate: child.endDate,
             parent_id: parent.id
           });
-
         });
-
       }
-
     });
 
     const payload = {
       name: this.projectForm.value.name,
       type: this.projectForm.value.type,
       address: this.projectForm.value.address,
+      latitude: this.projectForm.value.latitude,
+      longitude: this.projectForm.value.longitude,
+      place_id: this.projectForm.value.place_id,
       completionDate: this.projectForm.value.completionDate,
       budgetTotal: this.projectForm.value.budgetTotal,
       material_total: this.budgetBreakdown.value.material,

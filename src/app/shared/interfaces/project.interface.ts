@@ -136,7 +136,7 @@ export interface IMilestone {
   children?: IMilestone[];
   tasks?: IProjectTask[];
   milestone_progress?: number;
-submilestone_progress?: number;
+  submilestone_progress?: number;
 }
 
 export interface IProjectDocument {
@@ -193,6 +193,9 @@ export interface IProject {
   documents?: IProjectDocument[];
   thumbnail?: string;
   createdAt?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  place_id?: string | null;
 }
 
 export interface ITimelineItem {
