@@ -88,6 +88,19 @@ module.exports = (sequelize, Sequelize) => {
           max: 100
         }
       },
+
+      latitude: {
+        type: Sequelize.DECIMAL(10, 8),
+        allowNull: true,
+      },
+      longitude: {
+        type: Sequelize.DECIMAL(11, 8),
+        allowNull: true,
+      },
+      place_id: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
     },
     {
       freezeTableName: true,

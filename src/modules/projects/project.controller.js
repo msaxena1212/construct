@@ -173,7 +173,7 @@ class ProjectController {
 
       const projectData = req.body.data ? JSON.parse(req.body.data) : req.body;
       const { name, type, address, completionDate, budgetTotal, milestones, team,
-        material_total, equipment_total, labor_total, other_total
+        material_total, equipment_total, labor_total, other_total, latitude, longitude, place_id
       } = projectData;
 
       if (!name || !type) {
@@ -213,6 +213,9 @@ class ProjectController {
         equipment_total: equipment_total || 0,
         labor_total: labor_total || 0,
         other_total: other_total || 0,
+        latitude: latitude || null,
+        longitude: longitude || null,
+        place_id: place_id || null,
         company_id,
         thumbnail: thumbnailPath
       }, { transaction: t });
@@ -720,7 +723,8 @@ class ProjectController {
         labor_total,
         labor_used,
         other_total,
-        other_used
+        other_used,
+        latitude, longitude, place_id
       } = projectData;
 
       const project_data = await db.project.findOne({ where: { id, company_id } });
@@ -747,6 +751,9 @@ class ProjectController {
 
       let updateData = {
         name, type, address,
+        latitude: latitude !== undefined ? latitude : project_data.latitude,
+        longitude: longitude !== undefined ? longitude : project_data.longitude,
+        place_id: place_id !== undefined ? place_id : project_data.place_id,
         completion_date: completionDate,
         material_total: Number(project_data.material_total || 0) + Number(material_total || 0),
         material_used,
@@ -868,7 +875,7 @@ class ProjectController {
     }
   }
 
-  
+
   async uploadDocuments(req, res) {
     let t;
     try {
@@ -1776,8 +1783,6 @@ class ProjectController {
       });
     }
   }
-
-
 }
 
 module.exports = new ProjectController();
