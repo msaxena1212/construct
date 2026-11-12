@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/modules/history/vendors-history/vendors-history.scss", "src/app/modules/history/vendors-history/vendors-history.scss"],
+  "sourcesContent": [":host {\r\n    display: block;\r\n}\r\n\r\n.animate-in {\r\n    animation-fill-mode: both;\r\n}", ":host {\n  display: block;\n}\n\n.animate-in {\n  animation-fill-mode: both;\n}\n/*# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJmaWxlOi8vL0U6L1BvcnQvQ29uc3RydWN0aW9uL3p5bm9fY29uc3RydWN0aW9uX2Zyb250ZW5kL3p5bm9fY29uc3RydWN0aW9uX2Zyb250ZW5kL3NyYy9hcHAvbW9kdWxlcy9oaXN0b3J5L3ZlbmRvcnMtaGlzdG9yeS92ZW5kb3JzLWhpc3Rvcnkuc2NzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtFQUNJOzs7QUFHSjtFQUNJIiwic291cmNlc0NvbnRlbnQiOlsiOmhvc3Qge1xyXG4gICAgZGlzcGxheTogYmxvY2s7XHJcbn1cclxuXHJcbi5hbmltYXRlLWluIHtcclxuICAgIGFuaW1hdGlvbi1maWxsLW1vZGU6IGJvdGg7XHJcbn0iXX0= */"],
+  "mappings": ";AAAA;AACI,WAAA;ACCJ;ADEA,CAAA;AACI,uBAAA;ACCJ;",
+  "names": []
+}

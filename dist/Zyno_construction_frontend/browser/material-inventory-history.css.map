@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/modules/history/material-inventory-history/material-inventory-history.scss", "src/app/modules/history/material-inventory-history/material-inventory-history.scss"],
+  "sourcesContent": ["html {\r\n    scrollbar-gutter: stable;\r\n}", "html {\n  scrollbar-gutter: stable;\n}\n/*# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJmaWxlOi8vL0U6L1BvcnQvQ29uc3RydWN0aW9uL3p5bm9fY29uc3RydWN0aW9uX2Zyb250ZW5kL3p5bm9fY29uc3RydWN0aW9uX2Zyb250ZW5kL3NyYy9hcHAvbW9kdWxlcy9oaXN0b3J5L21hdGVyaWFsLWludmVudG9yeS1oaXN0b3J5L21hdGVyaWFsLWludmVudG9yeS1oaXN0b3J5LnNjc3MiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUE7RUFDSSIsInNvdXJjZXNDb250ZW50IjpbImh0bWwge1xyXG4gICAgc2Nyb2xsYmFyLWd1dHRlcjogc3RhYmxlO1xyXG59Il19 */"],
+  "mappings": ";AAAA;AACI,oBAAA;ACCJ;",
+  "names": []
+}

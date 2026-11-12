@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/modules/resources/invoices-liabilities/invoices-liabilities.scss", "src/app/modules/resources/invoices-liabilities/invoices-liabilities.scss"],
+  "sourcesContent": ["/* Invoices & Liabilities Styles */\n:host {\n  display: block;\n}\n", "/* Invoices & Liabilities Styles */\n:host {\n  display: block;\n}\n/*# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJmaWxlOi8vL0U6L1BvcnQvQ29uc3RydWN0aW9uL3p5bm9fY29uc3RydWN0aW9uX2Zyb250ZW5kL3p5bm9fY29uc3RydWN0aW9uX2Zyb250ZW5kL3NyYy9hcHAvbW9kdWxlcy9yZXNvdXJjZXMvaW52b2ljZXMtbGlhYmlsaXRpZXMvaW52b2ljZXMtbGlhYmlsaXRpZXMuc2NzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtBQUNBO0VBQ0UiLCJzb3VyY2VzQ29udGVudCI6WyIvKiBJbnZvaWNlcyAmIExpYWJpbGl0aWVzIFN0eWxlcyAqL1xuOmhvc3Qge1xuICBkaXNwbGF5OiBibG9jaztcbn1cbiJdfQ== */"],
+  "mappings": ";AACA;AACE,WAAA;ACCF;",
+  "names": []
+}

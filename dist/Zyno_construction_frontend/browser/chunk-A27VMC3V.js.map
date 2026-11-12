@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/environments/environment.ts"],
+  "sourcesContent": ["export const environment = {\n    serverUrl: 'http://localhost:3000',\n    production: false,\n    neonAuthUrl: 'https://steep-dawn-74976774.neon.tech/auth',\n    neonRealtimeUrl: 'wss://steep-dawn-74976774.realtime.neon.tech',\n};\n"],
+  "mappings": ";AAAO,IAAM,cAAc;EACvB,WAAW;EACX,YAAY;EACZ,aAAa;EACb,iBAAiB;;",
+  "names": []
+}
