@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- A small MSPDI sample used by tests/msp_mspdi.test.js. Names exercise entities and CDATA. -->
+<Project xmlns="http://schemas.microsoft.com/project">
+  <Name>Tower A schedule</Name>
+  <Calendars><Calendar><UID>1</UID><Name>Standard</Name></Calendar></Calendars>
+  <Tasks>
+    <Task>
+      <UID>0</UID>
+      <ID>0</ID>
+      <Name>Tower A schedule</Name>
+      <OutlineLevel>0</OutlineLevel>
+      <Summary>1</Summary>
+    </Task>
+    <Task>
+      <UID>1</UID>
+      <ID>1</ID>
+      <Name>Structure</Name>
+      <WBS>1</WBS>
+      <OutlineNumber>1</OutlineNumber>
+      <OutlineLevel>1</OutlineLevel>
+      <PercentComplete>40</PercentComplete>
+      <Summary>1</Summary>
+    </Task>
+    <Task>
+      <UID>2</UID>
+      <ID>2</ID>
+      <Name>Foundations</Name>
+      <WBS>1.1</WBS>
+      <OutlineNumber>1.1</OutlineNumber>
+      <OutlineLevel>2</OutlineLevel>
+      <PercentComplete>50</PercentComplete>
+      <Summary>1</Summary>
+    </Task>
+    <Task>
+      <UID>3</UID>
+      <ID>3</ID>
+      <Name>Excavation &amp; shoring</Name>
+      <WBS>1.1.1</WBS>
+      <OutlineNumber>1.1.1</OutlineNumber>
+      <OutlineLevel>3</OutlineLevel>
+      <PercentComplete>100</PercentComplete>
+      <Finish>2026-11-10T17:00:00</Finish>
+      <Summary>0</Summary>
+    </Task>
+    <Task>
+      <UID>4</UID>
+      <ID>4</ID>
+      <Name><![CDATA[Pile caps <level 1>]]></Name>
+      <WBS>1.1.2</WBS>
+      <OutlineNumber>1.1.2</OutlineNumber>
+      <OutlineLevel>3</OutlineLevel>
+      <PercentComplete>40</PercentComplete>
+      <Finish>2026-11-20T17:00:00</Finish>
+      <Summary>0</Summary>
+    </Task>
+    <Task>
+      <UID>5</UID>
+      <ID>5</ID>
+      <Name>Finishes</Name>
+      <WBS>2</WBS>
+      <OutlineNumber>2</OutlineNumber>
+      <OutlineLevel>1</OutlineLevel>
+      <Summary>1</Summary>
+    </Task>
+    <Task>
+      <UID>6</UID>
+      <ID>6</ID>
+      <Name>Painting and primer</Name>
+      <OutlineNumber>2.1</OutlineNumber>
+      <OutlineLevel>2</OutlineLevel>
+      <PercentComplete>0</PercentComplete>
+      <Summary>0</Summary>
+    </Task>
+    <Task>
+      <UID>7</UID>
+      <ID>7</ID>
+      <Name></Name>
+      <OutlineNumber>2.2</OutlineNumber>
+      <OutlineLevel>2</OutlineLevel>
+      <Summary>0</Summary>
+    </Task>
+  </Tasks>
+</Project>
