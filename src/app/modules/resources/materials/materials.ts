@@ -779,7 +779,17 @@ export class Materials {
     );
   }
 
+  /**
+   * CONTAINED — Project Reallocation is under review. The current cross-project path adjusts project counters
+   * without paired ledger movements, so it can show unplaced stock increasing in one project and going negative in
+   * another. It is blocked until it is rebuilt as an atomic ledger operation (see the completion register).
+   */
   transferStock() {
+    this.toast.warning('Project Reallocation is under review and disabled. Use Stock Transfer within a project instead.');
+    return;
+  }
+
+  private legacyTransferStockUnused() {
     if (!this.stockTransferData.transfers.length) {
       this.toast.error('Add at least one transfer');
       return;
@@ -804,11 +814,17 @@ export class Materials {
       }
     }
 
-    const totalQty = this.getTotalTransferQty();
-
-    if (totalQty > this.stockTransferData.stockIn) {
-      this.toast.error('Total transfer quantity exceeds available stock');
-      return;
+    // Each source project can only give up what it holds; the server re-checks under a lock.
+    const takenBySource = new Map<string, number>();
+    for (const t of this.stockTransferData.transfers) {
+      const key = String(t.from_project_id);
+      takenBySource.set(key, (takenBySource.get(key) || 0) + Number(t.quantity));
+    }
+    for (const [projectId, qty] of takenBySource) {
+      if (qty > Number(this.getProjectStock(projectId))) {
+        this.toast.error('Transfer quantity exceeds the stock held by the source project');
+        return;
+      }
     }
 
     const payload = {
@@ -824,7 +840,7 @@ export class Materials {
       .material_stock_transfer(this.stockTransferData.material_id, payload)
       .subscribe({
         next: () => {
-          this.toast.success('Material transferred successfully');
+          this.toast.success('Stock reallocated successfully');
           this.materialService.loadMaterials();
           this.showStockTransferModal = false;
         },

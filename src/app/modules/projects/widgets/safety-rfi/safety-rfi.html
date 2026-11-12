@@ -1,0 +1,298 @@
+<div class="space-y-6 animate-in fade-in duration-300">
+  <!-- Sub-navigation Tabs -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+      <button (click)="activeSubTab = 'safety'"
+        [ngClass]="activeSubTab === 'safety' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+        class="cursor-pointer px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+        <span class="material-symbols-outlined text-[16px] text-rose-500">health_and_safety</span>
+        HSE Safety & Toolbox Talks
+      </button>
+      <button (click)="activeSubTab = 'rfis'"
+        [ngClass]="activeSubTab === 'rfis' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+        class="cursor-pointer px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+        <span class="material-symbols-outlined text-[16px] text-indigo-500">help_center</span>
+        QA/QC & RFIs ({{ rfis.length }})
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      @if (activeSubTab === 'safety') {
+      <button (click)="showTalkForm = !showTalkForm"
+        class="cursor-pointer px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[16px]">campaign</span>
+        Log Toolbox Talk
+      </button>
+      <button (click)="showIncidentForm = !showIncidentForm"
+        class="cursor-pointer px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[16px]">report_problem</span>
+        Log Safety Incident
+      </button>
+      } @else {
+      <button (click)="showRfiForm = !showRfiForm"
+        class="cursor-pointer px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-[16px]">add_circle</span>
+        New RFI Query
+      </button>
+      }
+    </div>
+  </div>
+
+  <!-- ==================== SAFETY / HSE PANEL ==================== -->
+  @if (activeSubTab === 'safety') {
+  <!-- Metrics Row -->
+  @if (safetyMetrics) {
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900">
+      <div class="text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-400">Safe Days (No LTI)</div>
+      <div class="text-3xl font-black text-emerald-600 mt-1">{{ safetyMetrics.safe_man_days_without_lti }}</div>
+      <div class="text-[11px] text-emerald-700/80 dark:text-emerald-300/70">Continuous lost-time-free days</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <div class="text-[10px] font-black uppercase text-slate-400">Open Site Hazards</div>
+      <div class="text-3xl font-black text-rose-600 mt-1">{{ safetyMetrics.open_hazards }}</div>
+      <div class="text-[11px] text-slate-500">Incidents & critical safety snags</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <div class="text-[10px] font-black uppercase text-slate-400">Total Incidents Logged</div>
+      <div class="text-3xl font-black text-slate-800 dark:text-slate-100 mt-1">{{ safetyMetrics.total_incidents }}</div>
+      <div class="text-[11px] text-slate-500">Near misses, first-aid & hazards</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <div class="text-[10px] font-black uppercase text-slate-400">Toolbox Talks (TBT)</div>
+      <div class="text-3xl font-black text-indigo-600 mt-1">{{ safetyMetrics.toolbox_talks_conducted }}</div>
+      <div class="text-[11px] text-slate-500">Daily crew safety briefings</div>
+    </div>
+  </div>
+  }
+
+  <!-- Log Incident Form -->
+  @if (showIncidentForm) {
+  <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900 shadow-sm space-y-4">
+    <h3 class="text-sm font-black text-rose-600">Report HSE Safety Incident / Near Miss</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <input type="text" [(ngModel)]="newIncident.title" placeholder="Incident Title *"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+      <input type="text" [(ngModel)]="newIncident.location" placeholder="Location (e.g. Tower A, 6th Floor)"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+      <select [(ngModel)]="newIncident.severity"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+        <option value="near_miss">Near Miss</option>
+        <option value="first_aid">First Aid</option>
+        <option value="medical_treatment">Medical Treatment</option>
+        <option value="lost_time">Lost Time Injury (LTI)</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <select [(ngModel)]="newIncident.category"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+        <option value="Working at Height">Working at Height</option>
+        <option value="Electrical">Electrical</option>
+        <option value="PPE Non-Compliance">PPE Non-Compliance</option>
+        <option value="Excavation">Excavation & Shoring</option>
+        <option value="Heavy Equipment">Heavy Equipment / Crane</option>
+        <option value="Fire">Fire & Hot Work</option>
+      </select>
+      <input type="text" [(ngModel)]="newIncident.immediate_action" placeholder="Immediate Containment Action Taken"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+    </div>
+    <textarea [(ngModel)]="newIncident.description" rows="2" placeholder="Describe incident circumstances & unsafe condition..."
+      class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"></textarea>
+    <div class="flex justify-end gap-2">
+      <button (click)="showIncidentForm = false" class="cursor-pointer px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Cancel</button>
+      <button (click)="submitIncident()" class="cursor-pointer px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold">Submit Incident</button>
+    </div>
+  </div>
+  }
+
+  <!-- Log Toolbox Talk Form -->
+  @if (showTalkForm) {
+  <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900 shadow-sm space-y-4">
+    <h3 class="text-sm font-black text-emerald-600">Record Daily Toolbox Talk (TBT)</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <input type="text" [(ngModel)]="newTalk.topic" placeholder="Briefing Topic *"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+      <input type="text" [(ngModel)]="newTalk.trade" placeholder="Crew / Trade (e.g. Scaffolding)"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+      <input type="number" [(ngModel)]="newTalk.attendee_count" placeholder="Attendees Count"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+    </div>
+    <textarea [(ngModel)]="newTalk.key_points_discussed" rows="2" placeholder="Key safety protocols & PPE points briefed..."
+      class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"></textarea>
+    <div class="flex justify-end gap-2">
+      <button (click)="showTalkForm = false" class="cursor-pointer px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Cancel</button>
+      <button (click)="submitToolboxTalk()" class="cursor-pointer px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">Save Toolbox Talk</button>
+    </div>
+  </div>
+  }
+
+  <!-- Incidents & Toolbox Talks Lists -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="lg:col-span-7 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-5 space-y-3">
+      <h3 class="text-sm font-black text-slate-900 dark:text-white">Safety Incident & Hazard Register</h3>
+      @if (!incidents.length) {
+      <p class="text-xs text-slate-500 py-6 text-center">Zero safety incidents recorded. Keep up the safe site operations!</p>
+      } @else {
+      <div class="space-y-2.5">
+        @for (inc of incidents; track inc.id) {
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-start justify-between gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black text-slate-900 dark:text-white">{{ inc.incident_number }}</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase"
+                [ngClass]="inc.severity === 'lost_time' || inc.severity === 'fatal' ? 'bg-rose-500 text-white' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'">
+                {{ inc.severity.replace('_', ' ') }}
+              </span>
+              <span class="text-[10px] text-slate-400">{{ inc.incident_date }} · {{ inc.location }}</span>
+            </div>
+            <p class="text-xs font-bold text-slate-800 dark:text-slate-200">{{ inc.title }}</p>
+            <p class="text-[11px] text-slate-500">{{ inc.description }}</p>
+          </div>
+          <div class="shrink-0 flex flex-col items-end gap-1.5">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase"
+              [ngClass]="inc.status === 'closed' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'">
+              {{ inc.status }}
+            </span>
+            @if (inc.status !== 'closed') {
+            <button (click)="markIncidentClosed(inc)" class="cursor-pointer text-[10px] font-bold text-indigo-600 hover:underline">
+              Mark Closed
+            </button>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <div class="lg:col-span-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-5 space-y-3">
+      <h3 class="text-sm font-black text-slate-900 dark:text-white">Daily Toolbox Talks (TBT)</h3>
+      @if (!toolboxTalks.length) {
+      <p class="text-xs text-slate-500 py-6 text-center">No toolbox talks logged yet.</p>
+      } @else {
+      <div class="space-y-2.5">
+        @for (t of toolboxTalks; track t.id) {
+        <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-1">
+          <div class="flex items-center justify-between text-[10px] text-slate-500">
+            <span class="font-bold text-emerald-600">{{ t.talk_date }}</span>
+            <span>{{ t.attendee_count }} Crew Attended · {{ t.trade }}</span>
+          </div>
+          <p class="text-xs font-black text-slate-900 dark:text-white">{{ t.topic }}</p>
+          @if (t.key_points_discussed) {
+          <p class="text-[11px] text-slate-500">{{ t.key_points_discussed }}</p>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- ==================== QA/QC & RFI PANEL ==================== -->
+  @if (activeSubTab === 'rfis') {
+  @if (showRfiForm) {
+  <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900 shadow-sm space-y-4">
+    <h3 class="text-sm font-black text-indigo-600">Submit Request for Information (RFI)</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <input type="text" [(ngModel)]="newRfi.subject" placeholder="RFI Subject *"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+      <select [(ngModel)]="newRfi.discipline"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+        <option value="Structural">Structural</option>
+        <option value="Architectural">Architectural</option>
+        <option value="MEP">MEP</option>
+        <option value="Civil">Civil</option>
+      </select>
+      <select [(ngModel)]="newRfi.priority"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+        <option value="low">Low Priority</option>
+        <option value="medium">Medium Priority</option>
+        <option value="high">High Priority</option>
+        <option value="urgent">Urgent (Critical Path)</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+      <input type="text" [(ngModel)]="newRfi.drawing_reference" placeholder="Drawing Ref (e.g. STR-COL-104)"
+        class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
+      <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+        <input type="checkbox" [(ngModel)]="newRfi.cost_impact"> Potential Cost Impact
+      </label>
+      <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+        <input type="checkbox" [(ngModel)]="newRfi.schedule_impact"> Potential Schedule Impact
+      </label>
+    </div>
+    <textarea [(ngModel)]="newRfi.question" rows="3" placeholder="Technical query details for Structural/Architectural Consultant..."
+      class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"></textarea>
+    <div class="flex justify-end gap-2">
+      <button (click)="showRfiForm = false" class="cursor-pointer px-4 py-2 rounded-xl bg-slate-100 text-xs font-bold">Cancel</button>
+      <button (click)="submitRfi()" class="cursor-pointer px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold">Submit RFI</button>
+    </div>
+  </div>
+  }
+
+  <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-5 space-y-4">
+    <h3 class="text-sm font-black text-slate-900 dark:text-white">Requests for Information (RFI) Register</h3>
+    @if (!rfis.length) {
+    <p class="text-xs text-slate-500 py-8 text-center">No RFIs submitted for this project yet.</p>
+    } @else {
+    <div class="space-y-3">
+      @for (rfi of rfis; track rfi.id) {
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-black text-indigo-600">{{ rfi.rfi_number }}</span>
+            <span class="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-700 text-[10px] font-bold">{{ rfi.discipline }}</span>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase"
+              [ngClass]="rfi.priority === 'urgent' || rfi.priority === 'high' ? 'bg-rose-500 text-white' : 'bg-blue-500/15 text-blue-600'">
+              {{ rfi.priority }}
+            </span>
+          </div>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase"
+            [ngClass]="rfi.status === 'answered' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-amber-500/15 text-amber-600'">
+            {{ rfi.status }}
+          </span>
+        </div>
+        <h4 class="text-sm font-black text-slate-900 dark:text-white">{{ rfi.subject }}</h4>
+        <p class="text-xs text-slate-600 dark:text-slate-300">{{ rfi.question }}</p>
+
+        @if (rfi.ai_draft_response && rfi.status !== 'answered') {
+        <div class="p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 text-[11px] text-indigo-800 dark:text-indigo-200">
+          <strong class="flex items-center gap-1 mb-0.5">
+            <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+            RFI Assistant Bot Suggested Technical Draft:
+          </strong>
+          {{ rfi.ai_draft_response }}
+        </div>
+        }
+
+        @if (rfi.response) {
+        <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200">
+          <strong>Engineering Response:</strong> {{ rfi.response }}
+        </div>
+        } @else {
+        <div class="pt-1">
+          @if (answeringRfi?.id === rfi.id) {
+          <div class="space-y-2 mt-2">
+            <textarea [(ngModel)]="rfiAnswerText" rows="2" placeholder="Enter formal engineering response..."
+              class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-xs"></textarea>
+            <div class="flex gap-2">
+              <button (click)="submitRfiAnswer()" class="cursor-pointer px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold">Publish Response</button>
+              <button (click)="answeringRfi = null" class="cursor-pointer px-3 py-1.5 rounded-lg bg-slate-200 text-xs font-bold">Cancel</button>
+            </div>
+          </div>
+          } @else {
+          <button (click)="openAnswerRfi(rfi)" class="cursor-pointer text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">reply</span>
+            Answer RFI (Use AI Draft)
+          </button>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+</div>

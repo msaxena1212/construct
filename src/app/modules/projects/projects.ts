@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ProjectService } from './services/project-service';
 import { IProject, IUser, MilestoneStatus } from '../../shared/interfaces/project.interface';
 import { environment } from '../../../environments/environment';
@@ -22,16 +23,41 @@ export class Projects implements OnInit {
 
   allProjects: any[] = [];
   filteredProjects: any[] = [];
+  contextMode: string | null = null;
+  contextTab: string | null = null;
+  contextBannerTitle: string | null = null;
 
-  // constructor(private projectService: ProjectService) { }
+  private contextMap: Record<string, { tab: string; title: string }> = {
+    labour: { tab: 'Labour', title: 'Site Labour Attendance' },
+    dpr: { tab: 'DPR', title: 'Daily Progress Reports (DPR)' },
+    snags: { tab: 'Snags', title: 'Site Snags & Defects' },
+    budget: { tab: 'Budget', title: 'Budget Reconciliation & Financial Health' },
+    boq: { tab: 'BOQ', title: 'BOQ & Estimates' },
+    drawings: { tab: 'Drawings', title: 'Drawings & Blueprint Register' },
+    mb: { tab: 'MB & Billing', title: 'Measurement Books (MB) & Contractor RA Billing' },
+    billing: { tab: 'MB & Billing', title: 'Measurement Books (MB) & Contractor RA Billing' },
+  };
+
   constructor(
-  private projectService: ProjectService,
-  public permissionService: PermissionService
-) {}
+    private projectService: ProjectService,
+    public permissionService: PermissionService,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe((params) => {
+      const ctx = params['context']?.toLowerCase();
+      if (ctx && this.contextMap[ctx]) {
+        this.contextMode = ctx;
+        this.contextTab = this.contextMap[ctx].tab;
+        this.contextBannerTitle = this.contextMap[ctx].title;
+      } else {
+        this.contextMode = null;
+        this.contextTab = null;
+        this.contextBannerTitle = null;
+      }
+    });
     this.fetchProjects();
-
   }
 
 
@@ -106,6 +132,7 @@ export class Projects implements OnInit {
 
     const baseUrl = this.serverUrl.endsWith('/') ? this.serverUrl.slice(0, -1) : this.serverUrl;
     const thumbPath = thumbnail.startsWith('/') ? thumbnail : `/${thumbnail}`;
-    return `${baseUrl}${thumbPath}`;
+    const token = localStorage.getItem('token') || (JSON.parse(localStorage.getItem('auth_user') || '{}').accessToken);
+    return token ? `${baseUrl}${thumbPath}?token=${encodeURIComponent(token)}` : `${baseUrl}${thumbPath}`;
   }
 }

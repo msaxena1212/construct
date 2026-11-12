@@ -1,0 +1,259 @@
+<div class="st-page">
+  <app-stock-transfer-nav active="detail" [projectId]="transfer?.project_id ?? null" backTo="register" backLabel="Back to Stock Transfers"></app-stock-transfer-nav>
+
+  <p class="st-loading" *ngIf="loading">Loading transfer…</p>
+  <p class="st-error" *ngIf="loadError" role="alert">{{ loadError }}</p>
+
+  <ng-container *ngIf="transfer && !loading">
+    <header class="st-header">
+      <div>
+        <h1>{{ transfer.transfer_number }}</h1>
+        <p class="st-sub">
+          {{ locationName(transfer.source_location_id) }} → {{ locationName(transfer.destination_location_id) }}
+          · <span class="st-status" [attr.data-status]="transfer.status">{{ transfer.status | titlecase }}</span>
+        </p>
+        <p class="st-sub" *ngIf="transfer.reason">Reason: {{ transfer.reason }}</p>
+      </div>
+      <div class="st-summary">
+        <div class="st-kpi k-approved"><span class="material-symbols-outlined">fact_check</span><span>Approved</span><strong>{{ transfer.totals.approved }}</strong></div>
+        <div class="st-kpi k-dispatched"><span class="material-symbols-outlined">local_shipping</span><span>Dispatched</span><strong>{{ transfer.totals.dispatched }}</strong></div>
+        <div class="st-kpi k-transit"><span class="material-symbols-outlined">hourglass_top</span><span>Outstanding in transit</span><strong>{{ transfer.totals.outstanding }}</strong></div>
+      </div>
+    </header>
+
+    <!-- Lifecycle -->
+    <section class="st-card st-flow" aria-label="Transfer progress">
+      <ol class="st-steps" *ngIf="stepIndex >= 0; else terminalState">
+        <li *ngFor="let s of steps; let i = index" [class.done]="i < stepIndex" [class.current]="i === stepIndex" [attr.aria-current]="i === stepIndex ? 'step' : null">
+          <span class="dot"><span class="material-symbols-outlined">{{ i < stepIndex ? 'check' : s.icon }}</span></span>
+          <span class="lbl">{{ s.label }}</span>
+        </li>
+      </ol>
+      <ng-template #terminalState>
+        <p class="st-terminal" [attr.data-status]="transfer.status">
+          <span class="material-symbols-outlined">{{ transfer.status === 'rejected' ? 'cancel' : 'block' }}</span>
+          This transfer was {{ transfer.status }}. No further stock movement is possible.
+        </p>
+      </ng-template>
+    </section>
+
+    <section class="st-card">
+      <h2>Lines</h2>
+      <table class="st-table">
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th class="num">Requested</th>
+            <th class="num">Approved</th>
+            <th class="num">Dispatched</th>
+            <th class="num">Accepted</th>
+            <th class="num">Quarantined</th>
+            <th class="num">Reversed</th>
+            <th class="num">Written off</th>
+            <th class="num">Outstanding</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of transfer.lines">
+            <td>
+              <strong>{{ materialName(l.material_id) }}</strong> <span class="st-sub">({{ l.unit_of_measure }})</span>
+              <div class="st-bar" *ngIf="l.dispatched > 0" [attr.title]="dispatchPercent(l) + '% dispatched'"><div [style.width.%]="dispatchPercent(l)"></div></div>
+            </td>
+            <td class="num">{{ l.requested_qty }}</td>
+            <td class="num">{{ l.approved_qty ?? '—' }}</td>
+            <td class="num">{{ l.dispatched }}</td>
+            <td class="num">{{ l.received_accepted }}</td>
+            <td class="num">{{ l.received_quarantined }}</td>
+            <td class="num">{{ l.reversed }}</td>
+            <td class="num">{{ l.shortage }}</td>
+            <td class="num"><strong>{{ l.outstanding }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="st-sub">Quantities are derived from the stock ledger. Rejected or damaged goods are counted as quarantined, not lost.</p>
+    </section>
+
+    <!-- Approval -->
+    <section class="st-card" *ngIf="canApprove">
+      <h2>Approval</h2>
+      <p class="st-sub">You cannot approve a transfer you requested. Approved quantities cannot exceed requested quantities.</p>
+      <div class="st-grid" *ngFor="let l of transfer.lines">
+        <label>Line #{{ l.material_id }} approved quantity
+          <input type="number" min="0" step="1" [(ngModel)]="approvalDraft[l.id]" [name]="'appr' + l.id" />
+        </label>
+      </div>
+      <label>Decision note <input type="text" maxlength="500" [(ngModel)]="approvalReason" name="apprReason" /></label>
+      <label>Super Admin override reason <span class="st-sub">(only when approving a request you created; at least 10 characters; recorded in the audit history)</span>
+        <input type="text" maxlength="500" [(ngModel)]="overrideReason" name="overrideReason" />
+      </label>
+      <div class="st-actions">
+        <button type="button" class="st-btn primary" (click)="approve()" [disabled]="busy">Approve</button>
+      </div>
+      <label>Rejection reason <input type="text" maxlength="500" [(ngModel)]="rejectReason" name="rejReason" /></label>
+      <div class="st-actions">
+        <button type="button" class="st-btn danger" (click)="reject()" [disabled]="busy">Reject</button>
+      </div>
+    </section>
+
+    <!-- Draft / cancel -->
+    <section class="st-card" *ngIf="canSubmit || canCancel">
+      <h2>Request</h2>
+      <div class="st-actions" *ngIf="canSubmit">
+        <button type="button" class="st-btn primary" (click)="submit()" [disabled]="busy">Submit for approval</button>
+      </div>
+      <div *ngIf="canCancel">
+        <label>Cancellation reason <input type="text" maxlength="500" [(ngModel)]="cancelReason" name="cancelReason" /></label>
+        <div class="st-actions">
+          <button type="button" class="st-btn danger" (click)="cancel()" [disabled]="busy">Cancel transfer</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Source check-out -->
+    <section class="st-card" *ngIf="canCheckOut">
+      <h2>Source check-out</h2>
+      <p class="st-sub">Enter the quantity physically picked and dispatched for each line. Source stock decreases once; the goods stay traceable in transit.</p>
+      <table class="st-table">
+        <thead><tr><th>Line</th><th class="num">Remaining to dispatch</th><th>Dispatch quantity</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let l of transfer.lines">
+            <td>#{{ l.material_id }}</td>
+            <td class="num">{{ (l.approved_qty ?? 0) - l.dispatched }}</td>
+            <td><input type="number" min="0" step="1" [(ngModel)]="checkoutQty[l.id]" [name]="'out' + l.id" [disabled]="(l.approved_qty ?? 0) - l.dispatched <= 0" aria-label="Dispatch quantity" /></td>
+          </tr>
+        </tbody>
+      </table>
+      <label>Dispatch / challan reference <input type="text" maxlength="200" [(ngModel)]="dispatchRef" name="dispatchRef" /></label>
+      <div class="st-actions">
+        <button type="button" class="st-btn primary" (click)="checkOut()" [disabled]="busy">Check out stock</button>
+      </div>
+    </section>
+
+    <!-- Destination check-in -->
+    <section class="st-card" *ngIf="canCheckIn">
+      <h2>Destination check-in</h2>
+      <p class="st-sub">Accepted goods go to the destination. Damaged or rejected goods go to quarantine. Anything not received stays in transit.</p>
+      <table class="st-table" *ngIf="outstandingLines.length; else nothingOutstanding">
+        <thead><tr><th>Line</th><th class="num">Outstanding</th><th>Accepted</th><th>Quarantined</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let l of outstandingLines">
+            <td>#{{ l.material_id }}</td>
+            <td class="num">{{ l.outstanding }}</td>
+            <td><input type="number" min="0" step="1" [(ngModel)]="checkinAccepted[l.id]" [name]="'acc' + l.id" aria-label="Accepted quantity" /></td>
+            <td><input type="number" min="0" step="1" [(ngModel)]="checkinQuarantined[l.id]" [name]="'qua' + l.id" aria-label="Quarantined quantity" /></td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #nothingOutstanding><p class="st-sub">Nothing is outstanding in transit.</p></ng-template>
+      <div class="st-grid">
+        <label>Quarantine location
+          <select [(ngModel)]="quarantineLocationId" name="quarantine">
+            <option [ngValue]="null">Not needed</option>
+            <option *ngFor="let loc of locations" [ngValue]="loc.id" [disabled]="loc.location_type !== 'quarantine'">
+              {{ loc.name }} ({{ loc.code }}) — {{ loc.location_type }}
+            </option>
+          </select>
+        </label>
+        <label>Receipt reference <input type="text" maxlength="200" [(ngModel)]="receiptRef" name="receiptRef" /></label>
+      </div>
+      <div class="st-actions">
+        <button type="button" class="st-btn primary" (click)="checkIn()" [disabled]="busy || !outstandingLines.length">Check in</button>
+      </div>
+    </section>
+
+    <!-- Discrepancies -->
+    <section class="st-card" *ngIf="transfer.status !== 'draft' && transfer.status !== 'cancelled' && transfer.status !== 'rejected'">
+      <h2>Shortages and discrepancies</h2>
+      <table class="st-table" *ngIf="transfer.discrepancies.length; else noDisc">
+        <thead><tr><th>Line</th><th class="num">Quantity</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr *ngFor="let d of transfer.discrepancies">
+            <td>#{{ d.transfer_line_id }}</td>
+            <td class="num">{{ d.quantity }}</td>
+            <td>{{ d.reason }}</td>
+            <td>{{ d.status === 'open' ? 'Open' : 'Written off' }}</td>
+            <td><button type="button" class="st-btn danger" *ngIf="d.status === 'open'" (click)="writeOff(d)" [disabled]="busy">Authorized write-off</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noDisc><p class="st-sub">No shortages declared.</p></ng-template>
+
+      <div class="st-grid" *ngIf="canCheckIn">
+        <label>Line
+          <select [(ngModel)]="shortageLine" name="shortLine">
+            <option [ngValue]="null">Choose…</option>
+            <option *ngFor="let l of outstandingLines" [ngValue]="l.id">#{{ l.material_id }} (outstanding {{ l.outstanding }})</option>
+          </select>
+        </label>
+        <label>Quantity <input type="number" min="1" step="1" [(ngModel)]="shortageQty" name="shortQty" /></label>
+        <label>Reason <input type="text" maxlength="500" [(ngModel)]="shortageReason" name="shortReason" /></label>
+        <button type="button" class="st-btn" (click)="declareShortage()" [disabled]="busy">Declare shortage</button>
+      </div>
+    </section>
+
+    <!-- Reversal -->
+    <section class="st-card" *ngIf="canCheckIn">
+      <h2>Authorized dispatch reversal</h2>
+      <p class="st-sub">Returns goods that were dispatched but never received back to the source location.</p>
+      <div class="st-grid">
+        <label>Line
+          <select [(ngModel)]="reverseLine" name="revLine">
+            <option [ngValue]="null">Choose…</option>
+            <option *ngFor="let l of outstandingLines" [ngValue]="l.id">#{{ l.material_id }} (outstanding {{ l.outstanding }})</option>
+          </select>
+        </label>
+        <label>Quantity <input type="number" min="1" step="1" [(ngModel)]="reverseQty" name="revQty" /></label>
+        <label>Reason <input type="text" maxlength="500" [(ngModel)]="reverseReason" name="revReason" /></label>
+      </div>
+      <div class="st-actions">
+        <button type="button" class="st-btn danger" (click)="reverseDispatch()" [disabled]="busy">Reverse dispatch</button>
+      </div>
+    </section>
+
+    <!-- History -->
+    <section class="st-card" *ngIf="history">
+      <h2>History</h2>
+      <ol class="st-timeline">
+        <li *ngFor="let e of history.events">
+          <strong>{{ e.event_type | titlecase }}</strong>
+          <span class="st-sub">{{ e.createdAt | date: 'dd MMM yyyy, HH:mm' }} · user #{{ e.actor_id ?? '—' }}</span>
+        </li>
+      </ol>
+      <h3>Stock movements</h3>
+      <table class="st-table" *ngIf="history.movements.length">
+        <thead><tr><th>When</th><th>Type</th><th class="num">Quantity</th><th>Location</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let m of history.movements">
+            <td>{{ m.createdAt | date: 'dd MMM yyyy, HH:mm' }}</td>
+            <td>{{ m.movement_type }}</td>
+            <td class="num">{{ m.quantity }}</td>
+            <td>{{ m.location_id ? locationName(m.location_id) : 'In transit' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </ng-container>
+
+  <!-- In-app confirmation dialog (replaces native confirm() and prompt()). -->
+  <div class="st-modal-backdrop" *ngIf="dialog" (click)="closeDialog()">
+    <div class="st-modal" role="dialog" aria-modal="true" aria-labelledby="st-dialog-title" (click)="$event.stopPropagation()">
+      <h2 id="st-dialog-title">{{ dialog.title }}</h2>
+      <ul class="st-summary-list">
+        <li *ngFor="let s of dialog.summary">{{ s }}</li>
+      </ul>
+      <label *ngIf="dialog.reasonLabel">
+        {{ dialog.reasonLabel }}{{ dialog.reasonRequired ? ' (required)' : '' }}
+        <input type="text" maxlength="500" [(ngModel)]="dialog.reason" name="dialogReason" [attr.aria-invalid]="!!dialog.error" />
+      </label>
+      <label *ngIf="dialog.overrideLabel">
+        {{ dialog.overrideLabel }}
+        <input type="text" maxlength="500" [(ngModel)]="dialog.overrideReason" name="dialogOverride" />
+      </label>
+      <p class="st-error" *ngIf="dialog.error" role="alert">{{ dialog.error }}</p>
+      <div class="st-modal-actions">
+        <button type="button" class="st-btn" (click)="closeDialog()">Back</button>
+        <button type="button" class="st-btn" [class.danger]="dialog.danger" [class.primary]="!dialog.danger" (click)="confirmDialog()" [disabled]="busy">{{ dialog.confirmLabel }}</button>
+      </div>
+    </div>
+  </div>
+</div>

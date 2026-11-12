@@ -1,0 +1,182 @@
+<div class="st-page">
+  <app-stock-transfer-nav active="inventory" [projectId]="projectId" backTo="register" backLabel="Back to Stock Transfers"></app-stock-transfer-nav>
+
+  <header class="st-header">
+    <div>
+      <h1>Project Inventory</h1>
+      <p class="st-sub">Stock by material and location, with stock in, stock out and the movement history. All figures come from the stock ledger.</p>
+    </div>
+  </header>
+
+  <section class="st-filters">
+    <label>
+      Project
+      <select [ngModel]="projectId" (ngModelChange)="onProjectChange($event)" aria-label="Project">
+        <option [ngValue]="null">Select a project</option>
+        <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
+      </select>
+    </label>
+  </section>
+
+  <p class="st-empty" *ngIf="!projectId">Select a project to see its inventory.</p>
+  <p class="st-loading" *ngIf="loading">Loading inventory…</p>
+  <p class="st-error" *ngIf="loadError" role="alert">{{ loadError }}</p>
+
+  <ng-container *ngIf="projectId && balances && !loading">
+    <!-- Balances -->
+    <section class="st-card">
+      <h2>Balances</h2>
+      <p class="st-empty" *ngIf="!materials.length">No project stock records exist for this project yet.</p>
+      <div class="st-table-wrap" *ngIf="materials.length">
+        <table class="st-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>UOM</th>
+              <th class="num" *ngFor="let loc of storeLocations">{{ loc.name }} ({{ loc.code }})</th>
+              <th class="num">Unplaced</th>
+              <th class="num">In transit</th>
+              <th class="num">Quarantined</th>
+              <th class="num">Ledger total</th>
+              <th>Check</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of materials">
+              <td>{{ row.name }} <span class="st-sub">{{ row.sku }}</span></td>
+              <td>{{ row.unit_of_measure }}</td>
+              <td class="num" *ngFor="let loc of storeLocations">{{ balanceAt(row, loc.id)?.balance ?? 0 }}</td>
+              <td class="num">{{ row.unplaced }}</td>
+              <td class="num">{{ row.in_transit }}</td>
+              <td class="num">{{ row.quarantined }}</td>
+              <td class="num"><strong>{{ row.counter_available }}</strong></td>
+              <td><span class="st-status" [attr.data-status]="reviewRequired(row) ? 'rejected' : 'completed'">{{ reviewRequired(row) ? 'Review Required' : 'Reconciled' }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="st-sub">Ledger total = unplaced + location balances + in transit. Quarantined stock is counted in the location balance but is never issued.</p>
+    </section>
+
+    <div class="st-grid-two">
+      <!-- Stock in -->
+      <section class="st-card st-form" aria-labelledby="stock-in-title">
+        <h2 id="stock-in-title">Stock in (receipt)</h2>
+        <p class="st-sub">Records goods received into a store. A PO/GRN or opening-stock authorization reference is required.</p>
+
+        <div class="st-field">
+          <label for="inMaterial"><span class="st-label-text">Material</span><span class="st-req" aria-hidden="true">*</span></label>
+          <select id="inMaterial" name="inMaterial" [(ngModel)]="stockIn.material_id" required [attr.aria-invalid]="stockInTouched && !stockIn.material_id">
+            <option [ngValue]="null">Choose a material…</option>
+            <option *ngFor="let m of materials" [ngValue]="m.material_id">{{ m.name }} ({{ m.unit_of_measure }})</option>
+          </select>
+        </div>
+
+        <div class="st-field">
+          <label for="inLocation"><span class="st-label-text">Receiving location</span><span class="st-req" aria-hidden="true">*</span></label>
+          <select id="inLocation" name="inLocation" [(ngModel)]="stockIn.location_id" required [attr.aria-invalid]="stockInTouched && !stockIn.location_id">
+            <option [ngValue]="null">Choose a location…</option>
+            <option *ngFor="let l of stockInLocations" [ngValue]="l.id">{{ l.name }} ({{ l.code }})</option>
+          </select>
+        </div>
+
+        <div class="st-field">
+          <label for="inQty"><span class="st-label-text">Quantity</span><span class="st-req" aria-hidden="true">*</span></label>
+          <div class="st-qty-row">
+            <input id="inQty" type="number" min="1" step="1" inputmode="numeric" name="inQty" [(ngModel)]="stockIn.quantity" required [attr.aria-invalid]="stockInTouched && !stockIn.quantity" />
+            <span class="st-uom" aria-label="Unit of measure">{{ uomFor(stockIn.material_id) || 'UOM' }}</span>
+          </div>
+        </div>
+
+        <div class="st-field">
+          <label for="inRef"><span class="st-label-text">PO / GRN / authorization reference</span><span class="st-req" aria-hidden="true">*</span></label>
+          <input id="inRef" type="text" maxlength="200" name="inRef" [(ngModel)]="stockIn.reference" required [attr.aria-invalid]="stockInTouched && !stockIn.reference.trim()" />
+        </div>
+
+        <p class="st-field-error" *ngIf="stockInTouched && stockInError() as err" role="alert">{{ err }}</p>
+
+        <div class="st-actions">
+          <button type="button" class="st-btn primary st-submit" (click)="submitStockIn()" [disabled]="stockInBusy" [attr.aria-busy]="stockInBusy">
+            {{ stockInBusy ? 'Recording receipt…' : 'Record receipt' }}
+          </button>
+        </div>
+      </section>
+
+      <!-- Stock out -->
+      <section class="st-card st-form" aria-labelledby="stock-out-title">
+        <h2 id="stock-out-title">Stock out (issue)</h2>
+        <p class="st-sub">Issues material from a store against a project activity. Quarantined and in-transit stock cannot be issued.</p>
+
+        <div class="st-field">
+          <label for="outMaterial"><span class="st-label-text">Material</span><span class="st-req" aria-hidden="true">*</span></label>
+          <select id="outMaterial" name="outMaterial" [(ngModel)]="stockOut.material_id" required [attr.aria-invalid]="stockOutTouched && !stockOut.material_id">
+            <option [ngValue]="null">Choose a material…</option>
+            <option *ngFor="let m of materials" [ngValue]="m.material_id">{{ m.name }} ({{ m.unit_of_measure }})</option>
+          </select>
+        </div>
+
+        <div class="st-field">
+          <label for="outLocation"><span class="st-label-text">Issuing location</span><span class="st-req" aria-hidden="true">*</span></label>
+          <select id="outLocation" name="outLocation" [(ngModel)]="stockOut.location_id" required [attr.aria-invalid]="stockOutTouched && !stockOut.location_id">
+            <option [ngValue]="null">Choose a location…</option>
+            <option *ngFor="let l of stockOutLocations" [ngValue]="l.id">{{ l.name }} ({{ l.code }})</option>
+          </select>
+        </div>
+
+        <div class="st-field">
+          <label for="outQty"><span class="st-label-text">Quantity</span><span class="st-req" aria-hidden="true">*</span></label>
+          <div class="st-qty-row">
+            <input id="outQty" type="number" min="1" step="1" inputmode="numeric" name="outQty" [(ngModel)]="stockOut.quantity" required [attr.aria-invalid]="stockOutTouched && !stockOut.quantity" />
+            <span class="st-uom" aria-label="Unit of measure">{{ uomFor(stockOut.material_id) || 'UOM' }}</span>
+          </div>
+        </div>
+
+        <div class="st-field">
+          <label for="outActivity"><span class="st-label-text">Activity / work reference</span><span class="st-req" aria-hidden="true">*</span></label>
+          <input id="outActivity" type="text" maxlength="200" name="outActivity" [(ngModel)]="stockOut.activity" required [attr.aria-invalid]="stockOutTouched && !stockOut.activity.trim()" />
+        </div>
+
+        <div class="st-field">
+          <label for="outRequested"><span class="st-label-text">Requested by</span><span class="st-req" aria-hidden="true">*</span></label>
+          <input id="outRequested" type="text" maxlength="120" name="outRequested" [(ngModel)]="stockOut.requested_by" required [attr.aria-invalid]="stockOutTouched && !stockOut.requested_by.trim()" />
+        </div>
+
+        <p class="st-field-error" *ngIf="stockOutTouched && stockOutError() as err" role="alert">{{ err }}</p>
+
+        <div class="st-actions">
+          <button type="button" class="st-btn primary st-submit" (click)="submitStockOut()" [disabled]="stockOutBusy" [attr.aria-busy]="stockOutBusy">
+            {{ stockOutBusy ? 'Issuing material…' : 'Issue material' }}
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- History -->
+    <section class="st-card">
+      <h2>Recent movements</h2>
+      <p class="st-empty" *ngIf="!movements.length">No stock movements recorded for this project yet.</p>
+      <table class="st-table" *ngIf="movements.length">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Type</th>
+            <th>Material</th>
+            <th>Location</th>
+            <th class="num">Quantity</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of movements">
+            <td>{{ m.createdAt | date: 'dd MMM yyyy, HH:mm' }}</td>
+            <td>{{ m.movement_type }}</td>
+            <td>{{ m.material?.name || '—' }}</td>
+            <td>{{ m.location ? m.location.name + ' (' + m.location.code + ')' : '—' }}</td>
+            <td class="num">{{ m.quantity }} {{ m.unit_of_measure }}</td>
+            <td>{{ m.transfer_id ? 'Transfer #' + m.transfer_id : (m.reference_id || '—') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </ng-container>
+</div>

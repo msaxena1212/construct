@@ -55,6 +55,10 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/master/projects']);
   }
 
+  goToPortfolio(): void {
+    this.router.navigate(['/master/portfolio']);
+  }
+
   formatBudget(value: number): string {
   if (!value) return '0';
 

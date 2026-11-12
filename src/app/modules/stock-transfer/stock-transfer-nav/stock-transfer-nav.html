@@ -1,0 +1,26 @@
+<header class="st-navbar">
+  <a class="st-back" [routerLink]="backPath" [queryParams]="query" role="link" aria-label="{{ backLabel }}">
+    <span class="st-back-arrow" aria-hidden="true">&larr;</span>
+    <span>{{ backLabel }}</span>
+  </a>
+
+  <nav class="st-tabs" aria-label="Stock transfer sections">
+    <a [routerLink]="base + '/inventory'" [queryParams]="query" class="st-tab"
+       [class.active]="active === 'inventory'" [attr.aria-current]="active === 'inventory' ? 'page' : null">Project Inventory</a>
+    <a [routerLink]="base" [queryParams]="query" class="st-tab"
+       [class.active]="active === 'register'" [attr.aria-current]="active === 'register' ? 'page' : null">All Transfers</a>
+    <a [routerLink]="base + '/in-transit'" [queryParams]="query" class="st-tab"
+       [class.active]="active === 'in-transit'" [attr.aria-current]="active === 'in-transit' ? 'page' : null">In-transit Board</a>
+    <a [routerLink]="base + '/approvals'" [queryParams]="query" class="st-tab"
+       [class.active]="active === 'approvals'" [attr.aria-current]="active === 'approvals' ? 'page' : null">Approval Queue</a>
+    <a [routerLink]="base" [queryParams]="newQuery" class="st-tab"
+       [class.active]="active === 'new'" [attr.aria-current]="active === 'new' ? 'page' : null"
+       *ngIf="projectId; else newDisabled">New Transfer Request</a>
+    <ng-template #newDisabled>
+      <span class="st-tab disabled" aria-disabled="true" title="Select a project first">New Transfer Request</span>
+    </ng-template>
+  </nav>
+
+  <p class="st-project-chip" *ngIf="projectId">Project selected: <strong>#{{ projectId }}</strong></p>
+  <p class="st-project-chip warn" *ngIf="!projectId">No project selected</p>
+</header>

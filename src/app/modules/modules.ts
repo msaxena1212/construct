@@ -75,6 +75,7 @@ export class Modules implements OnInit, AfterContentChecked, DoCheck {
     }, 1000);
   }
 
+
   ngDoCheck(): void {
     this.currentRoute = this.router.url;
   }

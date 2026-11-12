@@ -1,0 +1,50 @@
+<div class="st-page">
+  <app-stock-transfer-nav active="in-transit" [projectId]="projectId" backTo="register" backLabel="Back to Stock Transfers"></app-stock-transfer-nav>
+
+  <header class="st-header">
+    <div>
+      <h1>In-transit Board</h1>
+      <p class="st-sub">Dispatched transfers with quantities not yet accepted, quarantined, reversed or written off.</p>
+    </div>
+  </header>
+
+  <p class="st-loading" *ngIf="loading">Loading…</p>
+  <p class="st-error" *ngIf="loadError" role="alert">{{ loadError }}</p>
+
+  <section class="st-card st-empty-state" *ngIf="!loading && !loadError && !rows.length">
+    <h2>Nothing is in transit</h2>
+    <p class="st-sub" *ngIf="projectId">
+      No dispatched transfer for this project has outstanding quantity. Completed and not-yet-dispatched transfers are listed under All Transfers.
+    </p>
+    <p class="st-sub" *ngIf="!projectId">Select a project first to see its in-transit transfers.</p>
+    <div class="st-actions">
+      <a class="st-btn primary" [routerLink]="'/master/stock-transfer'" [queryParams]="projectId ? { projectId: projectId } : {}">View all transfers</a>
+      <a class="st-btn" [routerLink]="'/master/stock-transfer'" [queryParams]="projectId ? { projectId: projectId } : {}">Back to Stock Transfers</a>
+    </div>
+  </section>
+
+  <table class="st-table" *ngIf="!loading && rows.length">
+    <thead>
+      <tr>
+        <th>Transfer</th>
+        <th>Status</th>
+        <th class="num">Approved</th>
+        <th class="num">Dispatched</th>
+        <th class="num">Outstanding</th>
+        <th>Dispatched at</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of rows" [class.st-overdue]="t.status === 'reconciliation_required'">
+        <td>{{ t.transfer_number }}</td>
+        <td><span class="st-status" [attr.data-status]="t.status">{{ t.status | titlecase }}</span></td>
+        <td class="num">{{ t.totals.approved }}</td>
+        <td class="num">{{ t.totals.dispatched }}</td>
+        <td class="num"><strong>{{ t.totals.outstanding }}</strong></td>
+        <td>{{ t.first_dispatched_at ? (t.first_dispatched_at | date: 'dd MMM yyyy, HH:mm') : '—' }}</td>
+        <td><button type="button" class="st-btn" (click)="open(t)">Open</button></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

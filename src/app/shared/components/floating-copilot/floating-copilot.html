@@ -1,0 +1,182 @@
+<!-- FLOATING COPILOT TRIGGER (When Closed) -->
+@if (!isOpen) {
+  <div class="fixed bottom-6 right-6 z-50">
+    <button (click)="toggleOpen()"
+      title="Open Zyno Intelligence Copilot"
+      class="group relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none cursor-pointer">
+      <span class="absolute -top-1 -right-1 flex h-4 w-4">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-4 w-4 bg-cyan-300 border-2 border-slate-900"></span>
+      </span>
+      <span class="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform">auto_awesome</span>
+    </button>
+  </div>
+}
+
+<!-- EXPANDABLE COPILOT WINDOW (When Open) -->
+@if (isOpen) {
+  <div class="fixed bottom-6 right-6 z-50 flex flex-col w-[420px] max-w-[calc(100vw-2rem)] transition-all duration-300 shadow-2xl rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden font-sans"
+    [ngClass]="isMinimized ? 'h-14' : 'h-[620px] max-h-[calc(100vh-5rem)]'">
+
+    <!-- COPILOT HEADER -->
+    <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-b border-slate-800 select-none">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
+          <span class="material-symbols-outlined text-lg text-white">auto_awesome</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h4 class="text-xs font-bold tracking-tight text-white">Zyno Intelligence Copilot</h4>
+            <span class="px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Active</span>
+          </div>
+          <p class="text-[10px] text-slate-400 flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            {{ activeProjectName }}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1 text-slate-400">
+        <!-- Clear chat -->
+        <button (click)="clearChat()" title="Reset Conversation"
+          class="p-1 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-base">restart_alt</span>
+        </button>
+
+        <!-- Minimize -->
+        <button (click)="toggleMinimize()" title="{{ isMinimized ? 'Expand' : 'Minimize' }}"
+          class="p-1 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-base">{{ isMinimized ? 'expand_less' : 'remove' }}</span>
+        </button>
+
+        <!-- Close -->
+        <button (click)="closeWidget()" title="Close Copilot"
+          class="p-1 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- COPILOT BODY (MESSAGES) -->
+    @if (!isMinimized) {
+      <div #messagesContainer class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/70 dark:bg-slate-950/70 message-scroll-container">
+        @for (msg of messages; track msg.id) {
+          <!-- USER MESSAGE -->
+          @if (msg.sender === 'user') {
+            <div class="flex justify-end pl-8">
+              <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-sm text-xs leading-relaxed max-w-[85%] break-words">
+                {{ msg.text }}
+              </div>
+            </div>
+          }
+
+          <!-- COPILOT MESSAGE -->
+          @if (msg.sender === 'copilot') {
+            <div class="flex gap-2.5 pr-4">
+              <div class="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center shrink-0 mt-0.5">
+                <span class="material-symbols-outlined text-sm text-indigo-600 dark:text-cyan-400">smart_toy</span>
+              </div>
+              <div class="flex-1 space-y-1.5 overflow-hidden">
+                <!-- Meta tags / badges -->
+                <div class="flex items-center justify-between text-[10px] text-slate-400">
+                  <span class="font-semibold">{{ msg.isGreeting ? 'Introductory Greeting' : 'Copilot Intelligence' }}</span>
+                  <div class="flex items-center gap-1.5">
+                    @if (!msg.isGreeting && !msg.isError) {
+                      <button (click)="speakMessage(msg)"
+                        title="{{ isSpeaking && currentlySpeakingId === msg.id ? 'Stop Speaking' : 'Read Aloud' }}"
+                        class="hover:text-indigo-600 dark:hover:text-cyan-400 cursor-pointer flex items-center gap-0.5">
+                        <span class="material-symbols-outlined text-xs">
+                          {{ isSpeaking && currentlySpeakingId === msg.id ? 'volume_off' : 'volume_up' }}
+                        </span>
+                      </button>
+                    }
+                    <span>{{ msg.timestamp | date:'shortTime' }}</span>
+                  </div>
+                </div>
+
+                <!-- Rich Message Bubble -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-3.5 rounded-2xl rounded-tl-sm shadow-sm text-xs text-slate-800 dark:text-slate-200 leading-relaxed overflow-x-auto copilot-rich-text"
+                  [ngClass]="msg.isError ? 'border-rose-300 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/20 text-rose-800 dark:text-rose-200' : ''"
+                  [innerHTML]="msg.renderedHtml">
+                </div>
+
+                <!-- Retry option on error -->
+                @if (msg.isError && lastFailedQuestion) {
+                  <div class="pt-1">
+                    <button (click)="retryLastQuestion()"
+                      class="px-2.5 py-1 bg-rose-100 dark:bg-rose-950/60 hover:bg-rose-200 text-rose-700 dark:text-rose-300 rounded-lg text-[11px] font-semibold cursor-pointer flex items-center gap-1 transition-colors">
+                      <span class="material-symbols-outlined text-xs">replay</span> Retry Query
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+
+        <!-- LOADING / GENERATING STATE -->
+        @if (isGenerating) {
+          <div class="flex gap-2.5 pr-4">
+            <div class="w-6 h-6 rounded-lg bg-indigo-100 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-sm text-indigo-600 dark:text-cyan-400 animate-spin">progress_activity</span>
+            </div>
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 px-4 py-2.5 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-2">
+              <span class="text-xs text-slate-500">Synthesizing project intelligence...</span>
+              <span class="flex gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]"></span>
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- COMPOSER FOOTER -->
+      <div class="p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-2">
+        <!-- Live transcription indicator -->
+        @if (isRecording) {
+          <div class="flex items-center justify-between px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-600 dark:text-rose-300 text-xs animate-pulse">
+            <span class="flex items-center gap-1.5 font-semibold">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span> Listening to speech...
+            </span>
+            <button (click)="stopRecording()" class="text-[10px] uppercase tracking-wider font-bold hover:underline cursor-pointer">
+              Stop
+            </button>
+          </div>
+        }
+
+        <!-- Input Area -->
+        <div class="flex items-end gap-2 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 focus-within:border-indigo-500 transition-colors">
+          <textarea #inputTextarea [(ngModel)]="userInput" (keydown)="handleKeyDown($event)"
+            [disabled]="isGenerating"
+            rows="2"
+            placeholder="Ask anything about EVM, milestones, snags..."
+            class="flex-1 bg-transparent text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 resize-none focus:outline-none"></textarea>
+
+          <div class="flex items-center gap-1">
+            <!-- Voice transcription mic button -->
+            <button (click)="toggleVoiceRecognition()" [disabled]="isGenerating"
+              title="{{ isRecording ? 'Stop Recording' : 'Voice Input (Speech-to-Text)' }}"
+              class="w-8 h-8 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
+              [ngClass]="isRecording ? 'bg-rose-600 text-white animate-pulse' : 'text-slate-400 hover:text-indigo-600 dark:hover:text-cyan-400 hover:bg-slate-200 dark:hover:bg-slate-800'">
+              <span class="material-symbols-outlined text-lg">{{ isRecording ? 'mic_off' : 'mic' }}</span>
+            </button>
+
+            <!-- Submit button -->
+            <button (click)="sendMessage()" [disabled]="!userInput.trim() || isGenerating"
+              title="Send Query (Enter)"
+              class="w-8 h-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white flex items-center justify-center shadow-md transition-all cursor-pointer">
+              <span class="material-symbols-outlined text-base">send</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-[10px] text-slate-400 px-1">
+          <span>Enter to send • Shift+Enter for newline</span>
+          <span class="font-medium text-slate-500">Zyno ERP v2.4</span>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -1,9 +1,9 @@
 <section class="p-4 flex flex-col gap-8 pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div class="space-y-1">
-            <h2 class="text-3xl font-black text-slate-800 dark:text-white">Equipment Inventory
+            <h2 class="text-3xl font-black text-slate-800 dark:text-white">{{ transferMode ? 'Machinery Transfers' : 'Equipment Inventory' }}
             </h2>
-            <p class="text-on-surface-variant/80 font-medium">Precision tracking across active construction sites</p>
+            <p class="text-on-surface-variant/80 font-medium">{{ transferMode ? 'Use Reassign Equipment on a row to move machinery between projects' : 'Precision tracking across active construction sites' }}</p>
         </div>
     </div>
 
@@ -28,7 +28,7 @@
                     </h3>
 
                     <p class="text-xs text-white/70 mt-1">
-                        Active Materials
+                        Active Equipment
                     </p>
                 </div>
 
@@ -427,7 +427,7 @@
                                     <div
                                         class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 flex items-center justify-center text-sm font-black text-white shadow-lg">
 
-                                        {{ item.vendor_name.charAt(0) }}
+                                        {{ (item.vendor_name || "?").charAt(0) }}
 
                                     </div>
 
@@ -460,7 +460,7 @@
                                             </span>
 
                                         </button>
-                                        <button (click)="openStockTransferModal(item)" title="Transfer Stock"
+                                        <button (click)="openStockTransferModal(item)" title="Reassign Equipment"
                                             [disabled]="!item.equipment_project_stock?.length" [ngClass]="
       item.equipment_project_stock?.length
         ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg cursor-pointer'
@@ -473,7 +473,7 @@
 
                                         </button>
 
-                                        <button (click)="openDeleteModal($event, item)" title="Delete Material"
+                                        <button (click)="openDeleteModal($event, item)" title="Delete Equipment"
                                             class="w-11 h-11 rounded-2xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
 
                                             <span class="material-symbols-outlined text-[18px]">
@@ -819,7 +819,7 @@
     </ng-container>
 </app-common-dialog>
 
-<app-common-dialog [open]="showDeleteModal && !!materialToDelete" variant="danger" title="Delete Material?"
+<app-common-dialog [open]="showDeleteModal && !!materialToDelete" variant="danger" title="Delete Equipment?"
     subtitle="This action cannot be undone." icon="delete_forever" [showCloseButton]="true" [showFooter]="true"
     cancelLabel="Cancel" primaryLabel="Delete Item" (closed)="showDeleteModal = false" (primary)="confirmDelete()">
     <div class="p-8 text-center">
@@ -1204,10 +1204,10 @@
 </div>
 }
 
-<app-common-dialog [open]="showStockTransferModal" title="Stock Transfer"
+<app-common-dialog [open]="showStockTransferModal" title="Reassign Equipment"
     subtitle="Move Equipment stock between projects" icon="swap_horiz" [showCloseButton]="true" [showFooter]="true"
     [contentClass]="'min-h-0 overflow-y-auto custom-scrollbar smooth-scroll'" cancelLabel="Cancel"
-    primaryLabel="Transfer Stock" (closed)="showStockTransferModal = false" (primary)="transferStock()">
+    primaryLabel="Reassign Equipment" (closed)="showStockTransferModal = false" (primary)="transferStock()">
 
     <div class="p-6 space-y-8">
         <div

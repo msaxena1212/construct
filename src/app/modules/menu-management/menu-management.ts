@@ -60,10 +60,50 @@ export class MenuManagement implements OnInit {
   loadMenus() {
     this.menuService.getMenus().subscribe({
       next: (res) => {
-        this.menus = this.buildHierarchy(res.data);
+        this.menus = this.buildHierarchy(res.data || []);
       },
-      error: () => {
-        this.toast.error('Failed to load available menus');
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Failed to load available menus');
+      }
+    });
+  }
+
+  toggleStatus(menu: any) {
+    const updatedStatus = !menu.status;
+    this.menuService.updateMenu(menu.id, {
+      ...menu,
+      status: updatedStatus
+    }).subscribe({
+      next: () => {
+        menu.status = updatedStatus;
+        this.toast.success(`Module "${menu.name}" marked ${updatedStatus ? 'Active' : 'Inactive'}`);
+      },
+      error: (err) => {
+        this.toast.error(err?.error?.message || 'Failed to update module status');
+      }
+    });
+  }
+
+  syncCanonical() {
+    Swal.fire({
+      title: 'Reset to Canonical 10 Domains?',
+      text: 'This will ensure all 10 enterprise domains and default working routes are restored.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3a66b0',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Restore Default Hierarchy'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.menuService.resetToCanonical().subscribe({
+          next: (res) => {
+            this.toast.success(res.message || 'Canonical menus restored successfully!');
+            this.loadMenus();
+          },
+          error: (err) => {
+            this.toast.error(err?.error?.message || 'Failed to restore canonical menus');
+          }
+        });
       }
     });
   }

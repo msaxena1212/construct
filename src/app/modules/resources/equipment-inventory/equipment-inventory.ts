@@ -1,5 +1,5 @@
 import { Component, inject, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EquipmentInventoryService, Material } from '../../../shared/services/equipment-inventory/equipment-inventory';
 import { CommonModule } from '@angular/common';
@@ -129,6 +129,9 @@ export class EquipmentInventory {
   closeDropdown() {
     this.openDropdown = null;
   }
+
+  /** True when opened from Plant & Machinery -> Machinery Transfers. */
+  readonly transferMode = inject(ActivatedRoute).snapshot.data['mode'] === 'transfer';
 
   ngOnInit() {
 
@@ -514,7 +517,7 @@ export class EquipmentInventory {
 
         this.showAddModal = false;
 
-        this.toast.success('Material added successfully');
+        this.toast.success('Equipment added successfully');
 
         this.materialService.loadMaterials();
 
@@ -638,7 +641,7 @@ export class EquipmentInventory {
             this.showDeleteModal = false;
             this.materialToDelete = null;
             this.toast.success(
-              'Material deleted successfully'
+              'Equipment deleted successfully'
             );
 
             this.materialService.loadMaterials();
@@ -648,7 +651,7 @@ export class EquipmentInventory {
             console.error('Delete failed', err);
             this.toast.error(
               err?.error?.message ||
-              'Failed to delete material'
+              'Failed to delete equipment'
             );
 
           }
@@ -1026,7 +1029,7 @@ export class EquipmentInventory {
 
           this.showEditModal = false;
           this.materialToEdit = null;
-          this.toast.success('Material updated successfully');
+          this.toast.success('Equipment updated successfully');
           this.materialService.loadMaterials();
           this.showAssignProjectModal = false;
 
@@ -1173,11 +1176,17 @@ export class EquipmentInventory {
 
     }
 
-    const totalQty = this.getTotalTransferQty();
-
-    if (totalQty > this.stockTransferData.stockIn) {
-      this.toast.error('Total transfer quantity exceeds available stock');
-      return;
+    // Each source project can only give up what it holds; the server re-checks under a lock.
+    const takenBySource = new Map<string, number>();
+    for (const t of this.stockTransferData.transfers) {
+      const key = String(t.from_project_id);
+      takenBySource.set(key, (takenBySource.get(key) || 0) + Number(t.quantity));
+    }
+    for (const [projectId, qty] of takenBySource) {
+      if (qty > Number(this.getProjectStock(projectId))) {
+        this.toast.error('Transfer quantity exceeds the stock held by the source project');
+        return;
+      }
     }
 
     const payload = {
@@ -1198,7 +1207,7 @@ export class EquipmentInventory {
       .subscribe({
         next: () => {
           this.toast.success(
-            'Material transferred successfully'
+            'Equipment reassigned successfully'
           );
 
           this.materialService.loadMaterials();

@@ -1,64 +1,96 @@
 <section class="p-4 flex flex-col gap-8 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
   @if (project) {
-  <section class="mt-0 mb-1 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+  <!-- Project Header Banner with Cover Image and Overview Details -->
+  <div class="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg">
+    <div class="relative h-48 sm:h-56 lg:h-64 w-full overflow-hidden">
+      <img [src]="(project.thumbnail | secureImage:'projects') | async"
+        class="w-full h-full object-cover" [alt]="project.name" />
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
 
-    <div class="space-y-0 max-w-2xl">
-
-      <nav class="flex items-center gap-1 text-[10px] text-outline uppercase tracking-wide font-medium mb-1">
-
-        <a routerLink="/master/projects" class="hover:text-primary transition-colors cursor-pointer">
-          Projects
-        </a>
-
-        <span class="material-symbols-outlined text-[10px]">
-          chevron_right
-        </span>
-
-        <span class="text-primary">
-          {{ project.type }}
-        </span>
-
-      </nav>
-
-      <h1 class="text-[28px] font-black text-slate-800 dark:text-white leading-none">
-        {{ project.name }}
-      </h1>
-
-      <p class="text-sm text-on-surface-variant mt-1">
-        {{ project.description }}
-      </p>
-
-    </div>
-
-    <div class="flex items-center gap-2">
-
-      <div class="flex -space-x-2">
-
-        @for (member of project.team; track member.name) {
-        <div class="w-8 h-8 rounded-full ring-2 ring-background overflow-hidden" [title]="member.role">
-
-          <img [src]="serverUrl + member.avatar" [alt]="member.name" class="w-full h-full object-cover">
-
-        </div>
-        }
-
+      <div class="absolute top-4 left-4 sm:left-6">
+        <nav class="flex items-center gap-1.5 text-xs text-white/80 font-bold uppercase tracking-wider bg-slate-900/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+          <a routerLink="/master/projects" class="hover:text-blue-400 transition-colors cursor-pointer flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">arrow_back</span>
+            Projects
+          </a>
+          <span class="material-symbols-outlined text-[12px] text-white/50">chevron_right</span>
+          <span class="text-blue-300">{{ project.type || 'Infrastructure' }}</span>
+        </nav>
       </div>
 
-      <button [routerLink]="['/master/projects/edit-project', project.id]"
-        class="cursor-pointer bg-surface-container-high text-on-surface px-4 py-2 rounded-xl font-semibold border border-outline-variant/30 hover:bg-surface-container-highest transition-all flex items-center gap-1.5">
-
-        <span class="material-symbols-outlined text-[18px]">
-          edit
+      <div class="absolute top-4 right-4 sm:right-6 flex items-center gap-2">
+        <span class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider backdrop-blur-md border"
+          [ngClass]="project.status === 'On Track' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/30'">
+          {{ project.status || 'Active' }}
         </span>
+        <button [routerLink]="['/master/projects/edit-project', project.id]"
+          class="cursor-pointer bg-white/20 hover:bg-white/30 text-white backdrop-blur-md px-4 py-2 rounded-xl text-xs font-bold border border-white/20 transition-all flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[16px]">edit</span>
+          Edit
+        </button>
+      </div>
 
-        Edit
+      <div class="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="space-y-1.5 max-w-3xl">
+          <span class="text-[10px] sm:text-xs font-black text-blue-400 uppercase tracking-widest">{{ project.type }}</span>
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+            {{ project.name }}
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-300 line-clamp-2 font-light">
+            {{ project.description || 'No description specified for this construction site.' }}
+          </p>
+        </div>
 
-      </button>
-
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="flex -space-x-2.5 overflow-hidden">
+            @for (member of project.team; track member.name) {
+            <div class="w-9 h-9 rounded-full ring-2 ring-white/30 dark:ring-slate-900 overflow-hidden shadow-sm" [title]="member.role">
+              <img [src]="(member.avatar | secureImage:'avatars') | async"
+                [alt]="member.name" class="w-full h-full object-cover">
+            </div>
+            }
+          </div>
+          <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/15 text-right">
+            <span class="text-xl sm:text-2xl font-black text-white tracking-tight">{{ project.progress || 0 }}%</span>
+            <p class="text-[9px] uppercase tracking-wider text-slate-300 font-bold">Progress</p>
+          </div>
+        </div>
+      </div>
     </div>
 
-  </section>
+    <!-- Quick Stats Bar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-800 p-4 sm:p-5 bg-slate-50/50 dark:bg-slate-900/50">
+      <div class="p-2 sm:px-4">
+        <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Site Location</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5">
+          <span class="material-symbols-outlined text-[13px] align-middle text-blue-500 mr-0.5">location_on</span>
+          {{ project.address || 'Not specified' }}
+        </p>
+      </div>
+      <div class="p-2 sm:px-4">
+        <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Est. Completion</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5">
+          <span class="material-symbols-outlined text-[13px] align-middle text-indigo-500 mr-0.5">event</span>
+          {{ (project.completion_date || project.completionDate || project.end_date) ? ((project.completion_date || project.completionDate || project.end_date) | date:'mediumDate') : 'Not scheduled' }}
+        </p>
+      </div>
+      <div class="p-2 sm:px-4">
+        <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Total Budget</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5">
+          <span class="material-symbols-outlined text-[13px] align-middle text-emerald-500 mr-0.5">payments</span>
+          ₹{{ ((project.budget_total || 0) / 100000).toFixed(2) }} Lakhs
+        </p>
+      </div>
+      <div class="p-2 sm:px-4">
+        <p class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Budget Spent</p>
+        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5">
+          <span class="material-symbols-outlined text-[13px] align-middle text-amber-500 mr-0.5">account_balance_wallet</span>
+          ₹{{ ((project.budget_used || 0) / 100000).toFixed(2) }} Lakhs
+        </p>
+      </div>
+    </div>
+  </div>
 
   <div class="flex items-center gap-5 mt-0 mb-2 overflow-x-auto pb-1 scrollbar-hide">
     @for (tab of tabs; track tab) {
@@ -404,6 +436,13 @@
     </div>
   </div>
   } @else if (activeTab === 'Tasks') {
+  <div class="flex flex-wrap items-center justify-end gap-2 mb-4">
+    <button type="button" (click)="exportMspProject()" class="bg-surface-container-high text-on-surface font-bold px-3.5 py-2 rounded-xl text-xs border border-outline-variant/30 cursor-pointer">Export MS Project XML</button>
+    <label class="bg-surface-container-high text-on-surface font-bold px-3.5 py-2 rounded-xl text-xs border border-outline-variant/30 cursor-pointer">
+      Import MS Project XML
+      <input type="file" accept=".xml,application/xml,text/xml" class="hidden" (change)="importMspProject($event)" />
+    </label>
+  </div>
   <app-task-management [projectId]="project.id" [team_members]="project.team_members || []"
     [milestones]="project.milestones || []"></app-task-management>
   } @else if (activeTab === 'Timeline') {
@@ -413,6 +452,854 @@
   <!-- } @else if (activeTab === 'Gallery') {
 <app-site-gallery (uploadMedia)="openDrawingUpload()" [projectId]="project.id"
   [documents]="project.documents || []"></app-site-gallery> -->
+  } @else if (activeTab === 'MB & Billing') {
+  <!-- Batch R: Measurement Book & Contractor RA Billing Interface -->
+  <div class="space-y-6 animate-in fade-in duration-300">
+    <!-- Sub-tab Navigation Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-3xl bg-surface-container-low border border-outline-variant/30">
+      <div class="flex items-center gap-2 bg-surface-container-highest/60 p-1.5 rounded-2xl">
+        <button (click)="mbSubTab = 'mb'" 
+          [ngClass]="mbSubTab === 'mb' ? 'bg-primary text-on-primary shadow-sm font-bold' : 'text-on-surface-variant hover:text-on-surface font-semibold'"
+          class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">menu_book</span>
+          Measurement Books (MB)
+          <span class="px-2 py-0.5 rounded-full text-[10px]" [ngClass]="mbSubTab === 'mb' ? 'bg-white/20 text-white' : 'bg-surface-container text-outline'">{{ mbList.length }}</span>
+        </button>
+        <button (click)="mbSubTab = 'ra_bills'" 
+          [ngClass]="mbSubTab === 'ra_bills' ? 'bg-primary text-on-primary shadow-sm font-bold' : 'text-on-surface-variant hover:text-on-surface font-semibold'"
+          class="px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+          Contractor RA Bills
+          <span class="px-2 py-0.5 rounded-full text-[10px]" [ngClass]="mbSubTab === 'ra_bills' ? 'bg-white/20 text-white' : 'bg-surface-container text-outline'">{{ raBillsList.length }}</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        @if (mbSubTab === 'mb') {
+        <button (click)="openCreateMbModal()" class="px-4 py-2 rounded-xl bg-primary text-on-primary hover:bg-primary/90 text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          New Measurement Book
+        </button>
+        } @else {
+        <button (click)="openCreateRaBillModal()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">post_add</span>
+          Draft RA Bill from Certified
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- 1. Measurement Books Sub-tab -->
+    @if (mbSubTab === 'mb') {
+      @if (mbLoading) {
+      <div class="flex justify-center items-center py-16">
+        <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      } @else if (mbList.length === 0) {
+      <div class="p-12 text-center rounded-3xl bg-surface-container-low border border-dashed border-outline-variant/40 space-y-3">
+        <span class="material-symbols-outlined text-4xl text-outline">menu_book</span>
+        <h4 class="text-base font-bold text-on-surface">No Measurement Books Created Yet</h4>
+        <p class="text-xs text-outline max-w-md mx-auto">Create physical measurement entries recording site work quantities before submitting them for certification and contractor billing.</p>
+        <button (click)="openCreateMbModal()" class="mt-2 px-4 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">add</span>
+          Create First MB Entry
+        </button>
+      </div>
+      } @else {
+      <div class="space-y-4">
+        @for (mb of mbList; track mb.id) {
+        <div class="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/30 space-y-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/20 pb-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-surface-container-high text-primary">{{ mb.mb_number }}</span>
+                <h4 class="text-sm font-bold text-on-surface">{{ mb.title }}</h4>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                  [ngClass]="mb.status === 'certified' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' :
+                             mb.status === 'submitted' ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30' :
+                             mb.status === 'rejected' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30' :
+                             'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'">
+                  {{ mb.status }}
+                </span>
+              </div>
+              <p class="text-[11px] text-outline flex items-center gap-3">
+                <span><strong class="text-on-surface-variant">Date:</strong> {{ mb.measurement_date | date:'mediumDate' }}</span>
+                @if (mb.vendor) {
+                <span>• <strong class="text-on-surface-variant">Subcontractor:</strong> {{ mb.vendor.vendor_name }}</span>
+                }
+                @if (mb.contract_reference) {
+                <span>• <strong class="text-on-surface-variant">Ref:</strong> {{ mb.contract_reference }}</span>
+                }
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="text-right mr-3">
+                <span class="text-[10px] uppercase font-bold text-outline block">Total Measured</span>
+                <span class="text-sm font-black text-on-surface">₹{{ (mb.total_measured_amount || 0) | number:'1.2-2' }}</span>
+              </div>
+
+              @if (mb.status === 'draft') {
+              <button (click)="submitMb(mb)" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">send</span>
+                Submit
+              </button>
+              }
+
+              @if (mb.status === 'submitted' || mb.status === 'under_review') {
+              <button (click)="certifyMb(mb)" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">verified</span>
+                Certify
+              </button>
+              <button (click)="rejectMb(mb)" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">close</span>
+                Reject
+              </button>
+              }
+            </div>
+          </div>
+
+          <!-- Items Table inside MB Card -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-surface-container-highest/40 text-outline text-[10px] font-black uppercase tracking-wider">
+                <tr>
+                  <th class="p-2.5 rounded-l-xl">BOQ Ref / Item</th>
+                  <th class="p-2.5">Work Description</th>
+                  <th class="p-2.5">Method</th>
+                  <th class="p-2.5 text-right">Units × Dims</th>
+                  <th class="p-2.5 text-right">Measured Qty</th>
+                  <th class="p-2.5 text-right">Rate (₹)</th>
+                  <th class="p-2.5 text-right">Amount (₹)</th>
+                  <th class="p-2.5 rounded-r-xl text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-outline-variant/10 text-on-surface">
+                @for (item of mb.items; track item.id) {
+                <tr class="hover:bg-surface-container-high/30 transition-colors">
+                  <td class="p-2.5 font-bold text-primary">{{ item.boq_item?.item_code || ('BOQ#' + item.boq_item_id) }}</td>
+                  <td class="p-2.5 max-w-xs truncate" [title]="item.work_description">{{ item.work_description }}</td>
+                  <td class="p-2.5 uppercase font-mono text-[10px] text-outline">{{ item.calculation_method }}</td>
+                  <td class="p-2.5 text-right text-outline">
+                    @if (item.calculation_method === 'l_b_d') {
+                    {{ item.num_units }} × ({{ item.length }} × {{ item.breadth }} × {{ item.depth_height }})
+                    } @else if (item.calculation_method === 'l_b') {
+                    {{ item.num_units }} × ({{ item.length }} × {{ item.breadth }})
+                    } @else {
+                    Direct Entry
+                    }
+                  </td>
+                  <td class="p-2.5 text-right font-black">{{ item.measured_qty }} <span class="text-[10px] text-outline font-normal">{{ item.unit }}</span></td>
+                  <td class="p-2.5 text-right">₹{{ item.contract_rate | number:'1.2-2' }}</td>
+                  <td class="p-2.5 text-right font-black">₹{{ item.measured_amount | number:'1.2-2' }}</td>
+                  <td class="p-2.5 text-center">
+                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase"
+                      [ngClass]="item.status === 'certified' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-surface-container-high text-outline'">
+                      {{ item.status }}
+                    </span>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    }
+
+    <!-- 2. Contractor RA Bills Sub-tab -->
+    @if (mbSubTab === 'ra_bills') {
+      @if (raBillsLoading) {
+      <div class="flex justify-center items-center py-16">
+        <div class="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      } @else if (raBillsList.length === 0) {
+      <div class="p-12 text-center rounded-3xl bg-surface-container-low border border-dashed border-outline-variant/40 space-y-3">
+        <span class="material-symbols-outlined text-4xl text-outline">receipt_long</span>
+        <h4 class="text-base font-bold text-on-surface">No Contractor RA Bills Created</h4>
+        <p class="text-xs text-outline max-w-md mx-auto">Generate running account bills from certified measurement book items with automatic retention and statutory deductions.</p>
+        <button (click)="openCreateRaBillModal()" class="mt-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">post_add</span>
+          Draft New RA Bill
+        </button>
+      </div>
+      } @else {
+      <div class="space-y-4">
+        @for (bill of raBillsList; track bill.id) {
+        <div class="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/30 space-y-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-outline-variant/20 pb-3">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">{{ bill.ra_bill_number }}</span>
+                <h4 class="text-sm font-bold text-on-surface">{{ bill.vendor?.vendor_name || 'Subcontractor Bill' }}</h4>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                  [ngClass]="bill.status === 'approved' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' :
+                             bill.status === 'invoiced' ? 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30' :
+                             'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'">
+                  {{ bill.status }}
+                </span>
+              </div>
+              <p class="text-[11px] text-outline flex items-center gap-3">
+                <span><strong class="text-on-surface-variant">Billing Period:</strong> {{ bill.billing_period_start | date:'mediumDate' }} to {{ bill.billing_period_end | date:'mediumDate' }}</span>
+                @if (bill.contract_reference) {
+                <span>• <strong class="text-on-surface-variant">Contract:</strong> {{ bill.contract_reference }}</span>
+                }
+              </p>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <div class="text-right">
+                <span class="text-[10px] uppercase font-bold text-outline block">Net Payable</span>
+                <span class="text-base font-black text-emerald-600 dark:text-emerald-400">₹{{ (bill.net_payable_amount || 0) | number:'1.2-2' }}</span>
+              </div>
+
+              @if (bill.status === 'draft' || bill.status === 'submitted') {
+              <button (click)="approveRaBill(bill)" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                Approve & Accrue Cost
+              </button>
+              }
+            </div>
+          </div>
+
+          <!-- Financial Breakdown Summary Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 p-3.5 rounded-2xl bg-surface-container-high/40 text-xs">
+            <div>
+              <span class="text-[10px] text-outline uppercase font-bold block">Previous Gross</span>
+              <span class="font-bold text-on-surface">₹{{ (bill.previous_cumulative_amount || 0) | number:'1.2-2' }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-outline uppercase font-bold block">Current Gross</span>
+              <span class="font-black text-primary">₹{{ (bill.current_period_gross_amount || 0) | number:'1.2-2' }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-outline uppercase font-bold block">Retention ({{ bill.retention_rate_pct }}%)</span>
+              <span class="font-bold text-rose-600 dark:text-rose-400">-₹{{ (bill.retention_amount || 0) | number:'1.2-2' }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-outline uppercase font-bold block">TDS ({{ bill.tds_rate_pct }}%)</span>
+              <span class="font-bold text-rose-600 dark:text-rose-400">-₹{{ (bill.tds_amount || 0) | number:'1.2-2' }}</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-outline uppercase font-bold block">Cumulative Gross</span>
+              <span class="font-black text-on-surface">₹{{ (bill.cumulative_gross_amount || 0) | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Billed Line Items List -->
+          @if (bill.billed_items && bill.billed_items.length > 0) {
+          <div class="text-[11px] text-outline space-y-1">
+            <span class="font-bold text-on-surface-variant block">Included Certified Measurements ({{ bill.billed_items.length }} items):</span>
+            <div class="flex flex-wrap gap-2">
+              @for (it of bill.billed_items; track it.id) {
+              <span class="px-2.5 py-1 rounded-lg bg-surface-container-high text-on-surface font-mono text-[10px] flex items-center gap-1 border border-outline-variant/20">
+                <strong>{{ it.boq_item?.item_code || 'BOQ' }}</strong>: {{ it.certified_qty }} {{ it.unit }} (₹{{ it.certified_amount | number:'1.0-0' }})
+              </span>
+              }
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    }
+  </div>
+
+  <!-- Create Measurement Book Modal -->
+  @if (showCreateMbModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div class="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl bg-surface-container-low border border-outline-variant/30 shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-outline-variant/20 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-primary text-2xl">menu_book</span>
+          <div>
+            <h3 class="text-base font-bold text-on-surface">Record Physical Measurements</h3>
+            <p class="text-xs text-outline">Deterministic dimensional calculations with authoritative BOQ linkage</p>
+          </div>
+        </div>
+        <button (click)="showCreateMbModal = false" class="p-1 rounded-full hover:bg-surface-container-high text-outline hover:text-on-surface transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="col-span-2">
+            <label class="block font-bold text-on-surface mb-1">Measurement Book Title <span class="text-rose-500">*</span></label>
+            <input type="text" [(ngModel)]="newMb.title" placeholder="e.g. Pier P1 to P4 Concrete Pouring" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary">
+          </div>
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Measurement Date <span class="text-rose-500">*</span></label>
+            <input type="date" [(ngModel)]="newMb.measurement_date" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Contract Reference</label>
+            <input type="text" [(ngModel)]="newMb.contract_reference" placeholder="e.g. LOA-CIVIL-004" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary">
+          </div>
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Period Start</label>
+            <input type="date" [(ngModel)]="newMb.period_start" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary">
+          </div>
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Period End</label>
+            <input type="date" [(ngModel)]="newMb.period_end" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold focus:outline-none focus:ring-1 focus:ring-primary">
+          </div>
+        </div>
+
+        <!-- Measurement Items Dynamic Rows -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+            <span class="font-bold text-on-surface uppercase tracking-wider text-[11px]">Measurement Entries</span>
+            <button (click)="addMbItemRow()" class="px-3 py-1 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs transition-colors flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-[14px]">add</span> Add Row
+            </button>
+          </div>
+
+          @for (item of newMb.items; track $index) {
+          <div class="p-4 rounded-2xl bg-surface-container-high/40 border border-outline-variant/20 space-y-3 relative">
+            <div class="flex items-center justify-between">
+              <span class="font-black text-primary text-[11px]">Item #{{ $index + 1 }}</span>
+              @if (newMb.items.length > 1) {
+              <button (click)="removeMbItemRow($index)" class="text-rose-500 hover:text-rose-700 text-xs flex items-center gap-0.5 cursor-pointer">
+                <span class="material-symbols-outlined text-[14px]">delete</span> Remove
+              </button>
+              }
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">BOQ Item Scope <span class="text-rose-500">*</span></label>
+                <select [ngModel]="item.boq_item_id" (ngModelChange)="onBoqItemSelected(item, $event)" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/30 text-xs text-on-surface font-semibold">
+                  <option [ngValue]="null">Select Contract BOQ Item...</option>
+                  @for (boq of boqList; track boq.id) {
+                  <option [ngValue]="boq.id">{{ boq.item_code }} - {{ boq.description | slice:0:35 }}... (Rate: ₹{{ boq.unit_rate }})</option>
+                  }
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">Work Description <span class="text-rose-500">*</span></label>
+                <input type="text" [(ngModel)]="item.work_description" placeholder="Description of measured work" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/30 text-xs text-on-surface font-semibold">
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">Location / Chainage / Grid</label>
+                <input type="text" [(ngModel)]="item.location_reference" placeholder="e.g. Pier P2 Grid A-B" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/30 text-xs text-on-surface font-semibold">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-2">
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">Formula</label>
+                <select [(ngModel)]="item.calculation_method" (ngModelChange)="recalculateMbItemQty(item)" class="w-full px-2 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-[11px] text-on-surface">
+                  <option value="direct">Direct Qty</option>
+                  <option value="l_b_d">L × B × D</option>
+                  <option value="l_b">L × B (Area)</option>
+                  <option value="count">Count (Units)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">No. of Units</label>
+                <input type="number" [(ngModel)]="item.num_units" (ngModelChange)="recalculateMbItemQty(item)" class="w-full px-2 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-[11px] text-on-surface">
+              </div>
+
+              @if (item.calculation_method === 'l_b_d' || item.calculation_method === 'l_b') {
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">Length (m)</label>
+                <input type="number" step="0.01" [(ngModel)]="item.length" (ngModelChange)="recalculateMbItemQty(item)" class="w-full px-2 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-[11px] text-on-surface">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">Breadth (m)</label>
+                <input type="number" step="0.01" [(ngModel)]="item.breadth" (ngModelChange)="recalculateMbItemQty(item)" class="w-full px-2 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-[11px] text-on-surface">
+              </div>
+              }
+
+              @if (item.calculation_method === 'l_b_d') {
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">Depth/Height (m)</label>
+                <input type="number" step="0.01" [(ngModel)]="item.depth_height" (ngModelChange)="recalculateMbItemQty(item)" class="w-full px-2 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-[11px] text-on-surface">
+              </div>
+              }
+
+              <div>
+                <label class="block text-[10px] font-bold text-outline mb-1">Calculated Qty</label>
+                <input type="number" step="0.001" [(ngModel)]="item.measured_qty" [readonly]="item.calculation_method !== 'direct'" class="w-full px-2 py-1.5 rounded-lg bg-surface-container border border-outline-variant/30 text-[11px] font-black text-primary">
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+
+        <div class="p-4 rounded-2xl bg-surface-container-highest/60 flex items-center justify-between">
+          <span class="font-bold text-outline uppercase tracking-wider text-xs">Total Calculated Value</span>
+          <span class="text-base font-black text-on-surface">₹{{ mbModalTotalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-outline-variant/20 flex items-center justify-end gap-3">
+        <button (click)="showCreateMbModal = false" class="px-4 py-2 rounded-xl text-outline hover:text-on-surface font-semibold text-xs transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button (click)="saveMeasurementBook()" [disabled]="mbSaving" class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50">
+          @if (mbSaving) {
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          }
+          Save Measurement Book Draft
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Draft RA Bill Modal -->
+  @if (showCreateRaBillModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div class="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl bg-surface-container-low border border-outline-variant/30 shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-outline-variant/20 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined text-emerald-600 text-2xl">post_add</span>
+          <div>
+            <h3 class="text-base font-bold text-on-surface">Draft Contractor Running Account (RA) Bill</h3>
+            <p class="text-xs text-outline">Select certified measurement entries to compile into an authoritative RA bill</p>
+          </div>
+        </div>
+        <button (click)="showCreateRaBillModal = false" class="p-1 rounded-full hover:bg-surface-container-high text-outline hover:text-on-surface transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Billing Period Start <span class="text-rose-500">*</span></label>
+            <input type="date" [(ngModel)]="newRaBill.billing_period_start" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Billing Period End <span class="text-rose-500">*</span></label>
+            <input type="date" [(ngModel)]="newRaBill.billing_period_end" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Contractual Retention %</label>
+            <input type="number" step="0.5" [(ngModel)]="newRaBill.retention_rate_pct" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Statutory TDS %</label>
+            <input type="number" step="0.5" [(ngModel)]="newRaBill.tds_rate_pct" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-on-surface mb-1">Other Recoveries (₹)</label>
+            <input type="number" step="100" [(ngModel)]="newRaBill.other_deductions_amount" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant/40 text-on-surface font-semibold">
+          </div>
+        </div>
+
+        <!-- Certified Measurement Items Selection -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-outline-variant/20 pb-2">
+            <span class="font-bold text-on-surface uppercase tracking-wider text-[11px]">Select Certified Measurements for this Bill</span>
+            <button (click)="selectAllCertifiedForBill()" class="text-primary hover:underline font-bold text-xs cursor-pointer">Select All</button>
+          </div>
+
+          @if (unbilledCertifiedItems.length === 0) {
+          <div class="p-6 text-center rounded-2xl bg-surface-container-high/40 text-outline">
+            No unbilled certified measurement entries available. Certify submitted measurement books first.
+          </div>
+          } @else {
+          <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+            @for (item of unbilledCertifiedItems; track item.id) {
+            <label class="flex items-center justify-between p-3 rounded-2xl bg-surface-container-high/40 border border-outline-variant/20 hover:bg-surface-container-high cursor-pointer transition-colors">
+              <div class="flex items-center gap-3">
+                <input type="checkbox" [checked]="selectedMbItemIdsForBill.includes(item.id)" (change)="toggleMbItemForBill(item.id)" class="rounded text-primary focus:ring-primary w-4 h-4">
+                <div>
+                  <span class="font-bold text-on-surface block">{{ item.work_description }}</span>
+                  <span class="text-[10px] text-outline font-mono">{{ item.measurement_book?.mb_number }} • BOQ: {{ item.boq_item?.item_code }}</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="font-black text-on-surface block">₹{{ (item.certified_amount || item.measured_amount) | number:'1.2-2' }}</span>
+                <span class="text-[10px] text-outline">{{ item.certified_qty }} {{ item.unit }}</span>
+              </div>
+            </label>
+            }
+          </div>
+          }
+        </div>
+
+        <!-- Calculated Summary -->
+        <div class="p-4 rounded-2xl bg-surface-container-highest/60 space-y-2">
+          <div class="flex justify-between text-outline">
+            <span>Selected Gross Certified Amount:</span>
+            <span class="font-bold text-on-surface">₹{{ selectedCertifiedGrossAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between text-rose-600 dark:text-rose-400">
+            <span>Less: Contractual Retention ({{ newRaBill.retention_rate_pct }}%):</span>
+            <span class="font-bold">-₹{{ billCalculatedRetention | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between text-rose-600 dark:text-rose-400">
+            <span>Less: TDS Deduction ({{ newRaBill.tds_rate_pct }}%):</span>
+            <span class="font-bold">-₹{{ billCalculatedTds | number:'1.2-2' }}</span>
+          </div>
+          <div class="border-t border-outline-variant/20 pt-2 flex justify-between text-sm font-black text-emerald-600 dark:text-emerald-400">
+            <span>Net Payable Amount:</span>
+            <span>₹{{ billCalculatedNetPayable | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-outline-variant/20 flex items-center justify-end gap-3">
+        <button (click)="showCreateRaBillModal = false" class="px-4 py-2 rounded-xl text-outline hover:text-on-surface font-semibold text-xs transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button (click)="saveContractorRaBill()" [disabled]="raBillSaving || selectedMbItemIdsForBill.length === 0" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50">
+          @if (raBillSaving) {
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          }
+          Generate Contractor RA Bill
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+  } @else if (activeTab === 'Variations') {
+  <!-- Batch W: Variations, Change Orders & Subcontractor Claims Interface -->
+  <div class="space-y-6 animate-in fade-in duration-300">
+    <!-- Top Summary Banner -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-outline uppercase tracking-wider block">Total Variations</span>
+          <span class="text-2xl font-black text-on-surface mt-1 block">{{ variationSummary?.total_variations_count || variationsList.length }}</span>
+          <span class="text-[10px] text-on-surface-variant">Contractual change records</span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">published_with_changes</span>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-outline uppercase tracking-wider block">Pending Review</span>
+          <span class="text-2xl font-black text-amber-600 mt-1 block">₹{{ (variationSummary?.total_proposed_variation || 0) | number:'1.2-2' }}</span>
+          <span class="text-[10px] text-amber-700/80">{{ variationSummary?.pending_approval_count || 0 }} orders in review queue</span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">hourglass_top</span>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-outline uppercase tracking-wider block">Approved Scope</span>
+          <span class="text-2xl font-black text-emerald-600 mt-1 block">₹{{ (variationSummary?.total_approved_variation || 0) | number:'1.2-2' }}</span>
+          <span class="text-[10px] text-emerald-700/80">{{ variationSummary?.approved_count || 0 }} approved changes</span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">verified</span>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-3xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[11px] font-bold text-outline uppercase tracking-wider block">Time Extensions</span>
+          <span class="text-2xl font-black text-indigo-600 mt-1 block">{{ variationSummary?.total_approved_time_extension_days || 0 }} Days</span>
+          <span class="text-[10px] text-indigo-700/80">Authorized milestone extension</span>
+        </div>
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+          <span class="material-symbols-outlined text-2xl">more_time</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar & Filter -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-3xl bg-surface-container-low border border-outline-variant/30">
+      <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
+        @for (f of ['All', 'draft', 'submitted', 'technical_review', 'commercial_review', 'budget_review', 'approved', 'implemented']; track f) {
+        <button (click)="selectedVariationFilter = f; loadVariationOrders()"
+          [ngClass]="selectedVariationFilter === f ? 'bg-primary text-on-primary font-bold shadow-sm' : 'bg-surface-container-high/60 text-on-surface-variant hover:text-on-surface'"
+          class="px-3.5 py-1.5 rounded-xl text-xs transition-all capitalize whitespace-nowrap cursor-pointer">
+          {{ f.replace('_', ' ') }}
+        </button>
+        }
+      </div>
+
+      <button (click)="openCreateVoModal()" class="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        New Variation / Claim
+      </button>
+    </div>
+
+    <!-- Variations Table -->
+    <div class="bg-surface-container-low rounded-3xl border border-outline-variant/30 overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-surface-container-high text-outline uppercase font-black text-[10px] tracking-wider border-b border-outline-variant/30">
+            <tr>
+              <th class="py-3 px-4">Variation #</th>
+              <th class="py-3 px-4">Title & Reason</th>
+              <th class="py-3 px-4">Category</th>
+              <th class="py-3 px-4">Type</th>
+              <th class="py-3 px-4 text-right">Proposed Value</th>
+              <th class="py-3 px-4 text-right">Approved Value</th>
+              <th class="py-3 px-4 text-center">Status</th>
+              <th class="py-3 px-4 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/20">
+            @if (variationsLoading) {
+            <tr>
+              <td colspan="8" class="text-center py-10 text-on-surface-variant font-semibold">
+                <div class="flex items-center justify-center gap-2">
+                  <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  Loading variation orders...
+                </div>
+              </td>
+            </tr>
+            } @else if (variationsList.length === 0) {
+            <tr>
+              <td colspan="8" class="text-center py-12 text-on-surface-variant">
+                <span class="material-symbols-outlined text-4xl text-outline mb-2 block">assignment_turned_in</span>
+                <p class="font-bold">No variation orders recorded</p>
+                <p class="text-[11px] text-outline mt-1">Contractual baseline is active with zero open scope amendments.</p>
+              </td>
+            </tr>
+            } @else {
+            @for (vo of variationsList; track vo.id) {
+            <tr class="hover:bg-surface-container-high/40 transition-colors">
+              <td class="py-3 px-4 font-mono font-bold text-primary">{{ vo.variation_number }}</td>
+              <td class="py-3 px-4">
+                <div class="font-bold text-on-surface">{{ vo.title }}</div>
+                <div class="text-[10px] text-on-surface-variant line-clamp-1">{{ vo.description }}</div>
+              </td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface font-semibold text-[10px] uppercase">
+                  {{ vo.category?.replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold"
+                  [ngClass]="vo.change_type === 'client_variation' ? 'bg-blue-500/10 text-blue-600' : 'bg-purple-500/10 text-purple-600'">
+                  {{ vo.change_type === 'client_variation' ? 'Client VO' : 'Subcontractor Claim' }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right font-mono font-bold text-on-surface">₹{{ (vo.proposed_amount || 0) | number:'1.2-2' }}</td>
+              <td class="py-3 px-4 text-right font-mono font-bold" [ngClass]="vo.approved_amount > 0 ? 'text-emerald-600' : 'text-outline'">
+                ₹{{ (vo.approved_amount || 0) | number:'1.2-2' }}
+              </td>
+              <td class="py-3 px-4 text-center">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                  [ngClass]="{
+                    'bg-slate-500/10 text-slate-600': vo.status === 'draft',
+                    'bg-amber-500/10 text-amber-600': vo.status === 'submitted' || vo.status === 'technical_review' || vo.status === 'commercial_review' || vo.status === 'budget_review',
+                    'bg-emerald-500/10 text-emerald-600': vo.status === 'approved',
+                    'bg-purple-500/10 text-purple-600': vo.status === 'implemented',
+                    'bg-rose-500/10 text-rose-600': vo.status === 'rejected',
+                    'bg-neutral-500/10 text-neutral-600': vo.status === 'withdrawn'
+                  }">
+                  {{ vo.status?.replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  @if (vo.status === 'draft') {
+                  <button (click)="submitVariation(vo)" title="Submit for Review" class="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold text-[10px] cursor-pointer">
+                    Submit
+                  </button>
+                  }
+                  @if (vo.status === 'budget_review' || vo.status === 'commercial_review') {
+                  <button (click)="approveVariation(vo)" title="Authorize" class="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 font-bold text-[10px] cursor-pointer">
+                    Approve
+                  </button>
+                  }
+                  @if (vo.status === 'approved') {
+                  <button (click)="implementVariation(vo)" title="Implement to BOQ Scope" class="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 font-bold text-[10px] cursor-pointer">
+                    Implement
+                  </button>
+                  }
+                  <button (click)="openVoDetails(vo)" title="View Lines & Revisions" class="p-1 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface cursor-pointer">
+                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Variation Order Modal -->
+  @if (showCreateVoModal) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-surface-container-low rounded-3xl border border-outline-variant/30 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+      <div class="p-5 border-b border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <h4 class="font-bold text-base text-on-surface">Draft Variation / Change Order</h4>
+          <p class="text-xs text-on-surface-variant">Manage scope additions, omissions, and rate revisions without overwriting baselines.</p>
+        </div>
+        <button (click)="showCreateVoModal = false" class="text-outline hover:text-on-surface p-1 rounded-xl cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="text-xs font-bold text-outline block mb-1">Variation Ref # <span class="text-rose-500">*</span></label>
+            <input type="text" [(ngModel)]="newVo.variation_number" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs text-on-surface">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-outline block mb-1">Change Type</label>
+            <select [(ngModel)]="newVo.change_type" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs text-on-surface">
+              <option value="client_variation">Client Variation Order</option>
+              <option value="contractor_claim">Subcontractor Claim</option>
+              <option value="internal_budget_adjustment">Internal Budget Adjustment</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-outline block mb-1">Category</label>
+            <select [(ngModel)]="newVo.category" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs text-on-surface">
+              <option value="quantity_deviation">Quantity Deviation</option>
+              <option value="addition">Addition / Extra Scope</option>
+              <option value="omission">Omission / Scope Reduction</option>
+              <option value="rate_revision">Rate Revision</option>
+              <option value="specification_change">Specification Change</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-bold text-outline block mb-1">Variation Title <span class="text-rose-500">*</span></label>
+            <input type="text" [(ngModel)]="newVo.title" placeholder="e.g. Additional Earthwork for Retaining Wall" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs text-on-surface">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-outline block mb-1">Originating Source / Instruction</label>
+            <input type="text" [(ngModel)]="newVo.originating_source" placeholder="e.g. Client Instruction CI-104 or Site RFI" class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs text-on-surface">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Scope Description & Contractual Basis <span class="text-rose-500">*</span></label>
+          <textarea [(ngModel)]="newVo.description" rows="2" placeholder="Detail the commercial and technical basis of change..." class="w-full px-3 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs text-on-surface resize-none"></textarea>
+        </div>
+
+        <!-- Variation Item Lines -->
+        <div class="border-t border-outline-variant/30 pt-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black uppercase text-outline tracking-wider">Affected BOQ Lines & Quantities</span>
+            <button (click)="addVoItemRow()" class="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-[15px]">add</span> Add Item Line
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            @for (it of newVo.items; track $index; let i = $index) {
+            <div class="p-3.5 rounded-2xl bg-surface-container border border-outline-variant/30 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+              <div class="sm:col-span-4">
+                <label class="text-[10px] font-bold text-outline block mb-1">Linked BOQ Item (or New)</label>
+                <select [ngModel]="it.boq_item_id" (ngModelChange)="onVoBoqSelected(it, $event)" class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs text-on-surface">
+                  <option [ngValue]="null">-- New Unscheduled Item --</option>
+                  @for (b of boqList; track b.id) {
+                  <option [ngValue]="b.id">{{ b.item_code }} - {{ b.description | slice:0:30 }}...</option>
+                  }
+                </select>
+              </div>
+
+              <div class="sm:col-span-3">
+                <label class="text-[10px] font-bold text-outline block mb-1">Description</label>
+                <input type="text" [(ngModel)]="it.description" placeholder="Work description" class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs text-on-surface">
+              </div>
+
+              <div class="sm:col-span-2">
+                <label class="text-[10px] font-bold text-outline block mb-1">Delta Qty ({{ it.unit }})</label>
+                <input type="number" [(ngModel)]="it.proposed_delta_qty" class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs text-on-surface font-mono text-right">
+              </div>
+
+              <div class="sm:col-span-2">
+                <label class="text-[10px] font-bold text-outline block mb-1">Unit Rate (₹)</label>
+                <input type="number" [(ngModel)]="it.proposed_rate" class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs text-on-surface font-mono text-right">
+              </div>
+
+              <div class="sm:col-span-1 text-center pt-3">
+                <button (click)="removeVoItemRow(i)" [disabled]="newVo.items.length <= 1" class="text-rose-500 hover:text-rose-700 disabled:opacity-30 cursor-pointer">
+                  <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-outline-variant/30 flex items-center justify-end gap-3 bg-surface-container">
+        <button (click)="showCreateVoModal = false" class="px-4 py-2 rounded-xl hover:bg-surface-container-high text-xs font-semibold text-outline cursor-pointer">Cancel</button>
+        <button (click)="saveVariationOrder()" [disabled]="voSaving" class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50">
+          @if (voSaving) {
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          }
+          Save Draft Variation
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- View Variation Details Modal -->
+  @if (showVoDetailModal && selectedVoDetail) {
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-surface-container-low rounded-3xl border border-outline-variant/30 w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95">
+      <div class="p-5 border-b border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="font-mono text-primary font-bold text-xs">{{ selectedVoDetail.variation_number }}</span>
+          <h4 class="font-bold text-base text-on-surface">{{ selectedVoDetail.title }}</h4>
+        </div>
+        <button (click)="showVoDetailModal = false" class="text-outline hover:text-on-surface p-1 rounded-xl cursor-pointer">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4 flex-1">
+        <div class="p-3.5 rounded-2xl bg-surface-container text-xs space-y-1">
+          <div class="text-outline font-semibold">Contractual Basis:</div>
+          <div class="text-on-surface leading-relaxed">{{ selectedVoDetail.description }}</div>
+        </div>
+
+        <div>
+          <span class="text-xs font-bold text-outline block mb-2 uppercase tracking-wider">Item Breakdown</span>
+          <div class="space-y-2">
+            @for (it of selectedVoDetail.items; track it.id) {
+            <div class="p-3 rounded-xl bg-surface-container border border-outline-variant/30 flex items-center justify-between text-xs">
+              <div>
+                <span class="font-mono text-[10px] text-primary font-bold block">{{ it.item_code }}</span>
+                <span class="font-semibold text-on-surface">{{ it.description }}</span>
+              </div>
+              <div class="text-right font-mono">
+                <span class="text-outline block text-[10px]">Δ Qty: {{ it.proposed_delta_qty }} {{ it.unit }} @ ₹{{ it.proposed_rate }}</span>
+                <span class="font-bold text-on-surface">₹{{ (it.proposed_delta_amount || 0) | number:'1.2-2' }}</span>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-outline-variant/30 flex items-center justify-end gap-3 bg-surface-container">
+        <button (click)="showVoDetailModal = false" class="px-4 py-2 rounded-xl bg-surface hover:bg-surface-container-high text-xs font-semibold text-on-surface cursor-pointer">Close</button>
+      </div>
+    </div>
+  </div>
+  }
   } @else if (activeTab === 'Files') {
   <app-project-files [documents]="project.documents || []" (uploadMedia)="openDrawingUpload()"></app-project-files>
   } @else if (activeTab === 'Updates') {
@@ -482,6 +1369,843 @@
       </div>
     </div>
   </div>
+  } @else if (activeTab === 'BOQ') {
+  <!-- BOQ INTERACTIVE SPREADSHEET VIEW -->
+  <div class="space-y-6">
+    <!-- Header & Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase text-outline tracking-wider">Total Line Items</span>
+          <h4 class="text-2xl font-black text-on-surface mt-0.5">{{ boqList.length }}</h4>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center">
+          <span class="material-symbols-outlined">receipt_long</span>
+        </div>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase text-outline tracking-wider">Estimated Budget</span>
+          <h4 class="text-2xl font-black text-primary mt-0.5">₹{{ boqTotalEstimated | number:'1.2-2' }}</h4>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 flex items-center justify-center">
+          <span class="material-symbols-outlined">account_balance_wallet</span>
+        </div>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase text-outline tracking-wider">Executed / Billed</span>
+          <h4 class="text-2xl font-black text-indigo-600 mt-0.5">₹{{ boqTotalExecuted | number:'1.2-2' }}</h4>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 flex items-center justify-center">
+          <span class="material-symbols-outlined">payments</span>
+        </div>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/30 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase text-outline tracking-wider">Variance Buffer</span>
+          <h4 class="text-2xl font-black text-emerald-500 mt-0.5">₹{{ (boqTotalEstimated - boqTotalExecuted) | number:'1.2-2' }}</h4>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center">
+          <span class="material-symbols-outlined">trending_up</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Toolbar -->
+    <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-surface p-4 rounded-2xl border border-outline-variant/30 shadow-sm">
+      <div class="flex flex-wrap items-center gap-3 flex-1">
+        <div class="relative flex-1 min-w-[200px] max-w-md">
+          <span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-lg">search</span>
+          <input type="text" [(ngModel)]="boqSearchQuery" placeholder="Search line items, codes, descriptions..."
+            class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant/40 rounded-xl text-xs text-on-surface focus:outline-none focus:border-primary">
+        </div>
+        <div class="flex items-center gap-1.5 overflow-x-auto py-1">
+          @for (cat of ['All', 'Civil', 'Concrete', 'Earthwork', 'MEP', 'Finishing']; track cat) {
+          <button (click)="selectedBoqCategory = cat"
+            [class]="selectedBoqCategory === cat ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface hover:bg-surface-container-highest'"
+            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer">
+            {{ cat }}
+          </button>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        @if (selectedBoqItemIds.length > 0) {
+        <button (click)="generateVendorRFQ()" [disabled]="rfqGenerating"
+          class="bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow hover:bg-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 animate-pulse">
+          <span class="material-symbols-outlined text-[16px]">request_quote</span>
+          {{ rfqGenerating ? 'Generating...' : 'Generate Vendor RFQ (' + selectedBoqItemIds.length + ')' }}
+        </button>
+        }
+        <button (click)="exportBOQFile()" class="bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 border border-outline-variant/30 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">download</span> Export Sheet
+        </button>
+        <button (click)="openAiBoqModal()" class="bg-primary/10 text-primary hover:bg-primary/20 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 border border-primary/30 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">auto_awesome</span> AI-assisted BOQ extraction
+        </button>
+        <button (click)="showAddBoqModal = true" class="bg-primary text-white font-bold px-4 py-2 rounded-xl text-xs shadow hover:bg-primary-dark transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">add</span> Add Line Item
+        </button>
+      </div>
+    </div>
+
+    <!-- EVM / Earned Value KPI Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div class="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-2xl border border-blue-200/60 flex flex-col gap-0.5">
+        <span class="text-[9px] font-black text-blue-500 uppercase tracking-wider">Planned Value (PV)</span>
+        <span class="text-base font-black text-blue-700">{{ plannedValue != null ? ('₹' + (plannedValue | number:'1.0-0')) : 'N/A' }}</span>
+      </div>
+      <div class="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-2xl border border-emerald-200/60 flex flex-col gap-0.5">
+        <span class="text-[9px] font-black text-emerald-500 uppercase tracking-wider">Earned Value (EV)</span>
+        <span class="text-base font-black text-emerald-700">{{ earnedValue != null ? ('₹' + (earnedValue | number:'1.0-0')) : 'N/A' }}</span>
+      </div>
+      <div class="bg-rose-50 dark:bg-rose-950/40 p-3 rounded-2xl border border-rose-200/60 flex flex-col gap-0.5">
+        <span class="text-[9px] font-black text-rose-500 uppercase tracking-wider">Actual Cost (AC)</span>
+        <span class="text-base font-black text-rose-700">{{ actualCost != null ? ('₹' + (actualCost | number:'1.0-0')) : 'N/A' }}</span>
+      </div>
+      <div class="p-3 rounded-2xl border flex flex-col gap-0.5"
+        [ngClass]="cpi != null ? (cpi >= 1 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/60' : 'bg-rose-50 dark:bg-rose-950/40 border-rose-200/60') : 'bg-slate-50 dark:bg-slate-900 border-slate-200'">
+        <span class="text-[9px] font-black uppercase tracking-wider" [ngClass]="cpi != null ? (cpi >= 1 ? 'text-emerald-500' : 'text-rose-500') : 'text-slate-400'">CPI (Cost Perf.)</span>
+        <span class="text-base font-black" [ngClass]="cpi != null ? (cpi >= 1 ? 'text-emerald-700' : 'text-rose-700') : 'text-slate-500'">{{ cpi != null ? cpi : 'N/A' }}
+          <span *ngIf="cpi != null" class="text-[9px]">{{ cpi >= 1 ? '✓ Under Budget' : '⚠ Over Budget' }}</span>
+        </span>
+      </div>
+      <div class="p-3 rounded-2xl border flex flex-col gap-0.5"
+        [ngClass]="spi != null ? (spi >= 1 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/60' : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/60') : 'bg-slate-50 dark:bg-slate-900 border-slate-200'">
+        <span class="text-[9px] font-black uppercase tracking-wider" [ngClass]="spi != null ? (spi >= 1 ? 'text-emerald-500' : 'text-amber-500') : 'text-slate-400'">SPI (Schedule Perf.)</span>
+        <span class="text-base font-black" [ngClass]="spi != null ? (spi >= 1 ? 'text-emerald-700' : 'text-amber-700') : 'text-slate-500'">{{ spi != null ? spi : 'N/A' }}
+          <span *ngIf="spi != null" class="text-[9px]">{{ spi >= 1 ? '✓ On Track' : '⚠ Behind' }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Spreadsheet-Style Grid Table -->
+    <div class="overflow-x-auto bg-surface rounded-2xl border border-outline-variant/30 shadow-md">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-surface-container-high text-[11px] font-black uppercase text-outline tracking-wider border-b border-outline-variant/40">
+          <tr>
+            <th class="py-3 px-4 w-10 text-center">
+              <input type="checkbox" (change)="toggleAllBoqSelection()"
+                [checked]="selectedBoqItemIds.length === filteredBoqList.length && filteredBoqList.length > 0"
+                class="w-3.5 h-3.5 accent-primary cursor-pointer">
+            </th>
+            <th class="py-3 px-4 w-12 text-center">#</th>
+            <th class="py-3 px-4 w-28">Item Code</th>
+            <th class="py-3 px-4 min-w-[280px]">Item Description</th>
+            <th class="py-3 px-4 w-28">Category</th>
+            <th class="py-3 px-4 w-20 text-center">Unit</th>
+            <th class="py-3 px-4 w-28 text-right">Est. Qty</th>
+            <th class="py-3 px-4 w-28 text-right">Unit Rate</th>
+            <th class="py-3 px-4 w-32 text-right">Total Est.</th>
+            <th class="py-3 px-4 w-32 text-right">Executed</th>
+            <th class="py-3 px-4 w-24 text-center">Progress</th>
+            <th class="py-3 px-4 w-20 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20 font-medium">
+          @for (item of filteredBoqList; track item.id; let i = $index) {
+          <tr class="hover:bg-primary/5 transition-colors group" [ngClass]="selectedBoqItemIds.includes(item.id) ? 'bg-emerald-50/60 dark:bg-emerald-950/30' : ''">
+            <td class="py-3 px-4 text-center">
+              <input type="checkbox" [checked]="selectedBoqItemIds.includes(item.id)"
+                (change)="toggleBoqSelection(item.id)"
+                class="w-3.5 h-3.5 accent-primary cursor-pointer">
+            </td>
+            <td class="py-3 px-4 text-center text-outline font-bold">{{ i + 1 }}</td>
+            <td class="py-3 px-4 font-black text-primary">{{ item.item_code || 'CW-' + (i+1) }}</td>
+            <td class="py-3 px-4 text-on-surface font-semibold">
+              {{ item.description }}
+            </td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-bold text-[10px]">
+                {{ item.category || 'Civil' }}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-center text-outline font-bold">{{ item.unit }}</td>
+            <td class="py-3 px-4 text-right font-bold text-on-surface">{{ item.estimated_qty | number:'1.2-2' }}</td>
+            <td class="py-3 px-4 text-right font-semibold text-outline">₹{{ item.unit_rate | number:'1.2-2' }}</td>
+            <td class="py-3 px-4 text-right font-black text-on-surface">₹{{ (item.total_estimated_amount || (item.estimated_qty * item.unit_rate)) | number:'1.2-2' }}</td>
+            <td class="py-3 px-4 text-right font-black text-indigo-600">₹{{ (item.billed_amount || 0) | number:'1.2-2' }}</td>
+            <td class="py-3 px-4 text-center">
+              <div class="w-16 bg-slate-200 dark:bg-slate-700 h-2 rounded-full mx-auto overflow-hidden">
+                <div class="bg-primary h-full rounded-full" [style.width]="((item.billed_amount || 0) / (item.total_estimated_amount || 1) * 100) + '%'"></div>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <button (click)="openEditBoqModal(item)" title="Edit Line Item" class="p-1 rounded-lg hover:bg-surface-container-high text-slate-500 hover:text-primary transition cursor-pointer">
+                  <span class="material-symbols-outlined text-base">edit</span>
+                </button>
+                <button (click)="deleteBoqItem(item)" title="Archive Item" class="p-1 rounded-lg hover:bg-surface-container-high text-slate-500 hover:text-rose-500 transition cursor-pointer">
+                  <span class="material-symbols-outlined text-base">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          }
+          @if (filteredBoqList.length === 0) {
+          <tr>
+            <td colspan="12" class="py-12 text-center text-outline">
+              <span class="material-symbols-outlined text-4xl mb-2 text-outline/50">receipt_long</span>
+              <p class="font-bold text-sm">No BOQ items recorded yet</p>
+              <p class="text-xs text-outline mt-1">Click "Add Line Item" or "AI-assisted BOQ extraction" to populate the schedule.</p>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  } @else if (activeTab === 'DPR') {
+  <!-- DPR DAILY LOG WIZARD VIEW -->
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface-container-low p-5 rounded-3xl border border-outline-variant/30 shadow-sm">
+      <div>
+        <h3 class="text-xl font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">calendar_month</span> Daily Progress Reports (DPR)
+        </h3>
+        <p class="text-xs text-on-surface-variant mt-0.5">Automated daily site log wizard with weather synchronization, trade output, and AI executive summaries.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="exportDPRFile()" class="bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 border border-outline-variant/30 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">download</span> Export DPRs
+        </button>
+        <button (click)="openDprWizard()" class="bg-primary text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md hover:bg-primary-dark transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">add_circle</span> Launch DPR Wizard
+        </button>
+      </div>
+    </div>
+
+    <!-- DPR Cards List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      @for (dpr of dprList; track dpr.id) {
+      <div (click)="openDpr(dpr)" (keydown.enter)="openDpr(dpr)" tabindex="0" role="button" [attr.aria-label]="'View DPR for ' + dpr.report_date" class="group bg-surface p-6 rounded-3xl border border-outline-variant/20 shadow-md space-y-4 hover:border-primary/60 hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40">
+        <div class="flex justify-between items-center pb-3 border-b border-outline-variant/20">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">event_available</span>
+            <span class="text-sm font-black text-on-surface">{{ dpr.report_date }}</span>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+            [ngClass]="{
+              'bg-emerald-100 text-emerald-700': dpr.status === 'approved' || dpr.status === 'APPROVED',
+              'bg-blue-100 text-blue-700': dpr.status === 'submitted' || dpr.status === 'SUBMITTED',
+              'bg-amber-100 text-amber-700': dpr.status === 'draft' || dpr.status === 'DRAFT',
+              'bg-red-100 text-red-700': dpr.status === 'rejected' || dpr.status === 'REJECTED'
+            }">
+            {{ dpr.status || 'SUBMITTED' }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-500 text-lg">wb_sunny</span>
+            <div>
+              <span class="text-[9px] font-bold text-outline uppercase block">Weather</span>
+              <span class="font-bold text-on-surface">{{ dpr.weather_summary || 'Sunny 28°C' }}</span>
+            </div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-surface-container-low border border-outline-variant/20 flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-500 text-lg">groups</span>
+            <div>
+              <span class="text-[9px] font-bold text-outline uppercase block">Manpower</span>
+              <span class="font-bold text-on-surface">{{ dpr.total_workforce_count || 0 }} Operatives</span>
+            </div>
+          </div>
+        </div>
+
+        @if (dpr.work_summary) {
+        <div>
+          <span class="text-[10px] font-black uppercase text-outline tracking-wider block mb-1">Site Diary Notes</span>
+          <p class="text-xs text-on-surface-variant leading-relaxed">{{ dpr.work_summary }}</p>
+        </div>
+        }
+
+        @if (dpr.ai_executive_summary) {
+        <div class="bg-gradient-to-r from-primary/10 via-purple-500/5 to-transparent p-4 rounded-2xl border border-primary/20 space-y-1.5">
+          <div class="flex items-center gap-1 text-[11px] font-black text-primary">
+            <span class="material-symbols-outlined text-sm">auto_awesome</span> Zyno Executive Briefing
+          </div>
+          <p class="text-xs text-on-surface leading-relaxed">{{ dpr.ai_executive_summary }}</p>
+        </div>
+        }
+        <div class="flex items-center justify-between pt-3 border-t border-outline-variant/20 text-[11px] font-bold text-primary">
+          <span class="flex items-center gap-1 text-outline"><span class="material-symbols-outlined text-sm">checklist</span> {{ dpr.work_items?.length || 0 }} work items</span>
+          <span class="flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">View details <span class="material-symbols-outlined text-sm">arrow_forward</span></span>
+        </div>
+      </div>
+      }
+      @if (dprList.length === 0) {
+      <div class="col-span-2 bg-surface p-8 rounded-3xl border border-dashed border-outline-variant/40 text-center space-y-2">
+        <span class="material-symbols-outlined text-4xl text-outline/50">description</span>
+        <h4 class="text-base font-black text-on-surface">No Daily Reports Submitted</h4>
+        <p class="text-xs text-outline max-w-md mx-auto">Click "Launch DPR Wizard" to capture field activities, weather conditions, worker output, and site photos.</p>
+      </div>
+      }
+    </div>
+  </div>
+
+  } @else if (activeTab === 'Labour') {
+  <!-- LABOUR & WORKFORCE ATTENDANCE -->
+  <div class="space-y-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface-container-low p-5 rounded-2xl border border-outline-variant/30 shadow-sm">
+      <div>
+        <h3 class="text-xl font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">engineering</span> Labour & Workforce Attendance
+        </h3>
+        <p class="text-xs text-on-surface-variant mt-0.5">Daily site gang allocations, trade headcounts, overtime, and wage analytics.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="openLabourModal()" class="bg-primary text-white font-bold px-4 py-2 rounded-xl text-xs shadow hover:bg-primary-dark transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">person_add</span> Record Labour Attendance
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto bg-surface rounded-2xl border border-outline-variant/20 shadow-sm">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-surface-container-high uppercase tracking-widest text-[10px] text-outline font-bold border-b border-outline-variant/30">
+          <tr>
+            <th class="py-3.5 px-4">Date</th>
+            <th class="py-3.5 px-4">Trade / Role</th>
+            <th class="py-3.5 px-4">Skill Level</th>
+            <th class="py-3.5 px-4 text-center">Headcount</th>
+            <th class="py-3.5 px-4 text-center">Shift</th>
+            <th class="py-3.5 px-4 text-right">OT (Hrs)</th>
+            <th class="py-3.5 px-4 text-right">Est. Daily Cost (₹)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/20">
+          @for (log of labourLogs; track log.id) {
+          <tr (click)="selectedLabourLog = log" (keydown.enter)="selectedLabourLog = log" tabindex="0" role="button" class="hover:bg-primary/5 transition-colors cursor-pointer focus:outline-none focus:bg-primary/10">
+            <td class="py-3 px-4 font-bold text-on-surface">{{ log.attendance_date }}</td>
+            <td class="py-3 px-4 font-semibold text-primary">{{ log.trade_type }}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-bold capitalize">{{ log.skill_level }}</span></td>
+            <td class="py-3 px-4 text-center font-bold">{{ log.headcount }}</td>
+            <td class="py-3 px-4 text-center text-outline font-semibold capitalize">{{ log.shift }}</td>
+            <td class="py-3 px-4 text-right font-medium">{{ log.overtime_hours }} hrs</td>
+            <td class="py-3 px-4 text-right font-bold text-on-surface">₹{{ log.total_cost | number:'1.2-2' }}</td>
+          </tr>
+          }
+          @if (labourLogs.length === 0) {
+          <tr>
+            <td colspan="7" class="py-12 text-center text-outline">
+              <span class="material-symbols-outlined text-4xl mb-2 text-outline/50">engineering</span>
+              <p class="font-bold text-sm">No labour attendance logs recorded yet</p>
+              <p class="text-xs text-outline mt-1">Click "Record Labour Attendance" to submit daily workforce gang logs.</p>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  } @else if (activeTab === 'Drawings') {
+  <!-- DRAWING REGISTER & FILE VAULT -->
+  <div class="space-y-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface-container-low p-5 rounded-3xl border border-outline-variant/30 shadow-sm">
+      <div>
+        <h3 class="text-xl font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">architecture</span> Drawing Register & Blueprint Vault
+        </h3>
+        <p class="text-xs text-on-surface-variant mt-0.5">Version-controlled architectural, structural, and MEP engineering drawings with automated revision tracking.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="showDrawingUploadModal = true" class="bg-primary text-white font-bold px-4 py-2 rounded-xl text-xs shadow hover:bg-primary-dark transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">upload_file</span> Register Drawing Sheet
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Discipline Pills -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+      @for (d of ['All', 'Structural', 'Architectural', 'MEP', 'Civil', 'Landscape']; track d) {
+      <button (click)="selectedDrawingDiscipline = d"
+        [class]="selectedDrawingDiscipline === d ? 'bg-primary text-white shadow-sm' : 'bg-surface text-on-surface hover:bg-surface-container-high'"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-outline-variant/30 transition-all whitespace-nowrap cursor-pointer">
+        {{ d }}
+      </button>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      @for (dwg of filteredDrawings; track dwg.id) {
+      <div class="bg-surface p-5 rounded-3xl border border-outline-variant/20 shadow-md space-y-4 hover:border-primary/40 transition-all flex flex-col justify-between">
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+              {{ dwg.revision || 'R0' }}
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-surface-container-high text-outline uppercase tracking-wider">
+              {{ dwg.discipline }}
+            </span>
+          </div>
+          <div>
+            <span class="text-[10px] font-black text-primary uppercase tracking-widest block">{{ dwg.drawing_number }}</span>
+            <h4 class="text-sm font-bold text-on-surface mt-0.5">{{ dwg.title }}</h4>
+          </div>
+          @if (dwg.ai_drawing_summary) {
+          <div class="bg-primary/5 p-3 rounded-xl border border-primary/20 text-xs text-on-surface-variant leading-relaxed">
+            {{ dwg.ai_drawing_summary }}
+          </div>
+          }
+        </div>
+        <div class="flex flex-wrap justify-between items-center pt-3 border-t border-outline-variant/20 text-xs gap-2">
+          <span class="text-[10px] font-bold text-outline capitalize">{{ dwg.status ? dwg.status.replace('_', ' ') : 'Approved' }}</span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button (click)="openDrawingHistoryModal(dwg)" title="Version History" class="font-bold text-indigo-600 hover:underline flex items-center gap-0.5 cursor-pointer text-[10px]">
+              <span class="material-symbols-outlined text-sm">history</span> History
+            </button>
+            <button (click)="openUploadRevisionModal(dwg)" title="Upload Revision" class="font-bold text-emerald-600 hover:underline flex items-center gap-0.5 cursor-pointer text-[10px]">
+              <span class="material-symbols-outlined text-sm">upgrade</span> Revision
+            </button>
+            <button (click)="openSignatureModal(dwg)" title="Request Stakeholder Signature" class="font-bold text-blue-600 hover:underline flex items-center gap-0.5 cursor-pointer text-[10px]">
+              <span class="material-symbols-outlined text-sm">history_edu</span> Signature
+            </button>
+            <button (click)="openBlueprintViewer(dwg)" class="font-bold text-amber-600 hover:underline flex items-center gap-1 cursor-pointer text-[10px]">
+              <span class="material-symbols-outlined text-sm">pin_drop</span> Drop Pin
+            </button>
+            <button type="button" (click)="downloadOrViewDrawing(dwg)" class="font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer text-[10px]">
+              <span class="material-symbols-outlined text-sm">visibility</span> View / Download
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+      @if (filteredDrawings.length === 0) {
+      <div class="col-span-3 bg-surface p-8 rounded-3xl border border-dashed border-outline-variant/40 text-center space-y-2">
+        <span class="material-symbols-outlined text-4xl text-outline/50">architecture</span>
+        <h4 class="text-base font-black text-on-surface">No Drawings in Vault</h4>
+        <p class="text-xs text-outline max-w-md mx-auto">Click "Register Drawing Sheet" to upload new blueprint revisions and track change orders.</p>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- INTERACTIVE BLUEPRINT VIEWER WITH CLICK-TO-PIN MODAL -->
+  @if (activeBlueprintModal && selectedBlueprintForViewing) {
+  <div class="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4 backdrop-blur-sm" (click)="activeBlueprintModal = false">
+    <div class="bg-surface rounded-3xl shadow-2xl border border-outline-variant/30 w-full max-w-4xl max-h-[90vh] overflow-hidden" (click)="$event.stopPropagation()">
+      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-400 text-sm">architecture</span>
+            <span class="font-black text-sm">{{ selectedBlueprintForViewing.drawing_number }}</span>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md font-bold">{{ selectedBlueprintForViewing.revision || 'R0' }}</span>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-0.5">{{ selectedBlueprintForViewing.title }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button (click)="createSnagFromBlueprintPin()" class="px-3 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700 flex items-center gap-1 cursor-pointer">
+            <span class="material-symbols-outlined text-sm">bug_report</span> Create Snag at Pin
+          </button>
+          <button (click)="activeBlueprintModal = false" class="text-slate-400 hover:text-white cursor-pointer">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+      <div class="p-2 bg-slate-950">
+        <p class="text-[10px] text-slate-400 text-center mb-2 font-bold tracking-wider uppercase">Click anywhere on the blueprint to drop a defect pin</p>
+        <div class="relative cursor-crosshair rounded-2xl overflow-hidden border border-slate-700 shadow-inner"
+          (click)="onBlueprintCanvasClick($event)" style="aspect-ratio: 16/9;">
+          <img [src]="selectedBlueprintForViewing.file_url" alt="Blueprint"
+            class="w-full h-full object-cover opacity-90">
+          <!-- Pin Marker -->
+          <div class="absolute w-6 h-6 -translate-x-3 -translate-y-6 pointer-events-none"
+            [style.left]="blueprintPinX + '%'"
+            [style.top]="blueprintPinY + '%'">
+            <span class="material-symbols-outlined text-rose-500 text-3xl drop-shadow-lg animate-bounce">location_on</span>
+          </div>
+          <!-- Grid overlay for visual reference -->
+          <div class="absolute inset-0 pointer-events-none"
+            style="background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 5% 5%;">
+          </div>
+        </div>
+        @if (newSnag.location_pin) {
+        <div class="mt-2 text-center">
+          <span class="text-[10px] bg-rose-900/40 text-rose-300 px-3 py-1 rounded-full font-bold">
+            📍 {{ newSnag.location_pin }}
+          </span>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+
+
+  } @else if (activeTab === 'Snags') {
+  <!-- SNAG LIST & KANBAN BOARD WITH PHOTO PINS -->
+  <div class="space-y-6">
+    <!-- Snag Header & View Switcher -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface-container-low p-5 rounded-3xl border border-outline-variant/30 shadow-sm">
+      <div>
+        <h3 class="text-xl font-bold text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">bug_report</span> Snagging & Punch Lists
+        </h3>
+        <p class="text-xs text-on-surface-variant mt-0.5">Interactive defect tracking with voice notes, AI classification, severity filters, and location grid pins.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex bg-surface-container-high rounded-xl p-1 border border-outline-variant/30">
+          <button (click)="snagViewMode = 'kanban'" [class]="snagViewMode === 'kanban' ? 'bg-primary text-white shadow' : 'text-outline hover:text-on-surface'" class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">view_kanban</span> Kanban
+          </button>
+          <button (click)="snagViewMode = 'list'" [class]="snagViewMode === 'list' ? 'bg-primary text-white shadow' : 'text-outline hover:text-on-surface'" class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">table_rows</span> List
+          </button>
+        </div>
+        <button (click)="showAddSnagModal = true" class="bg-primary text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md hover:bg-primary-dark transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">add_circle</span> Report Snag / Defect
+        </button>
+      </div>
+    </div>
+
+    <!-- Authoritative Snag Filter & Status Counts Toolbar (applies to both Kanban and List) -->
+    <div class="bg-surface p-4 rounded-2xl border border-outline-variant/30 shadow-xs flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+      <!-- Search & Filters -->
+      <div class="flex flex-wrap items-center gap-3 flex-1">
+        <div class="relative min-w-[200px] flex-1 max-w-xs">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+          <input type="text" [(ngModel)]="snagSearchQuery" placeholder="Search title, trade, location..."
+            class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:border-primary">
+        </div>
+
+        <select [(ngModel)]="snagSeverityFilter" class="px-3 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface font-semibold">
+          <option value="all">All Severities</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+
+        <select [(ngModel)]="snagTradeFilter" class="px-3 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface font-semibold">
+          <option value="all">All Trades</option>
+          <option value="civil">Civil</option>
+          <option value="structural">Structural</option>
+          <option value="electrical">Electrical</option>
+          <option value="plumbing">Plumbing</option>
+          <option value="hvac">HVAC</option>
+          <option value="finishing">Finishing</option>
+        </select>
+      </div>
+
+      <!-- Synchronized Authoritative Status Summary Badges -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-[11px] font-bold">
+        <span class="px-2.5 py-1 rounded-lg bg-surface-container-high text-on-surface border border-outline-variant/30 whitespace-nowrap">
+          Total: <strong class="text-primary">{{ getSnagCount('all') }}</strong>
+        </span>
+        <span class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
+          Open: <strong>{{ getSnagCount('open') }}</strong>
+        </span>
+        <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+          In Progress: <strong>{{ getSnagCount('in_progress') }}</strong>
+        </span>
+        <span class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 whitespace-nowrap">
+          Resolved: <strong>{{ getSnagCount('resolved') }}</strong>
+        </span>
+        <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+          Closed: <strong>{{ getSnagCount('closed') }}</strong>
+        </span>
+      </div>
+    </div>
+
+    <!-- KANBAN BOARD VIEW -->
+    @if (snagViewMode === 'kanban') {
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Open Column -->
+      <div class="bg-surface-container-low/60 p-4 rounded-3xl border border-outline-variant/30 flex flex-col gap-3 min-h-[400px]">
+        <div class="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+          <span class="text-xs font-black uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span> Open
+          </span>
+          <span class="text-xs font-bold text-outline">{{ getSnagsByStatus('open').length }}</span>
+        </div>
+        <div class="space-y-3 flex-1">
+          @for (snag of getSnagsByStatus('open'); track snag.id) {
+          <div class="bg-surface p-4 rounded-2xl border border-outline-variant/20 shadow-sm space-y-2.5 hover:border-primary/40 transition-all">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-md capitalize"
+                [ngClass]="snag.severity === 'critical' ? 'bg-rose-100 text-rose-700' : snag.severity === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'">
+                {{ snag.severity }}
+              </span>
+              <span class="text-[10px] text-outline font-bold truncate max-w-[120px]">{{ snag.location_pin || 'Site Area' }}</span>
+            </div>
+            <h5 class="text-xs font-bold text-on-surface">{{ snag.title }}</h5>
+            <p class="text-[11px] text-on-surface-variant leading-relaxed line-clamp-2">{{ snag.description }}</p>
+            <div class="flex justify-between items-center pt-2 border-t border-outline-variant/20">
+              <span class="text-[9px] font-bold text-outline uppercase">{{ snag.trade || 'Civil' }}</span>
+              <div class="flex items-center gap-1.5">
+                <button (click)="openEditSnagModal(snag)" title="Edit Snag" class="text-slate-400 hover:text-primary transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">edit</span>
+                </button>
+                <button (click)="deleteSnag(snag)" title="Delete Snag" class="text-slate-400 hover:text-rose-600 transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">delete</span>
+                </button>
+                <button (click)="changeSnagStatus(snag, 'in_progress')" class="text-[10px] font-bold text-primary hover:underline cursor-pointer flex items-center gap-0.5 ml-1">
+                  Start Fixing <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+          @if (getSnagsByStatus('open').length === 0) {
+          <div class="text-center py-10 text-outline text-xs italic">No open defects matching filters.</div>
+          }
+        </div>
+      </div>
+
+      <!-- In Progress Column -->
+      <div class="bg-surface-container-low/60 p-4 rounded-3xl border border-outline-variant/30 flex flex-col gap-3 min-h-[400px]">
+        <div class="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+          <span class="text-xs font-black uppercase tracking-wider text-amber-600 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span> In Progress
+          </span>
+          <span class="text-xs font-bold text-outline">{{ getSnagsByStatus('in_progress').length }}</span>
+        </div>
+        <div class="space-y-3 flex-1">
+          @for (snag of getSnagsByStatus('in_progress'); track snag.id) {
+          <div class="bg-surface p-4 rounded-2xl border border-outline-variant/20 shadow-sm space-y-2.5 hover:border-amber-400 transition-all">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 capitalize">{{ snag.severity }}</span>
+              <span class="text-[10px] text-outline font-bold truncate max-w-[120px]">{{ snag.location_pin || 'Site Area' }}</span>
+            </div>
+            <h5 class="text-xs font-bold text-on-surface">{{ snag.title }}</h5>
+            <p class="text-[11px] text-on-surface-variant leading-relaxed line-clamp-2">{{ snag.description }}</p>
+            <div class="flex justify-between items-center pt-2 border-t border-outline-variant/20">
+              <span class="text-[9px] font-bold text-outline uppercase">{{ snag.trade || 'General' }}</span>
+              <div class="flex items-center gap-1.5">
+                <button (click)="openEditSnagModal(snag)" title="Edit Snag" class="text-slate-400 hover:text-primary transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">edit</span>
+                </button>
+                <button (click)="deleteSnag(snag)" title="Delete Snag" class="text-slate-400 hover:text-rose-600 transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">delete</span>
+                </button>
+                <button (click)="changeSnagStatus(snag, 'resolved')" class="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-0.5 ml-1">
+                  Mark Resolved <span class="material-symbols-outlined text-[12px]">check</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+          @if (getSnagsByStatus('in_progress').length === 0) {
+          <div class="text-center py-10 text-outline text-xs italic">No defects currently in progress.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Resolved Column -->
+      <div class="bg-surface-container-low/60 p-4 rounded-3xl border border-outline-variant/30 flex flex-col gap-3 min-h-[400px]">
+        <div class="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+          <span class="text-xs font-black uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Resolved
+          </span>
+          <span class="text-xs font-bold text-outline">{{ getSnagsByStatus('resolved').length }}</span>
+        </div>
+        <div class="space-y-3 flex-1">
+          @for (snag of getSnagsByStatus('resolved'); track snag.id) {
+          <div class="bg-surface p-4 rounded-2xl border border-outline-variant/20 shadow-sm space-y-2.5 hover:border-indigo-400 transition-all">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700">Ready for QA</span>
+              <span class="text-[10px] text-outline font-bold truncate max-w-[120px]">{{ snag.location_pin || 'Site Area' }}</span>
+            </div>
+            <h5 class="text-xs font-bold text-on-surface">{{ snag.title }}</h5>
+            <p class="text-[11px] text-on-surface-variant leading-relaxed line-clamp-2">{{ snag.description }}</p>
+            <div class="flex justify-between items-center pt-2 border-t border-outline-variant/20">
+              <span class="text-[9px] font-bold text-outline uppercase">{{ snag.trade || 'General' }}</span>
+              <div class="flex items-center gap-1.5">
+                <button (click)="openEditSnagModal(snag)" title="Edit Snag" class="text-slate-400 hover:text-primary transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">edit</span>
+                </button>
+                <button (click)="deleteSnag(snag)" title="Delete Snag" class="text-slate-400 hover:text-rose-600 transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">delete</span>
+                </button>
+                <button (click)="changeSnagStatus(snag, 'closed')" class="text-[10px] font-bold text-emerald-600 hover:underline cursor-pointer flex items-center gap-0.5 ml-1">
+                  Approve & Close <span class="material-symbols-outlined text-[12px]">done_all</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+          @if (getSnagsByStatus('resolved').length === 0) {
+          <div class="text-center py-10 text-outline text-xs italic">No resolved snags awaiting QA.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Closed Column -->
+      <div class="bg-surface-container-low/60 p-4 rounded-3xl border border-outline-variant/30 flex flex-col gap-3 min-h-[400px]">
+        <div class="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+          <span class="text-xs font-black uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Closed
+          </span>
+          <span class="text-xs font-bold text-outline">{{ getSnagsByStatus('closed').length }}</span>
+        </div>
+        <div class="space-y-3 flex-1">
+          @for (snag of getSnagsByStatus('closed'); track snag.id) {
+          <div class="bg-surface/70 p-4 rounded-2xl border border-outline-variant/15 space-y-2 opacity-85 hover:opacity-100 transition-all">
+            <div class="flex justify-between items-center">
+              <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                <span class="material-symbols-outlined text-[12px]">verified</span> Verified QA
+              </span>
+              <span class="text-[10px] text-outline">{{ snag.location_pin || 'Site Area' }}</span>
+            </div>
+            <h5 class="text-xs font-bold text-on-surface line-through text-slate-500">{{ snag.title }}</h5>
+            <div class="flex justify-between items-center pt-1 text-[10px]">
+              <span class="text-[9px] font-bold text-outline uppercase">{{ snag.trade || 'Civil' }}</span>
+              <div class="flex items-center gap-1.5">
+                <button (click)="openEditSnagModal(snag)" title="Edit Snag" class="text-slate-400 hover:text-primary transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">edit</span>
+                </button>
+                <button (click)="deleteSnag(snag)" title="Delete Snag" class="text-slate-400 hover:text-rose-600 transition cursor-pointer">
+                  <span class="material-symbols-outlined text-[15px]">delete</span>
+                </button>
+                <button (click)="changeSnagStatus(snag, 'open')" class="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer ml-1">
+                  Re-open
+                </button>
+              </div>
+            </div>
+          </div>
+          }
+          @if (getSnagsByStatus('closed').length === 0) {
+          <div class="text-center py-10 text-outline text-xs italic">No closed defects.</div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- AUTHORITATIVE LIST VIEW (Displaying all records including Closed & Resolved) -->
+    @else if (snagViewMode === 'list') {
+    <div class="bg-surface rounded-3xl border border-outline-variant/30 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low border-b border-outline-variant/30 text-outline font-black uppercase text-[10px] tracking-wider">
+              <th class="py-3 px-4">Severity</th>
+              <th class="py-3 px-4">Defect Title & Location</th>
+              <th class="py-3 px-4">Trade</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Due Date</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/20">
+            @for (snag of filteredSnagList; track snag.id) {
+            <tr class="hover:bg-surface-container-low/40 transition-colors">
+              <td class="py-3.5 px-4 align-top">
+                <span class="text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider"
+                  [ngClass]="snag.severity === 'critical' ? 'bg-rose-100 text-rose-700' : snag.severity === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'">
+                  {{ snag.severity || 'Medium' }}
+                </span>
+              </td>
+              <td class="py-3.5 px-4 align-top">
+                <div class="font-bold text-on-surface text-xs mb-0.5" [class.line-through]="snag.status === 'closed'">
+                  {{ snag.title }}
+                </div>
+                <div class="flex items-center gap-1.5 text-[10px] text-outline font-medium">
+                  <span class="material-symbols-outlined text-[12px]">location_on</span>
+                  {{ snag.location_pin || 'Site Area / Unassigned Pin' }}
+                </div>
+                <!-- Inline Expandable Detail Drawer Button -->
+                <button (click)="toggleExpandSnag(snag.id)" class="text-[10px] text-primary hover:underline font-semibold mt-1 flex items-center gap-0.5 cursor-pointer">
+                  {{ expandedSnagId === snag.id ? 'Hide Details ▲' : 'View Notes & Rectification ▼' }}
+                </button>
+                @if (expandedSnagId === snag.id) {
+                <div class="mt-2 p-3 bg-surface-container-low rounded-xl border border-outline-variant/30 text-xs text-on-surface-variant space-y-1.5 animate-in fade-in duration-200">
+                  <p><strong>Description:</strong> {{ snag.description || 'No detailed rectification notes recorded.' }}</p>
+                  @if (snag.voice_note_text) {
+                  <p class="text-primary text-[11px] italic">
+                    <span class="material-symbols-outlined text-[13px] align-middle mr-1">mic</span>
+                    Voice Note: "{{ snag.voice_note_text }}"
+                  </p>
+                  }
+                  @if (getSnagTags(snag).length) {
+                  <div class="flex flex-wrap gap-1 pt-1">
+                    @for (tag of getSnagTags(snag); track tag) {
+                    <span class="px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-bold rounded-md">#{{ tag }}</span>
+                    }
+                  </div>
+                  }
+                </div>
+                }
+              </td>
+              <td class="py-3.5 px-4 align-top">
+                <span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-semibold text-[10px] uppercase">
+                  {{ snag.trade || 'Civil' }}
+                </span>
+              </td>
+              <td class="py-3.5 px-4 align-top">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1"
+                  [ngClass]="{
+                    'bg-rose-50 text-rose-700 border border-rose-200': (snag.status || 'open') === 'open',
+                    'bg-amber-50 text-amber-700 border border-amber-200': snag.status === 'in_progress',
+                    'bg-indigo-50 text-indigo-700 border border-indigo-200': snag.status === 'resolved',
+                    'bg-emerald-50 text-emerald-700 border border-emerald-200': snag.status === 'closed'
+                  }">
+                  <span class="w-1.5 h-1.5 rounded-full"
+                    [ngClass]="{
+                      'bg-rose-500': (snag.status || 'open') === 'open',
+                      'bg-amber-500': snag.status === 'in_progress',
+                      'bg-indigo-500': snag.status === 'resolved',
+                      'bg-emerald-500': snag.status === 'closed'
+                    }"></span>
+                  {{ (snag.status || 'open').replace('_', ' ') }}
+                </span>
+              </td>
+              <td class="py-3.5 px-4 align-top text-outline text-[11px] whitespace-nowrap">
+                {{ snag.due_date ? (snag.due_date | date:'mediumDate') : 'No target date' }}
+              </td>
+              <td class="py-3.5 px-4 align-top text-right whitespace-nowrap">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button (click)="openEditSnagModal(snag)" title="Edit Snag" class="p-1 rounded-lg hover:bg-surface-container-high text-slate-500 hover:text-primary transition cursor-pointer">
+                    <span class="material-symbols-outlined text-sm">edit</span>
+                  </button>
+                  <button (click)="deleteSnag(snag)" title="Delete Snag" class="p-1 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                  </button>
+                  @if ((snag.status || 'open') === 'open') {
+                  <button (click)="changeSnagStatus(snag, 'in_progress')" class="px-2.5 py-1 rounded-lg bg-primary text-white text-[10px] font-bold hover:bg-primary-dark transition cursor-pointer">
+                    Start Fix
+                  </button>
+                  } @else if (snag.status === 'in_progress') {
+                  <button (click)="changeSnagStatus(snag, 'resolved')" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-bold hover:bg-indigo-700 transition cursor-pointer">
+                    Resolve
+                  </button>
+                  } @else if (snag.status === 'resolved') {
+                  <button (click)="changeSnagStatus(snag, 'closed')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-bold hover:bg-emerald-700 transition cursor-pointer">
+                    Approve
+                  </button>
+                  } @else if (snag.status === 'closed') {
+                  <button (click)="changeSnagStatus(snag, 'open')" class="px-2 py-1 rounded-lg border border-outline-variant/40 text-slate-600 text-[10px] font-semibold hover:bg-surface-container-low transition cursor-pointer">
+                    Re-open
+                  </button>
+                  }
+                </div>
+              </td>
+            </tr>
+            }
+            @if (filteredSnagList.length === 0) {
+            <tr>
+              <td colspan="6" class="py-12 text-center text-outline text-xs">
+                <span class="material-symbols-outlined text-3xl mb-1 block">check_circle</span>
+                No punch list snags found matching the active filters.
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+  </div>
+  } @else if (activeTab === 'Safety & RFIs') {
+  <app-safety-rfi [projectId]="project.id"></app-safety-rfi>
+  } @else if (activeTab === 'AI Agents & Bots') {
+  <app-ai-agents-hub [projectId]="project.id"></app-ai-agents-hub>
   } @else {
   <div
     class="flex items-center justify-center h-64 bg-surface-container-low rounded-xl border border-dashed border-outline-variant/50">
@@ -493,100 +2217,1084 @@
   </div>
   }
 
-  @if (showAddUpdateModal) {
-  <!-- <app-add-site-note (close)="showAddUpdateModal = false"></app-add-site-note> -->
-  }
-  } @else {
+  <!-- ================= MODALS & DIALOGS ================= -->
 
+  <!-- ADD BOQ ITEM MODAL -->
+  <app-common-dialog [open]="showAddBoqModal" title="Add BOQ Line Item"
+    subtitle="Add a new measured structural line item to the Bill of Quantities." icon="receipt_long"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" primaryLabel="Save Item"
+    (closed)="showAddBoqModal = false" (cancelled)="showAddBoqModal = false" (primary)="saveNewBoqItem()">
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Item Code <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="newBoqItem.item_code" placeholder="e.g. CW-05, RCC-02" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs font-bold text-primary focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Category <span class="text-rose-500">*</span></label>
+          <select [(ngModel)]="newBoqItem.category" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:border-primary">
+            <option value="Civil">Civil</option>
+            <option value="Concrete">Concrete</option>
+            <option value="Earthwork">Earthwork</option>
+            <option value="MEP">MEP</option>
+            <option value="Finishing">Finishing</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Description <span class="text-rose-500">*</span></label>
+        <textarea [(ngModel)]="newBoqItem.description" placeholder="Description of work, technical specifications, and structural scope..." class="w-full h-20 px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none focus:outline-none focus:border-primary"></textarea>
+      </div>
+      <div class="grid grid-cols-4 gap-3">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Unit <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="newBoqItem.unit" placeholder="m³, sqm, kg..." class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Estimated Qty <span class="text-rose-500">*</span></label>
+          <input type="number" min="0.01" step="any" [(ngModel)]="newBoqItem.estimated_qty" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface font-bold text-right focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Unit Rate (₹) <span class="text-rose-500">*</span></label>
+          <input type="number" min="0" step="any" [(ngModel)]="newBoqItem.unit_rate" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface font-bold text-right focus:outline-none focus:border-primary">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Calculated Total (₹)</label>
+          <div class="px-3 py-2 rounded-xl bg-surface-container-high border border-outline-variant/30 text-xs font-black text-primary truncate text-right">
+            ₹{{ (newBoqItem.estimated_qty * newBoqItem.unit_rate) | number:'1.2-2' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  <!-- AI-ASSISTED BOQ EXTRACTION & PREVIEW MODAL -->
+  <app-common-dialog [open]="showAiBoqModal" title="AI-assisted BOQ extraction"
+    subtitle="Extract, validate, preview, and persist Bill of Quantities line items from Excel, PDF, or text." icon="receipt_long"
+    [showCloseButton]="true" [showFooter]="false" (closed)="showAiBoqModal = false">
+    <div class="p-6 space-y-5">
+      @if (!boqPreviewMode) {
+      <!-- Step 1: Input source selection -->
+      <div class="flex items-center gap-2 border-b border-outline-variant/30 pb-3">
+        <button type="button" (click)="boqImportTab = 'upload'"
+          [class]="boqImportTab === 'upload' ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface'"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-sm">upload_file</span> Upload Workbook / Document
+        </button>
+        <button type="button" (click)="boqImportTab = 'paste'"
+          [class]="boqImportTab === 'paste' ? 'bg-primary text-white shadow-sm' : 'bg-surface-container-high text-on-surface'"
+          class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-sm">content_paste</span> Paste Schedule Text
+        </button>
+      </div>
+
+      @if (boqImportTab === 'upload') {
+      <!-- Drag and Drop Zone -->
+      <div (dragover)="onBoqDragOver($event)" (dragleave)="onBoqDragLeave($event)" (drop)="onBoqFileDrop($event)"
+        [ngClass]="boqDragOver ? 'border-primary bg-primary/10 scale-[1.01]' : 'border-outline-variant/40 bg-surface-container-low hover:bg-surface-container-high/50'"
+        class="border-2 border-dashed rounded-3xl p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-3">
+        <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">upload_file</span>
+        </div>
+        <div>
+          <h5 class="text-sm font-bold text-on-surface">Drag & drop your Excel workbook or PDF schedule</h5>
+          <p class="text-xs text-outline mt-1">Supports .xlsx, .xls, .csv, .tsv, .txt, .pdf (Max 10MB)</p>
+        </div>
+        <div class="flex items-center gap-3 mt-1">
+          <label class="px-4 py-2 bg-primary text-white font-bold rounded-xl text-xs shadow hover:bg-primary-dark transition-all cursor-pointer flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">folder_open</span> Browse Files
+            <input type="file" (change)="onBoqFileSelected($event)" accept=".xlsx,.xls,.csv,.tsv,.txt,.pdf" class="hidden">
+          </label>
+        </div>
+        @if (boqSelectedFile) {
+        <div class="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-bold">
+          <span class="material-symbols-outlined text-sm">check_circle</span>
+          {{ boqSelectedFile.name }} ({{ (boqSelectedFile.size / 1024).toFixed(1) }} KB)
+        </div>
+        }
+      </div>
+      } @else {
+      <!-- Text paste fallback -->
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-outline block">Raw Schedule / Quantity Take-off Dump</label>
+        <textarea [(ngModel)]="boqRawText" rows="7" placeholder="Paste unformatted line items, CSV rows, or tab-delimited takeoff schedules..."
+          class="w-full px-4 py-3 rounded-2xl bg-surface-container-low border border-outline-variant/40 text-xs font-mono text-on-surface resize-none focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+      </div>
+      }
+
+      @if (ocrUnavailableNotice) {
+      <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-start gap-2">
+        <span class="material-symbols-outlined text-base mt-0.5 shrink-0">info</span>
+        <div>
+          <span class="font-bold">OCR Notice:</span> Scanned raster images without selectable text stream cannot be extracted without vector text layers. If parsing produces empty results, please export directly to Excel or CSV.
+        </div>
+      </div>
+      }
+
+      <div class="flex justify-end items-center gap-3 pt-2 border-t border-outline-variant/20">
+        <button type="button" (click)="showAiBoqModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-outline hover:bg-surface-container-high transition cursor-pointer">
+          Cancel
+        </button>
+        <button type="button" (click)="processBoqExtraction()" [disabled]="boqParsing || (boqImportTab === 'upload' && !boqSelectedFile) || (boqImportTab === 'paste' && !boqRawText.trim())"
+          class="px-5 py-2.5 bg-primary text-white font-bold rounded-xl text-xs shadow hover:bg-primary-dark transition disabled:opacity-50 cursor-pointer flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm" [ngClass]="boqParsing ? 'animate-spin' : ''">
+            {{ boqParsing ? 'progress_activity' : 'auto_awesome' }}
+          </span>
+          {{ boqParsing ? 'Extracting & Parsing...' : 'Parse & Preview BOQ Rows' }}
+        </button>
+      </div>
+
+      } @else {
+      <!-- Step 2: Extracted Preview Grid & Validation Flags -->
+      <div class="space-y-4">
+        <!-- Summary Banner -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 text-xs">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-outline">Total Extracted</span>
+            <p class="text-base font-black text-on-surface">{{ boqPreviewSummary?.total_items || boqPreviewItems.length }} rows</p>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-bold text-emerald-600">Valid Rows</span>
+            <p class="text-base font-black text-emerald-600">{{ boqPreviewSummary?.valid_items || 0 }} rows</p>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-bold text-amber-600">Flagged Rows</span>
+            <p class="text-base font-black text-amber-600">{{ boqPreviewSummary?.invalid_items || 0 }} rows</p>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase font-bold text-primary">Est. Total Amount</span>
+            <p class="text-base font-black text-primary">₹{{ (boqPreviewSummary?.total_estimated_amount || 0) | number:'1.2-2' }}</p>
+          </div>
+        </div>
+
+        <p class="text-xs text-outline">Review, edit, or exclude extracted items before saving to database. Server-side totals are recalculated dynamically.</p>
+
+        <!-- Preview Grid Table -->
+        <div class="overflow-x-auto max-h-72 overflow-y-auto rounded-2xl border border-outline-variant/30 bg-surface">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-surface-container-high sticky top-0 text-[10px] font-black uppercase text-outline tracking-wider border-b border-outline-variant/30">
+              <tr>
+                <th class="py-2.5 px-3 w-10 text-center">Include</th>
+                <th class="py-2.5 px-3 w-24">Item Code</th>
+                <th class="py-2.5 px-3 min-w-[200px]">Description</th>
+                <th class="py-2.5 px-3 w-24">Category</th>
+                <th class="py-2.5 px-3 w-16 text-center">Unit</th>
+                <th class="py-2.5 px-3 w-20 text-right">Qty</th>
+                <th class="py-2.5 px-3 w-24 text-right">Rate (₹)</th>
+                <th class="py-2.5 px-3 w-24 text-right">Total (₹)</th>
+                <th class="py-2.5 px-3 w-28">Validation</th>
+                <th class="py-2.5 px-3 w-10 text-center"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/20">
+              @for (row of boqPreviewItems; track $index; let idx = $index) {
+              <tr [ngClass]="row._excluded ? 'opacity-40 bg-surface-container-low' : 'hover:bg-primary/5'">
+                <td class="py-2 px-3 text-center">
+                  <input type="checkbox" [checked]="!row._excluded" (change)="toggleExcludePreviewRow(row)" class="w-3.5 h-3.5 accent-primary cursor-pointer">
+                </td>
+                <td class="py-2 px-3">
+                  <input type="text" [(ngModel)]="row.item_code" class="w-full px-2 py-1 bg-surface-container-low border border-outline-variant/30 rounded text-xs font-bold text-primary">
+                </td>
+                <td class="py-2 px-3">
+                  <input type="text" [(ngModel)]="row.description" class="w-full px-2 py-1 bg-surface-container-low border border-outline-variant/30 rounded text-xs text-on-surface">
+                </td>
+                <td class="py-2 px-3">
+                  <input type="text" [(ngModel)]="row.category" class="w-full px-2 py-1 bg-surface-container-low border border-outline-variant/30 rounded text-xs">
+                </td>
+                <td class="py-2 px-3 text-center">
+                  <input type="text" [(ngModel)]="row.unit" class="w-12 text-center px-1 py-1 bg-surface-container-low border border-outline-variant/30 rounded text-xs font-bold">
+                </td>
+                <td class="py-2 px-3 text-right">
+                  <input type="number" [(ngModel)]="row.estimated_qty" (input)="recalculatePreviewTotals()" class="w-16 text-right px-1 py-1 bg-surface-container-low border border-outline-variant/30 rounded text-xs">
+                </td>
+                <td class="py-2 px-3 text-right">
+                  <input type="number" [(ngModel)]="row.unit_rate" (input)="recalculatePreviewTotals()" class="w-20 text-right px-1 py-1 bg-surface-container-low border border-outline-variant/30 rounded text-xs">
+                </td>
+                <td class="py-2 px-3 text-right font-bold text-on-surface">
+                  ₹{{ ((row.estimated_qty || 0) * (row.unit_rate || 0)) | number:'1.2-2' }}
+                </td>
+                <td class="py-2 px-3">
+                  @if (row.validation_errors && row.validation_errors.length > 0) {
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 block truncate" [title]="row.validation_errors.join(', ')">
+                      ⚠ {{ row.validation_errors[0] }}
+                    </span>
+                  } @else {
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
+                      ✓ Valid
+                    </span>
+                  }
+                </td>
+                <td class="py-2 px-3 text-center">
+                  <button type="button" (click)="removePreviewRow(idx)" class="text-outline hover:text-rose-500 cursor-pointer">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Action Footer -->
+        <div class="flex justify-between items-center pt-3 border-t border-outline-variant/20">
+          <button type="button" (click)="boqPreviewMode = false" class="px-4 py-2 rounded-xl text-xs font-bold text-outline hover:bg-surface-container-high transition cursor-pointer flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">arrow_back</span> Re-upload / Back
+          </button>
+          <div class="flex items-center gap-3">
+            <button type="button" (click)="showAiBoqModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-outline hover:bg-surface-container-high transition cursor-pointer">
+              Cancel
+            </button>
+            <button type="button" (click)="confirmAndSaveBoqPreview()" [disabled]="boqPreviewSaving"
+              class="px-5 py-2.5 bg-emerald-600 text-white font-bold rounded-xl text-xs shadow hover:bg-emerald-700 transition disabled:opacity-50 cursor-pointer flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm" [ngClass]="boqPreviewSaving ? 'animate-spin' : ''">
+                {{ boqPreviewSaving ? 'progress_activity' : 'save' }}
+              </span>
+              {{ boqPreviewSaving ? 'Persisting to Database...' : 'Confirm & Save to Project BOQ' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </app-common-dialog>
+
+  <!-- EDIT BOQ LINE ITEM MODAL -->
+  @if (showEditBoqModal && editingBoqItem) {
+  <app-common-dialog [open]="showEditBoqModal" title="Edit BOQ Line Item"
+    subtitle="Update specifications, quantities, or unit rates." icon="edit_note"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="editBoqSaving ? 'Saving...' : 'Save Changes'"
+    [primaryDisabled]="editBoqSaving" (closed)="showEditBoqModal = false" (cancelled)="showEditBoqModal = false" (primary)="saveEditBoqItem()">
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Item Code</label>
+          <input type="text" [(ngModel)]="editingBoqItem.item_code" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Category</label>
+          <input type="text" [(ngModel)]="editingBoqItem.category" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Description</label>
+        <textarea [(ngModel)]="editingBoqItem.description" rows="3" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Unit</label>
+          <input type="text" [(ngModel)]="editingBoqItem.unit" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Estimated Qty</label>
+          <input type="number" [(ngModel)]="editingBoqItem.estimated_qty" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Unit Rate (₹)</label>
+          <input type="number" [(ngModel)]="editingBoqItem.unit_rate" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+      </div>
+    </div>
+  </app-common-dialog>
+  }
+
+  <!-- DPR DETAIL -->
+  <app-common-dialog [open]="!!selectedDpr" title="Daily Progress Report" [subtitle]="selectedDpr?.report_date || ''" icon="assignment"
+    [showCloseButton]="true" [showFooter]="false" panelClass="max-w-3xl" (closed)="closeDprDetail()">
+    @if (selectedDpr) {
+    @if (selectedDprImages.length) {
+    <div class="p-6 pb-0 space-y-3">
+      <span class="text-[10px] font-black uppercase text-outline tracking-wider">Site photos ({{ selectedDprImages.length }})</span>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        @for (image of selectedDprImages; track image.id) {
+        <figure class="rounded-2xl overflow-hidden border border-outline-variant/20 bg-surface-container-low">
+          @if (image.url) {
+          <img [src]="image.url" [alt]="image.file_name" class="w-full h-32 object-cover" />
+          } @else {
+          <div class="h-32 flex items-center justify-center text-xs text-outline">Loading...</div>
+          }
+          <figcaption class="px-2 py-1 text-[10px] truncate">{{ image.file_name }}</figcaption>
+        </figure>
+        }
+      </div>
+    </div>
+    }
+    <div class="p-6 space-y-5">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+          <span class="text-[9px] font-bold text-outline uppercase block">Status</span>
+          <span class="font-black text-on-surface capitalize">{{ selectedDpr.status || 'submitted' }}</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+          <span class="text-[9px] font-bold text-outline uppercase block">Weather</span>
+          <span class="font-black text-on-surface">{{ selectedDpr.weather_summary || '-' }}</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+          <span class="text-[9px] font-bold text-outline uppercase block">Manpower</span>
+          <span class="font-black text-on-surface">{{ selectedDpr.total_workforce_count || 0 }} operatives</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20">
+          <span class="text-[9px] font-bold text-outline uppercase block">Work items</span>
+          <span class="font-black text-on-surface">{{ selectedDpr.work_items?.length || 0 }}</span>
+        </div>
+      </div>
+
+      @if (selectedDpr.work_summary) {
+      <div>
+        <span class="text-[10px] font-black uppercase text-outline tracking-wider block mb-1">Site diary notes</span>
+        <p class="text-sm text-on-surface-variant leading-relaxed">{{ selectedDpr.work_summary }}</p>
+      </div>
+      }
+
+      <div>
+        <span class="text-[10px] font-black uppercase text-outline tracking-wider block mb-2">Work executed</span>
+        @if (selectedDpr.work_items?.length) {
+        <div class="space-y-2">
+          @for (item of selectedDpr.work_items; track item.id) {
+          <div class="p-3 rounded-2xl border border-outline-variant/20 bg-surface">
+            <div class="flex justify-between items-start gap-3">
+              <div>
+                <p class="text-sm font-bold text-on-surface">{{ item.description }}</p>
+                <p class="text-[11px] text-outline">{{ item.location_grid || 'Location not recorded' }} &bull; {{ item.quantity_executed || 0 }} {{ item.unit }}</p>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase"
+                [ngClass]="{
+                  'bg-emerald-100 text-emerald-700': item.status === 'completed',
+                  'bg-blue-100 text-blue-700': item.status === 'in_progress',
+                  'bg-red-100 text-red-700': item.status === 'delayed'
+                }">{{ (item.status || '').replace('_', ' ') }}</span>
+            </div>
+            <div class="mt-2 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+              <div class="h-full rounded-full bg-primary" [style.width.%]="item.progress_percentage || 0"></div>
+            </div>
+            <p class="text-[10px] text-outline mt-1 text-right">{{ item.progress_percentage || 0 }}% complete</p>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="text-xs text-outline">No work items recorded for this report.</p>
+        }
+      </div>
+
+      @if (selectedDpr.ai_executive_summary) {
+      <div class="bg-gradient-to-r from-primary/10 via-purple-500/5 to-transparent p-4 rounded-2xl border border-primary/20">
+        <div class="flex items-center gap-1 text-[11px] font-black text-primary mb-1"><span class="material-symbols-outlined text-sm">auto_awesome</span> Zyno Executive Briefing</div>
+        <p class="text-xs text-on-surface leading-relaxed">{{ selectedDpr.ai_executive_summary }}</p>
+      </div>
+      }
+    </div>
+    }
+  </app-common-dialog>
+
+  <!-- LABOUR ATTENDANCE DETAIL -->
+  <app-common-dialog [open]="!!selectedLabourLog" title="Labour Attendance" [subtitle]="selectedLabourLog ? (selectedLabourLog.trade_type + ' - ' + selectedLabourLog.attendance_date) : ''" icon="engineering"
+    [showCloseButton]="true" [showFooter]="false" panelClass="max-w-xl" (closed)="selectedLabourLog = null">
+    @if (selectedLabourLog) {
+    <div class="p-6 space-y-5">
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20"><span class="text-[9px] font-bold text-outline uppercase block">Trade</span><span class="font-black text-on-surface">{{ selectedLabourLog.trade_type }}</span></div>
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20"><span class="text-[9px] font-bold text-outline uppercase block">Skill level</span><span class="font-black text-on-surface capitalize">{{ selectedLabourLog.skill_level }}</span></div>
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20"><span class="text-[9px] font-bold text-outline uppercase block">Headcount</span><span class="font-black text-on-surface">{{ selectedLabourLog.headcount }} workers</span></div>
+        <div class="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20"><span class="text-[9px] font-bold text-outline uppercase block">Shift</span><span class="font-black text-on-surface capitalize">{{ selectedLabourLog.shift }}</span></div>
+      </div>
+
+      <div class="rounded-2xl border border-outline-variant/20 divide-y divide-outline-variant/20 text-sm">
+        <div class="flex justify-between p-3"><span class="text-outline">Daily wage rate</span><span class="font-bold">₹{{ selectedLabourLog.daily_wage_rate | number:'1.2-2' }}</span></div>
+        <div class="flex justify-between p-3"><span class="text-outline">Regular cost ({{ selectedLabourLog.headcount }} x rate)</span><span class="font-bold">₹{{ (selectedLabourLog.headcount * selectedLabourLog.daily_wage_rate) | number:'1.2-2' }}</span></div>
+        <div class="flex justify-between p-3"><span class="text-outline">Overtime ({{ selectedLabourLog.overtime_hours || 0 }} hrs)</span><span class="font-bold">₹{{ ((selectedLabourLog.total_cost || 0) - (selectedLabourLog.headcount * selectedLabourLog.daily_wage_rate)) | number:'1.2-2' }}</span></div>
+        <div class="flex justify-between p-3 bg-primary/5"><span class="font-black text-on-surface">Total daily cost</span><span class="font-black text-primary">₹{{ selectedLabourLog.total_cost | number:'1.2-2' }}</span></div>
+      </div>
+
+      @if (selectedLabourLog.notes) {
+      <div>
+        <span class="text-[10px] font-black uppercase text-outline tracking-wider block mb-1">Notes</span>
+        <p class="text-sm text-on-surface-variant">{{ selectedLabourLog.notes }}</p>
+      </div>
+      }
+    </div>
+    }
+  </app-common-dialog>
+
+  <!-- DPR LOG WIZARD MODAL -->
+  <app-common-dialog [open]="showDprWizardModal" title="Daily Progress Report Wizard"
+    subtitle="Step-by-step site diary entry with automatic AI risk detection." icon="assignment"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="dprSaving ? 'Saving...' : 'Submit DPR'"
+    [primaryDisabled]="dprSaving" (closed)="showDprWizardModal = false" (primary)="saveDprReport()">
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Report Date</label>
+          <input type="date" [(ngModel)]="dprForm.report_date" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Weather Type</label>
+          <select [(ngModel)]="dprForm.weather_type" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+            <option value="Sunny">Sunny</option>
+            <option value="Cloudy">Cloudy</option>
+            <option value="Rainy">Rainy</option>
+            <option value="Windy">Windy</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Total Manpower</label>
+          <input type="number" [(ngModel)]="dprForm.total_workforce_count" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Site Work Diary Summary</label>
+        <textarea [(ngModel)]="dprForm.work_summary" placeholder="Summary of major activities completed on site today..." class="w-full h-24 px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none"></textarea>
+      </div>
+
+      <div>
+        <span class="text-xs font-bold text-outline block mb-1">Site Photos</span>
+        <input type="file" multiple accept="image/jpeg,image/png,image/webp" (change)="onDprImagesPicked($event)" class="block w-full text-xs text-on-surface" />
+        <p class="text-[10px] text-outline mt-1">Up to 10 images, JPG, PNG or WEBP, 10 MB each.</p>
+        @if (dprImageError) {
+          <p class="text-xs font-bold text-red-600 mt-1" role="alert">{{ dprImageError }}</p>
+        }
+        @if (dprImageFiles.length) {
+          <ul class="space-y-1 mt-2">
+            @for (file of dprImageFiles; track $index) {
+              <li class="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low px-3 py-2 text-xs">
+                <span class="truncate">{{ file.name }}</span>
+                <button type="button" (click)="removeDprImage($index)" class="font-bold text-red-600">Remove</button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <div>
+            <span class="text-xs font-bold text-outline">Granular Work Output Items</span>
+            <p class="text-[10px] text-outline/80">Log measured daily quantities, locations, and progress against tasks.</p>
+          </div>
+          <button type="button" (click)="addDprWorkItem()" class="px-2.5 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer">
+            <span class="material-symbols-outlined text-sm">add</span> Add Output
+          </button>
+        </div>
+
+        <!-- Accessible Aligned Column Header -->
+        <div class="grid grid-cols-12 gap-2 px-3 py-1.5 bg-surface-container-high rounded-xl text-[10px] font-black uppercase text-outline tracking-wider mb-2 border border-outline-variant/30">
+          <div class="col-span-3">Location / Grid</div>
+          <div class="col-span-4">Work Activity / Description</div>
+          <div class="col-span-2 text-right">Quantity / Output</div>
+          <div class="col-span-2">Unit</div>
+          <div class="col-span-1 text-center">Actions</div>
+        </div>
+
+        <!-- Rows Container -->
+        <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          @for (item of dprForm.work_items; track $index; let i = $index) {
+          <div class="grid grid-cols-12 gap-2 items-center bg-surface-container-low p-2 rounded-xl border border-outline-variant/30">
+            <div class="col-span-3">
+              <input type="text" [(ngModel)]="item.location_grid" placeholder="Grid B2, 2nd Fl"
+                class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs text-on-surface focus:outline-none focus:border-primary">
+            </div>
+            <div class="col-span-4">
+              <input type="text" [(ngModel)]="item.description" placeholder="Activity details..."
+                class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs text-on-surface focus:outline-none focus:border-primary">
+            </div>
+            <div class="col-span-2">
+              <input type="number" min="0" step="any" [(ngModel)]="item.quantity_executed" placeholder="0"
+                class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs font-bold text-right text-on-surface focus:outline-none focus:border-primary">
+            </div>
+            <div class="col-span-2">
+              <input type="text" [(ngModel)]="item.unit" placeholder="m³, sqm, kg"
+                class="w-full px-2.5 py-1.5 rounded-lg bg-surface border border-outline-variant/30 text-xs text-on-surface focus:outline-none focus:border-primary">
+            </div>
+            <div class="col-span-1 flex items-center justify-center">
+              <button type="button" (click)="removeDprWorkItem(i)" title="Remove output item"
+                class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer">
+                <span class="material-symbols-outlined text-base">delete</span>
+              </button>
+            </div>
+          </div>
+          }
+          @if (dprForm.work_items.length === 0) {
+          <div class="p-4 bg-surface-container-low/50 rounded-xl border border-dashed border-outline-variant/40 text-center">
+            <p class="text-xs text-outline">No work output items added yet. Click <strong class="text-primary cursor-pointer" (click)="addDprWorkItem()">"+ Add Output"</strong> to log measured site activities.</p>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  <!-- ADD SNAG / DEFECT MODAL -->
+  <app-common-dialog [open]="showAddSnagModal" title="Report Site Snag & Defect"
+    subtitle="Log quality issues with real voice transcription and AI-assisted defect classification." icon="bug_report"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="snagSaving ? 'Saving...' : 'Record Snag'"
+    [primaryDisabled]="snagSaving" [closeOnBackdrop]="false" [closeOnOutsideClick]="false"
+    (closed)="cancelAddSnagModal()" (cancelled)="cancelAddSnagModal()" (primary)="saveNewSnag()">
+    <div class="p-6 space-y-4">
+      <!-- Voice AI Transcription Box -->
+      <div class="bg-primary/5 p-4 rounded-2xl border border-primary/20 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h5 class="text-xs font-bold text-primary flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-base">mic</span> Voice AI Transcription
+            </h5>
+            <p class="text-[11px] text-on-surface-variant mt-0.5">Record speech note from the site. Review and edit transcript below.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            @if (isRecordingVoice) {
+              <button type="button" (click)="stopVoiceRecording()"
+                class="px-3 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold shadow hover:bg-rose-700 cursor-pointer flex items-center gap-1 animate-pulse">
+                <span class="material-symbols-outlined text-sm">stop_circle</span> Stop Listening
+              </button>
+            } @else {
+              <button type="button" (click)="startVoiceRecording()"
+                class="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold shadow hover:bg-primary-dark cursor-pointer flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">mic</span> Voice Record
+              </button>
+            }
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-semibold text-outline block mb-1">Live Voice Transcript (Editable)</label>
+          <textarea [(ngModel)]="newSnag.voice_note_text"
+            placeholder="Live speech-to-text transcript will appear here. You can also type or modify speech notes directly..."
+            rows="2"
+            class="w-full px-3 py-2 rounded-xl bg-surface border border-outline-variant/40 text-xs text-on-surface resize-none focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-[10px] text-on-surface-variant italic">AI analyzes spoken text into title, severity, trade & location.</span>
+          <button type="button" (click)="triggerAiSnagAnalysis()" [disabled]="snagAiAnalyzing || !newSnag.voice_note_text"
+            class="px-3 py-1 bg-surface-container-high hover:bg-surface-container-highest disabled:opacity-50 text-primary border border-primary/30 rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1 transition-colors">
+            <span class="material-symbols-outlined text-sm" [ngClass]="snagAiAnalyzing ? 'animate-spin' : ''">
+              {{ snagAiAnalyzing ? 'progress_activity' : 'auto_awesome' }}
+            </span>
+            {{ snagAiAnalyzing ? 'Analyzing Note...' : 'Analyze with AI' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Form Fields (Editable Proposals) -->
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Defect Title <span class="text-rose-500">*</span></label>
+        <input type="text" [(ngModel)]="newSnag.title" placeholder="e.g. Honeycomb at shear wall SW-04" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Severity</label>
+          <select [(ngModel)]="newSnag.severity" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Trade / Discipline</label>
+          <select [(ngModel)]="newSnag.trade" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+            <option value="Civil">Civil</option>
+            <option value="Structural">Structural</option>
+            <option value="MEP">MEP</option>
+            <option value="Finishes">Finishes</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Safety">Safety</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Location Pin</label>
+          <input type="text" [(ngModel)]="newSnag.location_pin" placeholder="Grid B2 • 3rd Floor" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+        </div>
+      </div>
+
+      <!-- Snag Defect Tags Input -->
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Defect Tags</label>
+        <div class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-surface-container-low border border-outline-variant/40 min-h-[42px]">
+          @for (tag of newSnag.ai_defect_tags; track tag; let idx = $index) {
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-primary/10 text-primary font-bold text-xs border border-primary/20">
+            #{{ tag }}
+            <button type="button" (click)="removeNewSnagTag(idx)" class="text-primary/70 hover:text-rose-500 cursor-pointer text-xs font-black">
+              ×
+            </button>
+          </span>
+          }
+          <div class="flex items-center gap-1 flex-1 min-w-[120px]">
+            <input type="text" [(ngModel)]="newSnagTagInput" (keydown.enter)="$event.preventDefault(); addNewSnagTag()"
+              placeholder="+ Add tag..." class="w-full bg-transparent text-xs text-on-surface focus:outline-none py-1">
+            <button type="button" (click)="addNewSnagTag()"
+              class="px-2 py-0.5 rounded-md bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-[11px] cursor-pointer shrink-0">
+              Add
+            </button>
+          </div>
+        </div>
+        <span class="text-[10px] text-outline mt-0.5 block">Type tag name and press Enter or click Add (e.g. Rebar, Concrete, Honeycomb).</span>
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Description & Rectification Notes</label>
+        <textarea [(ngModel)]="newSnag.description" placeholder="Describe root cause and suggested corrective action..." class="w-full h-20 px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  <!-- EDIT SNAG / DEFECT MODAL -->
+  @if (showEditSnagModal && editingSnag) {
+  <app-common-dialog [open]="showEditSnagModal" title="Edit Site Snag & Defect"
+    subtitle="Update defect specifications, trade assignment, or rectification notes." icon="edit_note"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="editSnagSaving ? 'Saving...' : 'Save Changes'"
+    [primaryDisabled]="editSnagSaving" (closed)="showEditSnagModal = false" (cancelled)="showEditSnagModal = false" (primary)="saveEditSnag()">
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Defect Title <span class="text-rose-500">*</span></label>
+        <input type="text" [(ngModel)]="editingSnag.title" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Severity</label>
+          <select [(ngModel)]="editingSnag.severity" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Trade</label>
+          <select [(ngModel)]="editingSnag.trade" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+            <option value="Civil">Civil</option>
+            <option value="Structural">Structural</option>
+            <option value="MEP">MEP</option>
+            <option value="Finishes">Finishes</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Safety">Safety</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Status</label>
+          <select [(ngModel)]="editingSnag.status" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Location Pin</label>
+          <input type="text" [(ngModel)]="editingSnag.location_pin" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Target Due Date</label>
+          <input type="date" [(ngModel)]="editingSnag.due_date" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary">
+        </div>
+      </div>
+
+      <!-- Edit Snag Defect Tags Input -->
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Defect Tags</label>
+        <div class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-surface-container-low border border-outline-variant/40 min-h-[42px]">
+          @for (tag of editingSnag.ai_defect_tags; track tag; let idx = $index) {
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-primary/10 text-primary font-bold text-xs border border-primary/20">
+            #{{ tag }}
+            <button type="button" (click)="removeEditingSnagTag(idx)" class="text-primary/70 hover:text-rose-500 cursor-pointer text-xs font-black">
+              ×
+            </button>
+          </span>
+          }
+          <div class="flex items-center gap-1 flex-1 min-w-[120px]">
+            <input type="text" [(ngModel)]="editingSnagTagInput" (keydown.enter)="$event.preventDefault(); addEditingSnagTag()"
+              placeholder="+ Add tag..." class="w-full bg-transparent text-xs text-on-surface focus:outline-none py-1">
+            <button type="button" (click)="addEditingSnagTag()"
+              class="px-2 py-0.5 rounded-md bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-[11px] cursor-pointer shrink-0">
+              Add
+            </button>
+          </div>
+        </div>
+        <span class="text-[10px] text-outline mt-0.5 block">Type tag name and press Enter or click Add to update persisted tags.</span>
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Description & Rectification Notes</label>
+        <textarea [(ngModel)]="editingSnag.description" rows="3" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+      </div>
+    </div>
+  </app-common-dialog>
+  }
+
+  <!-- REGISTER DRAWING SHEET MODAL -->
+  <app-common-dialog [open]="showDrawingUploadModal" title="Register Drawing Sheet"
+    subtitle="Add engineering blueprint revision to project vault." icon="architecture"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="drawingSaving ? 'Saving...' : 'Register Sheet'"
+    [primaryDisabled]="drawingSaving" (closed)="showDrawingUploadModal = false" (cancelled)="showDrawingUploadModal = false" (primary)="saveNewDrawing()">
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-1">
+          <label class="text-xs font-bold text-outline block mb-1">Drawing Number <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="newDrawing.drawing_number" placeholder="STR-DWG-006" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs font-bold text-primary focus:outline-none focus:border-primary">
+        </div>
+        <div class="col-span-1">
+          <label class="text-xs font-bold text-outline block mb-1">Revision Number <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="newDrawing.revision" placeholder="R0, R1" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs font-black text-on-surface focus:outline-none focus:border-primary">
+        </div>
+        <div class="col-span-1">
+          <label class="text-xs font-bold text-outline block mb-1">Discipline <span class="text-rose-500">*</span></label>
+          <select [(ngModel)]="newDrawing.discipline" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:border-primary">
+            <option value="Structural">Structural</option>
+            <option value="Architectural">Architectural</option>
+            <option value="MEP">MEP</option>
+            <option value="Civil">Civil</option>
+            <option value="Landscape">Landscape</option>
+            <option value="Fire_Safety">Fire Safety</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Sheet Title <span class="text-rose-500">*</span></label>
+        <input type="text" [(ngModel)]="newDrawing.title" placeholder="e.g. 4th Floor Slab Beam Reinforcement Layout" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:border-primary">
+      </div>
+
+      <!-- Visible File Upload Dropzone / Picker -->
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Upload Drawing File <span class="text-rose-500">*</span></label>
+        @if (!selectedDrawingFile) {
+        <div class="relative border-2 border-dashed border-outline-variant/50 hover:border-primary/60 rounded-2xl p-4 text-center bg-surface-container-low/50 transition-colors cursor-pointer group">
+          <input type="file" (change)="onDrawingFileSelected($event)" accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
+            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+          <div class="flex flex-col items-center justify-center space-y-1.5">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-xl">upload_file</span>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-on-surface">Choose Drawing File or Drag & Drop</p>
+              <p class="text-[11px] text-outline">Supported formats: PDF, DWG, DXF, PNG, JPG (Max 10MB)</p>
+            </div>
+          </div>
+        </div>
+        } @else {
+        <div class="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-xl">
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <span class="material-symbols-outlined text-emerald-600 text-xl">description</span>
+            <div class="overflow-hidden">
+              <p class="text-xs font-bold text-emerald-950 dark:text-emerald-200 truncate">{{ selectedDrawingFile.name }}</p>
+              <p class="text-[10px] text-emerald-700 dark:text-emerald-400">{{ (selectedDrawingFile.size / 1024) | number:'1.0-1' }} KB • Ready to upload</p>
+            </div>
+          </div>
+          <button type="button" (click)="removeSelectedDrawingFile()" title="Remove file" class="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-lg text-emerald-800 dark:text-emerald-300 cursor-pointer">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+        }
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Revision Notes</label>
+        <textarea [(ngModel)]="newDrawing.revision_notes" placeholder="Notes for AI revision summarization and design change log..." class="w-full h-16 px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none focus:outline-none focus:border-primary"></textarea>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  <!-- RECORD LABOUR ATTENDANCE MODAL -->
+  <app-common-dialog [open]="showLabourModal" title="Record Labour Attendance"
+    subtitle="Log daily trade gang headcount, shifts, overtime, and daily wage rates." icon="person_add"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="labourSaving ? 'Saving...' : 'Record Attendance'"
+    [primaryDisabled]="labourSaving" (closed)="showLabourModal = false" (cancelled)="showLabourModal = false" (primary)="saveLabourAttendance()">
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Attendance Date <span class="text-rose-500">*</span></label>
+          <input type="date" [(ngModel)]="newLabour.attendance_date" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Work Location / Task</label>
+          <input type="text" [(ngModel)]="newLabour.work_location" placeholder="e.g. Grid A1-B3 • 2nd Floor" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Trade / Role <span class="text-rose-500">*</span></label>
+          <select [(ngModel)]="newLabour.trade_type" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+            <option value="Bar Benders & Steel Fixers">Bar Benders & Steel Fixers</option>
+            <option value="Carpenters & Shuttering">Carpenters & Shuttering</option>
+            <option value="Masons & Bricklayers">Masons & Bricklayers</option>
+            <option value="Plumbers & Pipefitters">Plumbers & Pipefitters</option>
+            <option value="Electricians">Electricians</option>
+            <option value="Welders & Riggers">Welders & Riggers</option>
+            <option value="Painters & Polishers">Painters & Polishers</option>
+            <option value="General Helpers & Labourers">General Helpers & Labourers</option>
+            <option value="Equipment Operators">Equipment Operators</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Skill Level <span class="text-rose-500">*</span></label>
+          <select [(ngModel)]="newLabour.skill_level" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+            <option value="unskilled">Unskilled</option>
+            <option value="semi_skilled">Semi-Skilled</option>
+            <option value="skilled">Skilled</option>
+            <option value="highly_skilled">Highly Skilled / Foreman</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 gap-3">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Headcount <span class="text-rose-500">*</span></label>
+          <input type="number" min="1" [(ngModel)]="newLabour.headcount" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface font-bold text-center">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Shift</label>
+          <select [(ngModel)]="newLabour.shift" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+            <option value="day">Day</option>
+            <option value="night">Night</option>
+            <option value="rotational">Rotational</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">OT Hours</label>
+          <input type="number" min="0" step="0.5" [(ngModel)]="newLabour.overtime_hours" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface text-center">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Wage Rate (₹/day)</label>
+          <input type="number" min="0" [(ngModel)]="newLabour.daily_wage_rate" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface font-bold text-right">
+        </div>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-primary/5 border border-primary/20 flex justify-between items-center text-xs">
+        <span class="text-outline">Estimated Shift Wage Accrual:</span>
+        <span class="font-black text-primary text-sm">
+          ₹{{ ((newLabour.headcount || 0) * (newLabour.daily_wage_rate || 0) + (newLabour.overtime_hours || 0) * ((newLabour.daily_wage_rate || 0) / 8 * 1.5)) | number:'1.2-2' }}
+        </span>
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Notes & Gang Allocation Details</label>
+        <textarea [(ngModel)]="newLabour.notes" rows="2" placeholder="e.g. Assigned to 4th floor column shuttering and formwork alignment..." class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none"></textarea>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  <!-- DRAWING VERSION HISTORY MODAL -->
+  <app-common-dialog [open]="showDrawingHistoryModal" title="Drawing Version History"
+    subtitle="Audit trail of drawing sheet revisions, uploaded versions, and superseded blueprints." icon="history"
+    [showCloseButton]="true" [showFooter]="false" (closed)="showDrawingHistoryModal = false">
+    <div class="p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-outline-variant/30">
+        <div>
+          <span class="text-[10px] uppercase font-bold text-primary">{{ selectedDrawingForHistory?.drawing_number }}</span>
+          <h4 class="text-sm font-bold text-on-surface">{{ selectedDrawingForHistory?.title }}</h4>
+        </div>
+        <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-surface-container-high text-outline">
+          Discipline: {{ selectedDrawingForHistory?.discipline || 'Structural' }}
+        </span>
+      </div>
+
+      @if (historyLoading) {
+      <div class="py-12 flex flex-col items-center justify-center">
+        <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-xs text-outline mt-2 font-bold">Loading immutable version history...</p>
+      </div>
+      } @else {
+      <div class="space-y-3 max-h-80 overflow-y-auto">
+        @for (rev of drawingVersionHistoryList; track rev.id; let idx = $index) {
+        <div class="p-4 rounded-2xl border transition-all flex flex-col gap-2"
+          [ngClass]="idx === 0 ? 'bg-primary/5 border-primary/30 shadow-sm' : 'bg-surface-container-low border-outline-variant/20 opacity-80'">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black px-2 py-0.5 rounded-md"
+                [ngClass]="idx === 0 ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'">
+                {{ rev.revision || 'R0' }}
+              </span>
+              <span class="text-xs font-bold text-on-surface">
+                {{ idx === 0 ? 'Current Active Version' : 'Superseded Revision' }}
+              </span>
+            </div>
+            <span class="text-[10px] font-semibold text-outline">
+              {{ rev.createdAt ? (rev.createdAt | date:'medium') : 'Date recorded' }}
+            </span>
+          </div>
+
+          @if (rev.revision_notes) {
+          <p class="text-xs text-on-surface-variant bg-surface p-2.5 rounded-xl border border-outline-variant/20">
+            <span class="font-bold text-[10px] text-outline uppercase block mb-0.5">Revision Notes:</span>
+            {{ rev.revision_notes }}
+          </p>
+          }
+
+          <div class="flex items-center justify-between pt-1 text-[11px] text-outline">
+            <span>Uploaded by: <strong class="text-on-surface">{{ rev.creator ? (rev.creator.firstname + ' ' + rev.creator.lastname) : 'Authorized Engineer' }}</strong></span>
+            @if (rev.file_url) {
+            <button type="button" (click)="downloadOrViewDrawing(rev)" class="font-bold text-primary hover:underline flex items-center gap-0.5 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">download</span> Download / View
+            </button>
+            }
+          </div>
+        </div>
+        }
+
+        @if (drawingVersionHistoryList.length === 0) {
+        <div class="py-8 text-center text-outline">
+          <p class="text-xs font-bold">No previous revisions recorded for this drawing number.</p>
+        </div>
+        }
+      </div>
+      }
+
+      <div class="flex justify-end pt-2 border-t border-outline-variant/20">
+        <button type="button" (click)="showDrawingHistoryModal = false" class="px-4 py-2 bg-surface-container-high hover:bg-surface-container-highest rounded-xl text-xs font-bold text-on-surface cursor-pointer">
+          Close History
+        </button>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  <!-- UPLOAD DRAWING REVISION MODAL -->
+  <app-common-dialog [open]="showUploadRevisionModal" title="Upload Drawing Revision"
+    subtitle="Register a new revision of an existing drawing. The previous version will be superseded." icon="upgrade"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="revisionSaving ? 'Registering Revision...' : 'Save New Revision'"
+    [primaryDisabled]="revisionSaving" (closed)="showUploadRevisionModal = false" (cancelled)="showUploadRevisionModal = false" (primary)="saveDrawingRevision()">
+    <div class="p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Drawing Number</label>
+          <input type="text" [value]="revisionForm.drawing_number" readonly class="w-full px-3 py-2 rounded-xl bg-surface-container-high border border-outline-variant/30 text-xs font-bold text-outline cursor-not-allowed">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">New Revision Identifier <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="revisionForm.revision" placeholder="e.g. R2, Rev-B" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs font-black text-primary">
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Drawing Title</label>
+        <input type="text" [(ngModel)]="revisionForm.title" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Discipline</label>
+          <select [(ngModel)]="revisionForm.discipline" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+            <option value="Structural">Structural</option>
+            <option value="Architectural">Architectural</option>
+            <option value="MEP">MEP</option>
+            <option value="Civil">Civil</option>
+            <option value="Landscape">Landscape</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Status</label>
+          <select [(ngModel)]="revisionForm.status" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+            <option value="approved_for_construction">Approved for Construction</option>
+            <option value="for_review">For Review / Tender</option>
+            <option value="as_built">As-Built</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Visible File Upload Dropzone / Picker for Revision -->
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Upload New Revision File <span class="text-rose-500">*</span></label>
+        @if (!selectedRevisionFile) {
+        <div class="relative border-2 border-dashed border-outline-variant/50 hover:border-primary/60 rounded-2xl p-4 text-center bg-surface-container-low/50 transition-colors cursor-pointer group">
+          <input type="file" (change)="onRevisionFileSelected($event)" accept=".pdf,.dwg,.dxf,.png,.jpg,.jpeg"
+            class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+          <div class="flex flex-col items-center justify-center space-y-1.5">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-xl">upgrade</span>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-on-surface">Choose New Revision File (PDF, DWG, DXF, PNG, JPG)</p>
+              <p class="text-[11px] text-outline">Max 10MB • Will be stored as current active blueprint revision</p>
+            </div>
+          </div>
+        </div>
+        } @else {
+        <div class="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-xl">
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <span class="material-symbols-outlined text-emerald-600 text-xl">description</span>
+            <div class="overflow-hidden">
+              <p class="text-xs font-bold text-emerald-950 dark:text-emerald-200 truncate">{{ selectedRevisionFile.name }}</p>
+              <p class="text-[10px] text-emerald-700 dark:text-emerald-400">{{ (selectedRevisionFile.size / 1024) | number:'1.0-1' }} KB • Revision payload ready</p>
+            </div>
+          </div>
+          <button type="button" (click)="removeSelectedRevisionFile()" title="Remove file" class="p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900 rounded-lg text-emerald-800 dark:text-emerald-300 cursor-pointer">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+        }
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Revision Notes & Design Delta <span class="text-rose-500">*</span></label>
+        <textarea [(ngModel)]="revisionForm.revision_notes" rows="3" placeholder="Describe engineering changes made in this revision (e.g. Updated column dimensions, modified duct route)..." class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  <!-- REQUEST STAKEHOLDER SIGNATURE MODAL -->
+  <app-common-dialog [open]="showSignatureModal" title="Request Stakeholder Signature"
+    subtitle="Initiate an auditable document review and approval signature request via email." icon="history_edu"
+    [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel" [primaryLabel]="signatureSending ? 'Dispatching Request...' : 'Send Signature Request'"
+    [primaryDisabled]="signatureSending" (closed)="showSignatureModal = false" (cancelled)="showSignatureModal = false" (primary)="sendSignatureRequest()">
+    <div class="p-6 space-y-4">
+      <!-- Target Document Header -->
+      <div class="p-3.5 rounded-2xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between text-xs">
+        <div>
+          <span class="text-[10px] uppercase font-bold text-primary block">{{ selectedDrawingForSignature?.drawing_number }} (Rev {{ selectedDrawingForSignature?.revision || 'R0' }})</span>
+          <span class="font-bold text-on-surface">{{ selectedDrawingForSignature?.title }}</span>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 font-bold text-[10px]">
+          {{ selectedDrawingForSignature?.discipline || 'Engineering' }}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Stakeholder / Reviewer Name <span class="text-rose-500">*</span></label>
+          <input type="text" [(ngModel)]="signatureForm.stakeholder_name" placeholder="e.g. Dr. K. Sharma (Consultant)" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Stakeholder Email <span class="text-rose-500">*</span></label>
+          <input type="email" [(ngModel)]="signatureForm.stakeholder_email" placeholder="consultant@clientdomain.com" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div class="col-span-2">
+          <label class="text-xs font-bold text-outline block mb-1">Email Subject</label>
+          <input type="text" [(ngModel)]="signatureForm.subject" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-outline block mb-1">Required By Date</label>
+          <input type="date" [(ngModel)]="signatureForm.required_by_date" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface">
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs font-bold text-outline block mb-1">Editable Request Message</label>
+        <textarea [(ngModel)]="signatureForm.message" rows="4" class="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs text-on-surface resize-none focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-2">
+        <span class="material-symbols-outlined text-base shrink-0 mt-0.5">info</span>
+        <div>
+          <strong>Compliance Notice:</strong> Sending an email request logs an auditable signature request event. It does not certify an executed legal e-signature until digital verification has been returned.
+        </div>
+      </div>
+    </div>
+  </app-common-dialog>
+
+  } @else {
   <div class="flex justify-center flex-col items-center h-96">
     <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
     <p class="mt-4 text-on-surface-variant font-bold tracking-widest text-sm uppercase">Loading Blueprint...</p>
   </div>
   }
-
-  @if (showRFIComposer) {
-  <div
-    class="fixed bottom-4 right-4 z-100 w-[450px] bg-white dark:bg-slate-900 rounded-t-2xl rounded-b-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-8 duration-300">
-    <div class="bg-slate-900 dark:bg-slate-950 text-white px-4 py-3 flex justify-between items-center">
-      <h4 class="text-sm font-bold tracking-widest uppercase flex items-center gap-2">
-        <span class="material-symbols-outlined text-[16px]">mail</span> Request Form Info
-      </h4>
-      <button (click)="showRFIComposer = false" class="text-slate-400 hover:text-white cursor-pointer">
-        <span class="material-symbols-outlined text-[18px]">close</span>
-      </button>
-    </div>
-    <div class="p-4 space-y-3 bg-slate-50 dark:bg-slate-800/20">
-      <div class="flex items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-        <span class="text-xs font-bold text-slate-400 w-12">To:</span>
-        <input type="text" [(ngModel)]="rfiForm.to"
-          class="flex-1 bg-transparent border-none outline-none text-sm text-slate-900 dark:text-slate-50">
-      </div>
-      <div class="flex items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-        <span class="text-xs font-bold text-slate-400 w-12">Cc:</span>
-        <input type="text" [(ngModel)]="rfiForm.cc"
-          class="flex-1 bg-transparent border-none outline-none text-sm text-slate-900 dark:text-slate-50">
-      </div>
-      <div class="flex items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-        <span class="text-xs font-bold text-slate-400 w-12">Bcc:</span>
-        <input type="text" [(ngModel)]="rfiForm.bcc"
-          class="flex-1 bg-transparent border-none outline-none text-sm text-slate-900 dark:text-slate-50">
-      </div>
-      <div class="flex items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-        <span class="text-xs font-bold text-slate-400 w-12">Subject:</span>
-        <input type="text" [(ngModel)]="rfiForm.subject" placeholder="RFI Project Inquiry"
-          class="flex-1 bg-transparent border-none outline-none font-bold text-sm text-slate-900 dark:text-slate-50">
-      </div>
-    </div>
-    <div class="flex-1 p-4 bg-white dark:bg-slate-900">
-      <textarea [(ngModel)]="rfiForm.content" placeholder="Type your request here..."
-        class="w-full h-32 bg-transparent border-none outline-none text-sm text-slate-700 dark:text-slate-300 resize-none"></textarea>
-    </div>
-    <div
-      class="p-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
-      <button class="text-slate-400 hover:text-blue-500 cursor-pointer">
-        <span class="material-symbols-outlined text-[20px]">attach_file</span>
-      </button>
-      <button (click)="sendRFI()" [disabled]="!rfiForm.to || !rfiForm.subject"
-        class="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 disabled:opacity-50 transition-colors cursor-pointer flex items-center gap-2">
-        <span class="material-symbols-outlined text-[16px]">send</span> Send
-      </button>
-    </div>
-  </div>
-  }
-
 </section>
-
-<app-common-dialog [open]="showDrawingUpload" title="Submit Project Drawing"
-  subtitle="Upload CAD, PDF, or image files. They will be added to the project gallery." icon="cloud_upload"
-  [showCloseButton]="true" [showFooter]="true" cancelLabel="Cancel"
-  [primaryLabel]="'Upload ' + (selectedFiles.length > 0 ? '(' + selectedFiles.length + ')' : '')"
-  [primaryDisabled]="selectedFiles.length === 0" (closed)="showDrawingUpload = false" (primary)="submitDrawing()">
-  <div class="p-8">
-
-    <div (click)="fileInput.click()"
-      class="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors mb-6">
-      <span class="material-symbols-outlined text-[32px] text-blue-500 mb-2">cloud_upload</span>
-      <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Click to Select Files</p>
-      <p class="text-[10px] text-slate-400 mt-1">Images, PDFs, CAD up to 100MB</p>
-      <input type="file" #fileInput (change)="onFilesSelected($event)" multiple class="hidden"
-        accept="image/*,.pdf,.dwg,.dxf,.zip">
-    </div>
-
-    @if (selectedFiles.length > 0) {
-    <div class="mb-6 max-h-32 overflow-y-auto space-y-2 no-scrollbar">
-      @for (file of selectedFiles; track file.name) {
-      <div
-        class="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
-        <div class="flex items-center gap-2 overflow-hidden">
-          <span class="material-symbols-outlined text-sm text-slate-400">description</span>
-          <span class="text-[10px] font-bold text-slate-600 truncate">{{ file.name }}</span>
-        </div>
-        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest">{{ (file.size / 1024).toFixed(0)
-          }}KB</span>
-      </div>
-      }
-    </div>
-    }
-
-  </div>
-</app-common-dialog>
+

@@ -63,7 +63,7 @@
                 <div class="relative">
                     <div class="profile-trigger" (click)="showDropdown($event)" [class.active]="showList">
                         <div class="profile-avatar-container">
-                            <img [src]="currentUser?.avatar ? serverUrl + currentUser?.avatar : '../../../../assets/image/profile-photo.png'"
+                            <img [src]="(currentUser?.avatar | secureImage:'avatars') | async"
                                 class="profile-img" alt="User">
                             <div class="status-indicator"></div>
                         </div>
@@ -102,4 +102,7 @@
         </main>
 
     </div>
+
+    <!-- Global Floating AI Copilot Widget -->
+    <app-floating-copilot></app-floating-copilot>
 </div>

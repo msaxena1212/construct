@@ -10,9 +10,11 @@ import { VendorAddComponent } from '../../shared/components/vendor-add-modal/ven
 import { Quotations } from './quotations/quotations';
 import { NewQuotations } from './new-quotations/new-quotations';
 import { CommonDialogComponent } from '../../shared/components/common-dialog/common-dialog';
+import { InvoicesLiabilitiesComponent } from './invoices-liabilities/invoices-liabilities';
+import { SiteLabourAttendanceComponent } from './site-labour-attendance/site-labour-attendance';
 
 @NgModule({
-  declarations: [Materials, Contracts, EquipmentInventory, Quotations, NewQuotations],
+  declarations: [Materials, Contracts, EquipmentInventory, Quotations, NewQuotations, InvoicesLiabilitiesComponent, SiteLabourAttendanceComponent],
   imports: [CommonModule, ResourcesRoutingModule, FormsModule, VendorAddComponent, CommonDialogComponent],
 })
 export class ResourcesModule {}

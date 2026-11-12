@@ -1,0 +1,141 @@
+<div class="st-page">
+  <app-stock-transfer-nav
+    [active]="mode === 'approvals' ? 'approvals' : 'register'"
+    [projectId]="projectId"
+    backTo="inventory"
+    backLabel="Back to Project Inventory">
+  </app-stock-transfer-nav>
+
+  <header class="st-header">
+    <div>
+      <h1>{{ mode === 'approvals' ? 'Approval Queue' : 'All Transfers' }}</h1>
+      <p class="st-sub" *ngIf="mode === 'approvals'">Requests awaiting approval for this project. Completed, cancelled and rejected transfers are not listed here.</p>
+      <p class="st-sub" *ngIf="mode !== 'approvals'">Internal moves between central warehouse, project stores, site stores and quarantine. Creating a request does not move stock.</p>
+    </div>
+    <div class="st-actions">
+      <button type="button" class="st-btn primary" (click)="openCreate()" [disabled]="!projectId">New transfer request</button>
+    </div>
+  </header>
+
+  <section class="st-filters">
+    <label>
+      Project
+      <select [ngModel]="projectId" (ngModelChange)="onProjectChange($event)" aria-label="Project">
+        <option [ngValue]="null">Select a project</option>
+        <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
+      </select>
+    </label>
+    <label *ngIf="mode !== 'approvals'">
+      Status
+      <select [(ngModel)]="statusFilter" (change)="onStatusChange()" aria-label="Status">
+        <option value="">All statuses</option>
+        <option value="draft">Draft</option>
+        <option value="submitted">Submitted (awaiting approval)</option>
+        <option value="approved">Approved</option>
+        <option value="in_transit">In transit</option>
+        <option value="partially_received">Partially received</option>
+        <option value="reconciliation_required">Reconciliation required</option>
+        <option value="completed">Completed</option>
+        <option value="rejected">Rejected</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </label>
+  </section>
+
+  <p class="st-empty" *ngIf="!projectId">Select a project to see its stock transfers.</p>
+
+  <p class="st-error" *ngIf="loadError" role="alert">{{ loadError }}</p>
+  <p class="st-loading" *ngIf="loading">Loading transfers…</p>
+
+  <div class="st-table-wrap" *ngIf="projectId && !loading && !loadError">
+    <table class="st-table" *ngIf="transfers.length; else noRows">
+      <thead>
+        <tr>
+          <th>Transfer</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Status</th>
+          <th class="num">Approved</th>
+          <th class="num">Dispatched</th>
+          <th class="num">Outstanding in transit</th>
+          <th>Required</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of transfers">
+          <td><a [routerLink]="['/master/stock-transfer', t.id]" [queryParams]="{ projectId: projectId }">{{ t.transfer_number }}</a></td>
+          <td>{{ locationLabel(t.source_location_id) }}</td>
+          <td>{{ locationLabel(t.destination_location_id) }}</td>
+          <td><span class="st-status" [attr.data-status]="t.status">{{ t.status | titlecase }}</span></td>
+          <td class="num">{{ t.totals.approved }}</td>
+          <td class="num">{{ t.totals.dispatched }}</td>
+          <td class="num">{{ t.totals.outstanding }}</td>
+          <td>{{ t.required_date || '—' }}</td>
+          <td>{{ t.createdAt | date: 'dd MMM yyyy' }}</td>
+          <td><a [routerLink]="['/master/stock-transfer', t.id]" [queryParams]="{ projectId: projectId }">Open</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #noRows>
+      <p class="st-empty">No transfers match these filters.</p>
+    </ng-template>
+
+    <nav class="st-pager" *ngIf="total > limit">
+      <button type="button" class="st-btn" (click)="nextPage(-1)" [disabled]="page <= 1">Previous</button>
+      <span>Page {{ page }} of {{ pageCount }}</span>
+      <button type="button" class="st-btn" (click)="nextPage(1)" [disabled]="page >= pageCount">Next</button>
+    </nav>
+  </div>
+
+  <div class="st-modal-backdrop" *ngIf="showCreate" (click)="showCreate = false">
+    <div class="st-modal" role="dialog" aria-modal="true" aria-labelledby="st-create-title" (click)="$event.stopPropagation()">
+      <h2 id="st-create-title">New transfer request</h2>
+      <p class="st-sub">Saved as a draft. Stock moves only after approval and check-out.</p>
+
+      <label>
+        Source location
+        <select [(ngModel)]="draft.source_location_id" name="source">
+          <option [ngValue]="null">Choose…</option>
+          <option *ngFor="let l of locations" [ngValue]="l.id">{{ l.name }} ({{ l.code }}) — {{ l.location_type }}</option>
+        </select>
+      </label>
+      <label>
+        Destination location
+        <select [(ngModel)]="draft.destination_location_id" name="destination">
+          <option [ngValue]="null">Choose…</option>
+          <option *ngFor="let l of locations" [ngValue]="l.id">{{ l.name }} ({{ l.code }}) — {{ l.location_type }}</option>
+        </select>
+      </label>
+      <label>
+        Reason
+        <input type="text" [(ngModel)]="draft.reason" maxlength="500" name="reason" />
+      </label>
+      <label>
+        Required by
+        <input type="date" [(ngModel)]="draft.required_date" name="required" />
+      </label>
+
+      <fieldset class="st-lines">
+        <legend>Materials (whole units)</legend>
+        <div class="st-line" *ngFor="let line of draft.lines; let i = index">
+          <select [(ngModel)]="line.material_id" [name]="'mat' + i" aria-label="Material">
+            <option [ngValue]="null">Choose material…</option>
+            <option *ngFor="let m of projectMaterials" [ngValue]="m.id">{{ m.name }} ({{ m.sku }})</option>
+          </select>
+          <input type="number" min="1" step="1" [(ngModel)]="line.requested_qty" [name]="'qty' + i" aria-label="Requested quantity" />
+          <button type="button" class="st-btn" (click)="removeLine(i)" [disabled]="draft.lines.length === 1">Remove</button>
+        </div>
+        <button type="button" class="st-btn" (click)="addLine()">Add material</button>
+      </fieldset>
+
+      <div class="st-modal-actions">
+        <button type="button" class="st-btn" (click)="showCreate = false">Cancel</button>
+        <button type="button" class="st-btn primary" (click)="createTransfer()" [disabled]="creating">
+          {{ creating ? 'Saving…' : 'Save draft' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

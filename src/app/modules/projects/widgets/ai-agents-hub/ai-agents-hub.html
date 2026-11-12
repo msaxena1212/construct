@@ -1,0 +1,251 @@
+<div class="space-y-6 animate-in fade-in duration-300">
+  <!-- Header Control Strip -->
+  <div class="rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 text-white shadow-xl border border-indigo-500/20 relative overflow-hidden">
+    <div class="absolute -right-12 -top-12 w-56 h-56 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+      <div class="space-y-2">
+        <div class="flex items-center gap-2.5">
+          <span class="px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-[10px] font-black uppercase tracking-widest text-indigo-300 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            11 Autonomous Agents Armed
+          </span>
+          @if (modelStatus) {
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border"
+            [ngClass]="modelStatus.reachable ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'">
+            LLM: {{ modelStatus.model || 'Local Engine' }} ({{ modelStatus.reachable ? 'Online' : 'Deterministic Fallback' }})
+          </span>
+          }
+        </div>
+        <h2 class="text-2xl font-black tracking-tight">AI Agents & Construction Swarm Command Center</h2>
+        <p class="text-xs text-slate-300 max-w-2xl">
+          Continuous site monitoring across Safety/HSE, Material Burn, RFIs, Earned Value, Bank Guarantees, Contractual Disputes, and India Tax Compliance. Agents generate auditable tasks without bypassing human authorization.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-4 shrink-0">
+        @if (insights) {
+        <div class="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md text-center">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">AI Health Score</div>
+          <div class="text-3xl font-black mt-0.5" [ngClass]="getHealthColor(insights.health_score)">
+            {{ insights.health_score }}<span class="text-xs text-slate-400 font-semibold">/100</span>
+          </div>
+          <div class="text-[10px] font-bold uppercase tracking-wider mt-0.5 text-slate-300">
+            Risk: {{ insights.risk_level }}
+          </div>
+        </div>
+        }
+
+        <button (click)="runAgentsNow()" [disabled]="runningAgents"
+          class="cursor-pointer px-5 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs tracking-wide shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]" [class.animate-spin]="runningAgents">
+            {{ runningAgents ? 'autorenew' : 'play_circle' }}
+          </span>
+          {{ runningAgents ? 'Running Swarm...' : 'Run All 11 Agents' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Telemetry KPI Grid -->
+  @if (insights?.telemetry) {
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Open Safety Hazards</div>
+      <div class="text-2xl font-black text-rose-600 mt-1">{{ insights.telemetry.critical_snags + insights.telemetry.open_incidents }}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">{{ insights.telemetry.open_incidents }} incidents · {{ insights.telemetry.critical_snags }} critical snags</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Low Stock Materials</div>
+      <div class="text-2xl font-black text-amber-600 mt-1">{{ insights.telemetry.low_stock_materials }}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">Items below 15% buffer</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Open RFIs</div>
+      <div class="text-2xl font-black text-indigo-600 mt-1">{{ insights.telemetry.open_rfis }}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">Pending technical clarification</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Pending Variations</div>
+      <div class="text-2xl font-black text-purple-600 mt-1">{{ insights.telemetry.pending_variations }}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">Unapproved scope / EOT</div>
+    </div>
+    <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Statutory Flags</div>
+      <div class="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">{{ insights.telemetry.india_high_flags }}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">High severity tax/labour flags</div>
+    </div>
+  </div>
+  }
+
+  <!-- Executive AI Briefing -->
+  @if (insights?.latest_briefing) {
+  <div class="rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 p-5">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-black text-xs uppercase tracking-wider">
+        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+        Latest Executive AI Briefing
+      </div>
+      <span class="text-[11px] text-slate-500">{{ insights.latest_briefing.at | date:'medium' }}</span>
+    </div>
+    <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ insights.latest_briefing.detail }}</p>
+    @if (insights.latest_briefing.meta?.narrative) {
+    <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed bg-white/60 dark:bg-slate-900/60 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900">
+      {{ insights.latest_briefing.meta.narrative }}
+    </p>
+    }
+  </div>
+  }
+
+  <!-- Main Grid: Agent Roster + Copilot & Action Stream -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Left 7 Cols: 11 Autonomous Agents Roster -->
+    <div class="lg:col-span-7 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-black text-slate-900 dark:text-white tracking-tight">Active Autonomous Agent Roster</h3>
+        <span class="text-xs text-slate-500">{{ insights?.roster?.length || 11 }} Agents Configured</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        @for (agent of (insights?.roster || []); track agent.id) {
+        <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-400/50 transition-all shadow-sm flex flex-col justify-between gap-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[20px]">{{ getAgentIcon(agent.id) }}</span>
+              </div>
+              <div>
+                <h4 class="text-xs font-black text-slate-900 dark:text-slate-100">{{ agent.name }}</h4>
+                <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">{{ agent.domain }}</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              Armed
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">{{ agent.trigger }}</p>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] font-bold text-slate-500">
+            <span>Actions Recorded</span>
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">{{ agent.actions_recorded }}</span>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right 5 Cols: Zyno Intelligence Copilot & Recent Actions -->
+    <div class="lg:col-span-5 space-y-6">
+      <!-- Zyno Copilot Interactive Box -->
+      <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/70 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-indigo-600 text-[20px]">psychology</span>
+            <h3 class="text-sm font-black text-slate-900 dark:text-white">Zyno Intelligence Copilot</h3>
+          </div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Grounded in ERP</span>
+        </div>
+
+        <div class="p-4 space-y-3 max-h-72 overflow-y-auto bg-slate-50/30 dark:bg-slate-950/30">
+          @if (copilotHistory.length === 0) {
+          <div class="space-y-2">
+            <p class="text-xs text-slate-500">Ask Zyno Copilot about project progress, safety hazards, material stock, RA bills, or compliance:</p>
+            <div class="flex flex-wrap gap-1.5">
+              @for (q of presetQueries; track q) {
+              <button (click)="askCopilot(q)"
+                class="cursor-pointer text-left text-[11px] px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 text-slate-700 dark:text-slate-200 transition-colors">
+                {{ q }}
+              </button>
+              }
+            </div>
+          </div>
+          }
+
+          @for (msg of copilotHistory; track $index) {
+          <div class="flex flex-col" [ngClass]="msg.role === 'user' ? 'items-end' : 'items-start'">
+            <div class="max-w-[90%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed whitespace-pre-wrap"
+              [ngClass]="msg.role === 'user'
+                ? 'bg-indigo-600 text-white rounded-br-sm'
+                : (msg.unavailable ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border border-amber-200' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-bl-sm')">
+              {{ msg.text }}
+            </div>
+          </div>
+          }
+
+          @if (copilotLoading) {
+          <div class="flex items-center gap-2 text-xs text-indigo-600 font-semibold">
+            <span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+            Analyzing live project records...
+          </div>
+          }
+        </div>
+
+        <form (ngSubmit)="askCopilot()" class="p-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 bg-white dark:bg-slate-900">
+          <input type="text" [(ngModel)]="copilotQuery" name="copilotQuery"
+            placeholder="Ask about BOQ, EVM, stock burn, safety or RFIs..."
+            class="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border-none text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+          <button type="submit" [disabled]="!copilotQuery.trim() || copilotLoading"
+            class="cursor-pointer px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">send</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Recent Agent Actions Stream -->
+      <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-black text-slate-900 dark:text-white">Autonomous Actions & Follow-Ups</h3>
+          <span class="text-[10px] font-bold text-slate-400">Idempotent Audit Log</span>
+        </div>
+
+        @if (!insights?.recent_actions?.length) {
+        <p class="text-xs text-slate-500 py-4 text-center">No autonomous actions logged yet. Click "Run All 11 Agents" to scan the project.</p>
+        } @else {
+        <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+          @for (act of insights.recent_actions; track act.id) {
+          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold text-[10px] uppercase">
+                {{ act.meta?.agent || 'agent' }}
+              </span>
+              <span class="text-[10px] text-slate-400">{{ act.at | date:'short' }}</span>
+            </div>
+            <p class="font-semibold text-slate-800 dark:text-slate-200">{{ act.detail }}</p>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- India Statutory Compliance Panel -->
+  @if (indiaCompliance?.findings?.length) {
+  <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm p-5 space-y-3">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div>
+        <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-amber-500 text-[18px]">gavel</span>
+          India Statutory & Tax Compliance Audit (FY {{ indiaCompliance.financial_year }})
+        </h3>
+        <p class="text-[11px] text-slate-500">{{ indiaCompliance.disclaimer }}</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      @for (f of indiaCompliance.findings; track $index) {
+      <div class="p-3.5 rounded-xl border text-xs"
+        [ngClass]="f.severity === 'high' ? 'bg-rose-50/50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900' : 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900'">
+        <div class="flex items-center justify-between mb-1">
+          <span class="font-black text-slate-900 dark:text-slate-100">{{ f.rule }}</span>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase"
+            [ngClass]="f.severity === 'high' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'">
+            {{ f.severity }}
+          </span>
+        </div>
+        <p class="text-slate-700 dark:text-slate-300">{{ f.message }}</p>
+        <p class="text-[11px] text-slate-500 mt-1"><strong>Proposed:</strong> {{ f.proposed_action }}</p>
+      </div>
+      }
+    </div>
+  </div>
+  }
+</div>

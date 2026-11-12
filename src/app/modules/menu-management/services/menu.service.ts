@@ -26,4 +26,8 @@ export class MenuService {
   deleteMenu(id: number): Observable<any> {
     return this.http.delete<any>(`${this.baseUrl}/${id}`);
   }
+
+  resetToCanonical(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/reset-canonical`, {});
+  }
 }

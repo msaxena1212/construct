@@ -1,1 +1,308 @@
-<p>contracts works!</p>
+<div class="bg-slate-50/50 dark:bg-slate-950 min-h-screen animate-in p-4 sm:p-6 lg:p-8">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+          Purchase & Vendor Contracting
+        </span>
+      </div>
+      <h1 class="text-3xl font-black text-slate-800 dark:text-white">Procurement Contracts</h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm">
+        Legally binding supplier purchase agreements, delivery terms, committed scopes, and payment milestones.
+      </p>
+    </div>
+
+    <button (click)="openCreateModal()"
+      class="group relative overflow-hidden flex items-center justify-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff] w-full sm:w-auto cursor-pointer">
+      <div class="relative z-10 w-6 h-6 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
+        <span class="material-symbols-outlined text-[20px]">add</span>
+      </div>
+      <span class="relative z-10 tracking-wide text-sm">New Contract Agreement</span>
+    </button>
+  </div>
+
+  <!-- KPI Metrics Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+    <!-- Total Contracts -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 text-white shadow-lg shadow-blue-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Total Contracts</p>
+          <h3 class="text-3xl font-black mt-2">{{ contracts.length }}</h3>
+          <p class="text-xs text-white/70 mt-1">Vendor Master Contracts</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">description</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Value -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Total Contract Value</p>
+          <h3 class="text-2xl font-black mt-2">₹{{ (totalContractValue / 100000).toFixed(1) }} Lakhs</h3>
+          <p class="text-xs text-white/70 mt-1">{{ activeContractsCount }} Active In-Force</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">account_balance_wallet</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paid Amount -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-700 text-white shadow-lg shadow-purple-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Disbursed / Paid</p>
+          <h3 class="text-2xl font-black mt-2">₹{{ (totalPaidValue / 100000).toFixed(1) }} Lakhs</h3>
+          <p class="text-xs text-white/70 mt-1">{{ ((totalPaidValue / (totalContractValue || 1)) * 100).toFixed(0) }}% Execution Rate</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">payments</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Under Review -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg shadow-amber-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Under Legal Review</p>
+          <h3 class="text-3xl font-black mt-2">{{ underReviewCount }}</h3>
+          <p class="text-xs text-white/70 mt-1">Pending Compliance Sign-off</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">verified_user</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6 p-4 flex flex-col sm:flex-row items-center gap-4">
+    <div class="relative flex-1 w-full">
+      <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+      <input type="text" [(ngModel)]="searchQuery" (input)="filterContracts()"
+        placeholder="Search contracts by ID, title, vendor name, or site project..."
+        class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 dark:text-white border-none rounded-2xl text-sm focus:ring-2 focus:ring-blue-500/30 transition-all outline-none">
+    </div>
+
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <select [(ngModel)]="statusFilter" (change)="filterContracts()"
+        class="px-4 py-3 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 outline-none">
+        <option value="All">All Statuses</option>
+        <option value="Active">Active</option>
+        <option value="Under Review">Under Review</option>
+        <option value="Completed">Completed</option>
+        <option value="Draft">Draft</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Contracts Table Card -->
+  <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50 dark:bg-slate-800/60 text-[11px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="px-6 py-4">Contract ID & Title</th>
+            <th class="px-6 py-4">Vendor & Category</th>
+            <th class="px-6 py-4">Project Site</th>
+            <th class="px-6 py-4">Value & Paid</th>
+            <th class="px-6 py-4">Validity</th>
+            <th class="px-6 py-4 text-center">Status</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          <tr *ngFor="let contract of filteredContracts" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20">
+                  <span class="material-symbols-outlined text-[20px]">assignment</span>
+                </div>
+                <div>
+                  <span class="text-xs font-black text-blue-600 dark:text-blue-400 tracking-wide font-mono">{{ contract.contractNumber }}</span>
+                  <div class="font-bold text-slate-800 dark:text-white mt-0.5 line-clamp-1">{{ contract.title }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-6 py-4">
+              <div class="font-bold text-slate-800 dark:text-slate-100">{{ contract.vendorName }}</div>
+              <div class="text-[11px] text-slate-400">{{ contract.vendorCategory }}</div>
+            </td>
+
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-200">
+                <span class="material-symbols-outlined text-slate-400 text-[16px]">domain</span>
+                {{ contract.projectName }}
+              </div>
+            </td>
+
+            <td class="px-6 py-4">
+              <div class="font-black text-slate-900 dark:text-white">₹{{ contract.contractValue.toLocaleString('en-IN') }}</div>
+              <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                Paid: ₹{{ contract.paidAmount.toLocaleString('en-IN') }}
+              </div>
+            </td>
+
+            <td class="px-6 py-4 text-xs font-medium">
+              <div>{{ contract.startDate | date:'mediumDate' }}</div>
+              <div class="text-slate-400">to {{ contract.endDate | date:'mediumDate' }}</div>
+            </td>
+
+            <td class="px-6 py-4 text-center">
+              <span class="px-3 py-1 rounded-full text-[11px] font-black border" [ngClass]="getStatusClass(contract.status)">
+                {{ contract.status }}
+              </span>
+            </td>
+
+            <td class="px-6 py-4 text-right">
+              <button (click)="viewContract(contract)"
+                class="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1">
+                <span class="material-symbols-outlined text-[15px]">visibility</span>
+                View
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredContracts.length === 0">
+            <td colspan="7" class="px-6 py-12 text-center text-slate-400">
+              <span class="material-symbols-outlined text-4xl mb-2">find_in_page</span>
+              <p class="font-medium text-sm">No procurement contracts found matching your filters.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div *ngIf="showDetailModal && selectedContract" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95">
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <span class="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">{{ selectedContract.contractNumber }}</span>
+          <h2 class="text-xl font-black text-slate-800 dark:text-white mt-1">{{ selectedContract.title }}</h2>
+          <p class="text-xs text-slate-500">{{ selectedContract.vendorName }} ({{ selectedContract.vendorCategory }})</p>
+        </div>
+        <button (click)="showDetailModal = false" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Contract Value</span>
+          <p class="text-lg font-black text-slate-900 dark:text-white">₹{{ selectedContract.contractValue.toLocaleString('en-IN') }}</p>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Paid Milestone Total</span>
+          <p class="text-lg font-black text-emerald-600">₹{{ selectedContract.paidAmount.toLocaleString('en-IN') }}</p>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Project Site</span>
+          <p class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ selectedContract.projectName }}</p>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Execution Period</span>
+          <p class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ selectedContract.startDate }} to {{ selectedContract.endDate }}</p>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <h4 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-2">Scope of Work & Agreement Terms</h4>
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-900">
+          {{ selectedContract.scope }}
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button (click)="showDetailModal = false" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Modal -->
+  <div *ngIf="showCreateModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-black text-slate-800 dark:text-white">Create Procurement Contract Agreement</h2>
+        <button (click)="showCreateModal = false" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Contract Title *</label>
+          <input type="text" [(ngModel)]="newContract.title" placeholder="e.g. Structural Steel & Rebar Supply Order"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Vendor / Supplier *</label>
+          <input type="text" [(ngModel)]="newContract.vendorName" placeholder="Supplier Company Name"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Category</label>
+          <select [(ngModel)]="newContract.vendorCategory"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="Raw Materials & Metals">Raw Materials & Metals</option>
+            <option value="Concrete & Masonry">Concrete & Masonry</option>
+            <option value="Plant & Heavy Machinery">Plant & Heavy Machinery</option>
+            <option value="Electrical & MEP">Electrical & MEP</option>
+            <option value="Subcontracting">Subcontracting</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Contract Value (₹ INR) *</label>
+          <input type="number" [(ngModel)]="newContract.contractValue" placeholder="e.g. 5000000"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Project Site</label>
+          <input type="text" [(ngModel)]="newContract.projectName" placeholder="Site Project Name"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Start Date</label>
+          <input type="date" [(ngModel)]="newContract.startDate"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">End Date</label>
+          <input type="date" [(ngModel)]="newContract.endDate"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Scope of Supply / Contract Terms</label>
+          <textarea rows="3" [(ngModel)]="newContract.scope" placeholder="Detailed deliverables, delivery milestones, liquidated damages, quality warranties..."
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button (click)="showCreateModal = false" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+          Cancel
+        </button>
+        <button (click)="saveNewContract()" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-xs text-white shadow-lg shadow-blue-500/20 cursor-pointer">
+          Save & Register Contract
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

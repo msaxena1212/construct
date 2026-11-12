@@ -489,6 +489,27 @@
                         [closeOnBackdrop]="false">
 
 
+                        <div class="px-8 pt-8 space-y-4 bg-white dark:bg-slate-900">
+                            <div class="flex items-center justify-between">
+                                <p class="text-[10px] font-black uppercase tracking-[2px] text-slate-500">Item-wise budget (optional)</p>
+                                <button type="button" (click)="addBudgetItem()" class="text-xs font-bold text-blue-600">+ Add item</button>
+                            </div>
+                            @for (item of budgetItems; track $index; let i = $index) {
+                                <div class="grid grid-cols-6 gap-3 items-center">
+                                    <input class="col-span-3 rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Item name, e.g. Structural steel"
+                                        [value]="item.name" (input)="updateBudgetItem(i, 'name', $any($event.target).value)" />
+                                    <input type="number" min="0" step="0.01" class="col-span-2 rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="0.00"
+                                        [value]="item.amount" (input)="updateBudgetItem(i, 'amount', $any($event.target).value)" />
+                                    <button type="button" (click)="removeBudgetItem(i)" class="text-xs font-bold text-red-600">Remove</button>
+                                </div>
+                            }
+                            <p class="text-xs" [class.text-red-600]="budgetItemsMismatch" [class.text-slate-500]="!budgetItemsMismatch">
+                                Items total ₹ {{ budgetItemsTotal | number:'1.0-2' }} of the budget total ₹ {{ budgetTotalValue | number:'1.0-2' }}
+                                @if (budgetItemsMismatch) {
+                                    <span> — the items must add up to the budget total.</span>
+                                }
+                            </p>
+                        </div>
                         <div [formGroup]="budgetBreakdown"
                             class="p-8 bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
 

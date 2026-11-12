@@ -16,6 +16,10 @@ const routes: Routes = [
         loadChildren: () => import('./dashboard/dashboard-module').then((m) => m.DashboardModule),
       },
       {
+        path: 'portfolio',
+        loadChildren: () => import('./portfolio/portfolio-module').then((m) => m.PortfolioModule),
+      },
+      {
         path: 'menu-management',
         loadChildren: () =>
           import('./menu-management/menu-management-module').then((m) => m.MenuManagementModule),
@@ -44,6 +48,10 @@ const routes: Routes = [
         path: 'stock-approval',
         loadChildren: () => import('./stock-approval/stock-approval-module').then((m) => m.StockApprovalModule),
 
+      },
+      {
+        path: 'stock-transfer',
+        loadChildren: () => import('./stock-transfer/stock-transfer-module').then((m) => m.StockTransferModule),
       },
       {
         path: 'resources',

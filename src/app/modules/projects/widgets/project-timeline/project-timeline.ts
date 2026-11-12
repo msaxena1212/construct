@@ -1,5 +1,7 @@
-﻿import { AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { ProjectService } from '../../services/project-service';
+import { forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-project-timeline',
@@ -7,11 +9,11 @@ import { ProjectService } from '../../services/project-service';
   templateUrl: './project-timeline.html',
   styleUrls: ['./project-timeline.scss']
 })
-export class ProjectTimeline implements AfterViewInit {
+export class ProjectTimeline implements AfterViewInit, OnChanges {
 
   @ViewChild('timelineTable') timelineTable?: ElementRef<HTMLElement>;
 
-  @Input() projectId!: number;
+  @Input() projectId!: number | string;
   @Input() selectedMember: any;
 
   phasesData: any[] = [];
@@ -38,17 +40,71 @@ export class ProjectTimeline implements AfterViewInit {
 
   constructor(private projectService: ProjectService) { }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['projectId'] && !changes['projectId'].firstChange) {
+      this.fetchTimelineData();
+    }
+  }
+
   ngAfterViewInit(): void {
     this.fetchTimelineData();
   }
 
   fetchTimelineData(): void {
-    this.projectService.getProjectTimeline(this.projectId).subscribe({
-      next: (res) => {
-        this.phasesData = res.data?.milestones_with_child || [];
-        this.buildTimeline();
-      }
-    });
+    if (this.projectId && this.projectId !== 'all' && Number(this.projectId) > 0) {
+      this.projectService.getProjectTimeline(this.projectId).subscribe({
+        next: (res) => {
+          this.phasesData = res.data?.milestones_with_child || [];
+          this.buildTimeline();
+        },
+        error: () => {
+          this.phasesData = [];
+          this.buildTimeline();
+        }
+      });
+    } else {
+      // Default: fetch all projects and aggregate their timelines
+      this.projectService.getProjects().subscribe({
+        next: (res) => {
+          const projects = res.data || [];
+          if (!projects.length) {
+            this.phasesData = [];
+            this.buildTimeline();
+            return;
+          }
+
+          const requests = projects.map(p =>
+            this.projectService.getProjectTimeline(p.id).pipe(
+              map(tres => ({
+                projectName: p.name,
+                milestones: (tres.data?.milestones_with_child || []).map((m: any) => ({
+                  ...m,
+                  name: `${p.name} • ${m.name || m.title || 'Milestone'}`
+                }))
+              })),
+              catchError(() => of({ projectName: p.name, milestones: [] }))
+            )
+          );
+
+          forkJoin(requests).subscribe({
+            next: (results) => {
+              const aggregated: any[] = [];
+              results.forEach(r => {
+                if (r.milestones && r.milestones.length) {
+                  aggregated.push(...r.milestones);
+                }
+              });
+              this.phasesData = aggregated;
+              this.buildTimeline();
+            }
+          });
+        },
+        error: () => {
+          this.phasesData = [];
+          this.buildTimeline();
+        }
+      });
+    }
   }
 
   changeView(mode: 'Day' | 'Week' | 'Month'): void {
@@ -418,16 +474,13 @@ export class ProjectTimeline implements AfterViewInit {
         minDate.getFullYear(),
         minDate.getMonth(),
         minDate.getDate(),
-        0,
-        0,
-        0,
-        0
+        0, 0, 0, 0
       );
-      timelineStart.setDate(timelineStart.getDate() - 365);
+      timelineStart.setDate(timelineStart.getDate() - 7); // 1 week lead buffer
 
     } else if (this.currentView === 'Week') {
       timelineStart = this.getStartOfISOWeek(minDate);
-      timelineStart.setDate(timelineStart.getDate() - 7 * 52);
+      timelineStart.setDate(timelineStart.getDate() - 7 * 2); // 2 weeks lead buffer
     } else {
       timelineStart = new Date(
         minDate.getFullYear(),
@@ -435,26 +488,21 @@ export class ProjectTimeline implements AfterViewInit {
         1,
         0, 0, 0
       );
-      timelineStart.setMonth(timelineStart.getMonth() - 24);
+      timelineStart.setMonth(timelineStart.getMonth() - 2); // 2 months lead buffer
     }
 
     let timelineEnd = new Date(maxDate);
 
     // Future buffer
     if (this.currentView === 'Day') {
-      timelineEnd.setDate(timelineEnd.getDate() + 365);
+      timelineEnd.setDate(timelineEnd.getDate() + 30);
     } else if (this.currentView === 'Week') {
-      timelineEnd.setDate(timelineEnd.getDate() + 7 * 52);
+      timelineEnd.setDate(timelineEnd.getDate() + 7 * 6);
     } else {
-      timelineEnd.setMonth(timelineEnd.getMonth() + 24);
+      timelineEnd.setMonth(timelineEnd.getMonth() + 6);
     }
 
-    timelineEnd.setHours(
-      23,
-      59,
-      59,
-      999
-    );
+    timelineEnd.setHours(23, 59, 59, 999);
 
     timelineEnd =
       this.ensureMinimumTimelineEnd(
@@ -474,7 +522,10 @@ export class ProjectTimeline implements AfterViewInit {
 
     const today = new Date();
     const maxStartIndex = Math.max(0, this.allTimelineColumns.length - this.getVisibleColumnCount());
-    this.timelineWindowStartIndex = this.getStartIndexForDate(today);
+
+    // If today is within or close to the project active span, anchor to today, otherwise anchor to minDate
+    const targetAnchorDate = (today >= timelineStart && today <= timelineEnd) ? today : minDate;
+    this.timelineWindowStartIndex = this.getStartIndexForDate(targetAnchorDate);
     this.timelineWindowStartIndex = Math.min(this.timelineWindowStartIndex, maxStartIndex);
 
     this.updateVisibleTimeline();

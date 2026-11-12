@@ -14,12 +14,15 @@ import { ProjectFiles } from './widgets/project-files/project-files';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TaskDetail } from './widgets/task-detail/task-detail';
 import { AddTask } from './widgets/add-task/add-task';
+import { AiAgentsHub } from './widgets/ai-agents-hub/ai-agents-hub';
+import { SafetyRfi } from './widgets/safety-rfi/safety-rfi';
 import { SubtaskProgressPipe } from '../../shared/pipes/subtask-progress.pipe';
 import { MilestoneFormDialog } from './dialogs/milestone-form-dialog/milestone-form-dialog';
 import { MaterialModule } from '../../shared/material/material-module';
 import { TaskFormDialog } from './dialogs/task-form-dialog/task-form-dialog';
 import { StockApprovalModule } from '../stock-approval/stock-approval-module';
 import { CommonDialogComponent } from '../../shared/components/common-dialog/common-dialog';
+import { SharedModule } from '../../shared/shared-module';
 
 @NgModule({
   declarations: [
@@ -42,8 +45,12 @@ import { CommonDialogComponent } from '../../shared/components/common-dialog/com
     MaterialModule,
     TaskManagement,
     TaskDetail,
+    AiAgentsHub,
+    SafetyRfi,
     StockApprovalModule,
-    CommonDialogComponent
+    CommonDialogComponent,
+    SharedModule
   ],
+  exports: [ProjectTimeline],
 })
 export class ProjectsModule {}

@@ -91,6 +91,13 @@ export class AuthService {
     localStorage.removeItem('permissions'); 
     localStorage.clear();
     sessionStorage.clear();
+    try {
+      // Clear secure image blob object URLs
+      const injector = (window as any).__secureImageService;
+      if (injector && injector.clearCache) {
+        injector.clearCache();
+      }
+    } catch (e) {}
     this.route.navigate(['']);
   }
 

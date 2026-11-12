@@ -1,8 +1,8 @@
 <div (click)="closeDropdown()" class="bg-slate-50/50 min-h-screen animate-in p-4">
   <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-10">
     <div>
-      <h1 class="text-3xl font-black text-slate-800 dark:text-white">Sales Quotations</h1>
-      <p class="text-slate-500">Manage and track material & equipment quotes from various vendors</p>
+      <h1 class="text-3xl font-black text-slate-800 dark:text-white">{{ pageTitle }}</h1>
+      <p class="text-slate-500">{{ pageSubtitle }}</p>
     </div>
     <a routerLink="/master/resources/quotations/new"
       class="group relative overflow-hidden flex items-center justify-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff] w-full sm:w-auto">
@@ -290,7 +290,7 @@
                 <div
                   class="w-11 h-11 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-sm font-black text-white shadow-md">
 
-                  {{quote.sales_person.charAt(0)}}
+                  {{ (quote.sales_person || "?").charAt(0) }}
 
                 </div>
 

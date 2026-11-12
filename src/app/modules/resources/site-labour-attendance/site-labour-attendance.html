@@ -1,0 +1,306 @@
+<div class="bg-slate-50/50 dark:bg-slate-950 min-h-screen animate-in p-4 sm:p-6 lg:p-8">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+          H.R & Payroll • Site Workforce
+        </span>
+      </div>
+      <h1 class="text-3xl font-black text-slate-800 dark:text-white">Site Labour Attendance</h1>
+      <p class="text-slate-500 dark:text-slate-400 text-sm">
+        Daily muster roll, contractor gang logs, trade skills, shifts, overtime tracking, and statutory wage calculation.
+      </p>
+    </div>
+
+    <button (click)="openRecordModal()"
+      class="group relative overflow-hidden flex items-center justify-center gap-3 px-7 py-3.5 rounded-2xl font-bold text-white transition-all duration-300 shadow-[0_10px_30px_rgba(58,102,176,0.35)] hover:shadow-[0_15px_40px_rgba(58,102,176,0.45)] hover:-translate-y-1 bg-gradient-to-r from-[#3a66b0] via-[#5b7fd1] to-[#7c4dff] w-full sm:w-auto cursor-pointer">
+      <div class="relative z-10 w-6 h-6 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
+        <span class="material-symbols-outlined text-[20px]">person_add</span>
+      </div>
+      <span class="relative z-10 tracking-wide text-sm">Record Labour Gang</span>
+    </button>
+  </div>
+
+  <!-- KPI Metrics Banner -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+    <!-- Total Workforce -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-800 text-white shadow-lg shadow-indigo-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Total Personnel On-Site</p>
+          <h3 class="text-3xl font-black mt-2">{{ totalPersonnel }}</h3>
+          <p class="text-xs text-white/70 mt-1">Active Tradesmen Today</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">groups</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Wage Commitment -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-emerald-500 via-teal-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Today's Wage Accrual</p>
+          <h3 class="text-2xl font-black mt-2">₹{{ totalDailyCost.toLocaleString('en-IN') }}</h3>
+          <p class="text-xs text-white/70 mt-1">Labour Cost Attributed</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">payments</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overtime Hours -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg shadow-amber-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Overtime Man-Hours</p>
+          <h3 class="text-3xl font-black mt-2">{{ totalOvertimeHours }} hrs</h3>
+          <p class="text-xs text-white/70 mt-1">1.5x Premium Wage Multiplier</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">schedule</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gangs Logged -->
+    <div class="rounded-3xl p-5 bg-gradient-to-br from-purple-500 via-indigo-600 to-purple-700 text-white shadow-lg shadow-purple-500/15">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest text-white/80 font-bold">Gangs Verified</p>
+          <h3 class="text-3xl font-black mt-2">{{ filteredLogs.length }}</h3>
+          <p class="text-xs text-white/70 mt-1">Trade Muster Records</p>
+        </div>
+        <div class="w-13 h-13 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl">fact_check</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Project Filters -->
+  <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6 p-4 flex flex-col md:flex-row items-center gap-4">
+    <!-- Search Bar -->
+    <div class="relative flex-1 w-full">
+      <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+      <input type="text" [(ngModel)]="searchQuery" (input)="applyFilters()"
+        placeholder="Search by trade type, subcontractor gang, or work grid location..."
+        class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 dark:text-white border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none">
+    </div>
+
+    <!-- Project Filter -->
+    <div class="flex items-center gap-3 w-full md:w-auto">
+      <select [(ngModel)]="selectedProjectId" (change)="applyFilters()"
+        class="px-4 py-3 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 outline-none w-full md:w-auto">
+        <option value="all">All Projects</option>
+        <option *ngFor="let p of projects" [value]="p.id">{{ p.name }}</option>
+      </select>
+
+      <!-- Trade Filter -->
+      <select [(ngModel)]="selectedTrade" (change)="applyFilters()"
+        class="px-4 py-3 bg-slate-50 dark:bg-slate-800 dark:text-white rounded-2xl text-xs font-bold border border-slate-200 dark:border-slate-700 outline-none w-full md:w-auto">
+        <option value="all">All Trade Gangs</option>
+        <option value="Carpenters & Shuttering">Carpenters & Shuttering</option>
+        <option value="Steel Fixers & Barbenders">Steel Fixers & Barbenders</option>
+        <option value="Masons & Plasterers">Masons & Plasterers</option>
+        <option value="Electricians & Cable Pullers">Electricians & Cable Pullers</option>
+        <option value="General Helpers & Labourers">General Helpers & Labourers</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Attendance Table -->
+  <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50 dark:bg-slate-800/60 text-[11px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="px-6 py-4">Trade Gang & Skill</th>
+            <th class="px-6 py-4">Project Site</th>
+            <th class="px-6 py-4">Work Location</th>
+            <th class="px-6 py-4 text-center">Headcount</th>
+            <th class="px-6 py-4">Shift & OT</th>
+            <th class="px-6 py-4">Daily Wage Rate</th>
+            <th class="px-6 py-4">Total Cost</th>
+            <th class="px-6 py-4 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          <tr *ngFor="let log of filteredLogs" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-500/20">
+                  <span class="material-symbols-outlined text-[20px]">engineering</span>
+                </div>
+                <div>
+                  <div class="font-bold text-slate-900 dark:text-white">{{ log.tradeType }}</div>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {{ log.skillLevel }}
+                    </span>
+                    <span class="text-[11px] text-slate-400">{{ log.contractorName }}</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td class="px-6 py-4">
+              <div class="font-medium text-slate-800 dark:text-slate-200">{{ log.projectName }}</div>
+              <div class="text-[11px] text-slate-400">{{ log.attendanceDate | date:'mediumDate' }}</div>
+            </td>
+
+            <td class="px-6 py-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              {{ log.workLocation }}
+            </td>
+
+            <td class="px-6 py-4 text-center">
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-black text-sm">
+                {{ log.headcount }}
+              </span>
+            </td>
+
+            <td class="px-6 py-4 text-xs">
+              <span class="font-bold text-slate-800 dark:text-slate-200">{{ log.shift }} Shift</span>
+              <div *ngIf="log.overtimeHours > 0" class="text-amber-600 font-bold text-[11px]">
+                +{{ log.overtimeHours }}h OT/man
+              </div>
+            </td>
+
+            <td class="px-6 py-4 font-mono font-bold text-xs text-slate-800 dark:text-slate-200">
+              ₹{{ log.dailyWageRate }}/day
+            </td>
+
+            <td class="px-6 py-4 font-black text-sm text-emerald-600 dark:text-emerald-400">
+              ₹{{ log.totalCost.toLocaleString('en-IN') }}
+            </td>
+
+            <td class="px-6 py-4 text-center">
+              <span class="px-3 py-1 rounded-full text-[11px] font-black border"
+                [class.bg-emerald-100]="log.status === 'Verified'"
+                [class.text-emerald-700]="log.status === 'Verified'"
+                [class.border-emerald-300]="log.status === 'Verified'"
+                [class.bg-amber-100]="log.status !== 'Verified'"
+                [class.text-amber-700]="log.status !== 'Verified'"
+                [class.border-amber-300]="log.status !== 'Verified'">
+                {{ log.status }}
+              </span>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredLogs.length === 0">
+            <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+              <span class="material-symbols-outlined text-4xl mb-2">engineering</span>
+              <p class="font-medium text-sm">No site labour attendance records found matching filters.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Record Labour Attendance Modal -->
+  <div *ngIf="showAddModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 animate-in fade-in zoom-in-95">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <span class="text-xs font-mono font-bold text-indigo-600">Site Workforce Register</span>
+          <h2 class="text-xl font-black text-slate-800 dark:text-white">Record Labour Attendance Gang</h2>
+        </div>
+        <button (click)="showAddModal = false" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-800 cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Project Site *</label>
+          <select [(ngModel)]="newLog.projectId"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <option *ngFor="let p of projects" [value]="p.id">{{ p.name }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Attendance Date *</label>
+          <input type="date" [(ngModel)]="newLog.attendanceDate"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Trade Category *</label>
+          <select [(ngModel)]="newLog.tradeType"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="Carpenters & Shuttering">Carpenters & Shuttering</option>
+            <option value="Steel Fixers & Barbenders">Steel Fixers & Barbenders</option>
+            <option value="Masons & Plasterers">Masons & Plasterers</option>
+            <option value="Electricians & Cable Pullers">Electricians & Cable Pullers</option>
+            <option value="General Helpers & Labourers">General Helpers & Labourers</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Skill Level</label>
+          <select [(ngModel)]="newLog.skillLevel"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="Skilled">Skilled Tradesman</option>
+            <option value="Semi-Skilled">Semi-Skilled Assistant</option>
+            <option value="Unskilled">Unskilled Helper</option>
+            <option value="Foreman">Gang Foreman / Supervisor</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Headcount (Number of Men) *</label>
+          <input type="number" min="1" [(ngModel)]="newLog.headcount"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Daily Wage Rate (₹/head) *</label>
+          <input type="number" min="100" [(ngModel)]="newLog.dailyWageRate"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Shift</label>
+          <select [(ngModel)]="newLog.shift"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="Day">Day Shift (08:00 - 17:00)</option>
+            <option value="Night">Night Shift (20:00 - 05:00)</option>
+            <option value="Overtime">Special Overtime Shift</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Overtime Hours (per worker)</label>
+          <input type="number" min="0" step="0.5" [(ngModel)]="newLog.overtimeHours"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Work Location / Site Zone *</label>
+          <input type="text" [(ngModel)]="newLog.workLocation" placeholder="e.g. Tower A • 6th Floor Deck • Beam Shuttering"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Subcontractor / Labour Contractor Gang</label>
+          <input type="text" [(ngModel)]="newLog.contractorName" placeholder="e.g. Om Shanti Construction Gang"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button (click)="showAddModal = false" class="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+          Cancel
+        </button>
+        <button (click)="saveAttendance()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white shadow-lg shadow-indigo-500/20 cursor-pointer">
+          Confirm Attendance Log
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

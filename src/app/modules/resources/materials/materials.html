@@ -247,7 +247,7 @@
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 flex items-center justify-center text-sm font-black text-white shadow-lg">
-                                        {{ item.vendor_name.charAt(0) }}
+                                        {{ (item.vendor_name || "?").charAt(0) }}
                                     </div>
                                     <div>
                                         <p class="text-sm font-black text-slate-700 dark:text-slate-200">{{
@@ -265,7 +265,7 @@
                                             class="w-11 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-center cursor-pointer">
                                             <span class="material-symbols-outlined text-[18px]">assignment_ind</span>
                                         </button>
-                                        <button (click)="openStockTransferModal(item)" title="Transfer Stock"
+                                        <button (click)="openStockTransferModal(item)" title="Project Reallocation"
                                             [disabled]="!item.material_project_stock?.length" [ngClass]="
       item.material_project_stock?.length
         ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-lg cursor-pointer'
@@ -738,12 +738,20 @@
 </div>
 }
 
-<app-common-dialog [open]="showStockTransferModal" title="Stock Transfer"
+<app-common-dialog [open]="showStockTransferModal" title="Project Reallocation"
     subtitle="Move material stock between projects" icon="swap_horiz" [showCloseButton]="true" [showFooter]="true"
     [contentClass]="'min-h-0 overflow-y-auto custom-scrollbar smooth-scroll'" cancelLabel="Cancel"
-    primaryLabel="Transfer Stock" (closed)="showStockTransferModal = false" (primary)="transferStock()">
+    primaryLabel="Review Required" (closed)="showStockTransferModal = false" (primary)="transferStock()">
 
     <div class="p-6 space-y-8">
+        <div class="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900" role="alert">
+            <p class="font-black text-sm">Review Required — Project Reallocation is disabled</p>
+            <p class="text-xs mt-1">
+                Cross-project reallocation is not reconciled: it adjusts project counters without paired ledger movements,
+                so unplaced stock can increase in one project and go negative in another. No reallocation is posted from here.
+                Use Stock Transfer within a project for movements that must reconcile.
+            </p>
+        </div>
 
         <div
             class="flex items-center gap-4 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">

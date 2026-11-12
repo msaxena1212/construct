@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 @use 'ngx-toastr/toastr';
 @use '@angular/material/prebuilt-themes/deeppurple-amber.css';
+@use 'katex/dist/katex.min.css';
 
 html {
   height: 100%;

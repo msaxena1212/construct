@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { QuotationService, Quote } from '../../../shared/services/quotation.service';
 import { ToastrService } from 'ngx-toastr';
@@ -14,10 +14,14 @@ import { ToastrService } from 'ngx-toastr';
 export class Quotations {
   private quotationService = inject(QuotationService);
   private toast = inject(ToastrService);
+  private route = inject(ActivatedRoute);
 
   quotes: Quote[] = [];
   searchQuery = '';
   activeDropdownId: string | null = null;
+  isTenderContext = false;
+  pageTitle = 'Sales Quotations';
+  pageSubtitle = 'Manage and track material & equipment quotes from various vendors';
 
   // New Modal States
   showViewModal = false;
@@ -49,18 +53,23 @@ export class Quotations {
   }
 
 ngOnInit() {
-
-  this.quotationService.quotes$.subscribe((q: any) => {
-
-    this.quotes = q.data || [];
-
-    console.log(this.quotes, 'this.quotes');
-
-    this.page = 1;
-    this.updatePagination();
-
+  this.route.queryParams.subscribe(params => {
+    if (params['context'] === 'tender' || params['type'] === 'tender') {
+      this.isTenderContext = true;
+      this.pageTitle = 'Tender Quotations & Subcontractor Bids';
+      this.pageSubtitle = 'Competitive supplier and subcontractor quotation register for tender bidding';
+    } else {
+      this.isTenderContext = false;
+      this.pageTitle = 'Sales & Procurement Quotations';
+      this.pageSubtitle = 'Manage and track material & equipment quotes from various vendors';
+    }
   });
 
+  this.quotationService.quotes$.subscribe((q: any) => {
+    this.quotes = q.data || [];
+    this.page = 1;
+    this.updatePagination();
+  });
 }
 
 onSearchChange() {

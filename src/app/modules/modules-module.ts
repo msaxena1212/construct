@@ -5,9 +5,10 @@ import { ModulesRoutingModule } from './modules-routing-module';
 import { Modules } from './modules';
 import { RouterModule } from '@angular/router';
 import { MaterialModule } from '../shared/material/material-module';
+import { SharedModule } from '../shared/shared-module';
 
 @NgModule({
   declarations: [Modules],
-  imports: [CommonModule, ModulesRoutingModule, RouterModule, MaterialModule],
+  imports: [CommonModule, ModulesRoutingModule, RouterModule, MaterialModule, SharedModule],
 })
 export class ModulesModule { }

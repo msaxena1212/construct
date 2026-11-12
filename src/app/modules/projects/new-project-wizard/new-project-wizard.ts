@@ -359,6 +359,35 @@ export class NewProjectWizard implements OnInit, OnDestroy {
     this.projectForm.get('budgetTotal')?.setValue(0);
   }
 
+  // Item-wise allocation (budget heads). Optional. When items are given they must add up to the budget total.
+  budgetItems: { name: string; amount: number }[] = [];
+
+  get budgetItemsTotal(): number {
+    return this.budgetItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  }
+
+  get budgetItemsMismatch(): boolean {
+    return (
+      this.budgetItems.length > 0 &&
+      Math.round(this.budgetItemsTotal * 100) !== Math.round(this.budgetTotalValue * 100)
+    );
+  }
+
+  addBudgetItem(): void {
+    this.budgetItems.push({ name: '', amount: 0 });
+  }
+
+  removeBudgetItem(index: number): void {
+    this.budgetItems.splice(index, 1);
+  }
+
+  updateBudgetItem(index: number, field: 'name' | 'amount', value: string): void {
+    const item = this.budgetItems[index];
+    if (!item) return;
+    if (field === 'amount') item.amount = Number(value) || 0;
+    else item.name = value;
+  }
+
   saveBudgetBreakdown() {
     this.projectForm.get('budgetTotal')?.setValue(this.budgetBreakdownTotal);
     this.showBudgetBreakdownDialog = false;
@@ -519,6 +548,17 @@ export class NewProjectWizard implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.budgetItems.length > 0) {
+      if (this.budgetItems.some((item) => !item.name.trim())) {
+        this.toastr.error('Every budget item needs a name.');
+        return;
+      }
+      if (this.budgetItemsMismatch) {
+        this.toastr.error('The budget items must add up to the budget total.');
+        return;
+      }
+    }
+
     this.loading = true;
     const formData = new FormData();
     const milestones: any[] = [];
@@ -589,18 +629,38 @@ export class NewProjectWizard implements OnInit, OnDestroy {
         : this.projectService.createProject(formData);
 
     request.subscribe({
-      next: () => {
-        this.loading = false;
-        this.toastr.success(
-          this.editMode ? 'Project updated!' : 'Project initialized!'
-        );
-        this.router.navigate(['/master/projects']);
+      next: (res: any) => {
+        const projectId = res?.data?.id;
+        if (!this.editMode && this.budgetItems.length > 0 && projectId) {
+          this.projectService
+            .createItemBudget({
+              project_id: projectId,
+              budget_total: this.budgetTotalValue,
+              items: this.budgetItems.map((item) => ({ name: item.name.trim(), amount: item.amount })),
+            })
+            .subscribe({
+              next: () => this.finishProjectSave('Project initialized!'),
+              error: (err) => {
+                this.loading = false;
+                this.toastr.warning(err.error?.message || 'Project saved, but the budget items could not be saved');
+                this.router.navigate(['/master/projects']);
+              },
+            });
+          return;
+        }
+        this.finishProjectSave(this.editMode ? 'Project updated!' : 'Project initialized!');
       },
       error: (err) => {
         this.loading = false;
         this.toastr.error(err.error?.message || 'Error saving project');
       }
     });
+  }
+
+  private finishProjectSave(message: string): void {
+    this.loading = false;
+    this.toastr.success(message);
+    this.router.navigate(['/master/projects']);
   }
 
   cancel() {
