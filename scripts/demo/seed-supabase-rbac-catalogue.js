@@ -42,6 +42,7 @@ async function main() {
       ['equipment', 'Equipment'],
       ['category', 'Category'],
       ['skill', 'Skill'],
+      ['inventory', 'Project Inventory'],
     ];
     for (const [path_, title] of ROUTE_PATHS) {
       const found = await db.rbac_module.findOne({ where: { path: path_ }, transaction: t });
