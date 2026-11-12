@@ -22,11 +22,19 @@ function assertSqlite(queryInterface) {
 
 module.exports = {
   async up(queryInterface) {
+    if (queryInterface.sequelize.getDialect() === 'postgres') {
+      await queryInterface.sequelize.query(`DROP INDEX IF EXISTS "${INDEX}"`);
+      return;
+    }
     assertSqlite(queryInterface);
     await queryInterface.sequelize.query(`DROP INDEX \`${INDEX}\``);
   },
 
   async down(queryInterface) {
+    if (queryInterface.sequelize.getDialect() === 'postgres') {
+      await queryInterface.sequelize.query(`CREATE UNIQUE INDEX IF NOT EXISTS "${INDEX}" ON "${TABLE}" ("task_id", "user_id")`);
+      return;
+    }
     assertSqlite(queryInterface);
     await queryInterface.sequelize.query(`CREATE UNIQUE INDEX \`${INDEX}\` ON \`${TABLE}\` (\`task_id\`, \`user_id\`)`);
   },

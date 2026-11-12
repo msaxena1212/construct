@@ -26,7 +26,9 @@ const { resolveApprovedSqlitePath, APPROVED_ROOT } = require("./sqlite_policy");
 // Known production hosts. Refused in any setting, even though SQLite does not use a host.
 const PROHIBITED_HOSTS = Object.freeze(["13.233.140.9"]);
 
-const TARGET_CLASSES = Object.freeze(["isolated_test", "local_demo", "neon_cloud"]);
+const TARGET_CLASSES = Object.freeze(["isolated_test", "local_demo", "neon_cloud", "supabase_cloud"]);
+// Hosted PostgreSQL targets. Only these classes may use DB_DIALECT=postgres.
+const POSTGRES_CLOUD_CLASSES = Object.freeze(["neon_cloud", "supabase_cloud"]);
 const DIALECTS = Object.freeze(["sqlite", "postgres"]);
 const DISPOSABLE_SQLITE = /\.disposable\.sqlite$/i;
 const DEMO_SQLITE = /\.sqlite$/i;
@@ -53,13 +55,13 @@ function evaluateDatabaseTarget(env) {
   }
 
   // Rule 2.
-  if (env.NODE_ENV === "production" && env.DB_TARGET_CLASS !== "neon_cloud") {
+  if (env.NODE_ENV === "production" && !POSTGRES_CLOUD_CLASSES.includes(env.DB_TARGET_CLASS)) {
     return refuse("NODE_ENV=production is refused without an approved cloud target class.");
   }
 
   // Rule 3.
   if (!env.DB_TARGET_CLASS) {
-    return refuse("DB_TARGET_CLASS is not set. Declare isolated_test, local_demo, or neon_cloud explicitly.");
+    return refuse("DB_TARGET_CLASS is not set. Declare isolated_test, local_demo, neon_cloud, or supabase_cloud explicitly.");
   }
   if (!TARGET_CLASSES.includes(env.DB_TARGET_CLASS)) {
     return refuse(`DB_TARGET_CLASS '${env.DB_TARGET_CLASS}' is not an approved class.`);
@@ -71,17 +73,20 @@ function evaluateDatabaseTarget(env) {
     return refuse(`DB_DIALECT '${env.DB_DIALECT}' is not permitted.`);
   }
 
-  // Neon PostgreSQL target
-  if (env.DB_DIALECT === "postgres" || env.DB_TARGET_CLASS === "neon_cloud") {
+  // Hosted PostgreSQL target (Neon or Supabase)
+  if (env.DB_DIALECT === "postgres" || POSTGRES_CLOUD_CLASSES.includes(env.DB_TARGET_CLASS)) {
     if (env.DB_DIALECT !== "postgres") {
-      return refuse("neon_cloud target requires DB_DIALECT=postgres.");
+      return refuse(`${env.DB_TARGET_CLASS} target requires DB_DIALECT=postgres.`);
+    }
+    if (!POSTGRES_CLOUD_CLASSES.includes(env.DB_TARGET_CLASS)) {
+      return refuse("PostgreSQL is permitted only for the neon_cloud or supabase_cloud target class.");
     }
     if (!env.DATABASE_URL && !env.DB_HOST) {
-      return refuse("DATABASE_URL or DB_HOST must be provided for postgres/neon_cloud.");
+      return refuse("DATABASE_URL or DB_HOST must be provided for postgres/cloud targets.");
     }
     return {
       ok: true,
-      reason: "Approved Neon PostgreSQL database target.",
+      reason: `Approved ${env.DB_TARGET_CLASS} PostgreSQL database target.`,
       target: summary,
     };
   }

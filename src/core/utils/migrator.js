@@ -73,6 +73,21 @@ class MigrationRunner {
     return baseline.tableOrder.filter((t) => present.has(t));
   }
 
+  /**
+   * PostgreSQL has no TINYINT type. The migration history uses TINYINT (written for MySQL and SQLite), so a
+   * TINYINT domain over SMALLINT is created before any migration runs. Idempotent; a no-op on other dialects.
+   */
+  async ensurePostgresCompatibility() {
+    if (this.sequelize.getDialect() !== 'postgres') return;
+    await this.sequelize.query(`
+      DO $$ BEGIN
+        CREATE DOMAIN tinyint AS smallint;
+      EXCEPTION
+        WHEN duplicate_object THEN NULL;
+      END $$;
+    `);
+  }
+
   /** Reads the applied list without creating the bookkeeping table, so a refused run leaves no trace. */
   async readAppliedIfPresent() {
     const names = (await this.queryInterface.showAllTables()).map((n) => (typeof n === "string" ? n : n.tableName));
@@ -108,6 +123,7 @@ class MigrationRunner {
     }
 
     await this.initMetaTable();
+    await this.ensurePostgresCompatibility();
 
     const results = [];
     for (const file of pending) {

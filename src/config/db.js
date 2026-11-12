@@ -9,7 +9,7 @@ assertDatabaseTarget(process.env);
 let sequelize;
 let storage = null;
 
-if (process.env.DB_DIALECT === "postgres" || (process.env.DATABASE_URL && process.env.DB_TARGET_CLASS === "neon_cloud")) {
+if (process.env.DB_DIALECT === "postgres") {
   const databaseUrl = process.env.DATABASE_URL;
   const isSsl = process.env.DB_SSL === "true" || (databaseUrl && databaseUrl.includes("sslmode="));
 

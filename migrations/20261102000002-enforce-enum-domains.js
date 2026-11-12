@@ -66,6 +66,17 @@ module.exports = {
   ENUM_DOMAINS,
 
   async up(queryInterface, Sequelize, transaction) {
+    if (queryInterface.sequelize.getDialect() === 'postgres') {
+      // PostgreSQL keeps VARCHAR(n); each domain is a named CHECK constraint on the column.
+      for (const d of ENUM_DOMAINS) {
+        const list = d.values.map(quoteValue).join(', ');
+        await queryInterface.sequelize.query(
+          `ALTER TABLE "${d.table}" ADD CONSTRAINT "ck_${d.table}_${d.column}" CHECK ("${d.column}" IN (${list}))`,
+          { transaction }
+        );
+      }
+      return;
+    }
     assertSqlite(queryInterface);
     for (const [table, domains] of byTable()) {
       await rebuildTable(
@@ -92,6 +103,15 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize, transaction) {
+    if (queryInterface.sequelize.getDialect() === 'postgres') {
+      for (const d of ENUM_DOMAINS) {
+        await queryInterface.sequelize.query(
+          `ALTER TABLE "${d.table}" DROP CONSTRAINT IF EXISTS "ck_${d.table}_${d.column}"`,
+          { transaction }
+        );
+      }
+      return;
+    }
     assertSqlite(queryInterface);
     for (const [table, domains] of byTable()) {
       await rebuildTable(

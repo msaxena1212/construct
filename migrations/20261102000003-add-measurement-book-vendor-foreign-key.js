@@ -15,6 +15,13 @@ const CLAUSE = `CONSTRAINT \`${CONSTRAINT}\` FOREIGN KEY (\`vendor_id\`) REFEREN
 
 module.exports = {
   async up(queryInterface, Sequelize, transaction) {
+    if (queryInterface.sequelize.getDialect() === 'postgres') {
+      await queryInterface.addConstraint(TABLE, {
+        fields: ['vendor_id'], type: 'foreign key', name: CONSTRAINT,
+        references: { table: 'VENDORS', field: 'id' }, onDelete: 'SET NULL', onUpdate: 'CASCADE', transaction,
+      });
+      return;
+    }
     assertSqlite(queryInterface);
     await rebuildTable(
       queryInterface,

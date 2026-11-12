@@ -9,11 +9,8 @@
  * A table rebuild was tried first and rejected: it drops PROJECT_TASK, and with foreign keys enforced that drop
  * cascades into TASK_CHILD and the other child tables with ON DELETE CASCADE. DROP COLUMN only edits the definition.
  */
-const { assertSqlite } = require('../src/core/utils/sqlite-rebuild');
-
 module.exports = {
   async up(queryInterface, Sequelize, transaction) {
-    assertSqlite(queryInterface);
     // Table and column names are written as literals: scripts/schema/generate-baseline.js reads them to know which
     // columns and indexes a migration owns, so the baseline does not take them over.
     await queryInterface.addColumn('PROJECT_TASK', 'msp_uid', { type: Sequelize.INTEGER, allowNull: true }, { transaction });
@@ -21,8 +18,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize, transaction) {
-    assertSqlite(queryInterface);
     await queryInterface.removeIndex('PROJECT_TASK', 'idx_project_task_milestone_msp_uid', { transaction });
-    await queryInterface.sequelize.query('ALTER TABLE `PROJECT_TASK` DROP COLUMN `msp_uid`', { transaction });
+    await queryInterface.sequelize.query('ALTER TABLE "PROJECT_TASK" DROP COLUMN "msp_uid"', { transaction });
   },
 };
