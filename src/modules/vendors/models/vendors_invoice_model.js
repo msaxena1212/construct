@@ -137,6 +137,13 @@ module.exports = (sequelize, Sequelize) => {
     },
   }, {
     freezeTableName: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['company_id', 'vendor_id', 'invoice_number'],
+        name: 'unique_vendor_invoice_per_company'
+      }
+    ]
   });
 
   return VendorInvoice;

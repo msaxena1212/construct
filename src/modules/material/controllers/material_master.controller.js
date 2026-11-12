@@ -100,7 +100,7 @@ async createMaterial_Master(req, res) {
                     .status(200)
                     .send({ code: 200, message: "Success", data: material_masters });
             } else {
-                return res.status(404).send({ code: 404, message: "No data found" });
+                return res.status(200).send({ code: 200, message: "No data found", data: [] });
             }
         } catch (error) {
             return res

@@ -468,9 +468,10 @@ class QuotationController {
 
             } else {
 
-                return res.status(404).json({
-                    code: 404,
-                    message: "No data found"
+                return res.status(200).json({
+                    code: 200,
+                    message: "No data found",
+                    data: []
                 });
             }
 

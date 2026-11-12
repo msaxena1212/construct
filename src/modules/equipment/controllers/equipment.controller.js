@@ -190,7 +190,7 @@ class equipmentController {
           .status(200)
           .send({ code: 200, message: "Success", data: equipments });
       } else {
-        return res.status(404).send({ code: 404, message: "No data found" });
+        return res.status(200).send({ code: 200, message: "No data found", data: [] });
       }
     } catch (error) {
       return res
@@ -237,158 +237,142 @@ class equipmentController {
         return res.status(401).json({ message: "Unauthorized. Company context missing." });
       }
 
-
       const equipment = await db.equipment.findOne({
         where: { id, isDeleted: false, company_id }
       });
 
       if (!equipment) {
-        return res.status(404).json({ message: "equipment not found." });
+        return res.status(404).json({ message: "Equipment not found." });
       }
-
-      const {
-        name,
-        sku,
-        category,
-        vendor_name,
-        cost,
-        status,
-        vendor_id,
-        equipment_master_id,
-        stockUsed,
-        stockIn,
-        quotation_id
-      } = equipment;
 
       const { projects } = req.body;
 
-      if (!projects || !Array.isArray(projects) || projects.length === 0) {
-        return res.status(400).json({ message: "Projects data is required." });
+      if (!Array.isArray(projects) || projects.length === 0) {
+        return res.status(400).json({ message: "projects array is required." });
       }
 
-      const totalUsedStock = projects.reduce((sum, item) => {
-        return sum + Number(item.stock || 0);
-      }, 0);
-
-      const availableStock = Number(stockIn) - Number(stockUsed || 0);
-
-      if (totalUsedStock <= 0) {
-        return res.status(400).json({ message: "Assigned stock must be greater than 0." });
-      }
-
-      if (totalUsedStock > availableStock) {
-        return res.status(400).json({
-          message: `Assigned stock (${totalUsedStock}) exceeds available stock (${availableStock}).`
-        });
-      }
-
-      await db.equipment.update(
-        {
-          stockUsed: Number(stockUsed || 0) + totalUsedStock,
-          stockRemaining: stockIn - (Number(stockUsed || 0) + totalUsedStock)
-        },
-        {
-          where: {
-            id,
-            company_id
-          }
+      for (const p of projects) {
+        if (!p.project_id) {
+          return res.status(400).json({ message: "project_id is required for every row." });
         }
-      );
+        if (!Number(p.stock) || Number(p.stock) <= 0) {
+          return res.status(400).json({ message: "Assigned stock must be greater than 0." });
+        }
+      }
 
-      const project_multiple = await Promise.all(
-        projects.map(async (project) => {
+      // Every target project must belong to this company.
+      const projectIds = [...new Set(projects.map((p) => p.project_id))];
+      const companyProjects = await db.project.findAll({ where: { id: projectIds, company_id } });
+      const projectById = new Map(companyProjects.map((p) => [String(p.id), p]));
+      if (projectIds.some((pid) => !projectById.has(String(pid)))) {
+        return res.status(404).json({ message: "Project not found." });
+      }
 
-          const existingProjectStock = await db.equipment_project_stock.findOne({
-            where: {
-              equipment_id: id,
-              project_id: project.project_id
-            }
+      await db.sequelize.transaction(async (t) => {
+        // Re-read under lock so concurrent assignments cannot over-allocate.
+        const current = await db.equipment.findOne({
+          where: { id, isDeleted: false, company_id },
+          transaction: t,
+          lock: t.LOCK.UPDATE
+        });
+        const { name, sku, category, vendor_name, cost, vendor_id, equipment_master_id, quotation_id } = current;
+        const stockIn = Number(current.stockIn || 0);
+        const stockUsed = Number(current.stockUsed || 0);
+
+        const totalUsedStock = projects.reduce((sum, item) => sum + Number(item.stock), 0);
+        const availableStock = stockIn - stockUsed;
+        if (totalUsedStock > availableStock) {
+          throw Object.assign(
+            new Error(`Assigned stock (${totalUsedStock}) exceeds available stock (${availableStock}).`),
+            { inventoryCode: 400 }
+          );
+        }
+
+        const newStockUsed = stockUsed + totalUsedStock;
+        await db.equipment.update(
+          {
+            stockUsed: newStockUsed,
+            stockRemaining: stockIn - newStockUsed,
+            status: newStockUsed > 0 ? "ASSIGNED" : "NOT ASSIGNED"
+          },
+          { where: { id, company_id }, transaction: t }
+        );
+
+        for (const project of projects) {
+          const project_name = projectById.get(String(project.project_id)).name;
+          const qty = Number(project.stock);
+
+          let projectStock = await db.equipment_project_stock.findOne({
+            where: { equipment_id: id, project_id: project.project_id, company_id },
+            transaction: t,
+            lock: t.LOCK.UPDATE
           });
 
-          let projectStockData;
-
-          if (existingProjectStock) {
-
-            const updatedStock =
-              Number(existingProjectStock.stockUsed || 0) +
-              Number(project.stock || 0);
-
-            await existingProjectStock.update({
-              stockUsed: updatedStock,
-            });
-
-            projectStockData = existingProjectStock;
-
+          if (projectStock) {
+            await projectStock.update(
+              { stockUsed: Number(projectStock.stockUsed || 0) + qty, status: "ASSIGNED" },
+              { transaction: t }
+            );
           } else {
+            projectStock = await db.equipment_project_stock.create(
+              {
+                equipment_id: id,
+                project_id: project.project_id,
+                name, sku, category, vendor_name, cost,
+                stockUsed: qty,
+                status: "ASSIGNED",
+                vendor_id, equipment_master_id, project_name, quotation_id, company_id
+              },
+              { transaction: t }
+            );
+          }
 
-            projectStockData = await db.equipment_project_stock.create({
+          await db.equipment_history.create(
+            {
+              name, sku, category,
+              stockIn: 0,
+              stockUsed: qty,
+              cost, vendor_name, project_name,
+              equipment_id: current.id,
+              equipment_master_id,
+              company_id,
+              project_id: project.project_id,
+              vendor_id, quotation_id,
+              user_id: req.user.id,
+              status: "ASSIGNED"
+            },
+            { transaction: t }
+          );
+
+          await db.equipment_project_stock_history.create(
+            {
+              equipment_project_stock_id: projectStock.id,
               equipment_id: id,
               project_id: project.project_id,
-              name,
-              sku,
-              category,
-              vendor_name,
-              stockUsed: project.stock,
-              cost,
+              name, sku, category, vendor_name, cost,
+              stockUsed: qty,
               status: "ASSIGNED",
-              vendor_id,
-              equipment_master_id,
-              project_name: project.project_name,
-              quotation_id,
-              company_id
-            });
-          }
-
-          await db.equipment_history.create({
-            name,
-            sku,
-            category,
-            stockIn,
-            stockUsed: project.stock,
-            cost,
-            vendor_name,
-            project_name: project.project_name,
-            equipment_id: equipment.id,
-            equipment_master_id,
-            company_id,
-            project_id: project.project_id,
-            vendor_id,
-            quotation_id,
-            status: "ASSIGNED",
-            user_id: req.user.id,
-          });
-
-          await db.equipment_project_stock_history.create({
-            equipment_project_stock_id: projectStockData.id,
-            equipment_id: id,
-            project_id: project.project_id,
-            name,
-            sku,
-            category,
-            vendor_name,
-            stockUsed: project.stock,
-            cost,
-            status: "ASSIGNED",
-            vendor_id,
-            equipment_master_id,
-            project_name: project.project_name,
-            quotation_id,
-            company_id
-          });
-
-          return projectStockData;
-        })
-      );
-
-      const updatedEquipment = await db.equipment.findOne({ where: { id, company_id } });
-
-      res.status(200).json({
-        message: "equipment updated successfully.",
-        data: updatedEquipment
+              vendor_id, equipment_master_id, project_name, quotation_id, company_id
+            },
+            { transaction: t }
+          );
+        }
       });
 
+      const updated = await db.equipment.findOne({
+        where: { id, company_id },
+        include: [{ model: db.equipment_project_stock, as: "equipment_project_stock" }]
+      });
+
+      res.status(200).json({
+        message: "Equipment updated successfully.",
+        data: updated
+      });
     } catch (error) {
-      console.error("[UPDATE_equipment_ERROR]", error);
+      if (error.inventoryCode) {
+        return res.status(error.inventoryCode).json({ message: error.message });
+      }
+      console.error("[UPDATE_EQUIPMENT_ERROR]", error);
       res.status(500).json({
         message: "Error updating equipment.",
         error: error.message
@@ -411,6 +395,14 @@ class equipmentController {
 
       if (!equipment) {
         return res.status(404).json({ message: "equipment not found." });
+      }
+      const allocated = await db.equipment_project_stock.count({
+        where: { equipment_id: id, company_id, stockUsed: { [db.Sequelize.Op.gt]: 0 } }
+      });
+      if (allocated > 0) {
+        return res.status(409).json({
+          message: "Cannot delete: stock is still allocated to projects. Transfer or return it first."
+        });
       }
 
       await equipment.update({ isDeleted: true });
@@ -483,7 +475,7 @@ class equipmentController {
           .status(200)
           .send({ code: 200, message: "Success", data: equipments });
       } else {
-        return res.status(404).send({ code: 404, message: "No data found" });
+        return res.status(200).send({ code: 200, message: "No data found", data: [] });
       }
     } catch (error) {
       return res
@@ -494,113 +486,69 @@ class equipmentController {
 
   async equipment_stock_transfer(req, res) {
     try {
-
-      const { equipment_id } = req.params;
-
+      const equipment_id = req.params.equipment_id;
       const { note, transfers } = req.body;
-
       const company_id = req.user.company_id;
 
       const equipment = await db.equipment.findOne({
-        where: {
-          id: equipment_id,
-          isDeleted: false,
-          company_id
-        }
+        where: { id: equipment_id, isDeleted: false, company_id }
       });
 
       if (!equipment) {
-        return res.status(404).json({
-          message: "Equipment not found."
-        });
+        return res.status(404).json({ message: "Equipment not found." });
       }
 
-      const {
-        name,
-        sku,
-        category,
-        vendor_name,
-        cost,
-        vendor_id,
-        equipment_master_id,
-        quotation_id
-      } = equipment;
-
       if (!transfers || !Array.isArray(transfers) || transfers.length === 0) {
-        return res.status(400).json({
-          message: "Transfers data is required"
-        });
+        return res.status(400).json({ message: "Transfers data is required" });
       }
 
       for (const item of transfers) {
         if (!item.from_project_id || !item.to_project_id) {
           return res.status(400).json({ message: "from_project_id and to_project_id are required." });
         }
-        if (item.from_project_id === item.to_project_id) {
+        if (String(item.from_project_id) === String(item.to_project_id)) {
           return res.status(400).json({ message: "From and To project cannot be the same." });
         }
-        if (!item.quantity || Number(item.quantity) <= 0) {
+        if (!Number(item.quantity) || Number(item.quantity) <= 0) {
           return res.status(400).json({ message: "Quantity must be greater than 0." });
         }
       }
 
-      for (const item of transfers) {
+      // Every destination project must exist in this company before any stock is touched.
+      const toProjectIds = [...new Set(transfers.map((t) => t.to_project_id))];
+      const toProjects = await db.project.findAll({ where: { id: toProjectIds, company_id } });
+      const projectById = new Map(toProjects.map((p) => [String(p.id), p]));
+      if (toProjectIds.some((id) => !projectById.has(String(id)))) {
+        return res.status(404).json({ message: "Destination project not found" });
+      }
 
-        const {
-          from_project_id,
-          to_project_id,
-          quantity
-        } = item;
+      const { name, sku, category, vendor_name, cost, vendor_id, equipment_master_id, quotation_id } = equipment;
 
-        const fromStock = await db.equipment_project_stock.findOne({
-          where: {
-            equipment_id,
-            project_id: from_project_id,
-            company_id
+      // All rows move together: a failure part-way through must not leave stock removed but not added.
+      await db.sequelize.transaction(async (t) => {
+        for (const item of transfers) {
+          const { from_project_id, to_project_id, quantity } = item;
+          const projectData = projectById.get(String(to_project_id));
+
+          const fromStock = await db.equipment_project_stock.findOne({
+            where: { equipment_id, project_id: from_project_id, company_id },
+            transaction: t,
+            lock: t.LOCK.UPDATE
+          });
+
+          if (!fromStock) throw Object.assign(new Error("Source project stock not found"), { transferCode: 404 });
+          if (Number(fromStock.stockUsed) < Number(quantity)) {
+            throw Object.assign(new Error("Insufficient stock in source project"), { transferCode: 400 });
           }
-        });
 
-        if (!fromStock) {
-          return res.status(404).json({
-            message: `Source project stock not found`
-          });
-        }
+          const remaining = Number(fromStock.stockUsed) - Number(quantity);
+          await fromStock.update(
+            { stockUsed: remaining, status: remaining > 0 ? fromStock.status : "NOT ASSIGNED" },
+            { transaction: t }
+          );
 
-        if (Number(fromStock.stockUsed) < Number(quantity)) {
-          return res.status(400).json({
-            message: `Insufficient stock in source project`
-          });
-        }
-
-        const updatedFromStock =
-          Number(fromStock.stockUsed) - Number(quantity);
-
-        await fromStock.update({
-          stockUsed: updatedFromStock
-        });
-
-        const projectData = await db.project.findOne({
-          where: {
-            id: to_project_id,
-            company_id
-          }
-        });
-
-        if (!projectData) {
-          return res.status(404).json({
-            message: "Destination project not found"
-          });
-        }
-
-        const [toStock, created] =
-          await db.equipment_project_stock.findOrCreate({
-
-            where: {
-              equipment_id,
-              project_id: to_project_id,
-              company_id
-            },
-
+          const [toStock, created] = await db.equipment_project_stock.findOrCreate({
+            where: { equipment_id, project_id: to_project_id, company_id },
             defaults: {
               equipment_id,
               project_id: to_project_id,
@@ -616,52 +564,58 @@ class equipmentController {
               project_name: projectData.name,
               quotation_id,
               company_id
-            }
-
+            },
+            transaction: t,
+            lock: t.LOCK.UPDATE
           });
 
-        if (!created) {
+          if (!created) {
+            await toStock.update(
+              { stockUsed: Number(toStock.stockUsed) + Number(quantity), status: "ASSIGNED" },
+              { transaction: t }
+            );
+          }
 
-          const updatedToStock =
-            Number(toStock.stockUsed) + Number(quantity);
-
-          await toStock.update({
-            stockUsed: updatedToStock
-          });
+          await db.equipment_history.create(
+            {
+              name,
+              sku,
+              category,
+              stockUsed: quantity,
+              cost,
+              vendor_name,
+              equipment_id,
+              equipment_master_id,
+              company_id,
+              project_id: to_project_id,
+              vendor_id,
+              project_name: projectData.name,
+              user_id: req.user.id,
+              status: "TRANSFER",
+              note
+            },
+            { transaction: t }
+          );
         }
 
-        await db.equipment_history.create({
-          name,
-          sku,
-          category,
-          stockUsed: quantity,
-          cost,
-          vendor_name,
-          equipment_id,
-          equipment_master_id,
-          company_id,
-          project_id: to_project_id,
-          vendor_id,
-          project_name: projectData.name,
-          status: "TRANSFER",
-          note,
-          user_id: req.user.id,
+        const allProjectStocks = await db.equipment_project_stock.findAll({
+          where: { equipment_id, company_id },
+          transaction: t
         });
-
-      }
-
-      return res.status(200).json({
-        message: "Equipment stock transferred successfully"
+        const stillAssigned = allProjectStocks.some((ps) => Number(ps.stockUsed) > 0);
+        await db.equipment.update(
+          { status: stillAssigned ? "ASSIGNED" : "NOT ASSIGNED" },
+          { where: { id: equipment_id, company_id }, transaction: t }
+        );
       });
 
+      return res.status(200).json({ message: "Equipment stock transferred successfully" });
     } catch (error) {
-
+      if (error.transferCode) {
+        return res.status(error.transferCode).json({ message: error.message });
+      }
       console.log("[EQUIPMENT_STOCK_TRANSFER_ERROR]", error);
-
-      return res.status(500).json({
-        message: "Internal server error",
-        error: error.message
-      });
+      return res.status(500).json({ message: "Internal server error", error: error.message });
     }
   }
 

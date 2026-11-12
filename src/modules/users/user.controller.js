@@ -102,9 +102,12 @@ class UserController {
 
   async getAllCompanies(req, res) {
     try {
-
+      // If user has a company_id, return their company profile instead of 403
       if (req.user && req.user.company_id) {
-        return res.status(403).json({ message: "Unauthorized. Super Admin access only." });
+        const company = await db.company.findOne({
+          where: { id: req.user.company_id, isDeleted: false }
+        });
+        return res.status(200).json({ data: company ? [company] : [] });
       }
 
       const companies = await db.company.findAll({

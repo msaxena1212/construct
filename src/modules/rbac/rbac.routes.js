@@ -5,6 +5,7 @@ module.exports = (router) => {
   router.get("/sidebar", rbacCtrl.getSidebar);
   router.post("/modules", rbacCtrl.createModule);
   router.get("/modules", rbacCtrl.getModules);
+  router.post("/modules/reset-canonical", rbacCtrl.resetToCanonical);
   router.put("/modules/:id", rbacCtrl.updateModule);
   router.delete("/modules/:id", rbacCtrl.deleteModule);
 

@@ -46,6 +46,15 @@ db.project = require("../modules/projects/models/project.model.js")(sequelize, S
 db.milestone = require("../modules/projects/models/milestone.model.js")(sequelize, Sequelize);
 db.project_team = require("../modules/projects/models/team.model.js")(sequelize, Sequelize);
 db.project_document = require("../modules/projects/models/document.model.js")(sequelize, Sequelize);
+// Project master data (scope section 03): clients, consultants and the project structure
+const projectMaster = require("../modules/projects/models/project_master.models.js");
+db.client_master = projectMaster.client_master(sequelize, Sequelize);
+db.consultant_master = projectMaster.consultant_master(sequelize, Sequelize);
+db.project_phase = projectMaster.project_phase(sequelize, Sequelize);
+db.project_zone = projectMaster.project_zone(sequelize, Sequelize);
+db.project_discipline = projectMaster.project_discipline(sequelize, Sequelize);
+db.project_cost_centre = projectMaster.project_cost_centre(sequelize, Sequelize);
+db.project_work_package = projectMaster.project_work_package(sequelize, Sequelize);
 // PROJECT HISTORY START
 db.project_history = require("../modules/projects/models/project-history.model.js")(sequelize, Sequelize);
 
@@ -58,8 +67,130 @@ db.project_task_assignee = require("../modules/projects/models/task-assignee.mod
 db.project_sub_task = require("../modules/projects/models/sub-task.model.js")(sequelize, Sequelize);
 db.project_task_dependency = require("../modules/projects/models/task-dependency.model.js")(sequelize, Sequelize);
 
+// Construction Extension Models
+db.dpr = require("../modules/projects/models/dpr.model.js")(sequelize, Sequelize);
+db.dpr_work_item = require("../modules/projects/models/dpr_work_item.model.js")(sequelize, Sequelize);
+db.dpr_image = require("../modules/projects/models/dpr_image.model.js")(sequelize, Sequelize);
+db.retention_release = require("../modules/projects/models/retention_release.model.js")(sequelize, Sequelize);
+db.bank_guarantee = require("../modules/projects/models/bank_guarantee.model.js")(sequelize, Sequelize);
+db.boq_item = require("../modules/projects/models/boq_item.model.js")(sequelize, Sequelize);
+db.snag_item = require("../modules/projects/models/snag_item.model.js")(sequelize, Sequelize);
+db.labour_attendance = require("../modules/projects/models/labour_attendance.model.js")(sequelize, Sequelize);
+db.drawing_register = require("../modules/projects/models/drawing_register.model.js")(sequelize, Sequelize);
+
+// Batch L: WBS, CBS & Budget Models
+db.wbs = require("../modules/projects/models/wbs.model.js")(sequelize, Sequelize);
+db.cbs = require("../modules/projects/models/cbs.model.js")(sequelize, Sequelize);
+db.budget = require("../modules/projects/models/budget.model.js")(sequelize, Sequelize);
+db.budget_line = require("../modules/projects/models/budget_line.model.js")(sequelize, Sequelize);
+db.commitment_ledger = require("../modules/projects/models/commitment_ledger.model.js")(sequelize, Sequelize);
+db.budget_head = require("../modules/projects/models/budget_head.model.js")(sequelize, Sequelize);
+db.budget_head_allocation = require("../modules/projects/models/budget_head_allocation.model.js")(sequelize, Sequelize);
+db.cost_ledger = require("../modules/projects/models/cost_ledger.model.js")(sequelize, Sequelize);
+
+// Batch R: Measurement Book & Contractor RA Billing
+db.measurement_book = require("../modules/projects/models/measurement_book.model.js")(sequelize, Sequelize);
+db.measurement_book_item = require("../modules/projects/models/measurement_book_item.model.js")(sequelize, Sequelize);
+db.contractor_ra_bill = require("../modules/projects/models/contractor_ra_bill.model.js")(sequelize, Sequelize);
+
+// Batch W: Variations, Change Orders & Subcontractor Claims
+db.variation_order = require("../modules/projects/models/variation_order.model.js")(sequelize, Sequelize);
+db.variation_order_item = require("../modules/projects/models/variation_order_item.model.js")(sequelize, Sequelize);
+
+// Associations for Construction Extension
+db.project.hasMany(db.dpr, { foreignKey: "project_id", as: "daily_reports", onDelete: "CASCADE" });
+db.dpr.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.dpr.hasMany(db.dpr_work_item, { foreignKey: "dpr_id", as: "work_items", onDelete: "CASCADE" });
+db.dpr_work_item.belongsTo(db.dpr, { foreignKey: "dpr_id", as: "dpr" });
+db.dpr.hasMany(db.dpr_image, { foreignKey: "dpr_id", as: "images", onDelete: "CASCADE" });
+db.dpr_image.belongsTo(db.dpr, { foreignKey: "dpr_id", as: "dpr" });
+db.project.hasMany(db.dpr_image, { foreignKey: "project_id", as: "dpr_images", onDelete: "CASCADE" });
+db.dpr_image.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.project.hasMany(db.retention_release, { foreignKey: "project_id", as: "retention_releases", onDelete: "CASCADE" });
+db.retention_release.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.project.hasMany(db.bank_guarantee, { foreignKey: "project_id", as: "bank_guarantees", onDelete: "CASCADE" });
+db.bank_guarantee.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.project.hasMany(db.boq_item, { foreignKey: "project_id", as: "boq_items", onDelete: "CASCADE" });
+db.boq_item.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+// Batch W Associations: Variation Orders ↔ Items
+db.project.hasMany(db.variation_order, { foreignKey: "project_id", as: "variation_orders", onDelete: "CASCADE" });
+db.variation_order.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.company.hasMany(db.variation_order, { foreignKey: "company_id", as: "variation_orders", onDelete: "CASCADE" });
+db.variation_order.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.variation_order.hasMany(db.variation_order_item, { foreignKey: "variation_order_id", as: "items", onDelete: "CASCADE" });
+db.variation_order_item.belongsTo(db.variation_order, { foreignKey: "variation_order_id", as: "variation_order" });
+db.variation_order_item.belongsTo(db.boq_item, { foreignKey: "boq_item_id", as: "boq_item" });
+
+// Batch R Associations: Measurement Book ↔ Items ↔ RA Bills
+db.project.hasMany(db.measurement_book, { foreignKey: "project_id", as: "measurement_books", onDelete: "CASCADE" });
+db.measurement_book.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.company.hasMany(db.measurement_book, { foreignKey: "company_id", as: "measurement_books", onDelete: "CASCADE" });
+db.measurement_book.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.measurement_book.hasMany(db.measurement_book_item, { foreignKey: "mb_id", as: "items", onDelete: "CASCADE" });
+db.measurement_book_item.belongsTo(db.measurement_book, { foreignKey: "mb_id", as: "measurement_book" });
+db.measurement_book_item.belongsTo(db.boq_item, { foreignKey: "boq_item_id", as: "boq_item" });
+
+db.project.hasMany(db.contractor_ra_bill, { foreignKey: "project_id", as: "contractor_ra_bills", onDelete: "CASCADE" });
+db.contractor_ra_bill.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.contractor_ra_bill.hasMany(db.measurement_book_item, { foreignKey: "ra_bill_id", as: "billed_items" });
+db.measurement_book_item.belongsTo(db.contractor_ra_bill, { foreignKey: "ra_bill_id", as: "ra_bill" });
+
+// Batch L Associations
+db.project.hasMany(db.wbs, { foreignKey: "project_id", as: "wbs_nodes", onDelete: "CASCADE" });
+db.wbs.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.wbs.hasMany(db.wbs, { foreignKey: "parent_id", as: "children", onDelete: "CASCADE" });
+db.wbs.belongsTo(db.wbs, { foreignKey: "parent_id", as: "parent" });
+
+db.company.hasMany(db.cbs, { foreignKey: "company_id", as: "cbs_codes", onDelete: "CASCADE" });
+db.cbs.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
+
+db.project.hasMany(db.budget, { foreignKey: "project_id", as: "budgets", onDelete: "CASCADE" });
+db.budget.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+// Batch N Associations
+db.project.hasMany(db.budget_head, { foreignKey: "project_id", as: "budget_heads", onDelete: "CASCADE" });
+db.budget_head.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.budget.hasMany(db.budget_head_allocation, { foreignKey: "budget_id", as: "head_allocations", onDelete: "CASCADE" });
+db.budget_head_allocation.belongsTo(db.budget, { foreignKey: "budget_id", as: "budget" });
+
+db.budget_head.hasMany(db.budget_head_allocation, { foreignKey: "budget_head_id", as: "allocations", onDelete: "CASCADE" });
+db.budget_head_allocation.belongsTo(db.budget_head, { foreignKey: "budget_head_id", as: "head" });
+
+db.budget_head.hasMany(db.budget_line, { foreignKey: "budget_head_id", as: "lines" });
+db.budget_line.belongsTo(db.budget_head, { foreignKey: "budget_head_id", as: "head" });
+
+db.budget.hasMany(db.budget_line, { foreignKey: "budget_id", as: "lines", onDelete: "CASCADE" });
+db.budget_line.belongsTo(db.budget, { foreignKey: "budget_id", as: "budget" });
+db.budget_line.belongsTo(db.wbs, { foreignKey: "wbs_id", as: "wbs" });
+db.budget_line.belongsTo(db.cbs, { foreignKey: "cbs_id", as: "cbs" });
+db.budget_line.belongsTo(db.boq_item, { foreignKey: "boq_item_id", as: "boq_item" });
+// boq_item is mapped directly to project; wbs/cbs linking is maintained via budget_line
+
+db.project.hasMany(db.snag_item, { foreignKey: "project_id", as: "snag_items", onDelete: "CASCADE" });
+db.snag_item.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.project.hasMany(db.labour_attendance, { foreignKey: "project_id", as: "labour_logs", onDelete: "CASCADE" });
+db.labour_attendance.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+
+db.project.hasMany(db.drawing_register, { foreignKey: "project_id", as: "drawings", onDelete: "CASCADE" });
+db.drawing_register.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.drawing_register.belongsTo(db.user, { foreignKey: "uploaded_by", as: "creator" });
+
 // Vendors Models
 db.vendors = require("../modules/vendors/models/vendors_model.js")(sequelize, Sequelize);
+// Vendor links for the Phase A control tables (retention releases and bank guarantees). Declared here because
+// db.vendors is defined on this line.
+db.vendors.hasMany(db.retention_release, { foreignKey: "vendor_id", as: "retention_releases", onDelete: "RESTRICT" });
+db.retention_release.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor" });
+db.vendors.hasMany(db.bank_guarantee, { foreignKey: "vendor_id", as: "bank_guarantees", onDelete: "RESTRICT" });
+db.bank_guarantee.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor" });
 db.vendors_activity = require("../modules/vendors/models/vendors_activity_model.js")(sequelize, Sequelize);
 db.vendors_labor = require("../modules/vendors/models/vendors_labor_model.js")(sequelize, Sequelize);
 db.vendors_invoice = require("../modules/vendors/models/vendors_invoice_model.js")(sequelize, Sequelize);
@@ -75,6 +206,25 @@ db.quotation = require("../modules/material/models/quotation.model.js")(sequeliz
 db.material = require("../modules/material/models/material.model.js")(sequelize, Sequelize);
 
 db.material_project_stock = require("../modules/material/models/material_project_stock.model.js")(sequelize, Sequelize);
+db.stock_ledger = require("../modules/material/models/stock_ledger.model.js")(sequelize, Sequelize);
+db.store_location = require("../modules/material/models/store_location.model.js")(sequelize, Sequelize);
+db.stock_transfer = require("../modules/material/models/stock_transfer.model.js")(sequelize, Sequelize);
+db.stock_transfer_line = require("../modules/material/models/stock_transfer_line.model.js")(sequelize, Sequelize);
+db.stock_transfer_event = require("../modules/material/models/stock_transfer_event.model.js")(sequelize, Sequelize);
+db.stock_transfer_discrepancy = require("../modules/material/models/stock_transfer_discrepancy.model.js")(sequelize, Sequelize);
+
+// Foreign keys for the location/transfer layer. These match the constraints created by
+// migrations/20261029000001-create-store-locations-and-stock-transfers.js.
+db.stock_ledger.belongsTo(db.store_location, { foreignKey: "location_id", as: "location", onDelete: "RESTRICT" });
+db.stock_ledger.belongsTo(db.stock_transfer, { foreignKey: "transfer_id", as: "transfer", onDelete: "RESTRICT" });
+db.stock_transfer.belongsTo(db.store_location, { foreignKey: "source_location_id", as: "source_location", onDelete: "RESTRICT" });
+db.stock_transfer.belongsTo(db.store_location, { foreignKey: "destination_location_id", as: "destination_location", onDelete: "RESTRICT" });
+db.stock_transfer_line.belongsTo(db.stock_transfer, { foreignKey: "transfer_id", as: "transfer", onDelete: "RESTRICT" });
+db.stock_transfer_event.belongsTo(db.stock_transfer, { foreignKey: "transfer_id", as: "transfer", onDelete: "RESTRICT" });
+db.stock_transfer_discrepancy.belongsTo(db.stock_transfer, { foreignKey: "transfer_id", as: "transfer", onDelete: "RESTRICT" });
+db.stock_transfer_discrepancy.belongsTo(db.stock_transfer_line, { foreignKey: "transfer_line_id", as: "line", onDelete: "RESTRICT" });
+db.purchase_order = require("../modules/material/models/purchase_order.model.js")(sequelize, Sequelize);
+db.goods_receipt_note = require("../modules/material/models/goods_receipt_note.model.js")(sequelize, Sequelize);
 
 db.material_project_stock_history = require("../modules/material/models/material_project_stock_history.model.js")(sequelize, Sequelize);
 
@@ -179,6 +329,9 @@ db.company.hasMany(db.vendors_activity, { foreignKey: "company_id", as: "vendors
 db.vendors_activity.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
 db.project.hasMany(db.vendors, { foreignKey: "project_id", as: "vendors" });
 db.vendors.belongsTo(db.project, { foreignKey: "project_id", as: "project" });
+db.contractor_ra_bill.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "subcontractor" });
+db.contractor_ra_bill.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor" });
+db.measurement_book.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor" });
 
 db.company.hasMany(db.material_master, { foreignKey: "company_id", as: "material_master" });
 db.material_master.belongsTo(db.company, { foreignKey: "company_id", as: "company" });
@@ -387,8 +540,33 @@ db.quotation.hasMany(db.quotation_history, { foreignKey: "quotation_id", as: "qu
 db.quotation_history.belongsTo(db.quotation, { foreignKey: "quotation_id", as: "quotation" });
 
 
+// Project master data associations. Foreign keys are defined by the migration and the model attributes,
+// so these associations are declared with constraints: false to avoid a second definition.
+db.company.hasMany(db.client_master, { foreignKey: "company_id", as: "clients", constraints: false });
+db.company.hasMany(db.consultant_master, { foreignKey: "company_id", as: "consultants", constraints: false });
+db.client_master.belongsTo(db.company, { foreignKey: "company_id", as: "company", constraints: false });
+db.consultant_master.belongsTo(db.company, { foreignKey: "company_id", as: "company", constraints: false });
+db.project.belongsTo(db.client_master, { foreignKey: "client_id", as: "client", constraints: false });
+db.project.belongsTo(db.consultant_master, { foreignKey: "consultant_id", as: "consultant", constraints: false });
+db.project.belongsTo(db.user, { foreignKey: "project_manager_id", as: "project_manager", constraints: false });
+for (const child of [db.project_phase, db.project_zone, db.project_discipline, db.project_cost_centre, db.project_work_package]) {
+  db.project.hasMany(child, { foreignKey: "project_id", as: child.getTableName().toLowerCase().replace("project_", "") + "s", constraints: false });
+  child.belongsTo(db.project, { foreignKey: "project_id", as: "project", constraints: false });
+}
+db.project_phase.hasMany(db.project_work_package, { foreignKey: "phase_id", as: "work_packages", constraints: false });
+db.project_work_package.belongsTo(db.project_phase, { foreignKey: "phase_id", as: "phase", constraints: false });
+db.project_zone.hasMany(db.project_zone, { foreignKey: "parent_id", as: "children", constraints: false });
+db.project_zone.belongsTo(db.project_zone, { foreignKey: "parent_id", as: "parent", constraints: false });
+db.project_discipline.hasMany(db.project_work_package, { foreignKey: "discipline_id", as: "work_packages", constraints: false });
+db.project_work_package.belongsTo(db.project_discipline, { foreignKey: "discipline_id", as: "discipline", constraints: false });
+db.project_zone.hasMany(db.project_work_package, { foreignKey: "zone_id", as: "work_packages", constraints: false });
+db.project_work_package.belongsTo(db.project_zone, { foreignKey: "zone_id", as: "zone", constraints: false });
+db.project_cost_centre.hasMany(db.project_work_package, { foreignKey: "cost_centre_id", as: "work_packages", constraints: false });
+db.project_work_package.belongsTo(db.project_cost_centre, { foreignKey: "cost_centre_id", as: "cost_centre", constraints: false });
+db.vendors.hasMany(db.project_work_package, { foreignKey: "vendor_id", as: "work_packages", constraints: false });
+db.project_work_package.belongsTo(db.vendors, { foreignKey: "vendor_id", as: "vendor", constraints: false });
+
 // PROJECT MANAGEMENT END
 
 
-connectDB();
 module.exports = db;

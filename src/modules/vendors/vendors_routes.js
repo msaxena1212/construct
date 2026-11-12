@@ -8,32 +8,35 @@ const auditCtrl = require('../vendors/vendors_audit_controller');
 const historyCtrl = require('../vendors/vendors_history_controller');
 const paymentRequestCtrl = require('../vendors/vendors_payment_request_controller');
 
-router.get('/stats', vendorCtrl.getStats);
+router.get('/stats', checkPermission("resources/vendors", "can_read"), vendorCtrl.getStats);
 
 // ── Invoice routes ────────────────────────────────────────────────────────
-router.get('/:vendorId/invoices', invoiceCtrl.getInvoicesByVendor);
-router.post('/:vendorId/invoices', invoiceCtrl.createInvoice);
-router.put('/:vendorId/invoices/:id/status', invoiceCtrl.updateInvoiceStatus);
-router.delete('/:vendorId/invoices/:id', invoiceCtrl.deleteInvoice);
+router.get('/:vendorId/invoices', checkPermission("resources/vendors", "can_read"), invoiceCtrl.getInvoicesByVendor);
+router.post('/:vendorId/invoices', checkPermission("resources/vendors", "can_create"), invoiceCtrl.createInvoice);
+router.put('/:vendorId/invoices/:id/status', checkPermission("resources/vendors", "can_update"), invoiceCtrl.updateInvoiceStatus);
+router.delete('/:vendorId/invoices/:id', checkPermission("resources/vendors", "can_delete"), invoiceCtrl.deleteInvoice);
 
 // ── Vendors payment request routes ────────────────────────────────────────────────────────
-router.post('/:vendorId/invoices/:invoiceId/payment-requests', paymentRequestCtrl.createPaymentRequest);
-router.get('/:vendorId/invoices/:invoiceId/payment-requests', paymentRequestCtrl.getRequestsByInvoice);
+router.post('/:vendorId/invoices/:invoiceId/payment-requests', checkPermission("resources/vendors", "can_create"), paymentRequestCtrl.createPaymentRequest);
+router.get('/:vendorId/invoices/:invoiceId/payment-requests', checkPermission("resources/vendors", "can_read"), paymentRequestCtrl.getRequestsByInvoice);
+// Three-way match report: every line's accepted, billed and remaining quantities, rates and exceptions. Read only.
+router.get('/:vendorId/invoices/:invoiceId/three-way-match', checkPermission("resources/vendors", "can_read"), paymentRequestCtrl.getThreeWayMatch);
 
-router.get('/payment-requests', paymentRequestCtrl.getPaymentRequests);
-router.put('/payment-requests/:requestId/approve', paymentRequestCtrl.approvePaymentRequest);
-router.put('/payment-requests/:requestId/reject', paymentRequestCtrl.rejectPaymentRequest);
+router.get('/payment-requests', checkPermission("resources/vendors", "can_read"), paymentRequestCtrl.getPaymentRequests);
+router.put('/payment-requests/:requestId/approve', checkPermission("resources/vendors", "can_update"), paymentRequestCtrl.approvePaymentRequest);
+router.put('/payment-requests/:requestId/reject', checkPermission("resources/vendors", "can_update"), paymentRequestCtrl.rejectPaymentRequest);
+router.post('/payment-requests/:requestId/execute', checkPermission("resources/vendors", "can_update"), paymentRequestCtrl.executePayment);
 
-// ── Vendors history routes  ──────────────────────
-router.get('/:vendorId/history', historyCtrl.getVendorHistory);
-router.get('/:vendorId/history/summary', historyCtrl.getVendorHistorySummary);
+// ── Vendors history routes ──────────────────────
+router.get('/:vendorId/history', checkPermission("resources/vendors", "can_read"), historyCtrl.getVendorHistory);
+router.get('/:vendorId/history/summary', checkPermission("resources/vendors", "can_read"), historyCtrl.getVendorHistorySummary);
 
 // ── Audit routes ──────────────────────────────────────────────────────────
-router.get('/:vendorId/audits', auditCtrl.getAuditsByVendor);
-router.post('/:vendorId/audits', auditCtrl.createAudit);
+router.get('/:vendorId/audits', checkPermission("resources/vendors", "can_read"), auditCtrl.getAuditsByVendor);
+router.post('/:vendorId/audits', checkPermission("resources/vendors", "can_create"), auditCtrl.createAudit);
 
 // ── Vendor CRUD ───────────────────────────────────────────────────────────
-router.get('/', vendorCtrl.getAllVendors);
+router.get('/', checkPermission("resources/vendors", "can_read"), vendorCtrl.getAllVendors);
 router.get('/:id', checkPermission("resources/vendors", "can_read"), vendorCtrl.getVendorById);
 
 router.post('/', (req, res, next) => {

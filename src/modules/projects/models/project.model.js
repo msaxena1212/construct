@@ -23,6 +23,16 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DATE,
         allowNull: true,
       },
+      // Handover starts the defect liability period (DLP). Retention can be released only after the DLP ends.
+      handover_date: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      dlp_months: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        defaultValue: 12,
+      },
       budget_total: {
         type: Sequelize.DECIMAL(15, 2),
         defaultValue: 0.0,
@@ -101,9 +111,38 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      // Project master data (migration 20261101000001-project-master-data.js)
+      project_code: { type: Sequelize.STRING(40), allowNull: true },
+      contract_type: { type: Sequelize.STRING(30), allowNull: true },
+      currency: { type: Sequelize.STRING(3), allowNull: false, defaultValue: "INR" },
+      start_date: { type: Sequelize.DATEONLY, allowNull: true },
+      location_name: { type: Sequelize.STRING(200), allowNull: true },
+      description: { type: Sequelize.TEXT, allowNull: true },
+      client_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: { model: "CLIENT_MASTER", key: "id" },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+      },
+      consultant_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: { model: "CONSULTANT_MASTER", key: "id" },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+      },
+      project_manager_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: { model: "RBAC_USER", key: "id" },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+      },
     },
     {
       freezeTableName: true,
+      indexes: [{ name: "ux_project_company_code", unique: true, fields: ["company_id", "project_code"] }],
     }
   );
   return Project;

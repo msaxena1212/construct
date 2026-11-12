@@ -1,10 +1,19 @@
 const db = require('../../models');
 const { logVendorHistory } = require('./history_helper');
+const { assertProjectAccess, handleAccessError } = require('../../core/utils/access');
 
 const InvoiceModel = db.vendors_invoice;
 const VendorModel = db.vendors;
 
 const getCompanyId = (req) => req.user?.company_id || req.user?.companyId || null;
+
+const toSafeDecimal = (val, fieldName = 'Amount', max = 1000000000) => {
+  const num = Number(val);
+  if (isNaN(num) || !isFinite(num) || num < 0 || num > max) {
+    throw new Error(`Invalid ${fieldName}: must be a non-negative finite number up to ${max}`);
+  }
+  return Number(num.toFixed(2));
+};
 
 const getBudgetInfo = async (vendor, company_id, extraAmount = 0) => {
   const allocated = parseFloat(vendor.budget_allocation) || 0;
@@ -18,7 +27,7 @@ const getBudgetInfo = async (vendor, company_id, extraAmount = 0) => {
     .filter((inv) => inv.status !== 'Cancelled')
     .reduce((sum, inv) => sum + (parseFloat(inv.grand_total) || 0), 0);
 
-  const projectedTotal = totalInvoiced + (parseFloat(extraAmount) || 0);
+  const projectedTotal = Number((totalInvoiced + (parseFloat(extraAmount) || 0)).toFixed(2));
   const exceeded = allocated > 0 && projectedTotal > allocated;
 
   return {
@@ -35,68 +44,169 @@ const getInvoicesByVendor = async (req, res) => {
     const { vendorId } = req.params;
     const vendor = await VendorModel.findOne({ where: { id: vendorId, company_id } });
     if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
+
+    if (vendor.project_id) {
+      await assertProjectAccess(req, vendor.project_id);
+    }
+
     const invoices = await InvoiceModel.findAll({
       where: { vendor_id: vendorId, company_id },
       order: [['createdAt', 'DESC']],
     });
     return res.status(200).json({ success: true, count: invoices.length, data: invoices });
   } catch (err) {
+    if (handleAccessError(err, res)) return;
     console.error('[getInvoicesByVendor]', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
 const createInvoice = async (req, res) => {
+  const t = await db.sequelize.transaction();
   try {
     const company_id = getCompanyId(req);
     const { vendorId } = req.params;
-    const { project_id, invoice_number, invoice_date, items, subtotal, tax_rate, tax_amount, grand_total } = req.body;
-
-    if (!invoice_number || !invoice_date)
-      return res.status(400).json({ success: false, message: 'invoice_number and invoice_date are required' });
-
-    const vendor = await VendorModel.findOne({ where: { id: vendorId, company_id } });
-    if (!vendor) return res.status(404).json({ success: false, message: 'Vendor not found' });
-
-    const invoice = await InvoiceModel.create({
-      vendor_id: vendorId,
-      company_id,
-      project_id: project_id || null,
+    const {
+      project_id,
       invoice_number,
       invoice_date,
-      items: items || [],
-      subtotal: parseFloat(subtotal) || 0,
-      tax_rate: parseFloat(tax_rate) || 0,
-      tax_amount: parseFloat(tax_amount) || 0,
-      grand_total: parseFloat(grand_total) || 0,
+      items,
+      subtotal,
+      tax_rate,
+      tax_amount,
+      grand_total,
+      settlement_type,
+      settlement_completion,
+      milestone_ids,
+      sub_milestone_ids,
+      task_ids,
+    } = req.body;
+
+    if (!invoice_number || !invoice_date) {
+      await t.rollback();
+      return res.status(400).json({ success: false, message: 'invoice_number and invoice_date are required' });
+    }
+
+    const trimmedInvoiceNumber = String(invoice_number).trim();
+    if (!trimmedInvoiceNumber) {
+      await t.rollback();
+      return res.status(400).json({ success: false, message: 'Valid invoice_number is required' });
+    }
+
+    const vendor = await VendorModel.findOne({
+      where: { id: vendorId, company_id },
+      transaction: t,
+    });
+    if (!vendor) {
+      await t.rollback();
+      return res.status(404).json({ success: false, message: 'Vendor not found' });
+    }
+
+    const targetProjectId = project_id || vendor.project_id || null;
+    if (targetProjectId) {
+      await assertProjectAccess(req, targetProjectId);
+    }
+
+    // Check duplicate invoice_number for this vendor within company
+    const existing = await InvoiceModel.findOne({
+      where: {
+        vendor_id: vendorId,
+        company_id,
+        invoice_number: trimmedInvoiceNumber,
+      },
+      transaction: t,
+    });
+    if (existing) {
+      await t.rollback();
+      return res.status(409).json({
+        success: false,
+        message: `Invoice #${trimmedInvoiceNumber} already exists for this vendor.`,
+      });
+    }
+
+    // Server-side financial calculations & validation
+    let safeSubtotal = 0;
+    const validatedItems = [];
+
+    if (Array.isArray(items) && items.length > 0) {
+      for (const it of items) {
+        const qty = toSafeDecimal(it.quantity || 1, 'Item quantity', 1000000);
+        const rate = toSafeDecimal(it.unit_price || it.rate || 0, 'Item rate');
+        const lineTotal = Number((qty * rate).toFixed(2));
+        safeSubtotal += lineTotal;
+        validatedItems.push({
+          description: String(it.description || '').slice(0, 255),
+          ...(it.item_code && { item_code: String(it.item_code).slice(0, 100) }),
+          ...(it.material_id && { material_id: Number(it.material_id) }),
+          ...((it.purchase_order_id || req.body.purchase_order_id) && {
+            purchase_order_id: Number(it.purchase_order_id || req.body.purchase_order_id),
+          }),
+          quantity: qty,
+          unit_price: rate,
+          total: lineTotal,
+        });
+      }
+      safeSubtotal = Number(safeSubtotal.toFixed(2));
+    } else {
+      safeSubtotal = toSafeDecimal(subtotal || grand_total || 0, 'Subtotal');
+    }
+
+    const safeTaxRate = toSafeDecimal(tax_rate || 0, 'Tax rate', 100);
+    const calculatedTax = Number(((safeSubtotal * safeTaxRate) / 100).toFixed(2));
+    const safeTaxAmount = tax_amount !== undefined ? toSafeDecimal(tax_amount, 'Tax amount') : calculatedTax;
+    const calculatedGrandTotal = Number((safeSubtotal + safeTaxAmount).toFixed(2));
+
+    const invoice = await InvoiceModel.create({
+      vendor_id: Number(vendorId),
+      company_id,
+      project_id: targetProjectId,
+      invoice_number: trimmedInvoiceNumber,
+      invoice_date,
+      items: validatedItems.length > 0 ? validatedItems : (items || []),
+      subtotal: safeSubtotal,
+      tax_rate: safeTaxRate,
+      tax_amount: safeTaxAmount,
+      grand_total: calculatedGrandTotal,
       paid_amount: 0,
       payment_history: [],
       status: 'Pending',
-    });
+      settlement_type: settlement_type || null,
+      settlement_completion: settlement_completion != null ? parseFloat(settlement_completion) : null,
+      milestone_ids: Array.isArray(milestone_ids) ? milestone_ids : [],
+      sub_milestone_ids: Array.isArray(sub_milestone_ids) ? sub_milestone_ids : [],
+      task_ids: Array.isArray(task_ids) ? task_ids : [],
+    }, { transaction: t });
 
     await logVendorHistory({
       req,
       vendor_id: parseInt(vendorId),
       company_id,
-      project_id: vendor.project_id || null,
+      project_id: targetProjectId,
       entity_type: 'invoice',
       entity_id: invoice.id,
       action: 'created',
-      description: `Invoice #${invoice_number} (₹${grand_total || 0}) was created.`,
+      description: `Invoice #${trimmedInvoiceNumber} (₹${calculatedGrandTotal}) was created.`,
       new_values: invoice.toJSON(),
-      meta: { invoice_number, grand_total },
+      meta: { invoice_number: trimmedInvoiceNumber, grand_total: calculatedGrandTotal },
     });
 
-    const budget = await getBudgetInfo(vendor, company_id, parseFloat(grand_total) || 0);
+    await t.commit();
 
+    const budget = await getBudgetInfo(vendor, company_id, calculatedGrandTotal);
     return res.status(201).json({ success: true, message: 'Invoice created', data: invoice, budget });
   } catch (err) {
+    await t.rollback().catch(() => {});
+    if (handleAccessError(err, res)) return;
     console.error('[createInvoice]', err);
-    return res.status(500).json({ success: false, message: err.message });
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ success: false, message: 'Duplicate invoice number for this vendor.' });
+    }
+    return res.status(400).json({ success: false, message: err.message });
   }
 };
 
 const updateInvoiceStatus = async (req, res) => {
+  const t = await db.sequelize.transaction();
   try {
     const company_id = getCompanyId(req);
     const {
@@ -106,25 +216,43 @@ const updateInvoiceStatus = async (req, res) => {
       budget_exceeded,
     } = req.body;
 
-    const invoice = await InvoiceModel.findOne({ where: { id: req.params.id, company_id } });
-    if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+    const invoice = await InvoiceModel.findOne({
+      where: { id: req.params.id, company_id },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (!invoice) {
+      await t.rollback();
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
 
-    if (status === 'Cancelled' && invoice.status === 'Partially Paid')
+    if (invoice.project_id) {
+      await assertProjectAccess(req, invoice.project_id);
+    }
+
+    if (status === 'Cancelled' && invoice.status === 'Partially Paid') {
+      await t.rollback();
       return res.status(400).json({
         success: false,
         message: 'Partially paid invoice cannot be cancelled. Please refund the payment first.',
       });
+    }
 
-    if (status === 'Cancelled' && invoice.status === 'Paid')
+    if (status === 'Cancelled' && invoice.status === 'Paid') {
+      await t.rollback();
       return res.status(400).json({
         success: false,
         message: 'Paid invoice cannot be cancelled.',
       });
+    }
 
-    const vendor = await VendorModel.findOne({ where: { id: invoice.vendor_id, company_id } });
+    const vendor = await VendorModel.findOne({
+      where: { id: invoice.vendor_id, company_id },
+      transaction: t,
+    });
 
     const oldSnapshot = invoice.toJSON();
-    const updatePayload = { status };
+    const updatePayload = {};
 
     let action = 'status_changed';
     let description = `Invoice #${invoice.invoice_number} status changed to "${status}".`;
@@ -132,27 +260,36 @@ const updateInvoiceStatus = async (req, res) => {
     let budget = null;
 
     if (status === 'Paid' || status === 'Partially Paid') {
-      if (!amount || parseFloat(amount) <= 0)
-        return res.status(400).json({ success: false, message: 'Valid amount is required for payment' });
-      if (!mode)
+      const paidNow = toSafeDecimal(amount, 'Payment amount');
+      if (paidNow <= 0) {
+        await t.rollback();
+        return res.status(400).json({ success: false, message: 'Payment amount must be greater than zero.' });
+      }
+      if (!mode) {
+        await t.rollback();
         return res.status(400).json({ success: false, message: 'Payment mode is required' });
-      if (mode === 'Cheque' && !clearance_date)
+      }
+      if (mode === 'Cheque' && !clearance_date) {
+        await t.rollback();
         return res.status(400).json({ success: false, message: 'Cheque clearance date is required' });
+      }
 
-      const paidNow = parseFloat(amount);
       const grandTotal = parseFloat(invoice.grand_total);
       const previouslyPaid = parseFloat(invoice.paid_amount) || 0;
-      const totalPaidSoFar = previouslyPaid + paidNow;
+      const totalPaidSoFar = Number((previouslyPaid + paidNow).toFixed(2));
 
-      if (totalPaidSoFar > grandTotal)
+      if (totalPaidSoFar > grandTotal) {
+        await t.rollback();
         return res.status(400).json({
           success: false,
           message: `Payment amount exceeds invoice total. Maximum payable: ₹${(grandTotal - previouslyPaid).toFixed(2)}`,
         });
+      }
 
       if (vendor && !budget_exceeded) {
         budget = await getBudgetInfo(vendor, company_id, paidNow);
         if (budget.exceeded) {
+          await t.rollback();
           return res.status(400).json({
             success: false,
             message: 'Budget exceeded. Please raise a payment request instead.',
@@ -175,6 +312,7 @@ const updateInvoiceStatus = async (req, res) => {
         reference: (reference && String(reference).trim() !== '') ? String(reference).trim() : null,
         clearance_date: clearance_date || null,
         paid_at: new Date().toISOString(),
+        paid_by: req.user?.id || null,
         budget_exceeded: !!budget_exceeded,
       };
       updatePayload.payment_history = [...existingHistory, newEntry];
@@ -188,9 +326,7 @@ const updateInvoiceStatus = async (req, res) => {
       }
 
       action = 'payment_added';
-      description = budget_exceeded
-        ? `Payment of ₹${paidNow} via ${mode} added to invoice #${invoice.invoice_number} (Budget Exceeded — Raised as Request). Total paid: ₹${totalPaidSoFar}.`
-        : `Payment of ₹${paidNow} via ${mode} added to invoice #${invoice.invoice_number}. Total paid: ₹${totalPaidSoFar}.`;
+      description = `Payment of ₹${paidNow} via ${mode} added to invoice #${invoice.invoice_number}. Total paid: ₹${totalPaidSoFar}.`;
       meta = {
         invoice_number: invoice.invoice_number,
         amount: paidNow,
@@ -199,9 +335,11 @@ const updateInvoiceStatus = async (req, res) => {
         new_status: updatePayload.status,
         budget_exceeded: !!budget_exceeded,
       };
+    } else if (status) {
+      updatePayload.status = status;
     }
 
-    await invoice.update(updatePayload);
+    await invoice.update(updatePayload, { transaction: t });
 
     await logVendorHistory({
       req,
@@ -217,14 +355,19 @@ const updateInvoiceStatus = async (req, res) => {
       meta,
     });
 
-    if (vendor && (status === 'Paid' || status === 'Partially Paid')) {
-      budget = await getBudgetInfo(vendor, company_id, 0);
-    }
+    await t.commit();
 
-    return res.status(200).json({ success: true, message: 'Invoice updated', data: invoice, budget });
+    return res.status(200).json({
+      success: true,
+      message: 'Invoice status updated',
+      data: invoice,
+      budget,
+    });
   } catch (err) {
+    await t.rollback().catch(() => {});
+    if (handleAccessError(err, res)) return;
     console.error('[updateInvoiceStatus]', err);
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(400).json({ success: false, message: err.message });
   }
 };
 
@@ -234,33 +377,42 @@ const deleteInvoice = async (req, res) => {
     const invoice = await InvoiceModel.findOne({ where: { id: req.params.id, company_id } });
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
-    if (invoice.status === 'Paid' || invoice.status === 'Partially Paid')
+    if (invoice.project_id) {
+      await assertProjectAccess(req, invoice.project_id);
+    }
+
+    if (invoice.status === 'Paid' || invoice.status === 'Partially Paid') {
       return res.status(400).json({
         success: false,
-        message: `Invoice with status "${invoice.status}" cannot be deleted.`,
+        message: 'Cannot delete an invoice that has recorded payments. Cancel or refund first.',
       });
+    }
 
-    const snapshot = invoice.toJSON();
     await invoice.destroy();
 
     await logVendorHistory({
       req,
-      vendor_id: snapshot.vendor_id,
+      vendor_id: invoice.vendor_id,
       company_id,
-      project_id: snapshot.project_id || null,
+      project_id: invoice.project_id || null,
       entity_type: 'invoice',
-      entity_id: snapshot.id,
+      entity_id: invoice.id,
       action: 'deleted',
-      description: `Invoice #${snapshot.invoice_number} (₹${snapshot.grand_total}) was deleted.`,
-      old_values: snapshot,
-      meta: { invoice_number: snapshot.invoice_number },
+      description: `Invoice #${invoice.invoice_number} was deleted.`,
+      meta: { invoice_number: invoice.invoice_number },
     });
 
-    return res.status(200).json({ success: true, message: 'Invoice deleted' });
+    return res.status(200).json({ success: true, message: 'Invoice deleted successfully' });
   } catch (err) {
+    if (handleAccessError(err, res)) return;
     console.error('[deleteInvoice]', err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-module.exports = { getInvoicesByVendor, createInvoice, updateInvoiceStatus, deleteInvoice };
+module.exports = {
+  getInvoicesByVendor,
+  createInvoice,
+  updateInvoiceStatus,
+  deleteInvoice,
+};

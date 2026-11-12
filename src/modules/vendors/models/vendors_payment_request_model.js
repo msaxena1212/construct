@@ -55,7 +55,7 @@ module.exports = (sequelize, Sequelize) => {
         },
 
         status: {
-            type: Sequelize.ENUM('pending_approval', 'approved', 'rejected'),
+            type: Sequelize.ENUM('pending_approval', 'approved', 'rejected', 'paid'),
             defaultValue: 'pending_approval',
         },
         budget_allocated: { type: Sequelize.DECIMAL(15, 2), allowNull: true },
@@ -68,6 +68,17 @@ module.exports = (sequelize, Sequelize) => {
         requested_by: { type: Sequelize.INTEGER, allowNull: true },
     }, {
         freezeTableName: true,
+        indexes: [
+            {
+                fields: ['company_id', 'invoice_id', 'status'],
+                name: 'idx_payment_req_company_invoice_status'
+            },
+            {
+                unique: true,
+                fields: ['company_id', 'reference'],
+                name: 'unique_company_payment_reference'
+            }
+        ]
     });
 
     return VendorPaymentRequest;

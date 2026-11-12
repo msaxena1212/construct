@@ -52,6 +52,9 @@ module.exports = (router) => {
     projectCtrl.updateProject
   );
 
+  // --- Project setup and master data (scope section 03) ---
+  require("./project_setup.routes")(router);
+
   // --- Task Management Routes ---
   const taskCtrl = require("./task.controller");
 

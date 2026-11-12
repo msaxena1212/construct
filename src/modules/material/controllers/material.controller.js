@@ -205,10 +205,7 @@ class MaterialController {
           data: materials
         });
       } else {
-        return res.status(404).send({
-          code: 404,
-          message: "No data found"
-        });
+        return res.status(200).send({ code: 200, message: "No data found", data: [] });
       }
 
     } catch (error) {
@@ -252,181 +249,145 @@ class MaterialController {
       const { id } = req.params;
 
       const company_id = req.user.company_id;
-
       if (!company_id) {
-        return res.status(401).json({
-          message: "Unauthorized. Company context missing."
-        });
+        return res.status(401).json({ message: "Unauthorized. Company context missing." });
       }
 
       const material = await db.material.findOne({
-        where: {
-          id,
-          isDeleted: false,
-          company_id
-        }
+        where: { id, isDeleted: false, company_id }
       });
 
       if (!material) {
-        return res.status(404).json({
-          message: "Material not found."
-        });
+        return res.status(404).json({ message: "Material not found." });
       }
-
-      const {
-        name,
-        sku,
-        category,
-        vendor_name,
-        cost,
-        status,
-        vendor_id,
-        material_master_id,
-        stockUsed,
-        stockIn,
-        quotation_id
-      } = material;
 
       const { projects } = req.body;
 
       if (!Array.isArray(projects) || projects.length === 0) {
-        return res.status(400).json({
-          message: "projects array is required."
-        });
+        return res.status(400).json({ message: "projects array is required." });
       }
 
-      const totalUsedStock = projects.reduce((sum, item) => {
-        return sum + Number(item.stock || 0);
-      }, 0);
-
-      const availableStock = Number(stockIn) - Number(stockUsed || 0);
-      if (totalUsedStock > availableStock) {
-        return res.status(400).json({
-          message: `Assigned stock (${totalUsedStock}) exceeds available stock (${availableStock}).`
-        });
-      }
-
-      const newStockUsed = Number(stockUsed || 0) + totalUsedStock;
-      const newStockRemaining = stockIn - newStockUsed;
-
-      const newStatus = newStockUsed > 0 ? "ASSIGNED" : "NOT ASSIGNED";
-
-      await db.material.update(
-        {
-          stockUsed: newStockUsed,
-          stockRemaining: newStockRemaining,
-          status: newStatus
-        },
-        {
-          where: {
-            id,
-            company_id
-          }
+      for (const p of projects) {
+        if (!p.project_id) {
+          return res.status(400).json({ message: "project_id is required for every row." });
         }
-      );
+        if (!Number(p.stock) || Number(p.stock) <= 0) {
+          return res.status(400).json({ message: "Assigned stock must be greater than 0." });
+        }
+      }
 
-      const project_multiple = await Promise.all(
-        projects.map(async (project) => {
+      // Every target project must belong to this company.
+      const projectIds = [...new Set(projects.map((p) => p.project_id))];
+      const companyProjects = await db.project.findAll({ where: { id: projectIds, company_id } });
+      const projectById = new Map(companyProjects.map((p) => [String(p.id), p]));
+      if (projectIds.some((pid) => !projectById.has(String(pid)))) {
+        return res.status(404).json({ message: "Project not found." });
+      }
 
-          const existingProjectStock = await db.material_project_stock.findOne({
-            where: {
-              material_id: id,
-              project_id: project.project_id
-            }
+      await db.sequelize.transaction(async (t) => {
+        // Re-read under lock so concurrent assignments cannot over-allocate.
+        const current = await db.material.findOne({
+          where: { id, isDeleted: false, company_id },
+          transaction: t,
+          lock: t.LOCK.UPDATE
+        });
+        const { name, sku, category, vendor_name, cost, vendor_id, material_master_id, quotation_id } = current;
+        const stockIn = Number(current.stockIn || 0);
+        const stockUsed = Number(current.stockUsed || 0);
+
+        const totalUsedStock = projects.reduce((sum, item) => sum + Number(item.stock), 0);
+        const availableStock = stockIn - stockUsed;
+        if (totalUsedStock > availableStock) {
+          throw Object.assign(
+            new Error(`Assigned stock (${totalUsedStock}) exceeds available stock (${availableStock}).`),
+            { inventoryCode: 400 }
+          );
+        }
+
+        const newStockUsed = stockUsed + totalUsedStock;
+        await db.material.update(
+          {
+            stockUsed: newStockUsed,
+            stockRemaining: stockIn - newStockUsed,
+            status: newStockUsed > 0 ? "ASSIGNED" : "NOT ASSIGNED"
+          },
+          { where: { id, company_id }, transaction: t }
+        );
+
+        for (const project of projects) {
+          const project_name = projectById.get(String(project.project_id)).name;
+          const qty = Number(project.stock);
+
+          let projectStock = await db.material_project_stock.findOne({
+            where: { material_id: id, project_id: project.project_id, company_id },
+            transaction: t,
+            lock: t.LOCK.UPDATE
           });
 
-          let projectStockData;
-
-          if (existingProjectStock) {
-
-            const updatedStock =
-              Number(existingProjectStock.stockUsed || 0) +
-              Number(project.stock || 0);
-
-            await existingProjectStock.update({
-              stockUsed: updatedStock,
-              status: project.status || "ASSIGNED"
-            });
-
-            projectStockData = existingProjectStock;
-
+          if (projectStock) {
+            await projectStock.update(
+              { stockUsed: Number(projectStock.stockUsed || 0) + qty, status: "ASSIGNED" },
+              { transaction: t }
+            );
           } else {
+            projectStock = await db.material_project_stock.create(
+              {
+                material_id: id,
+                project_id: project.project_id,
+                name, sku, category, vendor_name, cost,
+                stockUsed: qty,
+                status: "ASSIGNED",
+                vendor_id, material_master_id, project_name, quotation_id, company_id
+              },
+              { transaction: t }
+            );
+          }
 
-            projectStockData = await db.material_project_stock.create({
+          await db.material_history.create(
+            {
+              name, sku, category,
+              stockIn: 0,
+              stockUsed: qty,
+              cost, vendor_name, project_name,
+              material_id: current.id,
+              material_master_id,
+              company_id,
+              project_id: project.project_id,
+              vendor_id, quotation_id,
+              user_id: req.user.id,
+              status: "ASSIGNED"
+            },
+            { transaction: t }
+          );
+
+          await db.material_project_stock_history.create(
+            {
+              material_project_stock_id: projectStock.id,
               material_id: id,
               project_id: project.project_id,
-              name,
-              sku,
-              category,
-              vendor_name,
-              stockUsed: project.stock,
-              cost,
-              status: project.status || "ASSIGNED",
-              vendor_id,
-              material_master_id,
-              project_name: project.project_name,
-              quotation_id,
-              company_id
-            });
-          }
+              name, sku, category, vendor_name, cost,
+              stockUsed: qty,
+              status: "ASSIGNED",
+              vendor_id, material_master_id, project_name, quotation_id, company_id
+            },
+            { transaction: t }
+          );
+        }
+      });
 
-          await db.material_history.create({
-            name,
-            sku,
-            category,
-            stockIn: 0,
-            stockUsed: project.stock,
-            cost,
-            vendor_name,
-            project_name: project.project_name,
-            material_id: material.id,
-            material_master_id,
-            company_id,
-            project_id: project.project_id,
-            vendor_id,
-            quotation_id,
-            user_id: req.user.id,
-            status: "ASSIGNED",
-          });
-
-          await db.material_project_stock_history.create({
-            material_project_stock_id: projectStockData.id,
-            material_id: id,
-            project_id: project.project_id,
-            name,
-            sku,
-            category,
-            vendor_name,
-            stockUsed: project.stock,
-            cost,
-            status: project.status || "ASSIGNED",
-            vendor_id,
-            material_master_id,
-            project_name: project.project_name,
-            quotation_id,
-            company_id
-          });
-
-          return projectStockData;
-        })
-      );
-
-      const updatedMaterial = await db.material.findOne({
+      const updated = await db.material.findOne({
         where: { id, company_id },
-        include: [
-          {
-            model: db.material_project_stock,
-            as: "material_project_stock"
-          }
-        ]
+        include: [{ model: db.material_project_stock, as: "material_project_stock" }]
       });
 
       res.status(200).json({
         message: "Material updated successfully.",
-        data: updatedMaterial
+        data: updated
       });
-
     } catch (error) {
+      if (error.inventoryCode) {
+        return res.status(error.inventoryCode).json({ message: error.message });
+      }
       console.error("[UPDATE_MATERIAL_ERROR]", error);
       res.status(500).json({
         message: "Error updating material.",
@@ -450,6 +411,14 @@ class MaterialController {
 
       if (!material) {
         return res.status(404).json({ message: "Material not found." });
+      }
+      const allocated = await db.material_project_stock.count({
+        where: { material_id: id, company_id, stockUsed: { [db.Sequelize.Op.gt]: 0 } }
+      });
+      if (allocated > 0) {
+        return res.status(409).json({
+          message: "Cannot delete: stock is still allocated to projects. Transfer or return it first."
+        });
       }
 
       await material.update({ isDeleted: true });
@@ -496,105 +465,80 @@ class MaterialController {
   }
 
   async material_stock_transfer(req, res) {
+    // TEMPORARY SAFETY GATE — Project Reallocation containment (see ERP_MASTER_COMPLETION_REGISTER.md).
+    // This legacy path moves stock by changing project counters without paired ledger movements. It is refused
+    // before any database access until it is replaced by the ledger-based reallocation. The original body below
+    // is intentionally preserved for that replacement and is not reachable while the gate is in place.
+    return res.status(409).json({
+      status: "failed",
+      code: "REALLOCATION_UNAVAILABLE",
+      message: "Project Reallocation is temporarily unavailable pending ledger reconciliation.",
+    });
+    // eslint-disable-next-line no-unreachable
     try {
-
-      const { material_id } = req.params;
-
+      const material_id = req.params.material_id;
       const { note, transfers } = req.body;
-
       const company_id = req.user.company_id;
 
       const material = await db.material.findOne({
-        where: {
-          id: material_id,
-          isDeleted: false,
-          company_id
-        }
+        where: { id: material_id, isDeleted: false, company_id }
       });
 
       if (!material) {
-        return res.status(404).json({
-          message: "Material not found."
-        });
+        return res.status(404).json({ message: "Material not found." });
       }
 
-      const {
-        name,
-        sku,
-        category,
-        vendor_name,
-        cost,
-        status,
-        vendor_id,
-        material_master_id,
-        quotation_id
-      } = material;
-
       if (!transfers || !Array.isArray(transfers) || transfers.length === 0) {
-        return res.status(400).json({
-          message: "Transfers data is required"
-        });
+        return res.status(400).json({ message: "Transfers data is required" });
       }
 
       for (const item of transfers) {
+        if (!item.from_project_id || !item.to_project_id) {
+          return res.status(400).json({ message: "from_project_id and to_project_id are required." });
+        }
+        if (String(item.from_project_id) === String(item.to_project_id)) {
+          return res.status(400).json({ message: "From and To project cannot be the same." });
+        }
+        if (!Number(item.quantity) || Number(item.quantity) <= 0) {
+          return res.status(400).json({ message: "Quantity must be greater than 0." });
+        }
+      }
 
-        const {
-          from_project_id,
-          to_project_id,
-          quantity
-        } = item;
+      // Every destination project must exist in this company before any stock is touched.
+      const toProjectIds = [...new Set(transfers.map((t) => t.to_project_id))];
+      const toProjects = await db.project.findAll({ where: { id: toProjectIds, company_id } });
+      const projectById = new Map(toProjects.map((p) => [String(p.id), p]));
+      if (toProjectIds.some((id) => !projectById.has(String(id)))) {
+        return res.status(404).json({ message: "Destination project not found" });
+      }
 
-        const fromStock = await db.material_project_stock.findOne({
-          where: {
-            material_id,
-            project_id: from_project_id,
-            company_id
+      const { name, sku, category, vendor_name, cost, vendor_id, material_master_id, quotation_id } = material;
+
+      // All rows move together: a failure part-way through must not leave stock removed but not added.
+      await db.sequelize.transaction(async (t) => {
+        for (const item of transfers) {
+          const { from_project_id, to_project_id, quantity } = item;
+          const projectData = projectById.get(String(to_project_id));
+
+          const fromStock = await db.material_project_stock.findOne({
+            where: { material_id, project_id: from_project_id, company_id },
+            transaction: t,
+            lock: t.LOCK.UPDATE
+          });
+
+          if (!fromStock) throw Object.assign(new Error("Source project stock not found"), { transferCode: 404 });
+          if (Number(fromStock.stockUsed) < Number(quantity)) {
+            throw Object.assign(new Error("Insufficient stock in source project"), { transferCode: 400 });
           }
-        });
 
-        if (!fromStock) {
-          return res.status(404).json({
-            message: `Source project stock not found`
-          });
-        }
+          const remaining = Number(fromStock.stockUsed) - Number(quantity);
+          await fromStock.update(
+            { stockUsed: remaining, status: remaining > 0 ? fromStock.status : "NOT ASSIGNED" },
+            { transaction: t }
+          );
 
-        if (Number(fromStock.stockUsed) < Number(quantity)) {
-          return res.status(400).json({
-            message: `Insufficient stock in source project`
-          });
-        }
-
-        const updatedFromStock =
-          Number(fromStock.stockUsed) - Number(quantity);
-
-        await fromStock.update({
-          stockUsed: updatedFromStock,
-
-          status: updatedFromStock > 0 ? fromStock.status : "NOT ASSIGNED"
-        });
-
-        const projectData = await db.project.findOne({
-          where: {
-            id: to_project_id,
-            company_id
-          }
-        });
-
-        if (!projectData) {
-          return res.status(404).json({
-            message: "Destination project not found"
-          });
-        }
-
-        const [toStock, created] =
-          await db.material_project_stock.findOrCreate({
-
-            where: {
-              material_id,
-              project_id: to_project_id,
-              company_id
-            },
-
+          const [toStock, created] = await db.material_project_stock.findOrCreate({
+            where: { material_id, project_id: to_project_id, company_id },
             defaults: {
               material_id,
               project_id: to_project_id,
@@ -610,66 +554,58 @@ class MaterialController {
               project_name: projectData.name,
               quotation_id,
               company_id
-            }
-
+            },
+            transaction: t,
+            lock: t.LOCK.UPDATE
           });
 
-        if (!created) {
+          if (!created) {
+            await toStock.update(
+              { stockUsed: Number(toStock.stockUsed) + Number(quantity), status: "ASSIGNED" },
+              { transaction: t }
+            );
+          }
 
-          const updatedToStock =
-            Number(toStock.stockUsed) + Number(quantity);
-
-          await toStock.update({
-            stockUsed: updatedToStock,
-            status: "ASSIGNED"
-          });
+          await db.material_history.create(
+            {
+              name,
+              sku,
+              category,
+              stockUsed: quantity,
+              cost,
+              vendor_name,
+              material_id,
+              material_master_id,
+              company_id,
+              project_id: to_project_id,
+              vendor_id,
+              project_name: projectData.name,
+              user_id: req.user.id,
+              status: "TRANSFER",
+              note
+            },
+            { transaction: t }
+          );
         }
 
-        await db.material_history.create({
-          name,
-          sku,
-          category,
-          stockUsed: quantity,
-          cost,
-          vendor_name,
-          material_id,
-          material_master_id,
-          company_id,
-          project_id: to_project_id,
-          vendor_id,
-          project_name: projectData.name,
-          user_id: req.user.id,
-          status: "TRANSFER",
-          note
+        const allProjectStocks = await db.material_project_stock.findAll({
+          where: { material_id, company_id },
+          transaction: t
         });
-
-      }
-
-      const allProjectStocks = await db.material_project_stock.findAll({
-        where: { material_id, company_id }
+        const stillAssigned = allProjectStocks.some((ps) => Number(ps.stockUsed) > 0);
+        await db.material.update(
+          { status: stillAssigned ? "ASSIGNED" : "NOT ASSIGNED" },
+          { where: { id: material_id, company_id }, transaction: t }
+        );
       });
 
-      const stillAssigned = allProjectStocks.some(
-        (ps) => Number(ps.stockUsed) > 0
-      );
-
-      await db.material.update(
-        { status: stillAssigned ? "ASSIGNED" : "NOT ASSIGNED" },
-        { where: { id: material_id, company_id } }
-      );
-
-      return res.status(200).json({
-        message: "Stock transferred successfully"
-      });
-
+      return res.status(200).json({ message: "Stock transferred successfully" });
     } catch (error) {
-
+      if (error.transferCode) {
+        return res.status(error.transferCode).json({ message: error.message });
+      }
       console.log("[MATERIAL_STOCK_TRANSFER_ERROR]", error);
-
-      return res.status(500).json({
-        message: "Internal server error",
-        error: error.message
-      });
+      return res.status(500).json({ message: "Internal server error", error: error.message });
     }
   }
 

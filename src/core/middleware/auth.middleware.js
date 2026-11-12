@@ -5,13 +5,14 @@ const db = require("../../models");
 // EXCLUDED ROUTES (NO AUTH REQUIRED)
 // --------------------------------------
 const excludedRoutes = [
+  "/api/v1/health",
+  "/api/health",
   "/api/v1/register-company",
   "/api/auth/signin",
   "/api/auth/sendOTP",
   "/api/auth/forgotpassword",
   "/api/v1/accept-invite",
   "/api/v1/invite-info",
-  "/uploads"
 ];
 
 function isExcluded(req) {
@@ -27,7 +28,7 @@ const verifyAuthToken = async (req, res, next) => {
     if (isExcluded(req)) return next();
 
     // -----------------------------------
-    // CHECK TOKEN
+    // CHECK TOKEN (Strict Bearer Header Only - No Query String Tokens)
     // -----------------------------------
     const authHeader = req.headers.authorization;
 

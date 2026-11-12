@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
 
       equipment_id: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
       },
 
 
@@ -38,11 +38,20 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
+      company_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
       status: {
         type: Sequelize.ENUM('pending', 'approved', 'rejected'),
         allowNull: false,
         defaultValue: 'pending',
       },
+      approved_qty: { type: Sequelize.INTEGER, allowNull: true },
+      requested_by: { type: Sequelize.INTEGER, allowNull: true },
+      decided_by: { type: Sequelize.INTEGER, allowNull: true },
+      decided_at: { type: Sequelize.DATE, allowNull: true },
+      decision_reason: { type: Sequelize.STRING(500), allowNull: true },
 
       isDeleted: {
         type: Sequelize.BOOLEAN,

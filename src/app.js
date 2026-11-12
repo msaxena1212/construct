@@ -1,9 +1,14 @@
+const initialEnv = process.env.NODE_ENV;
 const dotenv = require("dotenv");
 dotenv.config();
+if (initialEnv === "test") {
+  process.env.NODE_ENV = "test";
+}
 
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 var bodyParser = require("body-parser");
 const Routes = require("./routes/routes");
 const verifyAuthToken = require("./core/middleware/auth.middleware");
@@ -11,82 +16,147 @@ const verifyAuthToken = require("./core/middleware/auth.middleware");
 const app = express();
 const db = require("./models");
 
-// table wise sycn
-// db.sequelize.sync({ alter: true }).then(() => {
-//   console.log("Database synced successfully");
-// }).catch((err) => {
-//   console.error("Error syncing database", err);
-// });
-// db.user.sync({ alter: true });
-// db.role_permission.sync({alter:true});
-// db.project.sync({ alter: true });
-// db.milestone.sync({ alter: true });
-// db.project_team.sync({alter:true});
-// db.project_document.sync({alter:true});
-// db.project_task.sync({ alter: true });
-// db.project_sub_task.sync({ alter: true });
-// db.project_task_dependency.sync({ alter: true });
-// db.task_activity.sync({ alter: true });
-// db.task_attachment.sync({ alter: true });
-// db.user.sync({ alter: true });
-// db.activity.sync({ alter: true });
-// db.material_master.sync({ alter: true });
-// db.quotation.sync({ alter: true });
-// db.material.sync({ alter: true });
-// db.material_project_stock.sync({ alter: true });
-// db.StockRequest.sync({ alter: true });
-// db.material_history.sync({ alter: true });
-// db.equipment_master.sync({ alter: true });
-// db.equipment.sync({ alter: true });
-// db.equipment_project_stock.sync({ alter: true });
-// db.equipment_history.sync({ alter: true });
-// db.vendors.sync({ alter: true });
-// db.material_project_stock_history.sync({ alter: true });
-// db.equipment_project_stock_history.sync({ alter: true });
-// db.quotation_history.sync({ alter: true });
-//  db.employee_history.sync({ alter: true });
+// ─────────────────────────────────────────────────────────────
+// Sync helpers (uncomment per model when schema changes needed)
+// ─────────────────────────────────────────────────────────────
 
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
-app.use(express.json());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(function (req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Allow-Credentials", true);
-  next();
-});
+// ─────────────────────────────────────────────────────────────
+// Trust proxy (required for rate-limiter when behind Nginx/load balancer)
+// ─────────────────────────────────────────────────────────────
+app.set("trust proxy", 1);
 
-app.set("trust proxy", true);
+// ─────────────────────────────────────────────────────────────
+// CORS — restrict to known origins only. NEVER allow "*" in production.
+// ─────────────────────────────────────────────────────────────
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : [
+      "http://localhost:4200",
+      "http://localhost:3000",
+      "http://localhost",
+      "https://zynoconstruction.elitetraveltech.in",
+    ];
 
 const corsOpts = {
-  origin: "*",
-  methods: ["GET", "PATCH", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  origin: (origin, callback) => {
+    // Allow server-to-server or same-origin requests (no Origin header)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS: Origin ${origin} is not permitted`));
+  },
+  methods: ["GET", "PATCH", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: true,
+  maxAge: 86400, // cache preflight 24h
 };
 
 app.use(cors(corsOpts));
+app.options(/(.*)/, cors(corsOpts)); // enable pre-flight across all routes
 
-// Calling Auth Token on All routes
+// ─────────────────────────────────────────────────────────────
+// Rate Limiters
+// ─────────────────────────────────────────────────────────────
+
+/** Auth brute-force guard: max 10 login/register attempts per 15 min per IP */
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: "error",
+    message: "Too many authentication attempts. Please try again after 15 minutes.",
+  },
+  skipSuccessfulRequests: false,
+});
+
+/** General API limiter: 300 req / min per IP to prevent scraping */
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: "error",
+    message: "Rate limit exceeded. Please slow down.",
+  },
+  skip: (req) => req.path === "/api/v1/health" || req.path === "/api/health",
+});
+
+/** AI Copilot limiter: streaming SSE calls are expensive */
+const copilotLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: "error",
+    message: "AI Copilot rate limit reached. Please wait before sending more queries.",
+  },
+});
+
+// ─────────────────────────────────────────────────────────────
+// Body parsing
+// ─────────────────────────────────────────────────────────────
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
+
+// ─────────────────────────────────────────────────────────────
+// Apply rate limiters BEFORE auth middleware
+// (auth endpoints exposed before verifyAuthToken)
+// ─────────────────────────────────────────────────────────────
+app.use("/api/auth", authLimiter);
+app.use("/api/v1", apiLimiter);
+app.use("/api/v1/copilot", copilotLimiter);
+
+// ─────────────────────────────────────────────────────────────
+// JWT Auth check on all routes (auth routes themselves are public
+// because auth.routes.js skips token verification internally)
+// ─────────────────────────────────────────────────────────────
 app.use(verifyAuthToken);
 
-app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.urlencoded({ extended: true }));
 
+// ─────────────────────────────────────────────────────────────
+// Static / Health / Root
+// ─────────────────────────────────────────────────────────────
 const serveStatic = path.join(__dirname, "static/index.html");
 
 app.get("/", (req, res) => {
   res.sendFile(serveStatic);
 });
-app.get("/api/health", async (req, res) => {
-  res.send({ message: "Server is healthy!", status: 200 });
+
+/** Health endpoint used by Docker health checks */
+app.get("/api/v1/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    service: "Zyno Construction API",
+    version: "2.0.0",
+  });
 });
 
+// Legacy path (kept for backward compat)
+app.get("/api/health", (req, res) => res.redirect("/api/v1/health"));
 
-
-// Initialize routes
+// ─────────────────────────────────────────────────────────────
+// Application Routes
+// ─────────────────────────────────────────────────────────────
 Routes.initializeRoutes(app);
+
+// ─────────────────────────────────────────────────────────────
+// Global error handler
+// ─────────────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  if (err.message && err.message.startsWith("CORS")) {
+    return res.status(403).json({ status: "error", message: err.message });
+  }
+  console.error("[Server Error]", err.stack || err.message);
+  res.status(err.status || 500).json({
+    status: "error",
+    message: err.message || "Internal server error",
+  });
+});
 
 module.exports = app;

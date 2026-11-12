@@ -24,6 +24,12 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.BOOLEAN,
         defaultValue: true,
       },
+      // What happens when an RA bill would exceed its budget head: 'warn' (record and allow), 'block' or 'off'.
+      budget_gate_mode: {
+        type: Sequelize.STRING(10),
+        allowNull: true,
+        defaultValue: 'warn',
+      },
     },
     {
       freezeTableName: true,

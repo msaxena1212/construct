@@ -34,8 +34,16 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.INTEGER,
       allowNull: true,
     },
+    // Task UID from an MS Project import. Set only on imported tasks; NULL for tasks created by hand.
+    msp_uid: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+    },
   }, {
     freezeTableName: true,
+    indexes: [
+      { name: "idx_project_task_milestone_msp_uid", fields: ["milestone_id", "msp_uid"] },
+    ],
   });
 
   return ProjectTask;

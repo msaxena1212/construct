@@ -14,15 +14,15 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
     quality: {
-      type: Sequelize.TINYINT.UNSIGNED,
+      type: Sequelize.SMALLINT,
       allowNull: false,
     },
     timeliness: {
-      type: Sequelize.TINYINT.UNSIGNED,
+      type: Sequelize.SMALLINT,
       allowNull: false,
     },
     safety: {
-      type: Sequelize.TINYINT.UNSIGNED,
+      type: Sequelize.SMALLINT,
       allowNull: false,
     },
     composite_score: {

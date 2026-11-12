@@ -1341,16 +1341,13 @@ class ProjectController {
         });
       });
 
+      // Note: Legacy query side-effect removed to prevent unintended database overwrites on read.
       let updateData = {
         material_used: total_material,
         equipment_used: total_equipment,
         labor_used: total_labor,
         other_used: total_others,
       };
-
-      await db.project.update(updateData, {
-        where: { id, company_id },
-      });
 
       const totalSpend = invoices.reduce((sum, invoice) => {
         return sum + parseFloat(invoice.paid_amount || 0);

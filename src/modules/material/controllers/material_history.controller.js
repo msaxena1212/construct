@@ -118,7 +118,7 @@ class MaterialHistoryController {
             });
 
             if (history.length === 0) {
-                return res.status(404).json({ message: "No history found." });
+                return res.status(200).json({ data: [] });
             }
 
             const formatted = history.map(h => {
@@ -164,7 +164,7 @@ class MaterialHistoryController {
             });
 
             if (history.length === 0) {
-                return res.status(404).json({ message: "No history found." });
+                return res.status(200).json({ data: [] });
             }
 
             const formatted = history.map(h => {
