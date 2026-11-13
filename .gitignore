@@ -44,6 +44,6 @@ __screenshots__/
 Thumbs.db
 js.js
 
-src/environments/environment.ts
+# src/environments/environment.ts
 # git rm --cached src/app/environments/environment.ts
 # git commit -m "Removed environment files from tracking"
